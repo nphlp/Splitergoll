@@ -1,0 +1,5 @@
+# Sources téléchargées et caches du build local.
+/.local/
+
+# Firmwares compilés et informations de build.
+/dist/

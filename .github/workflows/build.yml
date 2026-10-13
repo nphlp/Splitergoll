@@ -2,5 +2,5 @@ on: [push, pull_request, workflow_dispatch]
 
 jobs:
   build:
-    # uses: petejohanson/zmk/.github/workflows/build-user-config.yml@feat/pointers-move-scroll
-    uses: zmkfirmware/zmk/.github/workflows/build-user-config.yml@main
+    # CI complémentaire. L’image du build local est définie dans scripts/build-common.sh.
+    uses: zmkfirmware/zmk/.github/workflows/build-user-config.yml@edf5c0814fd3ea202e43aad2d68fd32e882a518c
