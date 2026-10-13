@@ -10,10 +10,10 @@ help:
 		'make clear : arrêter le build et supprimer les sources, caches et firmwares locaux'
 
 setup:
-	@sh scripts/setup.sh
+	@bash scripts/setup.sh
 
 build:
-	@sh scripts/build.sh
+	@bash scripts/build.sh
 
 stop:
 	@sh scripts/stop.sh

@@ -6,7 +6,7 @@ les fichiers UF2. GitHub Actions n’est pas nécessaire.
 
 ## Utilisation
 
-Prérequis : Make, Docker démarré, `shasum` et un terminal macOS/Linux.
+Prérequis : Make, Bash, Docker démarré, `shasum` et un terminal macOS/Linux.
 Sur Windows, utiliser WSL avec Docker. La validation Windows reste à faire.
 
 ```sh
@@ -27,6 +27,18 @@ Le nettoyage refuse les liens symboliques et tout conteneur restant qui utilise 
 Chaque commande utilise un conteneur éphémère, supprimé à sa sortie grâce à `--rm`.
 Les logs restent visibles dans le terminal. Un label identifie le checkout pour
 que `stop` cible ses seuls conteneurs de build.
+
+Les quatre étapes affichent leur durée. En terminal interactif, les huit dernières
+lignes défilent puis se replient après réussite. En cas d’échec, la sortie complète
+est affichée. Sans terminal interactif, tous les logs défilent normalement.
+Les journaux complets et les durées restent dans `.local/logs/` jusqu’au prochain `clear`.
+Les validations sont vertes, les avertissements jaunes et les erreurs rouges.
+Les couleurs sont désactivées sans terminal compatible ou avec `NO_COLOR=1`.
+
+Si Docker affiche `DOCKER_INSECURE_NO_IPTABLES_RAW`, ce réglage vient de son moteur.
+Il désactive certaines protections réseau iptables, pas la vérification des sources.
+L’avertissement reste visible. Aucun port n’est publié par les conteneurs Splitergoll.
+Voir [l’explication des mainteneurs Docker](https://github.com/moby/moby/pull/49621).
 Le dépôt est monté en lecture seule. Les dépendances et caches sont dans `.local/`.
 ZMK 0.3.0, Zephyr et leurs dépendances sont verrouillés dans `config/west.yml`.
 L’image officielle est figée par son digest dans `scripts/build-common.sh`.
@@ -41,6 +53,7 @@ ZMK/Zephyr, afin de verrouiller aussi les dépendances indirectes.
 Le Makefile expose les commandes, les scripts contiennent leur logique :
 
 - `scripts/build-common.sh` : constantes de chemins et d’image, contrôles et lancement Docker.
+- `scripts/build-logs.sh` : affichage des étapes, durées et journaux complets.
 - `scripts/setup.sh` : préparation des dépendances.
 - `scripts/build.sh` : compilation et récupération des UF2.
 - `scripts/container.sh` : commandes `west` et contrôles dans le conteneur.
@@ -63,6 +76,8 @@ Le build ne flashe rien et ne supprime aucun appairage.
 
 Validation : `make setup` et `make build` passent sur le Mac ARM après le découpage
 en scripts. Les deux UF2 et les rôles sont vérifiés. Il reste l’essai matériel.
-Les commandes `stop` et `clear` sont contrôlées sans arrêt ni suppression réels.
+Le nettoyage effectué avec `clear` a été vérifié avant une préparation complète.
+Le setup passe ensuite en mode normal et interactif, avec les 39 dépendances vérifiées.
+L’arrêt avec `stop` pendant un build reste à valider.
 Voir [le matériel](configuration-materielle.md), [la keymap](keymap.md) et
 [les tâches restantes](TODO.md).

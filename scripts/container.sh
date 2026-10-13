@@ -14,12 +14,14 @@ check_dependencies() {
 
     while read -r name revision path; do
         [ "$name" != manifest ] || continue
+        printf 'Contrôle de la dépendance : %s\n' "$name"
         current=$(git -C "$path" rev-parse HEAD)
         changes=$(git -C "$path" status --porcelain --untracked-files=no)
 
         if [ "$current" != "$revision" ] || [ -n "$changes" ]; then
             fail "Dépendance incorrecte ou modifiée : $name"
         fi
+        printf '[OK] %s au commit prévu\n' "$name"
     done < .west/projects.lock
 }
 
@@ -48,7 +50,7 @@ check_firmware() {
 case "${1-}" in
     setup)
         if [ ! -d .west ]; then west init -l config; fi
-        west update --narrow --fetch-opt=--filter=blob:none
+        west update --narrow --fetch-opt=--filter=blob:none --fetch-opt=--progress
         check_dependencies
         ;;
     build)

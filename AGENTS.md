@@ -45,6 +45,8 @@ Valider la syntaxe Make/shell, le manifeste, la conservation de la keymap et le
 build réel. Pas de nouveaux tests automatisés d’outillage par défaut. Les essais
 matériels restent distincts. Aucun flash implicite. Les conteneurs sont éphémères,
 le dépôt est monté en lecture seule et la compilation n’a pas de réseau.
+Stabiliser les scripts avant le lancement et ne pas modifier les fichiers montés
+pendant leur exécution : le montage en lecture seule n’isole pas les changements hôtes.
 
 Les conteneurs portent le label `splitergoll.build.repository` avec le chemin du
 checkout. `stop` ne cible que ce label. `clear` doit réussir cet arrêt avant de
@@ -56,6 +58,15 @@ Ne pas exécuter le nettoyage pour valider les scripts sans accord explicite.
 Chaque fonction des scripts doit avoir un commentaire court en français au-dessus,
 qui explique son rôle et les arguments lorsque leur sens n’est pas évident.
 Chaque script doit aussi expliquer son rôle dans un commentaire en tête de fichier.
+
+Les scripts hôtes `setup.sh` et `build.sh` utilisent Bash pour l’affichage repliable,
+isolé dans `build-logs.sh`. Les autres scripts restent compatibles `sh`.
+Conserver le statut réel des commandes et tous leurs logs dans `.local/logs/`.
+En terminal interactif, replier uniquement les étapes réussies et garder les
+avertissements visibles. Sans TTY, diffuser la sortie complète sans codes de curseur.
+Afficher la durée par étape et totale. Ne pas masquer les avertissements du moteur Docker.
+Utiliser des couleurs sobres en terminal compatible, respecter `NO_COLOR` et
+conserver une sortie lisible sans couleur. Afficher le chemin des logs une seule fois.
 
 Exception locale autorisée par l’utilisateur : les chemins de cet outillage et
 l’image figée peuvent être des constantes dans le script commun. Les chemins
