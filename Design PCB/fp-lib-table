@@ -1,0 +1,4 @@
+(fp_lib_table
+  (version 7)
+  (lib (name "kb_np_footprints")(type "KiCad")(uri "${KB_NP_KICAD}/kb_np_footprints")(options "")(descr ""))
+)

@@ -1,0 +1,4 @@
+(sym_lib_table
+  (version 7)
+  (lib (name "Keyboard_NP")(type "KiCad")(uri "${KB_NP_KICAD}/kb_np_symbols/Keyboard_NP.kicad_sym")(options "")(descr ""))
+)

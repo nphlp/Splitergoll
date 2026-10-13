@@ -1,0 +1,106 @@
+25514063540638
+kb_np_footprints
+Battery_PINs
+
+
+0
+2
+2
+kb_np_footprints
+Button_RESET
+
+
+0
+4
+4
+kb_np_footprints
+Capacitor_SMD
+
+
+0
+2
+2
+kb_np_footprints
+Diode_SMD
+SOD-123
+SOD-123
+0
+2
+2
+kb_np_footprints
+Diode_Standard
+Diode, DO-35_SOD27 series, Axial, Horizontal, pin pitch=7.62mm, , length*diameter=4*2mm^2, , http://www.diodes.com/_files/packages/DO-35.pdf
+Diode DO-35_SOD27 series Axial Horizontal pin pitch 7.62mm  length 4mm diameter 2mm
+0
+2
+2
+kb_np_footprints
+Encoder
+
+
+0
+7
+7
+kb_np_footprints
+Hotswap_KH
+Choc keyswitch V2 CPG1353 V2 Hotswap Plated Keycap ISOEnter 270deg
+Choc Keyswitch Switch CPG1353 V2 Hotswap Plated Cutout Keycap ISOEnter 270deg
+0
+7
+2
+kb_np_footprints
+Hotswap_MX
+keyswitch Hotswap Socket
+Keyboard Keyswitch Switch Hotswap Socket Relief Cutout
+0
+2
+2
+kb_np_footprints
+Jack_TRRS
+
+
+0
+4
+4
+kb_np_footprints
+Keyswitch_KH
+KH CPG1280 keyswitch Keycap 1.00u
+KH CPG1280 Keyboard Keyswitch Switch Cutout Keycap 1.00u
+0
+2
+2
+kb_np_footprints
+Keyswitch_MX
+MX keyswitch PCB Mount Keycap 1.00u
+MX Keyboard Keyswitch Switch PCB Cutout Keycap 1.00u
+0
+2
+2
+kb_np_footprints
+LEDs
+https://cdn-shop.adafruit.com/datasheets/WS2812B.pdf
+LED RGB NeoPixel
+0
+4
+4
+kb_np_footprints
+Nice_Nano_v2
+
+
+0
+24
+24
+kb_np_footprints
+Nice_View
+
+
+0
+4
+4
+kb_np_footprints
+Switch_ON_OFF
+
+
+0
+7
+7
