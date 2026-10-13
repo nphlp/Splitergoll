@@ -18,6 +18,8 @@
 - [x] Alléger le Makefile et répartir le build dans des scripts séparés.
 - [x] Remplacer le besoin de `.env` par des constantes en tête du script commun.
 - [x] Revalider `make setup` et `make build` après ce découpage.
+- [x] Ajouter `make stop` et `make clear`, limités aux conteneurs et fichiers de ce checkout.
+- [ ] Valider réellement l’arrêt d’un build puis le nettoyage et la préparation complète.
 - [ ] Préparer la montée de version ZMK/Zephyr, adapter les noms de cartes et revalider les deux firmwares.
 - [ ] Définir les paramètres OS `windows`, `macos`, `linux`, `multi`.
 - [ ] Définir si un OS de build est fixe ou seulement initial.

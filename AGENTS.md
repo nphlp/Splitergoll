@@ -30,7 +30,7 @@ et [la keymap](docs/keymap.md). Les tâches et idées sont centralisées dans
 Build local et profil câble : gauche centrale USB, droite périphérique BLE,
 alimentation USB, sans veille profonde ni reporting batterie.
 
-Le Makefile expose deux commandes et délègue aux scripts `setup.sh` et `build.sh`.
+Le Makefile expose `setup`, `build`, `stop` et `clear`, délégués aux scripts dédiés.
 Les constantes partagées sont en tête de `scripts/build-common.sh`. `container.sh`
 exécute `west` et vérifie les firmwares. Aucun `.env` n’est nécessaire.
 ZMK 0.3.0 et les
@@ -45,6 +45,13 @@ Valider la syntaxe Make/shell, le manifeste, la conservation de la keymap et le
 build réel. Pas de nouveaux tests automatisés d’outillage par défaut. Les essais
 matériels restent distincts. Aucun flash implicite. Les conteneurs sont éphémères,
 le dépôt est monté en lecture seule et la compilation n’a pas de réseau.
+
+Les conteneurs portent le label `splitergoll.build.repository` avec le chemin du
+checkout. `stop` ne cible que ce label. `clear` doit réussir cet arrêt avant de
+supprimer `.local/` et `dist/`, toutes versions comprises. Refuser les chemins
+inattendus, les liens symboliques et les conteneurs restants qui utilisent le dépôt.
+L’image Docker partagée est conservée.
+Ne pas exécuter le nettoyage pour valider les scripts sans accord explicite.
 
 Chaque fonction des scripts doit avoir un commentaire court en français au-dessus,
 qui explique son rôle et les arguments lorsque leur sens n’est pas évident.

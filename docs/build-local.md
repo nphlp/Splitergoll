@@ -16,9 +16,17 @@ make build
 
 - `setup` télécharge l’image et les sources figées.
 - `build` compile les deux moitiés dans un conteneur sans réseau.
+- `stop` arrête les conteneurs de build de ce checkout, en conservant les fichiers.
+- `clear` les arrête puis supprime `.local/` et `dist/` pour toutes les versions.
 - `make -n build` affiche les commandes sans les exécuter.
 
-Les conteneurs sont éphémères et les logs restent visibles dans le terminal.
+Après le premier `setup`, `make build` suffit tant que les versions restent les mêmes.
+Après `make clear`, recommencer par `make setup`. L’image Docker reste disponible.
+Le nettoyage refuse les liens symboliques et tout conteneur restant qui utilise le dépôt.
+
+Chaque commande utilise un conteneur éphémère, supprimé à sa sortie grâce à `--rm`.
+Les logs restent visibles dans le terminal. Un label identifie le checkout pour
+que `stop` cible ses seuls conteneurs de build.
 Le dépôt est monté en lecture seule. Les dépendances et caches sont dans `.local/`.
 ZMK 0.3.0, Zephyr et leurs dépendances sont verrouillés dans `config/west.yml`.
 L’image officielle est figée par son digest dans `scripts/build-common.sh`.
@@ -36,6 +44,8 @@ Le Makefile expose les commandes, les scripts contiennent leur logique :
 - `scripts/setup.sh` : préparation des dépendances.
 - `scripts/build.sh` : compilation et récupération des UF2.
 - `scripts/container.sh` : commandes `west` et contrôles dans le conteneur.
+- `scripts/stop.sh` : arrêt des conteneurs de build du checkout.
+- `scripts/clear.sh` : arrêt et suppression des fichiers locaux générés.
 
 Les chemins locaux sont calculés depuis le dépôt. Aucun `.env` n’est nécessaire.
 
@@ -53,5 +63,6 @@ Le build ne flashe rien et ne supprime aucun appairage.
 
 Validation : `make setup` et `make build` passent sur le Mac ARM après le découpage
 en scripts. Les deux UF2 et les rôles sont vérifiés. Il reste l’essai matériel.
+Les commandes `stop` et `clear` sont contrôlées sans arrêt ni suppression réels.
 Voir [le matériel](configuration-materielle.md), [la keymap](keymap.md) et
 [les tâches restantes](TODO.md).
