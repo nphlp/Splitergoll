@@ -23,6 +23,11 @@
 - [ ] Valider réellement l’arrêt d’un build avec `stop`.
 - [x] Ajouter des logs en direct repliables, les journaux complets et les durées du setup/build.
 - [ ] Préparer la montée de version ZMK/Zephyr, adapter les noms de cartes et revalider les deux firmwares.
+- [ ] Migrer le bootloader vers l’API de rétention, conserver les codes UF2 et vérifier `&bootloader` / `&sys_reset` sur le matériel.
+- [x] Déclarer la matrice des deux moitiés comme source de réveil avec `wakeup-source`.
+- [x] Compiler les deux moitiés avec et sans veille, vérifier la gestion d’alimentation et la source de réveil.
+- [ ] Activer la veille automatique dans les profils sur batterie et tester toutes les touches, la première frappe et la reconnexion BLE.
+- [ ] Résoudre le drapeau réseau `DOCKER_INSECURE_NO_IPTABLES_RAW` au niveau du moteur Docker, sans masquer l’avertissement.
 - [ ] Définir les paramètres OS `windows`, `macos`, `linux`, `multi`.
 - [ ] Définir si un OS de build est fixe ou seulement initial.
 - [ ] Ajouter les profils Bluetooth direct, priorité USB et dongle.

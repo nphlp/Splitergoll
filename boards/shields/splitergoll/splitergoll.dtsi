@@ -27,6 +27,8 @@
     kscan0: kscan {
         compatible = "zmk,kscan-gpio-matrix";
         diode-direction = "col2row";
+        // Permet aux touches de réveiller la moitié après une veille profonde.
+        wakeup-source;
 
         col-gpios
             = <&pro_micro 4 GPIO_ACTIVE_HIGH>

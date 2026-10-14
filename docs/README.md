@@ -33,5 +33,6 @@ Ces commandes ne flashent pas le clavier.
 
 - [Build local](build-local.md) : commandes, environnement et résultats.
 - [Matériel et connexions](configuration-materielle.md) : cartes, rôles et limites.
+- [Veille et redémarrage](veille-et-demarrage.md) : réveil par les touches et bootloader.
 - [Keymap](keymap.md) : organisation, couches et sept schémas de touches.
 - [TODO et idées](TODO.md) : suivi des tâches restantes.

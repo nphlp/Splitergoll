@@ -39,6 +39,13 @@ Si Docker affiche `DOCKER_INSECURE_NO_IPTABLES_RAW`, ce réglage vient de son mo
 Il désactive certaines protections réseau iptables, pas la vérification des sources.
 L’avertissement reste visible. Aucun port n’est publié par les conteneurs Splitergoll.
 Voir [l’explication des mainteneurs Docker](https://github.com/moby/moby/pull/49621).
+Le diagnostic sur le moteur OrbStack n’a pas identifié de réglage exposé pour
+corriger ce drapeau. Ce point reste ouvert côté moteur, sans modification système.
+
+L’avertissement `NRF_STORE_REBOOT_TYPE_GPREGRET` vient de ZMK 0.3.0, qui utilise
+encore ce mécanisme pour la touche bootloader. Le supprimer demande une adaptation
+du firmware, décrite dans [veille et redémarrage](veille-et-demarrage.md).
+
 Le dépôt est monté en lecture seule. Les dépendances et caches sont dans `.local/`.
 ZMK 0.3.0, Zephyr et leurs dépendances sont verrouillés dans `config/west.yml`.
 L’image officielle est figée par son digest dans `scripts/build-common.sh`.

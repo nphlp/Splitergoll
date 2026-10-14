@@ -30,6 +30,14 @@ et [la keymap](docs/keymap.md). Les tâches et idées sont centralisées dans
 Build local et profil câble : gauche centrale USB, droite périphérique BLE,
 alimentation USB, sans veille profonde ni reporting batterie.
 
+La matrice `kscan0` porte `wakeup-source` pour permettre un réveil par les touches.
+Ne pas activer la veille dans le profil câble. Les profils sur batterie devront
+activer `ZMK_SLEEP`, puis vérifier chaque touche, la première frappe et la reconnexion.
+Le guide `docs/veille-et-demarrage.md` distingue les capacités de ZMK des essais matériels.
+Le mécanisme bootloader déprécié reste nécessaire à ZMK 0.3.0 : son remplacement
+demande l’API de rétention, l’adaptation du comportement reset et des codes UF2.
+Ne pas désactiver `NRF_STORE_REBOOT_TYPE_GPREGRET` pour faire disparaître le warning.
+
 Le Makefile expose `setup`, `build`, `stop` et `clear`, délégués aux scripts dédiés.
 Les constantes partagées sont en tête de `scripts/build-common.sh`. `container.sh`
 exécute `west` et vérifie les firmwares. Aucun `.env` n’est nécessaire.

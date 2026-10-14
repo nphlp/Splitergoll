@@ -99,6 +99,8 @@ ZMK 0.3.0 cible `nice_nano_v2` avec `splitergoll_left` ou `splitergoll_right`.
 
 Chaque moitié scanne quatre lignes et six colonnes. Le transform associe les
 positions câblées à la keymap. Les rotations des encodeurs sont distinctes de leurs clics.
+La matrice est déclarée comme source de réveil. Le profil câble garde la veille
+profonde désactivée. Voir [veille et redémarrage](veille-et-demarrage.md).
 
 Pour les affectations : [keymap](keymap.md). Pour compiler : [build local](build-local.md).
 Les essais restent dans le [TODO](TODO.md). Le build ne flashe aucun appareil.
