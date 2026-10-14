@@ -3,6 +3,8 @@
 La référence est la keymap complète de `dongle` au commit `2584ca4`.
 Les affectations, accents, macros et encodeurs sont conservés. Les branches
 `-minimal` sont uniquement des archives.
+Cette keymap constitue le profil `multi` actuel : les trois OS et le jeu dans
+un même firmware.
 
 ## Organisation
 
@@ -34,8 +36,10 @@ les appuis simples et multiples. Les morphs changent une action selon un modific
 Le comportement Shift de `dongle` est conservé : absent de la couche tertiaire
 commune, présent sur celle de macOS. La disposition de ses accents reste identique.
 
-Les futurs paramètres de build `windows`, `macos`, `linux` et `multi` ne sont pas
-encore implémentés. Ils devront utiliser cette même source de keymap.
+Les futurs profils `windows` avec jeu, `macos`, `linux` et `multi` ne sont pas encore
+implémentés. Avant de les séparer, conserver une sauvegarde versionnée de la keymap
+actuelle avec ses couches, helpers et fichiers de disposition. Le profil `multi`
+doit rester disponible comme référence complète. Le découpage sera traité plus tard.
 
 ## Schémas
 

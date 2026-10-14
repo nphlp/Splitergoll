@@ -15,16 +15,22 @@ make build
 ```
 
 - `setup` télécharge l’image et les sources figées.
-- `build` compile les deux moitiés dans un conteneur sans réseau.
+- `build wire` compile les deux moitiés pour une sortie USB à gauche.
+- `build bluetooth` compile les deux moitiés pour une sortie Bluetooth directe.
+- `build` sans profil compile `wire`, puis `bluetooth`, soit quatre UF2.
 - `stop` arrête les conteneurs de build de ce checkout, en conservant les fichiers.
 - `clear` les arrête puis supprime `.local/` et `dist/` pour toutes les versions.
-- `make -n build` affiche les commandes sans les exécuter.
+- `make -n build bluetooth` affiche les commandes sans les exécuter.
 
 Après le premier `setup`, `make build` suffit tant que les versions restent les mêmes.
+Un seul `setup` prépare les deux profils. Pour limiter le build, choisir un profil
+avec `make build wire` ou `make build bluetooth`.
+Chaque profil conserve son propre dossier de sortie et ses journaux.
 Après `make clear`, recommencer par `make setup`. L’image Docker reste disponible.
 Le nettoyage refuse les liens symboliques et tout conteneur restant qui utilise le dépôt.
 
-Chaque commande utilise un conteneur éphémère, supprimé à sa sortie grâce à `--rm`.
+Chaque action Docker utilise un conteneur éphémère, supprimé à sa sortie grâce à `--rm`.
+`make build` lance les deux compilations successivement, une par profil.
 Les logs restent visibles dans le terminal. Un label identifie le checkout pour
 que `stop` cible ses seuls conteneurs de build.
 
@@ -44,7 +50,7 @@ corriger ce drapeau. Ce point reste ouvert côté moteur, sans modification syst
 
 L’avertissement `NRF_STORE_REBOOT_TYPE_GPREGRET` vient de ZMK 0.3.0, qui utilise
 encore ce mécanisme pour la touche bootloader. Le supprimer demande une adaptation
-du firmware, décrite dans [veille et redémarrage](veille-et-demarrage.md).
+du firmware. Voir [le bootloader](flash-firmware.md#touche-bootloader).
 
 Le dépôt est monté en lecture seule. Les dépendances et caches sont dans `.local/`.
 ZMK 0.3.0, Zephyr et leurs dépendances sont verrouillés dans `config/west.yml`.
@@ -69,29 +75,42 @@ Le Makefile expose les commandes, les scripts contiennent leur logique :
 
 Les chemins locaux sont calculés depuis le dépôt. Aucun `.env` n’est nécessaire.
 
+## Profils matériels
+
+| Profil | Sortie de la gauche | Veille profonde | Batterie |
+| --- | --- | --- | --- |
+| `wire` | USB vers l’ordinateur | Désactivée | Reporting désactivé |
+| `bluetooth` | Bluetooth direct, même pendant la charge USB | Après 15 minutes sur batterie | Reporting activé |
+
+Dans les deux cas, la droite communique avec la gauche en BLE. La gauche applique
+la même keymap de `dongle`. `config/splitergoll.conf` contient le socle commun,
+les fichiers des moitiés fixent leurs rôles, et `config/profiles/<profil>.conf`
+est ajouté en dernier via `EXTRA_CONF_FILE`. Le nom du profil est transmis
+au script Docker comme argument. Les versions ZMK et l’image restent identiques.
+`dongle` sera ajouté plus tard.
+
 ## Résultat
 
-Chaque build crée un dossier `dist/firmware/wire-AAAA-MM-JJ-HH-MM-SS/`,
-par exemple `wire-2026-10-14-10-30-00`. La date utilise l’heure locale de la machine.
+Chaque build crée un dossier `dist/firmware/<profil>-AAAA-MM-JJ-HH-MM-SS/`,
+avec un horodatage utilisant l’heure locale de la machine.
 Le dossier contient :
 
-- `splitergoll-wire-left.uf2`
-- `splitergoll-wire-right.uf2`
+- `splitergoll-<profil>-left.uf2`
+- `splitergoll-<profil>-right.uf2`
 - `SHA256SUMS` : empreintes des deux firmwares
 - `build-info.txt` : profil et identifiant de l’environnement utilisé
 
-`wire` désigne la sortie USB de la gauche, avec BLE entre les moitiés.
-Les futurs profils `bluetooth` et `dongle` suivront le même nommage, mais ne sont
-pas encore disponibles. La keymap reste celle de `dongle`.
 Si deux exports utilisent la même seconde, le second échoue sans écraser le premier.
 Relancer `make build` pour obtenir un nouvel horodatage.
 
-Les caches sont séparés par version et par moitié. Les dépendances modifiées
+Les caches sont séparés par version, profil et moitié. Les dépendances modifiées
 bloquent le build. Les rôles USB/BLE sont contrôlés après compilation.
 Le build ne flashe rien et ne supprime aucun appairage.
 
 Validation : `make setup` et `make build` passent sur le Mac ARM après le découpage
-en scripts. Les deux UF2 et les rôles sont vérifiés. Il reste l’essai matériel.
+en scripts. Les deux profils produisent chacun deux UF2 vérifiés. La saisie Bluetooth
+des deux moitiés est confirmée sur le Mac, avec alimentation USB et sur batterie seule.
+Réveil et première frappe restent à tester, ainsi que le profil `wire`.
 Le nettoyage effectué avec `clear` a été vérifié avant une préparation complète.
 Le setup passe ensuite en mode normal et interactif, avec les 39 dépendances vérifiées.
 L’arrêt avec `stop` pendant un build reste à valider.

@@ -1,7 +1,8 @@
 # Matériel et connexions
 
-Deux claviers existent : PC Windows avec deux câbles USB, MacBook avec batteries
-et dongle. La différence principale est la carte qui traite les touches.
+Deux claviers existent : PC Windows avec deux câbles USB, MacBook avec batteries.
+Le Mac utilise maintenant le Bluetooth direct, son XIAO BLE reste disponible pour
+le profil dongle historique. La différence principale est la carte qui traite les touches.
 
 ## Le matériel
 
@@ -15,6 +16,11 @@ et dongle. La différence principale est la carte qui traite les touches.
 
 Le Nordic des anciennes photos n’est pas utilisé. Les fichiers de
 [PCB](<../Design PCB/>) et de [boîtier](<../Design 3D/>) sont dans le dépôt.
+
+Sur le clavier Mac, distinguer l’interrupteur de batterie et l’alimentation USB.
+Une moitié branchée en USB est alimentée même avec l’interrupteur sur arrêt.
+Pour la mettre réellement hors tension, débrancher l’USB et couper la batterie.
+Un câble USB ne signifie pas que les touches passent par USB : cela dépend du profil.
 
 ## Centrale et périphériques
 
@@ -43,7 +49,7 @@ un hôte restent présentes, ce profil ne promet pas une radio arrêtée.
 **État :** deux UF2 compilés et rôles vérifiés, essai matériel à faire.
 Ce profil sert au premier essai sur le clavier Mac et au clavier du PC Windows.
 
-## Dongle, MacBook actuel
+## Dongle, configuration historique
 
 ```mermaid
 flowchart LR
@@ -56,33 +62,51 @@ Les moitiés sont sur batterie, le Mac alimente le XIAO. Le dongle traite les
 couches et les événements des deux moitiés.
 [Architecture ZMK](https://zmk.dev/docs/hardware-integration/dongle).
 
-**État :** utilisé avec la branche historique `dongle`, pas encore réintégré au
-build paramétrable. `make build` produit uniquement le profil câble.
+**État :** utilisé auparavant avec la branche historique `dongle`, pas encore réintégré au
+build paramétrable. Le build local produit les profils `wire` et `bluetooth`.
 
-## Bluetooth direct, futur profil Mac
+## Profil `bluetooth`, sans dongle
 
 ```mermaid
 flowchart LR
     R["Droite : périphérique"] -->|BLE interne| L["Gauche : centrale"]
-    L -->|Bluetooth direct| MAC["MacBook"]
+    L -->|Bluetooth direct| MAC["Mac ou PC"]
 ```
 
-Les moitiés restent sur batterie. La gauche remplace le dongle comme centrale
-et communique avec le Mac. Son autonomie sera à mesurer avec ce nouveau rôle.
+Les moitiés fonctionnent sur batterie. La gauche remplace le dongle comme centrale
+et communique avec l’ordinateur. Son autonomie sera à mesurer avec ce nouveau rôle.
+La sortie clavier USB est désactivée : brancher un câble pour charger conserve
+la saisie en Bluetooth, même si le câble va à l’ordinateur.
 
-**État :** à implémenter et tester. La priorité USB pendant la charge sera une
-option de cette architecture, avec la même centrale.
+La veille profonde est activée après 15 minutes sur batterie, avec la matrice comme
+source de réveil. Les mesures de batterie sont activées.
+
+**État :** deux UF2 normaux flashés, saisie des deux moitiés sur le Mac confirmée
+avec alimentation USB et sur batterie seule, sans dongle. La veille, le réveil et
+les encodeurs restent à tester. Voir [la procédure de reset](appairage-bluetooth.md#réinitialiser-les-réglages)
+en cas d’appairage incohérent.
+La priorité USB pendant la charge reste une option future de cette architecture.
+
+## Affichage des batteries
+
+Le pourcentage affiché sur le Mac représente actuellement la batterie gauche.
+La droite a sa propre mesure, qui n’est pas encore remontée au Mac.
+
+ZMK peut exposer les deux niveaux via la gauche. Leur affichage séparé dans les
+réglages macOS n’est pas garanti, un lecteur dédié peut être nécessaire.
+Cette amélioration reste à décider. Voir [l’étude technique](batteries.md).
 
 ## Ce qui change par firmware ou à chaud
 
 | Changement | Mécanisme |
 | --- | --- |
-| Sortie USB ou Bluetooth de la même centrale | ZMK propose `&out`, ces touches restent à ajouter dans la keymap |
+| Profil `wire` ou `bluetooth` | Choix au build, puis flash des deux moitiés. Les rôles restent identiques |
+| Sortie USB ou Bluetooth à chaud | ZMK propose `&out` si les deux sorties sont compilées. Ces touches restent à ajouter |
 | Gauche centrale ou dongle central | Firmwares adaptés et procédure d’appairage, pas un toggle de sortie |
 
-Le choix de sortie est sauvegardé et peut survivre aux flashs. Pour le futur profil
-direct, on vise USB avec un câble de données vers le Mac, puis Bluetooth après
-débranchement. La charge secteur et le recours à une sélection BLE manuelle
+Le choix de sortie à chaud est sauvegardé et peut survivre aux flashs. Pour le futur
+profil avec priorité USB, on vise USB avec un câble de données vers le Mac, puis
+Bluetooth après débranchement. La charge secteur et le recours à une sélection BLE manuelle
 restent à tester. [Sorties ZMK](https://zmk.dev/docs/keymaps/behaviors/outputs).
 
 ## Les fichiers de configuration
@@ -92,16 +116,17 @@ ZMK 0.3.0 cible `nice_nano_v2` avec `splitergoll_left` ou `splitergoll_right`.
 
 | Fichier | Rôle |
 | --- | --- |
-| [config/splitergoll.conf](../config/splitergoll.conf) | Options communes : split, BLE, encodeurs et alimentation |
-| [left.conf](../boards/shields/splitergoll/splitergoll_left.conf) / [right.conf](../boards/shields/splitergoll/splitergoll_right.conf) | Gauche centrale USB, droite périphérique |
+| [config/splitergoll.conf](../config/splitergoll.conf) | Options communes : split, BLE, encodeurs et macros |
+| [left.conf](../boards/shields/splitergoll/splitergoll_left.conf) / [right.conf](../boards/shields/splitergoll/splitergoll_right.conf) | Gauche centrale avec USB par défaut, droite périphérique |
+| [wire.conf](../config/profiles/wire.conf) / [bluetooth.conf](../config/profiles/bluetooth.conf) | Sortie et alimentation propres à chaque profil |
 | [splitergoll.dtsi](../boards/shields/splitergoll/splitergoll.dtsi) | Matrice, ordre des 44 positions et encodeurs |
 | [Overlay gauche](../boards/shields/splitergoll/splitergoll_left.overlay) / [droite](../boards/shields/splitergoll/splitergoll_right.overlay) | GPIO de chaque moitié et encodeur actif |
-| [build.yaml](../build.yaml) | Couples board/shield et noms des deux UF2 |
+| [build.yaml](../build.yaml) | Les deux profils et leurs deux moitiés pour la CI complémentaire |
 
 Chaque moitié scanne quatre lignes et six colonnes. Le transform associe les
 positions câblées à la keymap. Les rotations des encodeurs sont distinctes de leurs clics.
 La matrice est déclarée comme source de réveil. Le profil câble garde la veille
-profonde désactivée. Voir [veille et redémarrage](veille-et-demarrage.md).
+profonde désactivée. Voir [veille et réveil](veille.md).
 
 Pour les affectations : [keymap](keymap.md). Pour compiler : [build local](build-local.md).
 Les essais restent dans le [TODO](TODO.md). Le build ne flashe aucun appareil.

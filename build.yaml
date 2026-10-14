@@ -3,12 +3,26 @@
     {
       "board": "nice_nano_v2",
       "shield": "splitergoll_left",
-      "artifact-name": "splitergoll-wire-left"
+      "artifact-name": "splitergoll-wire-left",
+      "cmake-args": "-DEXTRA_CONF_FILE=${GITHUB_WORKSPACE}/config/profiles/wire.conf"
     },
     {
       "board": "nice_nano_v2",
       "shield": "splitergoll_right",
-      "artifact-name": "splitergoll-wire-right"
+      "artifact-name": "splitergoll-wire-right",
+      "cmake-args": "-DEXTRA_CONF_FILE=${GITHUB_WORKSPACE}/config/profiles/wire.conf"
+    },
+    {
+      "board": "nice_nano_v2",
+      "shield": "splitergoll_left",
+      "artifact-name": "splitergoll-bluetooth-left",
+      "cmake-args": "-DEXTRA_CONF_FILE=${GITHUB_WORKSPACE}/config/profiles/bluetooth.conf"
+    },
+    {
+      "board": "nice_nano_v2",
+      "shield": "splitergoll_right",
+      "artifact-name": "splitergoll-bluetooth-right",
+      "cmake-args": "-DEXTRA_CONF_FILE=${GITHUB_WORKSPACE}/config/profiles/bluetooth.conf"
     }
   ]
 }

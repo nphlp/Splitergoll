@@ -3,3 +3,5 @@
 
 # Firmwares compilés et informations de build.
 /dist/
+
+.DS_Store

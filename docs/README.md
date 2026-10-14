@@ -8,14 +8,17 @@ Il reste dans `docs/` pendant le chantier, le README actuel est conservé.
 
 ## Version en cours
 
-Sur `unified-firmware` : build local et profil `wire`, avec la keymap de `dongle`.
-La gauche envoie les touches par USB, la droite est alimentée par son câble et
-communique avec la gauche en BLE. Les deux firmwares sont compilés localement,
-le premier essai sur le clavier Mac reste à faire.
+Sur `unified-firmware` : build local et profils `wire` / `bluetooth`, avec la
+keymap de `dongle`. La gauche envoie les touches par USB ou Bluetooth direct,
+la droite communique avec elle en BLE. Le profil Bluetooth garde la saisie en
+Bluetooth pendant la charge USB et active la veille sur batterie.
+Les deux moitiés fonctionnent sur le Mac après réinitialisation et nouvel appairage,
+avec leurs USB branchés pour l’alimentation et sur batterie seule, sans dongle.
+La veille et le réveil restent à valider.
 
-Les profils OS paramétrables et `bluetooth` / `dongle` viendront ensuite. Le clavier
-MacBook conserve son firmware dongle actuel. Les branches historiques restent
-intactes et les variantes minimales sont des archives.
+La keymap actuelle correspond à `multi`. Les profils `windows` avec jeu, `macos`,
+`linux`, ainsi que priorité USB et `dongle`, viendront ensuite. Les branches
+historiques restent intactes et les variantes minimales sont des archives.
 
 ## Démarrer
 
@@ -26,6 +29,9 @@ make setup
 make build
 ```
 
+`make build` compile les deux profils. Pour n’en compiler qu’un :
+`make build wire` ou `make build bluetooth`.
+
 Le [guide de build](build-local.md) détaille les prérequis et les fichiers UF2 obtenus.
 Ces commandes ne flashent pas le clavier.
 
@@ -33,6 +39,9 @@ Ces commandes ne flashent pas le clavier.
 
 - [Build local](build-local.md) : commandes, environnement et résultats.
 - [Matériel et connexions](configuration-materielle.md) : cartes, rôles et limites.
-- [Veille et redémarrage](veille-et-demarrage.md) : réveil par les touches et bootloader.
+- [Veille et réveil](veille.md) : états d’inactivité et reprise à la frappe.
+- [Flash du firmware](flash-firmware.md) : copie des UF2, bootloader et messages du Finder.
+- [Appairage Bluetooth](appairage-bluetooth.md) : clés de connexion, reset et diagnostic.
+- [Batteries](batteries.md) : mesure actuelle et affichage des deux niveaux.
 - [Keymap](keymap.md) : organisation, couches et sept schémas de touches.
 - [TODO et idées](TODO.md) : suivi des tâches restantes.

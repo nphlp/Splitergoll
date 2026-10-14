@@ -15,13 +15,26 @@ ARTIFACT_ROOT="$OUTPUT_ROOT/firmware"
 CONTAINER_SOURCE='/work/splitergoll'
 CONTAINER_WORKSPACE='/work/zmk'
 BOARD='nice_nano_v2'
-PROFILE='wire'
+PROFILES='wire bluetooth'
 SIDES='left right'
 
 # Affiche une erreur et arrête la commande pour éviter de poursuivre dans un état incorrect.
 fail() {
     printf '%s\n' "$*" >&2
     exit 1
+}
+
+# Valide le nom du profil reçu et retrouve sa configuration matérielle.
+select_profile() {
+    PROFILE=$1
+
+    case "$PROFILE" in
+        wire|bluetooth) ;;
+        *) fail "Profil inconnu : $PROFILE. Choisis wire ou bluetooth" ;;
+    esac
+
+    PROFILE_CONFIGURATION="$REPOSITORY/config/profiles/$PROFILE.conf"
+    test -r "$PROFILE_CONFIGURATION" || fail "Configuration du profil absente : $PROFILE"
 }
 
 # Vérifie que Docker est installé et que son moteur répond avant toute action.
@@ -102,5 +115,5 @@ run_container() {
         --mount "type=bind,source=$workspace,target=$CONTAINER_WORKSPACE" \
         --workdir "$CONTAINER_WORKSPACE" \
         --entrypoint /bin/sh "$BUILD_IMAGE" \
-        "$CONTAINER_SOURCE/scripts/container.sh" "$action"
+        "$CONTAINER_SOURCE/scripts/container.sh" "$action" "${PROFILE-}"
 }
