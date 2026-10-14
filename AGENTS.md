@@ -27,8 +27,9 @@ et [la keymap](docs/keymap.md). Les tâches et idées sont centralisées dans
 
 ## Étape active et validation
 
-Build local et profil câble : gauche centrale USB, droite périphérique BLE,
+Build local et profil `wire` : gauche centrale USB, droite périphérique BLE,
 alimentation USB, sans veille profonde ni reporting batterie.
+Le premier essai matériel est prévu sur le clavier Mac, puis sur le PC Windows.
 
 La matrice `kscan0` porte `wakeup-source` pour permettre un réveil par les touches.
 Ne pas activer la veille dans le profil câble. Les profils sur batterie devront
@@ -44,6 +45,10 @@ exécute `west` et vérifie les firmwares. Aucun `.env` n’est nécessaire.
 ZMK 0.3.0 et les
 59 projets résolus sont figés dans `config/west.yml`. Les workspaces sont séparés
 par empreinte de l’environnement, les caches CMake par moitié.
+Les sorties sont dans `dist/firmware/wire-AAAA-MM-JJ-HH-MM-SS/`, en heure locale,
+sans suffixe aléatoire. Refuser un dossier existant plutôt que l’écraser.
+Les UF2 sont nommés `splitergoll-wire-left.uf2` et `splitergoll-wire-right.uf2`.
+`bluetooth` et `dongle` nommeront les futurs profils, ils ne sont pas encore compilables.
 
 `config/splitergoll.conf` contient les options communes. Les fichiers `.conf` des
 moitiés contiennent leurs différences. La matrice `build.yaml` couvre uniquement

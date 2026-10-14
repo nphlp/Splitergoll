@@ -10,16 +10,17 @@ set -eu
 
 # Exporte une paire complète et ses empreintes seulement après les deux compilations réussies.
 export_firmware() {
-    artifacts="$ARTIFACT_ROOT/$PROFILE"
-    mkdir -p "$artifacts"
-    destination=$(mktemp -d "$artifacts/$(date -u +%Y%m%dT%H%M%SZ)-XXXXXX")
+    timestamp=$(date +%Y-%m-%d-%H-%M-%S)
+    destination="$ARTIFACT_ROOT/$PROFILE-$timestamp"
+    mkdir -p "$ARTIFACT_ROOT"
+    mkdir "$destination" || fail "Export refusé : impossible de créer $destination"
 
     for side in $SIDES; do
         name="splitergoll-$PROFILE-$side"
         cp "$workspace/build/$name/zephyr/zmk.uf2" "$destination/$name.uf2"
     done
 
-    printf 'environment=%s\nimage=%s\n' "$identity" "$BUILD_IMAGE" > "$destination/build-info.txt"
+    printf 'profile=%s\nenvironment=%s\nimage=%s\n' "$PROFILE" "$identity" "$BUILD_IMAGE" > "$destination/build-info.txt"
     (cd "$destination" && shasum -a 256 ./*.uf2 > SHA256SUMS)
     printf '%s\n' "$destination" > "$RUN_LOG_DIRECTORY/artifacts-path"
 }

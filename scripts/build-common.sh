@@ -15,7 +15,7 @@ ARTIFACT_ROOT="$OUTPUT_ROOT/firmware"
 CONTAINER_SOURCE='/work/splitergoll'
 CONTAINER_WORKSPACE='/work/zmk'
 BOARD='nice_nano_v2'
-PROFILE='cable-multi'
+PROFILE='wire'
 SIDES='left right'
 
 # Affiche une erreur et arrête la commande pour éviter de poursuivre dans un état incorrect.

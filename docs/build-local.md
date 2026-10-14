@@ -71,11 +71,20 @@ Les chemins locaux sont calculés depuis le dépôt. Aucun `.env` n’est néces
 
 ## Résultat
 
-Un nouveau dossier sous `dist/firmware/cable-multi/` contient :
+Chaque build crée un dossier `dist/firmware/wire-AAAA-MM-JJ-HH-MM-SS/`,
+par exemple `wire-2026-10-14-10-30-00`. La date utilise l’heure locale de la machine.
+Le dossier contient :
 
-- `splitergoll-cable-multi-left.uf2`
-- `splitergoll-cable-multi-right.uf2`
-- les empreintes SHA-256 et l’identifiant de l’environnement utilisé
+- `splitergoll-wire-left.uf2`
+- `splitergoll-wire-right.uf2`
+- `SHA256SUMS` : empreintes des deux firmwares
+- `build-info.txt` : profil et identifiant de l’environnement utilisé
+
+`wire` désigne la sortie USB de la gauche, avec BLE entre les moitiés.
+Les futurs profils `bluetooth` et `dongle` suivront le même nommage, mais ne sont
+pas encore disponibles. La keymap reste celle de `dongle`.
+Si deux exports utilisent la même seconde, le second échoue sans écraser le premier.
+Relancer `make build` pour obtenir un nouvel horodatage.
 
 Les caches sont séparés par version et par moitié. Les dépendances modifiées
 bloquent le build. Les rôles USB/BLE sont contrôlés après compilation.

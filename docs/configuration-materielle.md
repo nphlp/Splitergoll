@@ -25,7 +25,7 @@ une lettre sur l’autre. [Rôles ZMK](https://zmk.dev/docs/features/split-keybo
 
 Les schémas montrent le trajet des touches. L’alimentation est décrite à part.
 
-## Câble, PC Windows
+## Profil `wire`, USB vers l’ordinateur
 
 ```mermaid
 flowchart LR
@@ -33,7 +33,7 @@ flowchart LR
     L -->|USB| PC["PC Windows"]
 ```
 
-Le PC alimente les deux moitiés. Le câble gauche transporte aussi la saisie,
+Les deux câbles USB alimentent les moitiés. Le câble gauche transporte aussi la saisie,
 le câble droit fournit l’alimentation. Les moitiés communiquent toujours en BLE,
 les deux câbles ne les relient pas entre elles.
 
@@ -41,6 +41,7 @@ Veille profonde et reporting batterie sont désactivés. Les capacités BLE vers
 un hôte restent présentes, ce profil ne promet pas une radio arrêtée.
 
 **État :** deux UF2 compilés et rôles vérifiés, essai matériel à faire.
+Ce profil sert au premier essai sur le clavier Mac et au clavier du PC Windows.
 
 ## Dongle, MacBook actuel
 

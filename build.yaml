@@ -3,12 +3,12 @@
     {
       "board": "nice_nano_v2",
       "shield": "splitergoll_left",
-      "artifact-name": "splitergoll-cable-multi-left"
+      "artifact-name": "splitergoll-wire-left"
     },
     {
       "board": "nice_nano_v2",
       "shield": "splitergoll_right",
-      "artifact-name": "splitergoll-cable-multi-right"
+      "artifact-name": "splitergoll-wire-right"
     }
   ]
 }

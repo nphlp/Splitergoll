@@ -8,12 +8,12 @@ Il reste dans `docs/` pendant le chantier, le README actuel est conservé.
 
 ## Version en cours
 
-Sur `unified-firmware` : build local et profil câble, avec la keymap de `dongle`.
+Sur `unified-firmware` : build local et profil `wire`, avec la keymap de `dongle`.
 La gauche envoie les touches par USB, la droite est alimentée par son câble et
 communique avec la gauche en BLE. Les deux firmwares sont compilés localement,
-les essais sur le clavier Windows restent à faire.
+le premier essai sur le clavier Mac reste à faire.
 
-Les profils OS paramétrables et Bluetooth/dongle viendront ensuite. Le clavier
+Les profils OS paramétrables et `bluetooth` / `dongle` viendront ensuite. Le clavier
 MacBook conserve son firmware dongle actuel. Les branches historiques restent
 intactes et les variantes minimales sont des archives.
 

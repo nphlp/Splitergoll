@@ -9,7 +9,7 @@
 - [x] Figer ZMK 0.3.0, les dépendances et l’image Docker.
 - [x] Préparer un Makefile avec `make setup` et `make build`.
 - [x] Compiler les deux moitiés et vérifier les UF2, leurs empreintes et les rôles.
-- [ ] Tester le clavier Windows : touches, encodeurs, accents, Shift, couches et redémarrages.
+- [ ] Tester le profil `wire` sur le clavier Mac, puis sur le PC Windows : touches, encodeurs, accents, Shift, couches et redémarrages.
 
 ## Étapes suivantes
 
@@ -22,6 +22,7 @@
 - [x] Vérifier le nettoyage effectué avec `clear` puis refaire une préparation complète.
 - [ ] Valider réellement l’arrêt d’un build avec `stop`.
 - [x] Ajouter des logs en direct repliables, les journaux complets et les durées du setup/build.
+- [x] Nommer les sorties par profil et date lisible : `wire-AAAA-MM-JJ-HH-MM-SS`.
 - [ ] Préparer la montée de version ZMK/Zephyr, adapter les noms de cartes et revalider les deux firmwares.
 - [ ] Migrer le bootloader vers l’API de rétention, conserver les codes UF2 et vérifier `&bootloader` / `&sys_reset` sur le matériel.
 - [x] Déclarer la matrice des deux moitiés comme source de réveil avec `wakeup-source`.
