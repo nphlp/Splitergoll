@@ -1,0 +1,184 @@
+#!/bin/bash
+
+# Sélectionne un UF2 local, affiche sa date et le copie après confirmation.
+# Reçoit matériel, keymap, left/right et éventuellement debug, ou un chemin UF2.
+# macOS uniquement. Aucun build, reset des réglages ou flash sans confirmation.
+
+set -euo pipefail
+
+. "$(dirname "$0")/build-common.sh"
+. "$(dirname "$0")/terminal-colors.sh"
+configure_output
+
+if [ "$#" -eq 0 ]; then
+    exec bash "$SCRIPT_DIRECTORY/help.sh" flash
+fi
+
+[ "$(uname -s)" = Darwin ] || fail 'Le flash automatique est disponible sur macOS uniquement'
+
+# Retrouve le dernier dossier du profil exact, sans mélanger normal et debug.
+select_latest_firmware() {
+    local candidate name latest=''
+
+    for candidate in "$ARTIFACT_ROOT/$BUILD_VARIANT"-*; do
+        [ -d "$candidate" ] && [ ! -L "$candidate" ] || continue
+        name=$(basename "$candidate")
+        [[ "$name" =~ ^$BUILD_VARIANT-[0-9]{4}(-[0-9]{2}){5}$ ]] || continue
+        if [[ -z "$latest" || "$candidate" > "$latest" ]]; then
+            latest=$candidate
+        fi
+    done
+
+    [ -n "$latest" ] || fail "Aucun build trouvé pour $BUILD_VARIANT. Lance make build $PROFILE $KEYMAP_PROFILE${DEBUG_ARGUMENT-}"
+    FIRMWARE="$latest/splitergoll-$BUILD_VARIANT-$SIDE.uf2"
+}
+
+# Vérifie l’origine du fichier, son empreinte et tous ses blocs avant toute copie.
+check_source() {
+    local directory filename entry expected actual
+    directory=$(dirname "$FIRMWARE")
+    filename=$(basename "$FIRMWARE")
+    [ -f "$FIRMWARE" ] && [ ! -L "$FIRMWARE" ] || fail "Firmware absent ou lien symbolique : $FIRMWARE"
+    [ -r "$directory/build-info.txt" ] && [ -r "$directory/SHA256SUMS" ] ||
+        fail 'Le fichier doit provenir d’un build du dépôt, avec build-info.txt et SHA256SUMS'
+
+    for entry in "hardware_profile=$HARDWARE_PROFILE" "keymap_profile=$KEYMAP_PROFILE" "build_mode=$BUILD_MODE" "variant=$BUILD_VARIANT"; do
+        grep -Fxq "$entry" "$directory/build-info.txt" || fail "Métadonnées incompatibles : $entry"
+    done
+    expected=$(awk -v name="./$filename" '$2 == name { print $1 }' "$directory/SHA256SUMS")
+    [[ "$expected" =~ ^[a-f0-9]{64}$ ]] || fail 'Empreinte absente, ambiguë ou incorrecte dans SHA256SUMS'
+    actual=$(shasum -a 256 "$FIRMWARE" | cut -d ' ' -f 1)
+    [ "$actual" = "$expected" ] || fail 'Le firmware ne correspond pas à son empreinte SHA-256'
+    hexdump -v -e '128/4 "%u " "\n"' "$FIRMWARE" | awk -f "$SCRIPT_DIRECTORY/uf2-check.awk" ||
+        fail 'Le firmware UF2 est incompatible ou incomplet'
+    FIRMWARE_SHA=$actual
+}
+
+# Lit la date du dossier de build, dans le même fuseau local que les exports.
+read_build_date() {
+    local name timestamp
+    name=$(basename "$(dirname "$FIRMWARE")")
+    [[ "$name" =~ ^$BUILD_VARIANT-[0-9]{4}(-[0-9]{2}){5}$ ]] || fail 'Le fichier doit rester dans son dossier de build horodaté'
+    timestamp=${name#"$BUILD_VARIANT"-}
+    BUILD_EPOCH=$(date -j -f '%Y-%m-%d-%H-%M-%S' "$timestamp" '+%s' 2>/dev/null) || fail 'Date du build illisible'
+    [ "$(date -r "$BUILD_EPOCH" '+%Y-%m-%d-%H-%M-%S')" = "$timestamp" ] || fail 'Date du build invalide'
+    BUILD_DATE=$(date -r "$BUILD_EPOCH" '+%d/%m/%Y à %H:%M:%S %Z')
+}
+
+# Formate l’âge du build, ou signale une date future plutôt que de la masquer.
+describe_build_age() {
+    local age prefix='il y a'
+    age=$(( $(date '+%s') - BUILD_EPOCH ))
+    if [ "$age" -lt 0 ]; then
+        age=$(( -age ))
+        prefix='dans'
+    fi
+    if [ "$age" -ge 86400 ]; then
+        printf '%s %d j %d h' "$prefix" "$((age / 86400))" "$((age % 86400 / 3600))"
+    elif [ "$age" -ge 3600 ]; then
+        printf '%s %d h %d min' "$prefix" "$((age / 3600))" "$((age % 3600 / 60))"
+    elif [ "$age" -ge 60 ]; then
+        printf '%s %d min %d s' "$prefix" "$((age / 60))" "$((age % 60))"
+    else
+        printf '%s %d s' "$prefix" "$age"
+    fi
+}
+
+# Lit un champ du volume interrogé avec diskutil, sans exécuter ses métadonnées.
+volume_field() {
+    printf '%s' "$VOLUME_INFO" | plutil -extract "$1" raw -o - -
+}
+
+# Vérifie que le chemin correspond toujours à un volume FAT monté sur un disque USB.
+check_volume() {
+    [ -d "$BOOTLOADER_VOLUME" ] && [ ! -L "$BOOTLOADER_VOLUME" ] || fail 'Le volume bootloader a disparu'
+    VOLUME_INFO=$(diskutil info -plist "$BOOTLOADER_VOLUME") || fail 'Impossible de vérifier le volume bootloader'
+    [ "$(volume_field MountPoint)" = "$BOOTLOADER_VOLUME" ] || fail 'Le chemin ne désigne pas un volume monté'
+    [ "$(volume_field BusProtocol)" = USB ] && [ "$(volume_field FilesystemType)" = msdos ] ||
+        fail 'Le bootloader doit être un volume FAT sur USB'
+    [ "$(volume_field WritableVolume)" = true ] || fail 'Le volume bootloader n’est pas accessible en écriture'
+    [ "$(tr -d '\r' < "$BOOTLOADER_VOLUME/INFO_UF2.TXT")" = "$BOOTLOADER_INFO" ] ||
+        fail 'L’identité du bootloader a changé'
+}
+
+# Refuse l’absence ou l’ambiguïté des bootloaders nice!nano, sans déduire leur côté.
+find_bootloader() {
+    local info board count=0
+    for info in "$BOOTLOADER_VOLUME_ROOT"/*/INFO_UF2.TXT; do
+        [ -f "$info" ] || continue
+        board=$(sed -n 's/^Board-ID: *//p' "$info" | tr -d '\r')
+        [ "$board" = "$BOOTLOADER_BOARD_ID" ] || continue
+        count=$((count + 1))
+        BOOTLOADER_VOLUME=$(dirname "$info")
+    done
+    [ "$count" -gt 0 ] || fail "Aucun bootloader nice!nano trouvé. Fais un double appui sur reset de la moitié $SIDE, puis relance la commande"
+    [ "$count" -eq 1 ] || fail 'Plusieurs bootloaders nice!nano détectés. Garde uniquement la moitié à flasher en bootloader'
+    BOOTLOADER_INFO=$(tr -d '\r' < "$BOOTLOADER_VOLUME/INFO_UF2.TXT")
+    check_volume
+    BOOTLOADER_DEVICE=$(volume_field DeviceIdentifier)
+}
+
+# Demande un seul accord, puis recontrôle le fichier et le volume avant l’écriture.
+confirm_and_flash() {
+    local answer actual
+    [ -t 0 ] || fail 'Confirmation interactive requise. Relance la commande depuis un terminal'
+    if ! IFS= read -r -p 'Flasher ce firmware ? [o/N] ' answer; then
+        answer=''
+    fi
+    case "$answer" in
+        o|O|oui|Oui|OUI) ;;
+        *) printf '%s\n' 'Flash annulé, aucun fichier copié'; return ;;
+    esac
+
+    actual=$(shasum -a 256 "$FIRMWARE" | cut -d ' ' -f 1)
+    [ "$actual" = "$FIRMWARE_SHA" ] || fail 'Le firmware a changé depuis la confirmation'
+    check_volume
+    [ "$(volume_field DeviceIdentifier)" = "$BOOTLOADER_DEVICE" ] || fail 'Le disque USB a changé depuis la confirmation'
+    printf '\n%sCopie du firmware…%s\n' "$LOG_HEADING" "$LOG_RESET"
+    cp -X "$FIRMWARE" "$BOOTLOADER_VOLUME/$(basename "$FIRMWARE")" ||
+        fail 'Copie signalée en erreur. Le résultat du flash reste à vérifier, aucun nouvel essai automatique'
+    printf '%sCopie terminée.%s Le bootloader peut redémarrer et disparaître.\n' "$LOG_SUCCESS" "$LOG_RESET"
+    printf '%s\n' 'Vérifie ensuite la saisie du clavier pour confirmer le flash.'
+}
+
+if [ "$#" -eq 1 ]; then
+    FIRMWARE=$1
+    filename=$(basename "$FIRMWARE")
+    [[ "$filename" =~ ^splitergoll-(wire|bluetooth)-(multi|windows|macos|linux)(-debug)?-(left|right)\.uf2$ ]] ||
+        fail 'Précise un UF2 généré par ce dépôt, ou make flash <matériel> <keymap> <left|right> [debug]'
+    profile=${BASH_REMATCH[1]}
+    keymap=${BASH_REMATCH[2]}
+    mode=${BASH_REMATCH[3]}
+    SIDE=${BASH_REMATCH[4]}
+    select_profile "$profile"
+    select_keymap "$keymap"
+    if [ "$mode" = -debug ]; then select_build_mode debug; else select_build_mode normal; fi
+    directory=$(CDPATH= cd "$(dirname "$FIRMWARE")" && pwd) || fail 'Dossier du firmware absent'
+    FIRMWARE="$directory/$filename"
+else
+    [ "$#" -eq 3 ] || [ "$#" -eq 4 ] || fail 'Utilise make flash <matériel> <keymap> <left|right> [debug]'
+    select_profile "$1"
+    select_keymap "$2"
+    SIDE=$3
+    case "$SIDE" in left|right) ;; *) fail 'Moitié attendue : left ou right' ;; esac
+    mode=normal
+    if [ "$#" -eq 4 ]; then
+        [ "$4" = debug ] || fail 'Seul debug est accepté après la moitié'
+        mode=debug
+        DEBUG_ARGUMENT=' debug'
+    fi
+    select_build_mode "$mode"
+    select_latest_firmware
+fi
+
+check_source
+read_build_date
+printf '\n%sFirmware sélectionné%s\n' "$LOG_HEADING" "$LOG_RESET"
+printf 'Profil : %s | moitié : %s\n' "$BUILD_VARIANT" "$SIDE"
+printf 'Build : %s (%s)\n' "$BUILD_DATE" "$(describe_build_age)"
+printf 'Fichier : %s\n' "$FIRMWARE"
+printf 'SHA-256 : %sOK%s\n' "$LOG_SUCCESS" "$LOG_RESET"
+find_bootloader
+printf 'Bootloader : %s\n' "$BOOTLOADER_VOLUME"
+printf '%s\n\n' 'Le disque ne distingue pas gauche et droite. Seule la moitié choisie doit être en bootloader.'
+confirm_and_flash

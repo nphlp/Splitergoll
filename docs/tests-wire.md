@@ -9,6 +9,9 @@ Le flash et la saisie des deux moitiés par USB sur le Mac sont confirmés par
 l’utilisateur, avec la variante de diagnostic. Le clic d’encodeur qui affiche
 l’OS paraît plus rapide qu’avec l’ancien firmware.
 
+Le flash automatique avec `make flash wire macos right` puis `left` et le
+fonctionnement des deux moitiés avec ce profil fixe sont aussi confirmés.
+
 Une latence est ressentie à droite par rapport à gauche. Elle n’est pas mesurée :
 comparer les variantes normale et debug avant d’attribuer cet écart au BLE.
 La lecture des consoles USB, le parcours complet des touches et les essais

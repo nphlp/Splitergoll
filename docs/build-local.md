@@ -78,6 +78,7 @@ Les mots après la commande sont ses arguments, vérifiés dans le script :
 - `scripts/build-logs.sh` : affichage des étapes, durées et journaux complets.
 - `scripts/setup.sh` : préparation des dépendances.
 - `scripts/build.sh` : compilation et récupération des UF2.
+- `scripts/flash.sh` et `uf2-check.awk` : sélection, contrôle et copie d’un UF2 après confirmation sur macOS, voir [le flash](flash-firmware.md).
 - `scripts/container.sh` : commandes `west` et contrôles dans le conteneur.
 - `scripts/stop.sh` : arrêt des conteneurs de build du checkout.
 - `scripts/clear.sh` : arrêt et suppression des fichiers locaux générés.
@@ -136,8 +137,9 @@ en scripts. Les deux profils produisent chacun deux UF2 vérifiés. La saisie Bl
 des deux moitiés est confirmée sur le Mac, avec alimentation USB et sur batterie seule.
 Le profil d’essai confirme un réveil sans reset sur chaque moitié, avec un premier
 appui sans saisie. La saisie USB `wire` sur le Mac est aussi confirmée avec la
-keymap `multi`. Les essais complets des touches et encodeurs, Windows et les
-nouvelles keymaps fixes restent à faire.
+keymap `multi`. Le flash automatique et le fonctionnement des deux moitiés avec
+`wire macos` sont aussi confirmés. Les essais complets des touches et encodeurs,
+Windows et les autres keymaps fixes restent à faire.
 Les profils normaux compilent, avec les délais et le service auxiliaire batterie
 contrôlés. Les deux mesures ont aussi été lues sur le Mac. Le profil permanent
 aux délais courts est retiré après les essais.

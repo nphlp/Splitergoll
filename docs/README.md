@@ -22,7 +22,8 @@ Le parcours complet de la keymap et les essais Windows restent à valider.
 
 La keymap historique reste disponible dans `multi`, avec changement d’OS au clavier.
 Les profils fixes `windows` avec jeu, `macos` et `linux` se choisissent au build
-et restent sur leur OS après redémarrage. Leurs essais matériels restent à faire.
+et restent sur leur OS après redémarrage. Le flash automatique et le fonctionnement
+de `wire macos` sont confirmés sur les deux moitiés. Les essais complets des profils restent à faire.
 La priorité USB et `dongle` viendront ensuite. Les branches
 historiques restent intactes et les variantes minimales sont des archives.
 
@@ -44,6 +45,8 @@ par exemple `make build bluetooth windows debug`.
 
 Le [guide de build](build-local.md) détaille les prérequis et les fichiers UF2 obtenus.
 Ces commandes ne flashent pas le clavier.
+Sur macOS, `make flash wire macos right` sélectionne le dernier build correspondant
+et demande confirmation avant sa copie. Voir [le guide de flash](flash-firmware.md).
 `make help` affiche toutes les commandes. Sur macOS, `make bat` lit les deux batteries
 et `make bat avg` calcule une moyenne par moitié sur 30 secondes.
 

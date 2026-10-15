@@ -1,13 +1,13 @@
 #!/bin/bash
 
 # Affiche les commandes du dépôt, regroupées par usage, avec des couleurs facultatives.
-# Appelé par make help, ou avec build pour afficher uniquement les profils disponibles.
+# Appelé par make help, ou avec build/flash pour afficher l’aide correspondante.
 
 set -eu
 
 [ "$#" -le 1 ] || { printf '%s\n' 'Utilise make help sans argument' >&2; exit 1; }
 case "${1-}" in
-    ''|build) ;;
+    ''|build|flash) ;;
     *) printf '%s\n' 'Utilise make help sans argument' >&2; exit 1 ;;
 esac
 
@@ -45,8 +45,27 @@ show_build_help() {
     printf '\n'
 }
 
+# Présente la sélection du build et la confirmation requise avant un flash USB.
+show_flash_help() {
+    printf '\n%sFlasher un firmware (macOS)%s\n\n' "$LOG_HEADING" "$LOG_RESET"
+    printf '  %smake flash <matériel> <keymap> <left|right> [debug]%s\n' "$LOG_SUCCESS" "$LOG_RESET"
+    printf '  %smake flash <chemin.uf2>%s\n\n' "$LOG_SUCCESS" "$LOG_RESET"
+    printf '%s\n' '  Matériel : wire ou bluetooth. Keymap : multi, windows, macos ou linux.'
+    printf '%s\n' '  Sans chemin, choisit le dernier build du profil exact. debug doit être explicite.'
+    printf '%s\n' '  Affiche la date complète et l’ancienneté, puis demande confirmation avant copie.'
+    printf '%s\n' '  Mettre uniquement la moitié choisie en bootloader par un double appui sur reset.'
+    printf '\n%sExemples%s\n' "$LOG_HEADING" "$LOG_RESET"
+    show_command 'make flash wire macos right' 'Dernier build USB avec keymap macOS, moitié droite'
+    show_command 'make flash bluetooth multi left debug' 'Dernier build Bluetooth multi avec logs, moitié gauche'
+    printf '\n'
+}
+
 if [ "${1-}" = build ]; then
     show_build_help
+    exit 0
+fi
+if [ "${1-}" = flash ]; then
+    show_flash_help
     exit 0
 fi
 
@@ -54,6 +73,8 @@ printf '\n%sSplitergoll%s\n\n' "$LOG_HEADING" "$LOG_RESET"
 show_command 'make setup' 'Préparer les sources et le build local'
 show_command 'make build' 'Afficher les choix de compilation'
 show_build_help
+show_command 'make flash' 'Afficher les choix de flash et leur confirmation'
+show_command 'make flash wire macos right' 'Flasher le dernier build correspondant sur la moitié droite'
 
 printf '\n%sBatteries sur macOS%s\n' "$LOG_HEADING" "$LOG_RESET"
 show_command 'make bat' 'Lire les deux derniers niveaux annoncés'

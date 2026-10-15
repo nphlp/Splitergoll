@@ -16,6 +16,9 @@ CONTAINER_SOURCE='/work/splitergoll'
 CONTAINER_WORKSPACE='/work/zmk'
 BOARD='nice_nano_v2'
 SIDES='left right'
+# Détection des bootloaders nice!nano sur macOS, sans chemin personnel.
+BOOTLOADER_VOLUME_ROOT='/Volumes'
+BOOTLOADER_BOARD_ID='nRF52840-nicenano'
 
 # Affiche une erreur et arrête la commande pour éviter de poursuivre dans un état incorrect.
 fail() {

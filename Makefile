@@ -1,6 +1,6 @@
 .DEFAULT_GOAL := help
 
-.PHONY: help setup build bat stop clear
+.PHONY: help setup build flash bat stop clear
 
 # Récupère les mots après la commande et protège chaque argument pour le shell.
 ARGS = $(foreach arg,$(filter-out $@,$(MAKECMDGOALS)),'$(subst ','"'"',$(arg))')
@@ -13,6 +13,9 @@ setup:
 
 build:
 	@bash scripts/build.sh $(ARGS)
+
+flash:
+	@bash scripts/flash.sh $(ARGS)
 
 bat:
 	@bash scripts/batteries.sh $(ARGS)

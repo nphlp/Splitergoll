@@ -73,8 +73,10 @@ L’AGENTS.md garde les invariants, preuves techniques et décisions utiles au p
 
 Build local et profil `wire` : gauche centrale USB, droite périphérique BLE,
 alimentation USB, sans veille profonde ni reporting batterie.
-Le clavier PC sans batterie est flashé avec la variante de diagnostic : saisie
-des deux moitiés par USB sur le Mac confirmée par l’utilisateur. Le clic d’encodeur
+Le clavier PC sans batterie est maintenant flashé avec `wire macos` normal,
+via `make flash wire macos right` puis `left` : flash et fonctionnement des deux
+moitiés confirmés par l’utilisateur. Le parcours complet des touches reste à faire.
+Avec la précédente variante de diagnostic `multi`, le clic d’encodeur
 affichant l’OS paraît plus rapide qu’avec son ancien firmware. Une latence est
 ressentie à droite, sans mesure ni comparaison normal/debug. Ne pas conclure à
 sa cause. Les consoles USB, toutes les touches et les essais Windows restent
@@ -183,7 +185,7 @@ Le mécanisme bootloader déprécié reste nécessaire à ZMK 0.3.0 : son rempla
 demande l’API de rétention, l’adaptation du comportement reset et des codes UF2.
 Ne pas désactiver `NRF_STORE_REBOOT_TYPE_GPREGRET` pour faire disparaître le warning.
 
-Le Makefile expose `help`, `setup`, `build <matériel> <keymap> [debug]`, `bat`, `bat avg`,
+Le Makefile expose `help`, `setup`, `build <matériel> <keymap> [debug]`, `flash`, `bat`, `bat avg`,
 `stop` et `clear`, délégués aux scripts dédiés. Le matériel (`wire` ou `bluetooth`)
 puis la keymap (`multi`, `windows`, `macos` ou `linux`) sont obligatoires, sans défaut.
 Windows inclut toujours le gaming. Seul l’argument final `debug` est facultatif
@@ -197,8 +199,8 @@ Chaque commande a sa propre cible et son appel de script dans le Makefile.
 ses arguments, sans validateur central ni variable d’environnement intermédiaire.
 `ARGS` retire le nom de la cible et protège chaque mot pour le shell. Chaque script
 vérifie son nombre d’arguments et ses valeurs avant toute action. `setup`, `stop`
-et `clear` n’acceptent aucun argument. `help.sh` accepte le périmètre interne `build`
-pour afficher les profils, l’aide générale reste `make help`. La règle `%` ne fait rien : Make voit
+et `clear` n’acceptent aucun argument. `help.sh` accepte les périmètres internes `build`
+et `flash`, l’aide générale reste `make help`. La règle `%` ne fait rien : Make voit
 les arguments comme d’autres cibles, déjà traitées par le script de la commande.
 Un mot inconnu seul est donc sans action. Ne pas ajouter de dispatch central ni
 de cibles individuelles pour chaque valeur d’argument.
@@ -209,6 +211,33 @@ choix demandé sont compilées.
 `help.sh` affiche l’aide groupée, avec la palette partagée de `terminal-colors.sh`.
 Les constantes partagées sont en tête de `scripts/build-common.sh`. `container.sh`
 exécute `west` et vérifie les firmwares. Aucun `.env` n’est nécessaire.
+
+`make flash <matériel> <keymap> <left|right> [debug]` choisit le dernier dossier
+horodaté du profil exact, sans rabattement normal/debug ni retour à un build plus
+ancien si le dernier est incomplet. `make flash <chemin.uf2>` accepte un UF2 du
+dépôt resté dans son dossier horodaté, avec métadonnées et empreintes.
+`flash.sh` affiche date absolue et âge avant toute confirmation. La date du dossier
+est locale, sans fuseau embarqué. Windows inclut toujours le gaming.
+Le flash est limité à macOS, sans Docker. Le script vérifie les métadonnées, SHA-256
+et chaque bloc avec `uf2-check.awk` : famille nRF52840, blocs de 256 octets, adresses
+de l’application nice!nano v2 de `0x26000` à la partition NVS `0xEC000` exclue.
+Ces bornes devront être revues lors d’une migration du partitionnement.
+La détection utilise `/Volumes/*/INFO_UF2.TXT`, le Board-ID historique observé
+`nRF52840-nicenano`, puis `diskutil` pour vérifier un volume FAT USB monté et inscriptible.
+Le bootloader ne révèle pas le côté : seule la moitié choisie doit être en bootloader.
+Refuser zéro ou plusieurs cibles compatibles. Une seule confirmation interactive
+est demandée, avec annulation par défaut et sans option d’approbation automatique.
+Après accord, recontrôler le SHA et l’identité du disque avant `cp -X`, sans effacement
+des réglages, éjection forcée ou nouvel essai automatique en cas d’erreur.
+Une copie réussie n’est pas une validation de saisie. Aucun flash matériel implicite
+pendant les validations de code.
+Les gardes sont contrôlés sans écriture USB : sélection par profil et par chemin
+sur des UF2 réels, absence de build et de bootloader, refus des arguments invalides
+et de neuf variantes UF2 malformées transmises en mémoire. Aucun nouveau fichier
+de tests d’outillage n’est ajouté. L’utilisateur confirme le parcours réel et le
+fonctionnement des deux moitiés avec `make flash wire macos right` puis `left`.
+Le chemin UF2 explicite, debug, l’annulation et les autres OS restent à tester sur matériel.
+
 ZMK 0.3.0 et les
 59 projets résolus sont figés dans `config/west.yml`. Les workspaces sont séparés
 par empreinte de l’environnement, les caches CMake par moitié.
@@ -274,7 +303,7 @@ qui explique son rôle et les arguments lorsque leur sens n’est pas évident.
 Chaque script doit aussi expliquer son rôle dans un commentaire en tête de fichier.
 
 Les scripts hôtes `setup.sh` et `build.sh` utilisent Bash pour l’affichage repliable,
-isolé dans `build-logs.sh`. `help.sh`, `batteries.sh` et
+isolé dans `build-logs.sh`. `help.sh`, `flash.sh`, `batteries.sh` et
 `terminal-colors.sh` utilisent également Bash. Les autres scripts restent compatibles `sh`.
 Conserver le statut réel des commandes et tous leurs logs dans `.local/logs/`.
 En terminal interactif, replier uniquement les étapes réussies et garder les

@@ -5,6 +5,41 @@ Choisir le profil voulu et utiliser les deux fichiers du même dossier de build.
 Le nom indique désormais le matériel et la keymap, avec `-debug` si demandé,
 par exemple `splitergoll-wire-macos-right.uf2`.
 
+## Depuis le terminal (macOS)
+
+Mettre uniquement la moitié à flasher en bootloader avec un double appui sur reset,
+puis lancer par exemple :
+
+```sh
+make flash wire macos right
+make flash wire macos left
+```
+
+Chaque commande choisit le dernier build du matériel et de la keymap demandés.
+Elle affiche sa date complète, son ancienneté et le fichier retenu, puis demande
+une seule confirmation avant la copie. Entrée seule annule. Sans build correspondant,
+elle s’arrête avec un message explicite. `make flash` affiche l’aide.
+
+Ajouter `debug` en dernier pour choisir un build avec logs USB, par exemple
+`make flash bluetooth multi right debug`. Un build normal ne prend jamais un build
+debug à sa place. Pour choisir un fichier précis :
+
+```sh
+make flash dist/firmware/wire-macos-AAAA-MM-JJ-HH-MM-SS/splitergoll-wire-macos-right.uf2
+```
+
+Le fichier doit rester dans son dossier de build, avec `build-info.txt` et
+`SHA256SUMS`. La commande contrôle ces métadonnées, l’empreinte et le format UF2.
+La date vient du nom de ce dossier, dans le fuseau local utilisé pour le build.
+Elle refuse plusieurs bootloaders compatibles. Le disque ne permet pas de
+distinguer physiquement gauche et droite, il faut donc préparer la moitié indiquée.
+
+La copie évite les métadonnées du Finder et ne réinitialise pas les appairages.
+« Copie terminée » confirme la copie, vérifier ensuite la saisie du clavier.
+Le flash automatique et le fonctionnement des deux moitiés sont confirmés sur le
+Mac avec `wire macos`. Windows/WSL et Linux utilisent pour le moment la copie
+manuelle ci-dessous.
+
 ## Copier les UF2
 
 1. Brancher la moitié droite en USB et faire un double appui sur son bouton reset.

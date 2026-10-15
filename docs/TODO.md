@@ -54,6 +54,9 @@
 - [x] Ajouter le Bluetooth direct sans dongle, conservé pendant la charge USB.
 - [ ] Ajouter les profils priorité USB et dongle.
 - [x] Documenter le [flash](flash-firmware.md) et l’[appairage](appairage-bluetooth.md) des profils actuels.
+- [x] Ajouter `make flash` sur macOS : dernier build du profil et de la moitié, date complète et relative, confirmation unique avant copie.
+- [x] Valider le flash automatique sur les deux moitiés et leur fonctionnement avec `wire macos` sur le Mac.
+- [ ] Étendre la détection des bootloaders à Linux/Windows, tester le chemin UF2 explicite, debug et l’annulation sur matériel.
 - [x] Résoudre l’appairage de droite avec un reset vérifié des deux moitiés, documenter la procédure et le diagnostic.
 - [x] Revenir aux deux firmwares Bluetooth normaux sans logs et confirmer la saisie.
 - [x] Tester la saisie Bluetooth directe des deux moitiés sur le MacBook, USB branchés pour l’alimentation.

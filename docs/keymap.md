@@ -22,7 +22,8 @@ Même `multi` doit être précisé, aucune keymap n’est choisie par défaut.
 Les profils fixes gardent leur OS après redémarrage et veille profonde. Le clic
 droit affiche toujours son nom sur la base, mais ne change plus d’OS avec `L1`.
 Le pavé numérique revient à la base du même OS. Celui de macOS reprend aussi
-ses modificateurs et ses symboles. Ces nouveaux profils restent à tester au clavier.
+ses modificateurs et ses symboles. Le fonctionnement de `wire macos` sur les deux
+moitiés est confirmé, le parcours complet des touches et les autres profils restent à tester.
 
 ## Organisation
 
