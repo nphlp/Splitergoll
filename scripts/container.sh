@@ -33,6 +33,19 @@ check_firmware() {
 
     grep -qx 'CONFIG_ZMK_SPLIT=y' "$configuration" || fail 'Split désactivé'
     grep -qx 'CONFIG_ZMK_BLE=y' "$configuration" || fail 'BLE interne désactivé'
+    if grep -Eq '^(CONFIG_ZMK_SETTINGS_RESET_ON_START|CONFIG_ZMK_BLE_CLEAR_BONDS_ON_START)=y$' "$configuration"; then
+        fail 'Firmware de clavier incorrect : effacement des appairages activé'
+    fi
+
+    if [ "$BUILD_MODE" = debug ]; then
+        grep -qx 'CONFIG_ZMK_USB_LOGGING=y' "$configuration" || fail 'Logs USB de diagnostic absents'
+        grep -qx 'CONFIG_LOG=y' "$configuration" || fail 'Système de logs désactivé'
+        grep -qx 'CONFIG_UART_CONSOLE=y' "$configuration" || fail 'Console UART désactivée'
+        grep -qx 'CONFIG_USB_CDC_ACM=y' "$configuration" || fail 'Port série USB absent'
+        grep -q 'snippet_zmk_usb_logging_uart' "$directory/zephyr/zephyr.dts" || fail 'Console USB de diagnostic absente du matériel compilé'
+    elif grep -qx 'CONFIG_ZMK_USB_LOGGING=y' "$configuration"; then
+        fail 'Logs USB activés dans un firmware normal'
+    fi
 
     if [ "$side" = left ]; then
         grep -qx 'CONFIG_ZMK_SPLIT_ROLE_CENTRAL=y' "$configuration" || fail 'Gauche non centrale'
@@ -48,17 +61,30 @@ check_firmware() {
             if grep -Eq '^(CONFIG_ZMK_SLEEP|CONFIG_ZMK_BATTERY_REPORTING)=y$' "$configuration"; then
                 fail 'Veille ou reporting batterie activé dans le profil wire'
             fi
+            if grep -Eq '^CONFIG_ZMK_SPLIT_BLE_CENTRAL_BATTERY_LEVEL_(FETCHING|PROXY)=y$' "$configuration"; then
+                fail 'Remontée des batteries activée dans le profil wire'
+            fi
             ;;
         bluetooth)
             if grep -qx 'CONFIG_ZMK_USB=y' "$configuration"; then
                 fail 'Sortie clavier USB activée dans le profil bluetooth'
             fi
             grep -qx 'CONFIG_ZMK_SLEEP=y' "$configuration" || fail 'Veille Bluetooth désactivée'
-            grep -qx 'CONFIG_ZMK_IDLE_SLEEP_TIMEOUT=900000' "$configuration" || fail 'Délai de veille incorrect'
+            grep -qx 'CONFIG_ZMK_IDLE_TIMEOUT=30000' "$configuration" || fail 'Délai d’inactivité normal incorrect'
+            grep -qx 'CONFIG_ZMK_IDLE_SLEEP_TIMEOUT=900000' "$configuration" || fail 'Délai de veille normal incorrect'
+            grep -qx 'CONFIG_ZMK_BATTERY_REPORT_INTERVAL=60' "$configuration" || fail 'Intervalle batterie normal incorrect'
             grep -qx 'CONFIG_ZMK_BATTERY_REPORTING=y' "$configuration" || fail 'Reporting batterie désactivé'
             grep -qx 'CONFIG_PM_DEVICE=y' "$configuration" || fail 'Gestion d’alimentation désactivée'
             sed -n '/kscan0: kscan {/,/};/p' "$directory/zephyr/zephyr.dts" |
                 grep -q 'wakeup-source;' || fail 'Matrice non déclarée comme source de réveil'
+            if [ "$side" = left ]; then
+                grep -qx 'CONFIG_ZMK_SPLIT_BLE_CENTRAL_BATTERY_LEVEL_FETCHING=y' "$configuration" ||
+                    fail 'Récupération de la batterie droite désactivée'
+                grep -qx 'CONFIG_ZMK_SPLIT_BLE_CENTRAL_BATTERY_LEVEL_PROXY=y' "$configuration" ||
+                    fail 'Transmission de la batterie droite désactivée'
+            elif grep -Eq '^CONFIG_ZMK_SPLIT_BLE_CENTRAL_BATTERY_LEVEL_(FETCHING|PROXY)=y$' "$configuration"; then
+                fail 'Récupération ou proxy batterie activé sur la droite'
+            fi
             ;;
     esac
     test -s "$directory/zephyr/zmk.uf2" || fail "UF2 absent : $side"
@@ -72,16 +98,22 @@ case "${1-}" in
         ;;
     build)
         select_profile "${2-}"
+        select_build_mode "${3-normal}"
         check_dependencies
         west zephyr-export
 
         for side in $SIDES; do
-            directory="build/splitergoll-$PROFILE-$side"
-            west build -p auto -s zmk/app -d "$directory" -b "$BOARD" -- \
+            select_side_configuration "$side"
+            directory="build/splitergoll-$BUILD_VARIANT-$side"
+            set --
+            if [ "$BUILD_MODE" = debug ]; then
+                set -- -S zmk-usb-logging
+            fi
+            west build -p auto -s zmk/app -d "$directory" -b "$BOARD" "$@" -- \
                 -DSHIELD="splitergoll_$side" \
                 -DZMK_CONFIG="$REPOSITORY/config" \
                 -DZMK_EXTRA_MODULES="$REPOSITORY" \
-                -DEXTRA_CONF_FILE="$PROFILE_CONFIGURATION"
+                -DEXTRA_CONF_FILE="$FIRMWARE_CONFIGURATION"
             check_firmware "$side" "$directory"
         done
         ;;

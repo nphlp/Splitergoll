@@ -16,7 +16,7 @@
       "board": "nice_nano_v2",
       "shield": "splitergoll_left",
       "artifact-name": "splitergoll-bluetooth-left",
-      "cmake-args": "-DEXTRA_CONF_FILE=${GITHUB_WORKSPACE}/config/profiles/bluetooth.conf"
+      "cmake-args": "-DEXTRA_CONF_FILE=\"${GITHUB_WORKSPACE}/config/profiles/bluetooth.conf;${GITHUB_WORKSPACE}/config/profiles/bluetooth-left.conf\""
     },
     {
       "board": "nice_nano_v2",

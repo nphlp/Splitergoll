@@ -15,7 +15,6 @@ ARTIFACT_ROOT="$OUTPUT_ROOT/firmware"
 CONTAINER_SOURCE='/work/splitergoll'
 CONTAINER_WORKSPACE='/work/zmk'
 BOARD='nice_nano_v2'
-PROFILES='wire bluetooth'
 SIDES='left right'
 
 # Affiche une erreur et arrête la commande pour éviter de poursuivre dans un état incorrect.
@@ -29,12 +28,38 @@ select_profile() {
     PROFILE=$1
 
     case "$PROFILE" in
-        wire|bluetooth) ;;
+        wire|bluetooth) HARDWARE_PROFILE=$PROFILE ;;
         *) fail "Profil inconnu : $PROFILE. Choisis wire ou bluetooth" ;;
     esac
 
-    PROFILE_CONFIGURATION="$REPOSITORY/config/profiles/$PROFILE.conf"
+    PROFILE_CONFIGURATION="$REPOSITORY/config/profiles/$HARDWARE_PROFILE.conf"
     test -r "$PROFILE_CONFIGURATION" || fail "Configuration du profil absente : $PROFILE"
+}
+
+# Valide le mode de compilation et distingue les caches et artefacts de diagnostic.
+select_build_mode() {
+    BUILD_MODE=$1
+    case "$BUILD_MODE" in
+        normal) BUILD_VARIANT=$PROFILE ;;
+        debug) BUILD_VARIANT="$PROFILE-debug" ;;
+        *) fail 'Mode de compilation inconnu : utilise l’argument debug ou aucun argument' ;;
+    esac
+}
+
+# Assemble les configurations du profil et de la moitié reçue.
+select_side_configuration() {
+    case "$1" in
+        left|right) ;;
+        *) fail 'Moitié attendue : left ou right' ;;
+    esac
+
+    FIRMWARE_CONFIGURATION=$PROFILE_CONFIGURATION
+    side_configuration="$REPOSITORY/config/profiles/$HARDWARE_PROFILE-$1.conf"
+
+    if [ -f "$side_configuration" ]; then
+        test -r "$side_configuration" || fail "Configuration de moitié illisible : $1"
+        FIRMWARE_CONFIGURATION="$FIRMWARE_CONFIGURATION;$side_configuration"
+    fi
 }
 
 # Vérifie que Docker est installé et que son moteur répond avant toute action.
@@ -95,7 +120,7 @@ resolve_workspace() {
 
 # Vérifie que le workspace est préparé et correspond à la configuration attendue.
 require_setup() {
-    test -f "$workspace/.splitergoll" || fail 'Lance make setup avant make build'
+    test -f "$workspace/.splitergoll" || fail 'Lance make setup avant de compiler'
     test "$(cat "$workspace/.splitergoll")" = "$identity" ||
         fail 'Le workspace ne correspond pas au build figé'
     test -d "$workspace/.west" || fail 'Préparation incomplète : relance make setup'
@@ -115,5 +140,5 @@ run_container() {
         --mount "type=bind,source=$workspace,target=$CONTAINER_WORKSPACE" \
         --workdir "$CONTAINER_WORKSPACE" \
         --entrypoint /bin/sh "$BUILD_IMAGE" \
-        "$CONTAINER_SOURCE/scripts/container.sh" "$action" "${PROFILE-}"
+        "$CONTAINER_SOURCE/scripts/container.sh" "$action" "${PROFILE-}" "${BUILD_MODE-normal}"
 }

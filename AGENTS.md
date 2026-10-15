@@ -31,7 +31,8 @@ L’AGENTS.md garde les invariants, preuves techniques et décisions utiles au p
 - Le README reste au contenu validé du commit `a1f6c35` jusqu’à sa mise à jour finale.
 - Distinguer l’OS, le rôle central/périphérique et la sortie USB/Bluetooth.
 - Le BLE entre moitiés reste nécessaire avec le câblage actuel. Le Bluetooth direct
-  fonctionne sur le Mac avec alimentation USB et sur batterie seule. La veille reste à tester.
+  fonctionne sur le Mac avec alimentation USB et sur batterie seule. Veille et réveil
+  sont testés sur des touches représentatives, toutes les touches et encodeurs restent à vérifier.
   La priorité USB est un profil futur.
 
 ## Étape active et validation
@@ -40,10 +41,65 @@ Build local et profil `wire` : gauche centrale USB, droite périphérique BLE,
 alimentation USB, sans veille profonde ni reporting batterie.
 Profil `bluetooth` : mêmes rôles, sortie Bluetooth directe de la gauche, USB clavier
 désactivé même pendant la charge, veille après 15 minutes et reporting batterie activés.
+Le profil aux délais courts a été supprimé après validation matérielle. Les deux
+profils disponibles sont `wire` et `bluetooth`. L’option transversale `debug` ajoute
+le snippet natif `zmk-usb-logging` à chaque moitié, sans toucher aux timings, rôles
+ou keymaps. `BUILD_MODE` vaut `normal` ou `debug`, `BUILD_VARIANT` nomme le profil
+avec suffixe `-debug` uniquement en diagnostic. Caches et artefacts sont séparés,
+et les métadonnées indiquent le mode. Valider les quatre paires de builds et conserver
+les contrôles d’absence de reset dans tous les modes. Le logging doit être présent
+en debug et absent en normal. Le guide court est [logs-usb.md](docs/logs-usb.md).
+Avec l’ancien firmware aux délais courts, l’utilisateur confirme une reprise immédiate après 10 secondes
+d’inactivité et une déconnexion après une minute, suivie d’une reconnexion en environ
+3 secondes sur appui, sans reset. Son essai séparé confirme le réveil local gauche
+puis droite : le premier appui n’écrit rien, le second écrit après reconnexion.
+Dans l’ordre inverse, la droite se réveille mais ne transmet rien tant que la gauche
+dort. Réveiller la gauche permet à la droite de se reconnecter. Le réveil depuis la
+droite seule n’est donc pas fonctionnel quand la centrale est en veille profonde.
+Ne pas prétendre que toutes les touches ou les encodeurs ont été testés.
+Le choix macOS revient à Windows après une veille profonde, confirmé par l’utilisateur.
+Dans ZMK 0.3.0, `activity.c` appelle `sys_poweroff()`, l’état des couches et la couche
+par défaut sont des variables initialisées à zéro dans `keymap.c`. `&to` ne sauvegarde
+pas cet état. Windows correspond à la couche initiale zéro. Les appairages NVS sont
+distincts et conservés. La persistance du choix OS ou son initialisation au build
+restent à définir lors du découpage, sans modifier la keymap avant sa sauvegarde.
+Le menu Bluetooth macOS affiche un seul niveau (63 % lors de l’essai).
+Un lecteur temporaire Swift/CoreBluetooth a identifié deux services `180F` et
+deux caractéristiques `2A19`. Les descripteurs `2904` indiquent `0x0106` (principale)
+et `0x0108` (auxiliaire), le descripteur `2901` du proxy indique `Peripheral 0`.
+Six lectures par service donnent gauche 63 % et droite 62 %. Le proxy et la liaison
+de mesure droite sont donc validés. Les notifications ne sont pas testées, le lecteur
+effectue uniquement des lectures et s’arrête après 30 secondes. Il réutilise le clavier
+déjà connecté et ferme sa connexion cliente, sans modifier les appairages.
+Le diagnostic initial reste dans `.local/diagnostic/`. La lecture durable est
+versionnée dans `scripts/batteries.sh`, `batteries.swift` et `batteries-info.plist`.
+`make bat` retourne dès que deux valeurs identifiées sont reçues. `make bat avg`
+démarre une fenêtre de 30 secondes après réception de la première paire, relit
+toutes les 5 secondes et calcule une moyenne arithmétique par moitié, sans combiner
+les deux batteries. Ce sont les valeurs annoncées, pas des mesures ADC forcées :
+le profil normal les actualise toutes les 60 secondes. La première connexion et
+lecture est limitée à 15 secondes, les erreurs rendent un statut non nul.
+Le lecteur nécessite macOS et Swift, compile automatiquement dans
+`.local/tools/batteries/` si ses sources ou métadonnées changent, sans Docker.
+Son nom cible est lu dans la configuration de la centrale, sans nom par défaut inventé.
+L’accès Bluetooth demande la permission macOS, et hors sandbox pour l’agent.
+Ne modifier ni les appairages ni les abonnements aux notifications pour lire.
+Valider la compilation Swift, la lecture réelle et les erreurs de CLI, sans nouvelle
+suite de tests d’outillage. Un affichage permanent dans la barre des menus reste futur.
+Les deux commandes sont validées sur le Mac avec USB de charge branchés : lecture
+rapide gauche/droite 100 % en moins d’une seconde, puis moyennes 100,0 % sur six
+lectures par moitié. Compilation Swift sans avertissement, syntaxe Bash macOS et
+validation des commandes compatibles et incompatibles contrôlées.
 Essai matériel sur le Mac : les deux moitiés fonctionnent avec les UF2 Bluetooth
 normaux, confirmé par l’utilisateur. Les USB étaient branchés pour l’alimentation,
 la saisie reste en Bluetooth. L’utilisateur confirme aussi la saisie sur batterie
-seule, sans USB ni dongle. Veille, première frappe et encodeurs restent à valider séparément.
+seule, sans USB ni dongle. Les résultats de veille sont décrits ci-dessus.
+Toutes les touches et les encodeurs restent à valider séparément.
+Après les essais, l’utilisateur confirme avoir remis les deux UF2 `bluetooth`
+normaux avec proxy batterie, sans reset des réglages. Les deux USB restent branchés
+pour charger. Inactivité 30 secondes, veille profonde 15 minutes et mesure batterie
+60 secondes sont les paramètres compilés. Ne pas présenter le délai de 15 minutes
+comme un nouvel essai matériel : l’alimentation USB bloque actuellement cette veille.
 
 Un appairage incohérent bloquait la droite : clé restaurée, renouvellement refusé,
 erreur de sécurité 4. Le firmware et le scan des touches étaient corrects.
@@ -63,14 +119,22 @@ Le reset nice!nano v2 est indépendant du profil matériel. Les builds reset,
 gauche et droite utilisent la même partition NVS à `0xEC000`, sur 32 Kio.
 Le binaire temporaire reste dans `.local/flash/`, à la demande de l’utilisateur.
 
-Le Mac affiche actuellement la mesure de batterie de la gauche. Le build ne récupère
-pas celle de droite. ZMK 0.3.0 dispose des options de récupération et proxy sur la
-centrale, l’affichage de deux valeurs par macOS n’est pas garanti. L’étude est dans
-[batteries.md](docs/batteries.md), sans option appliquée pour l’instant.
+Les nouveaux builds Bluetooth activent récupération et proxy de batterie droite
+sur la centrale via `bluetooth-left.conf`. La droite conserve son service de mesure.
+Le service principal expose la gauche, l’auxiliaire la droite. L’affichage de deux
+valeurs par le menu natif macOS n’est pas observé, malgré deux mesures lues via CoreBluetooth,
+voir [batteries.md](docs/batteries.md).
+Les profils `wire` ne récupèrent ni ne transmettent ces mesures.
 
 La matrice `kscan0` porte `wakeup-source` pour permettre un réveil par les touches.
 Ne pas activer la veille dans le profil câble. Le profil Bluetooth active `ZMK_SLEEP`.
 Vérifier sur le matériel chaque touche, la première frappe et la reconnexion.
+ZMK 0.3.0 bloque la veille profonde lorsqu’une alimentation USB est détectée,
+quel que soit le profil de sortie. Les délais partent de la dernière activité et
+sont contrôlés toutes les secondes. Les moitiés ont des activités indépendantes.
+Avec les deux en veille profonde, la droite ne peut pas réveiller la centrale.
+Décider après les tests si la centrale doit rester en inactivité pour permettre
+une reprise depuis la droite, sans promettre ce comportement avec sa radio coupée.
 Le guide `docs/veille.md` distingue les capacités de ZMK des essais matériels.
 `docs/flash-firmware.md` couvre le flash et le bootloader, `docs/appairage-bluetooth.md`
 couvre les clés de connexion et le reset.
@@ -78,10 +142,23 @@ Le mécanisme bootloader déprécié reste nécessaire à ZMK 0.3.0 : son rempla
 demande l’API de rétention, l’adaptation du comportement reset et des codes UF2.
 Ne pas désactiver `NRF_STORE_REBOOT_TYPE_GPREGRET` pour faire disparaître le warning.
 
-Le Makefile expose `setup`, `build wire`, `build bluetooth`, `stop` et `clear`,
-délégués aux scripts dédiés. `make build` compile `wire`, puis `bluetooth`.
-Un profil explicite limite la compilation. Les deux cibles marqueurs sont déclarées
-séparément pour permettre cette syntaxe, un seul profil explicite est accepté.
+Le Makefile expose `help`, `setup`, `build wire`, `build bluetooth`, `bat`, `bat avg`,
+`stop` et `clear`, délégués aux scripts dédiés. Le second argument `debug` active
+les logs USB du profil choisi, sans cibles Make supplémentaires.
+Chaque commande a sa propre cible et son appel de script dans le Makefile.
+À la demande de l’utilisateur, le Makefile appelle directement chaque script avec
+ses arguments, sans validateur central ni variable d’environnement intermédiaire.
+`ARGS` retire le nom de la cible et protège chaque mot pour le shell. Chaque script
+vérifie son nombre d’arguments et ses valeurs avant toute action. `setup`, `stop`
+et `clear` n’acceptent aucun argument. `help.sh` accepte le périmètre interne `build`
+pour afficher les profils, l’aide générale reste `make help`. La règle `%` ne fait rien : Make voit
+les arguments comme d’autres cibles, déjà traitées par le script de la commande.
+Un mot inconnu seul est donc sans action. Ne pas ajouter de dispatch central ni
+de cibles individuelles pour chaque valeur d’argument.
+`make build` seul affiche les profils disponibles via `help.sh build`, sans Docker
+ni préparation requise. La compilation demande un profil explicite : `wire`,
+`bluetooth`, avec `debug` en option. Les deux moitiés du seul profil choisi sont compilées.
+`help.sh` affiche l’aide groupée, avec la palette partagée de `terminal-colors.sh`.
 Les constantes partagées sont en tête de `scripts/build-common.sh`. `container.sh`
 exécute `west` et vérifie les firmwares. Aucun `.env` n’est nécessaire.
 ZMK 0.3.0 et les
@@ -93,11 +170,20 @@ Les UF2 sont nommés `splitergoll-<profil>-left.uf2` et `splitergoll-<profil>-ri
 `dongle` nommera un futur profil, il n’est pas encore compilable.
 
 `config/splitergoll.conf` contient les options communes. Les fichiers `.conf` des
-moitiés fixent leurs rôles. `config/profiles/<profil>.conf` est chargé en dernier avec
-`EXTRA_CONF_FILE`. Le profil est validé côté hôte et transmis comme argument au
-conteneur, puis validé à nouveau. Les caches CMake sont séparés par profil et moitié.
-La matrice `build.yaml` couvre les quatre UF2 des deux profils, avec les mêmes fichiers
-de profil que le build local. Elle utilise `GITHUB_WORKSPACE` fourni par GitHub.
+moitiés fixent leurs rôles. `EXTRA_CONF_FILE` charge le profil matériel, puis une
+configuration de moitié optionnelle. Le snippet USB logging est ajouté avec
+`west build -S zmk-usb-logging` en mode debug uniquement.
+Le profil est validé côté hôte et dans le conteneur, les caches sont séparés par profil
+et moitié. Les contrôles vérifient les délais, la mesure et le proxy gauche, ainsi
+que l’absence de reset d’appairage dans tous les UF2 clavier. Les contrôles imposent
+les logs USB et leur console CDC en debug, et leur absence en normal.
+Les huit UF2 normaux/debug compilent et passent ces contrôles. Empreintes SHA-256,
+famille nRF52840 et adresses de firmware sont vérifiées. Les consoles de ces nouveaux
+builds restent à tester sur le matériel, sans flash implicite. Les conteneurs de
+validation ont disparu, les trois services préexistants sont conservés.
+La matrice `build.yaml` couvre les quatre UF2 normaux. Sa liste de fichiers CMake
+est entre guillemets pour que le point-virgule ne soit pas interprété par le shell.
+Elle utilise `GITHUB_WORKSPACE` fourni par GitHub.
 
 Valider la syntaxe Make/shell, les erreurs de sélection, le manifeste, la conservation
 de la keymap et les deux builds réels. Pas de nouveaux tests automatisés d’outillage
@@ -119,7 +205,8 @@ qui explique son rôle et les arguments lorsque leur sens n’est pas évident.
 Chaque script doit aussi expliquer son rôle dans un commentaire en tête de fichier.
 
 Les scripts hôtes `setup.sh` et `build.sh` utilisent Bash pour l’affichage repliable,
-isolé dans `build-logs.sh`. Les autres scripts restent compatibles `sh`.
+isolé dans `build-logs.sh`. `help.sh`, `batteries.sh` et
+`terminal-colors.sh` utilisent également Bash. Les autres scripts restent compatibles `sh`.
 Conserver le statut réel des commandes et tous leurs logs dans `.local/logs/`.
 En terminal interactif, replier uniquement les étapes réussies et garder les
 avertissements visibles. Sans TTY, diffuser la sortie complète sans codes de curseur.

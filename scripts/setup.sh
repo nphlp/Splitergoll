@@ -8,6 +8,8 @@ set -eu
 . "$(dirname "$0")/build-common.sh"
 . "$(dirname "$0")/build-logs.sh"
 
+[ "$#" -eq 0 ] || fail 'Utilise make setup sans argument'
+
 # Prépare le workspace identifié par les versions sans écraser un dossier non géré.
 prepare_workspace() {
     if [ -d "$workspace" ]; then

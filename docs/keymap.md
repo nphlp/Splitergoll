@@ -29,6 +29,10 @@ La keymap comporte 44 positions et 15 couches techniques : bases Windows/Linux/m
 fonctions primaires, secondaires et tertiaires avec adaptations OS, pavé numérique
 et jeu. Windows est initial, le changement d’OS actuel reste disponible.
 
+Le choix d’OS est en mémoire et ne survit pas au redémarrage après veille profonde :
+macOS revient à Windows, confirmé sur le clavier Mac. Les appairages Bluetooth
+restent enregistrés. La conservation de l’OS fera partie du découpage des profils.
+
 Les touches de fonction activent des couches temporairement. Des couches
 conditionnelles combinent le choix d’OS et ces fonctions. Les tap dances distinguent
 les appuis simples et multiples. Les morphs changent une action selon un modificateur.

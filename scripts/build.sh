@@ -1,7 +1,8 @@
 #!/bin/bash
 
 # Compile les deux moitiés dans Docker et exporte les firmwares UF2 dans dist/.
-# Sans argument, compile tous les profils. Un argument choisit wire ou bluetooth.
+# Sans argument, affiche les profils disponibles. Un argument choisit le profil à compiler.
+# L’argument debug ajoute les logs USB au profil choisi.
 # Appelé par make build, sans flasher le clavier.
 
 set -eu
@@ -9,39 +10,42 @@ set -eu
 . "$(dirname "$0")/build-common.sh"
 . "$(dirname "$0")/build-logs.sh"
 
-[ "$#" -le 1 ] || fail 'Choisis un seul profil : make build wire ou make build bluetooth'
-if [ "$#" -eq 1 ]; then
-    profiles=$1
-    select_profile "$profiles"
-else
-    profiles=$PROFILES
-    for selected_profile in $profiles; do
-        select_profile "$selected_profile"
-    done
+[ "$#" -le 2 ] || fail 'Utilise make build wire ou bluetooth, avec debug en option'
+if [ "$#" -eq 0 ]; then
+    exec bash "$SCRIPT_DIRECTORY/help.sh" build
+fi
+if [ "$#" -eq 2 ] && [ "$2" != debug ]; then
+    fail 'Le seul second argument accepté est debug'
 fi
 
 # Exporte une paire complète et ses empreintes seulement après les deux compilations réussies.
 export_firmware() {
     timestamp=$(date +%Y-%m-%d-%H-%M-%S)
-    destination="$ARTIFACT_ROOT/$PROFILE-$timestamp"
+    destination="$ARTIFACT_ROOT/$BUILD_VARIANT-$timestamp"
     mkdir -p "$ARTIFACT_ROOT"
     mkdir "$destination" || fail "Export refusé : impossible de créer $destination"
 
     for side in $SIDES; do
-        name="splitergoll-$PROFILE-$side"
+        name="splitergoll-$BUILD_VARIANT-$side"
         cp "$workspace/build/$name/zephyr/zmk.uf2" "$destination/$name.uf2"
     done
 
-    printf 'profile=%s\nenvironment=%s\nimage=%s\n' "$PROFILE" "$identity" "$BUILD_IMAGE" > "$destination/build-info.txt"
+    printf 'profile=%s\nhardware_profile=%s\nbuild_mode=%s\nvariant=%s\nenvironment=%s\nimage=%s\n' \
+        "$PROFILE" "$HARDWARE_PROFILE" "$BUILD_MODE" "$BUILD_VARIANT" "$identity" "$BUILD_IMAGE" > "$destination/build-info.txt"
+
     (cd "$destination" && shasum -a 256 ./*.uf2 > SHA256SUMS)
     printf '%s\n' "$destination" > "$RUN_LOG_DIRECTORY/artifacts-path"
 }
 
-# Compile et exporte les deux moitiés du profil reçu, avec son propre journal.
+# Compile et exporte le profil reçu en mode normal ou debug, avec son propre journal.
 build_profile() {
     select_profile "$1"
+    select_build_mode "$2"
     start_logging build 4
-    printf 'Profil : %s\n' "$PROFILE"
+    printf 'Profil : %s\n' "$BUILD_VARIANT"
+    if [ "$BUILD_MODE" = debug ]; then
+        printf '%s\n' 'Diagnostic : logs USB activés sur les deux moitiés'
+    fi
     run_step 'Vérification des prérequis' preflight
     resolve_workspace
     run_step 'Contrôle du workspace préparé' require_setup
@@ -51,6 +55,4 @@ build_profile() {
     printf 'Firmwares : %s\n' "$(cat "$RUN_LOG_DIRECTORY/artifacts-path")"
 }
 
-for selected_profile in $profiles; do
-    build_profile "$selected_profile"
-done
+build_profile "$1" "${2-normal}"

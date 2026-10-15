@@ -5,18 +5,7 @@
 
 LOG_WINDOW_LINES=8
 
-# Active une palette sobre uniquement dans un terminal compatible, sauf avec NO_COLOR.
-configure_output() {
-    LOG_HEADING='' LOG_SUCCESS='' LOG_WARNING='' LOG_ERROR='' LOG_DIM='' LOG_RESET=''
-    if [ -t 1 ] && [ "${TERM:-dumb}" != dumb ] && [ -z "${NO_COLOR:-}" ]; then
-        LOG_HEADING=$'\033[1;36m'
-        LOG_SUCCESS=$'\033[32m'
-        LOG_WARNING=$'\033[33m'
-        LOG_ERROR=$'\033[31m'
-        LOG_DIM=$'\033[90m'
-        LOG_RESET=$'\033[0m'
-    fi
-}
+. "$(dirname "$0")/terminal-colors.sh"
 
 # Formate une durée en secondes pour afficher des minutes et secondes lisibles.
 format_duration() {

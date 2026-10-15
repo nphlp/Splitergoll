@@ -82,19 +82,20 @@ La veille profonde est activée après 15 minutes sur batterie, avec la matrice 
 source de réveil. Les mesures de batterie sont activées.
 
 **État :** deux UF2 normaux flashés, saisie des deux moitiés sur le Mac confirmée
-avec alimentation USB et sur batterie seule, sans dongle. La veille, le réveil et
-les encodeurs restent à tester. Voir [la procédure de reset](appairage-bluetooth.md#réinitialiser-les-réglages)
+avec alimentation USB et sur batterie seule, sans dongle. Le profil d’essai confirme
+un réveil sans reset sur chaque moitié. Le premier appui sert au réveil, et la
+gauche doit être éveillée pour recevoir la droite. Toutes les touches et les
+encodeurs restent à vérifier, voir [veille et réveil](veille.md).
+Voir [la procédure de reset](appairage-bluetooth.md#réinitialiser-les-réglages)
 en cas d’appairage incohérent.
 La priorité USB pendant la charge reste une option future de cette architecture.
 
 ## Affichage des batteries
 
-Le pourcentage affiché sur le Mac représente actuellement la batterie gauche.
-La droite a sa propre mesure, qui n’est pas encore remontée au Mac.
-
-ZMK peut exposer les deux niveaux via la gauche. Leur affichage séparé dans les
-réglages macOS n’est pas garanti, un lecteur dédié peut être nécessaire.
-Cette amélioration reste à décider. Voir [l’étude technique](batteries.md).
+Les deux niveaux sont lus sur le Mac via la gauche : 63 % à gauche et 62 % à droite
+lors de l’essai. Le menu Bluetooth macOS ne présente que la gauche.
+Un lecteur dédié sera nécessaire pour présenter les deux ensemble.
+Voir [la configuration et les essais](batteries.md).
 
 ## Ce qui change par firmware ou à chaud
 

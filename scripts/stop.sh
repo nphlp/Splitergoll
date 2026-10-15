@@ -7,5 +7,7 @@ set -eu
 
 . "$(dirname "$0")/build-common.sh"
 
+[ "$#" -eq 0 ] || fail 'Utilise make stop sans argument'
+
 require_docker
 stop_containers

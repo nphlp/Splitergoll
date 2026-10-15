@@ -14,7 +14,9 @@ la droite communique avec elle en BLE. Le profil Bluetooth garde la saisie en
 Bluetooth pendant la charge USB et active la veille sur batterie.
 Les deux moitiés fonctionnent sur le Mac après réinitialisation et nouvel appairage,
 avec leurs USB branchés pour l’alimentation et sur batterie seule, sans dongle.
-La veille et le réveil restent à valider.
+Le profil d’essai confirme un réveil sans reset et la lecture des deux batteries.
+Le premier appui réveille sans écrire. La gauche doit être éveillée pour recevoir
+la droite, et le choix d’OS revient à Windows après veille profonde.
 
 La keymap actuelle correspond à `multi`. Les profils `windows` avec jeu, `macos`,
 `linux`, ainsi que priorité USB et `dongle`, viendront ensuite. Les branches
@@ -26,18 +28,22 @@ Avec Make et Docker démarré, depuis la racine du dépôt :
 
 ```sh
 make setup
-make build
+make build bluetooth
 ```
 
-`make build` compile les deux profils. Pour n’en compiler qu’un :
+`make build` seul affiche les profils disponibles. Pour compiler, choisir
 `make build wire` ou `make build bluetooth`.
+Ajouter `debug` pour obtenir les logs USB, par exemple `make build bluetooth debug`.
 
 Le [guide de build](build-local.md) détaille les prérequis et les fichiers UF2 obtenus.
 Ces commandes ne flashent pas le clavier.
+`make help` affiche toutes les commandes. Sur macOS, `make bat` lit les deux batteries
+et `make bat avg` calcule une moyenne par moitié sur 30 secondes.
 
 ## Documentation
 
 - [Build local](build-local.md) : commandes, environnement et résultats.
+- [Logs USB](logs-usb.md) : firmwares de diagnostic et console de chaque moitié.
 - [Matériel et connexions](configuration-materielle.md) : cartes, rôles et limites.
 - [Veille et réveil](veille.md) : états d’inactivité et reprise à la frappe.
 - [Flash du firmware](flash-firmware.md) : copie des UF2, bootloader et messages du Finder.

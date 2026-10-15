@@ -1,42 +1,28 @@
 .DEFAULT_GOAL := help
 
-.PHONY: help setup build wire bluetooth stop clear
+.PHONY: help setup build bat stop clear
 
-# Make lit le profil comme une seconde cible. build transmet ce nom au script.
-ifneq ($(filter build,$(MAKECMDGOALS)),)
-ifneq ($(filter-out build wire bluetooth,$(MAKECMDGOALS)),)
-$(error Utilise make build wire ou make build bluetooth)
-endif
-endif
-ifneq ($(filter wire bluetooth,$(MAKECMDGOALS)),)
-ifeq ($(filter build,$(MAKECMDGOALS)),)
-$(error Utilise make build wire ou make build bluetooth)
-endif
-endif
+# Récupère les mots après la commande et protège chaque argument pour le shell.
+ARGS = $(foreach arg,$(filter-out $@,$(MAKECMDGOALS)),'$(subst ','"'"',$(arg))')
 
 help:
-	@printf '%s\n' \
-		'make setup : préparer le build local' \
-		'make build wire : compiler le profil USB' \
-		'make build bluetooth : compiler le profil Bluetooth direct' \
-		'make build : compiler wire puis bluetooth' \
-		'make stop : arrêter les conteneurs de build de ce checkout' \
-		'make clear : arrêter le build et supprimer les sources, caches et firmwares locaux'
+	@bash scripts/help.sh $(ARGS)
 
 setup:
-	@bash scripts/setup.sh
+	@bash scripts/setup.sh $(ARGS)
 
 build:
-	@bash scripts/build.sh $(filter wire bluetooth,$(MAKECMDGOALS))
+	@bash scripts/build.sh $(ARGS)
 
-wire:
-	@:
-
-bluetooth:
-	@:
+bat:
+	@bash scripts/batteries.sh $(ARGS)
 
 stop:
-	@sh scripts/stop.sh
+	@sh scripts/stop.sh $(ARGS)
 
 clear:
-	@sh scripts/clear.sh
+	@sh scripts/clear.sh $(ARGS)
+
+# Make voit aussi wire, bluetooth et avg comme des cibles. Le script reçoit déjà ces mots.
+%:
+	@:
