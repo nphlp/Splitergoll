@@ -9,7 +9,9 @@
 - [x] Figer ZMK 0.3.0, les dépendances et l’image Docker.
 - [x] Préparer un Makefile avec `make setup` et `make build`.
 - [x] Compiler les deux moitiés et vérifier les UF2, leurs empreintes et les rôles.
-- [ ] Tester le profil `wire` sur le clavier Mac, puis sur le PC Windows : touches, encodeurs, accents, Shift, couches et redémarrages.
+- [x] Confirmer le flash et la saisie USB des deux moitiés sur le Mac avec le clavier PC sans batterie, variante `wire debug`.
+- [ ] Terminer les essais `wire` sur Mac puis Windows : toutes les touches, encodeurs, accents, Shift, couches et redémarrages. Voir [les essais wire](tests-wire.md).
+- [ ] Mesurer la latence ressentie à droite en comparant les variantes normale et debug avant tout réglage radio.
 
 ## Étapes suivantes
 

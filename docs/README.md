@@ -17,6 +17,8 @@ avec leurs USB branchés pour l’alimentation et sur batterie seule, sans dongl
 Le profil d’essai confirme un réveil sans reset et la lecture des deux batteries.
 Le premier appui réveille sans écrire. La gauche doit être éveillée pour recevoir
 la droite, et le choix d’OS revient à Windows après veille profonde.
+Le profil `wire` fonctionne aussi sur le Mac avec le clavier PC sans batterie.
+Le parcours complet de la keymap et les essais Windows restent à valider.
 
 La keymap actuelle correspond à `multi`. Les profils `windows` avec jeu, `macos`,
 `linux`, ainsi que priorité USB et `dongle`, viendront ensuite. Les branches
@@ -45,6 +47,7 @@ et `make bat avg` calcule une moyenne par moitié sur 30 secondes.
 - [Build local](build-local.md) : commandes, environnement et résultats.
 - [Logs USB](logs-usb.md) : firmwares de diagnostic et console de chaque moitié.
 - [Matériel et connexions](configuration-materielle.md) : cartes, rôles et limites.
+- [Essais wire](tests-wire.md) : vérifier le clavier sans batterie sur Mac et Windows.
 - [Veille et réveil](veille.md) : états d’inactivité et reprise à la frappe.
 - [Flash du firmware](flash-firmware.md) : copie des UF2, bootloader et messages du Finder.
 - [Appairage Bluetooth](appairage-bluetooth.md) : clés de connexion, reset et diagnostic.

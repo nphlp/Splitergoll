@@ -1,6 +1,6 @@
 # Matériel et connexions
 
-Deux claviers existent : PC Windows avec deux câbles USB, MacBook avec batteries.
+Deux claviers existent : PC Windows sans batterie avec deux câbles USB, MacBook avec batteries.
 Le Mac utilise maintenant le Bluetooth direct, son XIAO BLE reste disponible pour
 le profil dongle historique. La différence principale est la carte qui traite les touches.
 
@@ -36,7 +36,7 @@ Les schémas montrent le trajet des touches. L’alimentation est décrite à pa
 ```mermaid
 flowchart LR
     R["Droite : périphérique"] -->|BLE| L["Gauche : centrale"]
-    L -->|USB| PC["PC Windows"]
+    L -->|USB| PC["Mac ou PC Windows"]
 ```
 
 Les deux câbles USB alimentent les moitiés. Le câble gauche transporte aussi la saisie,
@@ -46,8 +46,9 @@ les deux câbles ne les relient pas entre elles.
 Veille profonde et reporting batterie sont désactivés. Les capacités BLE vers
 un hôte restent présentes, ce profil ne promet pas une radio arrêtée.
 
-**État :** deux UF2 compilés et rôles vérifiés, essai matériel à faire.
-Ce profil sert au premier essai sur le clavier Mac et au clavier du PC Windows.
+**État :** saisie des deux moitiés par USB sur le Mac confirmée avec le clavier
+PC sans batterie et la variante de diagnostic. Les essais Windows et le parcours
+complet des touches restent à faire, voir [les essais wire](tests-wire.md).
 
 ## Dongle, configuration historique
 

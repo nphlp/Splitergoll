@@ -17,7 +17,7 @@ L’AGENTS.md garde les invariants, preuves techniques et décisions utiles au p
 
 ## Invariants
 
-- Deux claviers : PC Windows alimenté par deux USB, MacBook sur batteries en Bluetooth direct.
+- Deux claviers : PC Windows sans batterie, alimenté par deux USB, MacBook sur batteries en Bluetooth direct.
   Le XIAO BLE reste disponible pour le profil dongle historique.
 - Les moitiés sont des répliques de nice!nano v2. Le Nordic des photos n’est pas utilisé.
 - La keymap complète de `dongle` à `2584ca4` fait référence : conserver les 44 positions,
@@ -39,6 +39,12 @@ L’AGENTS.md garde les invariants, preuves techniques et décisions utiles au p
 
 Build local et profil `wire` : gauche centrale USB, droite périphérique BLE,
 alimentation USB, sans veille profonde ni reporting batterie.
+Le clavier PC sans batterie est flashé avec la variante de diagnostic : saisie
+des deux moitiés par USB sur le Mac confirmée par l’utilisateur. Le clic d’encodeur
+affichant l’OS paraît plus rapide qu’avec son ancien firmware. Une latence est
+ressentie à droite, sans mesure ni comparaison normal/debug. Ne pas conclure à
+sa cause. Les consoles USB, toutes les touches et les essais Windows restent
+à valider selon le [protocole wire](docs/tests-wire.md).
 Profil `bluetooth` : mêmes rôles, sortie Bluetooth directe de la gauche, USB clavier
 désactivé même pendant la charge, veille après 15 minutes et reporting batterie activés.
 Le profil aux délais courts a été supprimé après validation matérielle. Les deux
@@ -227,8 +233,9 @@ transparents, `∅` les touches sans action. Garder les schémas cohérents avec
 Ne pas modifier le README actuel avant la promotion finale de l’index.
 
 `docs/configuration-materielle.md` distingue le matériel, le trajet des touches
-et l’alimentation. Ses trois architectures doivent préciser l’état réel : câble
-compilé, dongle utilisé sur le Mac mais pas encore réintégré au build, Bluetooth
+et l’alimentation. Ses trois architectures doivent préciser l’état réel : saisie
+câble confirmée sur le Mac avec le clavier PC sans batterie, dongle historique
+pas encore réintégré au build, Bluetooth
 direct compilé et saisie des deux moitiés confirmée avec USB et sur batterie seule.
 Ne pas présenter les capacités natives ZMK ou les essais restants comme déjà validés.
 
