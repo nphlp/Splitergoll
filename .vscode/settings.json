@@ -1,0 +1,17 @@
+{
+  "files.associations": {
+    "**/config/keymaps/common/*.dtsi": "cpp"
+  },
+  "editor.tokenColorCustomizations": {
+    "comments": {
+      "fontStyle": ""
+    }
+  },
+  "editor.semanticTokenColorCustomizations": {
+    "rules": {
+      "comment": {
+        "italic": false
+      }
+    }
+  }
+}

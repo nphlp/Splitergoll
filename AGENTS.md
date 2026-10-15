@@ -21,10 +21,44 @@ L’AGENTS.md garde les invariants, preuves techniques et décisions utiles au p
   Le XIAO BLE reste disponible pour le profil dongle historique.
 - Les moitiés sont des répliques de nice!nano v2. Le Nordic des photos n’est pas utilisé.
 - La keymap complète de `dongle` à `2584ca4` fait référence : conserver les 44 positions,
-  accents, Shift, macros, couches et encodeurs. Les helpers, transforms et GPIO sont inchangés.
-- La keymap actuelle constitue `multi`, avec les trois OS et le jeu. Avant son découpage,
-  conserver une sauvegarde versionnée de la keymap, des couches, helpers et dispositions.
-  Les futurs profils sont `windows` avec jeu, `macos`, `linux` et `multi`. Ce chantier reste futur.
+  accents, Shift, macros, couches et encodeurs de `multi`. Les helpers, transforms et GPIO sont inchangés.
+- L’archive unique avant découpage est dans `archives/keymap-multi/` : keymap,
+  couches, helpers, trois dispositions et `SHA256SUMS`. Les six sources restent
+  identiques à `4940bf8`, comme sauvegarde autonome. Aucun profil actif ne les inclut.
+  Ne pas remettre de keymap historique ni ses helpers dans le dossier du shield.
+  Les builds locaux et la CI choisissent toujours `config/keymaps/<profil>.keymap`
+  avec `KEYMAP_FILE`, sans utiliser la sélection automatique du shield.
+- Les quatre keymaps sont `multi`, `windows` avec jeu, `macos` et `linux`.
+  `multi` garde ses quinze couches et son changement d’OS. Les trois profils fixes
+  démarrent sur leur OS en couche zéro, sans bascule OS. Windows a sept couches,
+  macOS et Linux cinq, sans gaming. Les retours du pavé et du jeu ciblent leur base.
+  Le clic d’encodeur droit avec L1 est sans action dans les profils fixes.
+  Le pavé macOS utilise Command/Control et les symboles de son OS.
+- `config/keymaps/common/behaviors.dtsi` partage les comportements historiques.
+  `common/base-layer.dtsi` porte les 44 positions de la base commune aux quatre
+  keymaps. Chaque appelant définit `BASE_CTRL`, `BASE_ALT`, `BASE_GUI`, `BASE_DOT`,
+  `BASE_BSLS` et `BASE_OS`. `BASE_LAYER(bindings, sensors)` conserve le nom du nœud
+  `WINDOWS_layer` dans `multi` et `BASE_layer` dans les profils fixes. Tous ces
+  paramètres sont retirés après l’inclusion pour éviter toute fuite vers les autres couches.
+  Les autres couches des profils fixes explicitent leurs affectations, après résolution
+  des touches transparentes des adaptations OS. Ne pas garder une couche Windows
+  active comme base cachée de macOS ou Linux. `multi.keymap` compose directement
+  les quinze couches avec la base et les comportements partagés.
+  Les helpers actifs, les numéros de couches `multi` et les dispositions sont
+  dans `common/function.h`, `common/multi-layers.h` et `common/french_layout/`.
+  Faire évoluer ces copies actives, jamais les fichiers de la sauvegarde historique.
+- Chaque couche des keymaps fixes conserve un schéma commenté au même format
+  que `multi` : 44 positions, clics et deux actions de rotation des encodeurs.
+  Les légendes suivent les bindings réels, `·` indique une action héritée et `∅`
+  aucune action. Adapter le schéma dans le même changement que les affectations.
+  Aligner les bindings gauche à gauche et droite à droite sous le schéma, comme
+  dans `multi`, avec les retraits des rangées et des pouces. La base garde son
+  schéma concret dans chaque profil et son schéma paramétré dans le fichier commun.
+- `.vscode/settings.json` garde les commentaires en style normal pour lire les
+  schémas, via les réglages TextMate et sémantiques du workspace, sans fixer de thème.
+  Les fragments `config/keymaps/common/*.dtsi` utilisent la coloration `cpp`,
+  adaptée à leurs appels de macros. Les fichiers Devicetree matériels gardent
+  leur langage natif. Cette association ne change pas le build.
 - Les branches `-minimal` sont des archives, exclues du chantier.
 - Les branches historiques restent intactes. `wire` archive `main` à `cbad9a0`,
   `wire-minimal` archive `main-minimal` à `27ed2b7`.
@@ -50,7 +84,7 @@ désactivé même pendant la charge, veille après 15 minutes et reporting batte
 Le profil aux délais courts a été supprimé après validation matérielle. Les deux
 profils disponibles sont `wire` et `bluetooth`. L’option transversale `debug` ajoute
 le snippet natif `zmk-usb-logging` à chaque moitié, sans toucher aux timings, rôles
-ou keymaps. `BUILD_MODE` vaut `normal` ou `debug`, `BUILD_VARIANT` nomme le profil
+ou keymaps. `BUILD_MODE` vaut `normal` ou `debug`, `BUILD_VARIANT` nomme matériel et keymap
 avec suffixe `-debug` uniquement en diagnostic. Caches et artefacts sont séparés,
 et les métadonnées indiquent le mode. Valider les quatre paires de builds et conserver
 les contrôles d’absence de reset dans tous les modes. Le logging doit être présent
@@ -67,8 +101,9 @@ Le choix macOS revient à Windows après une veille profonde, confirmé par l’
 Dans ZMK 0.3.0, `activity.c` appelle `sys_poweroff()`, l’état des couches et la couche
 par défaut sont des variables initialisées à zéro dans `keymap.c`. `&to` ne sauvegarde
 pas cet état. Windows correspond à la couche initiale zéro. Les appairages NVS sont
-distincts et conservés. La persistance du choix OS ou son initialisation au build
-restent à définir lors du découpage, sans modifier la keymap avant sa sauvegarde.
+distincts et conservés. Ce comportement reste celui de `multi`. Les profils fixes
+mettent leur propre OS en couche zéro, sans état OS à sauvegarder. Le matériel
+reste à tester pour ces nouveaux profils.
 Le menu Bluetooth macOS affiche un seul niveau (63 % lors de l’essai).
 Un lecteur temporaire Swift/CoreBluetooth a identifié deux services `180F` et
 deux caractéristiques `2A19`. Les descripteurs `2904` indiquent `0x0106` (principale)
@@ -149,8 +184,11 @@ demande l’API de rétention, l’adaptation du comportement reset et des codes
 Ne pas désactiver `NRF_STORE_REBOOT_TYPE_GPREGRET` pour faire disparaître le warning.
 
 Le Makefile expose `help`, `setup`, `build wire`, `build bluetooth`, `bat`, `bat avg`,
-`stop` et `clear`, délégués aux scripts dédiés. Le second argument `debug` active
-les logs USB du profil choisi, sans cibles Make supplémentaires.
+`stop` et `clear`, délégués aux scripts dédiés. Après le matériel, une keymap
+facultative choisit `multi` (défaut), `windows`, `macos` ou `linux`. L’argument
+final `debug` active les logs USB, sans cibles Make supplémentaires.
+`make build wire debug` reste valide et choisit `multi`. Les arguments sont
+validés avant Docker. `setup` ne dépend pas de la keymap.
 Chaque commande a sa propre cible et son appel de script dans le Makefile.
 À la demande de l’utilisateur, le Makefile appelle directement chaque script avec
 ses arguments, sans validateur central ni variable d’environnement intermédiaire.
@@ -162,32 +200,53 @@ les arguments comme d’autres cibles, déjà traitées par le script de la comm
 Un mot inconnu seul est donc sans action. Ne pas ajouter de dispatch central ni
 de cibles individuelles pour chaque valeur d’argument.
 `make build` seul affiche les profils disponibles via `help.sh build`, sans Docker
-ni préparation requise. La compilation demande un profil explicite : `wire`,
-`bluetooth`, avec `debug` en option. Les deux moitiés du seul profil choisi sont compilées.
+ni préparation requise. La compilation demande un matériel explicite : `wire`,
+`bluetooth`, puis la keymap et `debug` en option. Les deux moitiés du seul choix demandé sont compilées.
 `help.sh` affiche l’aide groupée, avec la palette partagée de `terminal-colors.sh`.
 Les constantes partagées sont en tête de `scripts/build-common.sh`. `container.sh`
 exécute `west` et vérifie les firmwares. Aucun `.env` n’est nécessaire.
 ZMK 0.3.0 et les
 59 projets résolus sont figés dans `config/west.yml`. Les workspaces sont séparés
 par empreinte de l’environnement, les caches CMake par moitié.
-Les sorties sont dans `dist/firmware/<profil>-AAAA-MM-JJ-HH-MM-SS/`, en heure locale,
+Les sorties sont dans `dist/firmware/<matériel>-<keymap>[-debug]-AAAA-MM-JJ-HH-MM-SS/`, en heure locale,
 sans suffixe aléatoire. Refuser un dossier existant plutôt que l’écraser.
-Les UF2 sont nommés `splitergoll-<profil>-left.uf2` et `splitergoll-<profil>-right.uf2`.
+Les UF2 sont nommés `splitergoll-<matériel>-<keymap>[-debug]-<moitié>.uf2`.
+Les caches sont séparés selon les mêmes choix, les métadonnées indiquent
+`keymap_profile`. Les anciens artefacts ne sont ni renommés ni supprimés.
 `dongle` nommera un futur profil, il n’est pas encore compilable.
 
 `config/splitergoll.conf` contient les options communes. Les fichiers `.conf` des
 moitiés fixent leurs rôles. `EXTRA_CONF_FILE` charge le profil matériel, puis une
 configuration de moitié optionnelle. Le snippet USB logging est ajouté avec
 `west build -S zmk-usb-logging` en mode debug uniquement.
-Le profil est validé côté hôte et dans le conteneur, les caches sont séparés par profil
-et moitié. Les contrôles vérifient les délais, la mesure et le proxy gauche, ainsi
+Le profil et la keymap sont validés côté hôte et dans le conteneur. `KEYMAP_FILE`
+est transmis explicitement à CMake et contrôlé dans son cache avant export.
+Les contrôles vérifient les délais, la mesure et le proxy gauche, ainsi
 que l’absence de reset d’appairage dans tous les UF2 clavier. Les contrôles imposent
 les logs USB et leur console CDC en debug, et leur absence en normal.
-Les huit UF2 normaux/debug compilent et passent ces contrôles. Empreintes SHA-256,
-famille nRF52840 et adresses de firmware sont vérifiées. Les consoles de ces nouveaux
+Les seize UF2 normaux (quatre keymaps, deux matériels et deux moitiés) et les quatre
+UF2 `wire macos debug` / `bluetooth windows debug` compilent et passent ces contrôles.
+Les devicetrees compilés des deux moitiés sont comparés à la référence précédente :
+`multi` conserve intégralement `/keymap`, `/conditional_layers`, `/behaviors` et
+`/macros`, ainsi que l’ordre des couches. Les profils fixes ont 44 bindings et
+deux encodeurs par couche, des transitions valides et les affectations héritées
+attendues. Le pavé macOS est adapté explicitement, les autres différences sont
+le retrait de la bascule OS, du gaming hors Windows et le changement des numéros
+de couche. Ces contrôles sont réalisés avec le parseur devicetree de Zephyr,
+sans nouvelle suite de tests d’outillage. Les essais physiques restent nécessaires.
+Le partage de la base est revalidé sur les mêmes vingt firmwares : les devicetrees
+complets et l’ordre des couches sont identiques avant/après, hors numéros de phandle.
+La séparation de la sauvegarde est contrôlée de la même manière sur les vingt
+firmwares. Leurs fichiers `zephyr.dts.d` chargent une keymap active de `config/keymaps/`
+et ne référencent ni `splitergoll.keymap` ni ses helpers historiques. L’archive
+et ses cinq headers restent identiques à `4940bf8`. Son déplacement hors du shield
+est revalidé avec les deux moitiés de `wire multi` et `bluetooth macos`.
+Empreintes SHA-256, famille nRF52840 et adresses de firmware sont vérifiées.
+Les consoles de ces nouveaux
 builds restent à tester sur le matériel, sans flash implicite. Les conteneurs de
 validation ont disparu, les trois services préexistants sont conservés.
-La matrice `build.yaml` couvre les quatre UF2 normaux. Sa liste de fichiers CMake
+La matrice `build.yaml` couvre les seize UF2 normaux : deux matériels, quatre
+keymaps et deux moitiés. Sa liste de fichiers CMake
 est entre guillemets pour que le point-virgule ne soit pas interprété par le shell.
 Elle utilise `GITHUB_WORKSPACE` fourni par GitHub.
 

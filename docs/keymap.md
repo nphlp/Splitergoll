@@ -6,24 +6,62 @@ Les affectations, accents, macros et encodeurs sont conservés. Les branches
 Cette keymap constitue le profil `multi` actuel : les trois OS et le jeu dans
 un même firmware.
 
+## Choisir une keymap
+
+| Argument | Contenu | Démarrage |
+| --- | --- | --- |
+| `multi` | Keymap actuelle, trois OS et gaming, changement d’OS au clavier | Windows |
+| `windows` | Windows et les deux couches gaming | Windows |
+| `macos` | macOS, sans gaming ni bascule OS | macOS |
+| `linux` | Linux, sans gaming ni bascule OS | Linux |
+
+Par exemple : `make build wire macos` ou `make build bluetooth windows debug`.
+Sans argument de keymap, `multi` est conservé. Le matériel et la keymap sont
+deux choix indépendants.
+
+Les profils fixes gardent leur OS après redémarrage et veille profonde. Le clic
+droit affiche toujours son nom sur la base, mais ne change plus d’OS avec `L1`.
+Le pavé numérique revient à la base du même OS. Celui de macOS reprend aussi
+ses modificateurs et ses symboles. Ces nouveaux profils restent à tester au clavier.
+
 ## Organisation
 
-Tous ces fichiers sont dans `boards/shields/splitergoll/` :
+Les fichiers de sélection sont dans `config/keymaps/` :
+le build les choisit explicitement avec `KEYMAP_FILE`.
 
 | Fichier | Rôle |
 | --- | --- |
-| `splitergoll.keymap` | Affectations des touches et des encodeurs, comportements et macros |
-| `layers.h` | Numéros des couches et activation des couches conditionnelles |
-| `function.h` | Helpers pour déclarer les couches, tap dances, morphs et macros |
-| `french_layout/windows.h` | Codes et raccourcis Windows |
-| `french_layout/linux.h` | Adaptations Linux |
-| `french_layout/macos.h` | Adaptations macOS |
+| `multi.keymap` | Composition active des quinze couches, avec changement d’OS |
+| `windows.keymap`, `macos.keymap`, `linux.keymap` | Paramètres de base et couches propres à chaque OS fixe |
+| `common/base-layer.dtsi` | 44 positions de la base, partagées par les quatre keymaps |
+| `common/behaviors.dtsi` | Macros, tap dances et morphs partagés |
+| `common/fixed-layers.h` | Couches et combinaison `L1` + `L2` des profils fixes |
+| `common/multi-layers.h` | Numéros et combinaisons des couches de `multi` |
+| `common/function.h`, `common/french_layout/` | Helpers et codes de touches de la configuration active |
+
+L’archive autonome est dans [`archives/keymap-multi/`](../archives/keymap-multi/).
+Elle conserve `splitergoll.keymap`, ses cinq headers d’origine et leurs empreintes,
+sans être utilisée par les builds. Faire évoluer les profils actifs, pas cette archive.
+
+Le matériel reste dans `boards/shields/splitergoll/` :
+
+| Fichier | Rôle |
+| --- | --- |
 | `splitergoll.dtsi` et les overlays | Correspondance entre positions physiques et keymap |
+| Fichiers `.conf`, `Kconfig.*` et `Splitergoll.zmk.yml` | Rôles des moitiés et déclaration du shield |
+| `splitergoll_dongle.conf` et `.overlay` | Configuration historique à conserver pour réintégrer le dongle |
 
 Le préprocesseur assemble ces fichiers. ZMK traite ensuite les appuis et l’état
 des couches sur la centrale.
+La configuration active ne dépend plus de la keymap de sauvegarde ni de ses helpers.
 
-## Comportement actuel
+Dans VS Code, `.vscode/settings.json` affiche les commentaires en style normal
+pour garder les schémas lisibles. Cette surcharge vaut uniquement pour le dépôt
+et conserve les couleurs du thème.
+Les fragments communs `.dtsi` utilisent la coloration C++, comme des `.h`,
+sans changer leur extension ni leur rôle dans le build.
+
+## Comportement de multi
 
 La keymap comporte 44 positions et 15 couches techniques : bases Windows/Linux/macOS,
 fonctions primaires, secondaires et tertiaires avec adaptations OS, pavé numérique
@@ -40,10 +78,11 @@ les appuis simples et multiples. Les morphs changent une action selon un modific
 Le comportement Shift de `dongle` est conservé : absent de la couche tertiaire
 commune, présent sur celle de macOS. La disposition de ses accents reste identique.
 
-Les futurs profils `windows` avec jeu, `macos`, `linux` et `multi` ne sont pas encore
-implémentés. Avant de les séparer, conserver une sauvegarde versionnée de la keymap
-actuelle avec ses couches, helpers et fichiers de disposition. Le profil `multi`
-doit rester disponible comme référence complète. Le découpage sera traité plus tard.
+Les profils fixes résolvent les touches héritées des adaptations Linux/macOS.
+La base n’est écrite qu’une fois. Chaque profil fournit ses trois modificateurs,
+ses deux bindings de ponctuation et le nom d’OS affiché par le clic droit.
+Les autres couches restent explicites, avec un schéma commenté et les bindings
+gauche/droite alignés en dessous. `multi` conserve ses bascules et ses limites.
 
 ## Schémas
 
@@ -196,5 +235,7 @@ Les encodeurs gardent les mêmes actions de rotation selon la fonction active.
 Les schémas ne reproduisent pas les 15 couches techniques séparément : les couches
 OS modifient les positions nécessaires et héritent du reste.
 
-Les retours du pavé numérique et du jeu utilisent actuellement `to 0`, donc Windows.
-La conservation de l’OS choisi reste dans le [TODO](TODO.md).
+Dans `multi`, les retours du pavé numérique et du jeu utilisent toujours `to 0`,
+donc Windows. La conservation de son choix d’OS reste dans le [TODO](TODO.md).
+Les sept schémas ci-dessus documentent `multi`, les profils fixes reprennent
+l’adaptation de leur OS et les différences décrites en début de guide.

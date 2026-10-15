@@ -5,14 +5,16 @@ Ajouter `debug` au profil voulu :
 ```sh
 make build wire debug
 make build bluetooth debug
+make build wire macos debug
 ```
 
 L’option utilise le snippet natif `zmk-usb-logging` de ZMK. Elle ajoute une console
 série USB sur chaque moitié, avec les mêmes rôles, keymap et délais que le profil
 normal. En Bluetooth, l’USB sert à la console et à la charge, la saisie reste en BLE.
 
-Les caches sont séparés. Les dossiers et UF2 portent `wire-debug` ou
-`bluetooth-debug`, et `build-info.txt` indique `build_mode=debug`.
+Sans keymap explicite, ces commandes utilisent `multi`.
+Les caches sont séparés. Les dossiers et UF2 portent par exemple `wire-multi-debug`
+ou `bluetooth-macos-debug`, et `build-info.txt` indique `build_mode=debug`.
 Les compilations sans `debug` gardent les logs USB désactivés.
 
 ## Lire la console

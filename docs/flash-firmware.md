@@ -2,6 +2,8 @@
 
 Les commandes de build produisent les UF2, elles ne flashent pas le clavier.
 Choisir le profil voulu et utiliser les deux fichiers du même dossier de build.
+Le nom indique désormais le matériel et la keymap, avec `-debug` si demandé,
+par exemple `splitergoll-wire-macos-right.uf2`.
 
 ## Copier les UF2
 

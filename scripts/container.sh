@@ -1,7 +1,8 @@
 #!/bin/sh
 
 # Exécute les commandes west dans le conteneur et contrôle les dépendances.
-# Reçoit setup ou build des scripts hôtes, puis vérifie les firmwares compilés.
+# Reçoit setup ou build, le profil matériel, la keymap et le mode de diagnostic.
+# Vérifie les firmwares compilés avant leur export.
 
 set -eu
 
@@ -30,6 +31,9 @@ check_firmware() {
     side=$1
     directory=$2
     configuration="$directory/zephyr/.config"
+
+    grep -Fxq "KEYMAP_FILE:STRING=$KEYMAP_FILE" "$directory/CMakeCache.txt" ||
+        fail 'La keymap compilée ne correspond pas à celle demandée'
 
     grep -qx 'CONFIG_ZMK_SPLIT=y' "$configuration" || fail 'Split désactivé'
     grep -qx 'CONFIG_ZMK_BLE=y' "$configuration" || fail 'BLE interne désactivé'
@@ -98,7 +102,8 @@ case "${1-}" in
         ;;
     build)
         select_profile "${2-}"
-        select_build_mode "${3-normal}"
+        select_keymap "${3-multi}"
+        select_build_mode "${4-normal}"
         check_dependencies
         west zephyr-export
 
@@ -113,6 +118,7 @@ case "${1-}" in
                 -DSHIELD="splitergoll_$side" \
                 -DZMK_CONFIG="$REPOSITORY/config" \
                 -DZMK_EXTRA_MODULES="$REPOSITORY" \
+                -DKEYMAP_FILE:STRING="$KEYMAP_FILE" \
                 -DEXTRA_CONF_FILE="$FIRMWARE_CONFIGURATION"
             check_firmware "$side" "$directory"
         done

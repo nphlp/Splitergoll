@@ -20,8 +20,10 @@ la droite, et le choix d’OS revient à Windows après veille profonde.
 Le profil `wire` fonctionne aussi sur le Mac avec le clavier PC sans batterie.
 Le parcours complet de la keymap et les essais Windows restent à valider.
 
-La keymap actuelle correspond à `multi`. Les profils `windows` avec jeu, `macos`,
-`linux`, ainsi que priorité USB et `dongle`, viendront ensuite. Les branches
+La keymap historique reste disponible dans `multi`, avec changement d’OS au clavier.
+Les profils fixes `windows` avec jeu, `macos` et `linux` se choisissent au build
+et restent sur leur OS après redémarrage. Leurs essais matériels restent à faire.
+La priorité USB et `dongle` viendront ensuite. Les branches
 historiques restent intactes et les variantes minimales sont des archives.
 
 ## Démarrer
@@ -31,11 +33,14 @@ Avec Make et Docker démarré, depuis la racine du dépôt :
 ```sh
 make setup
 make build bluetooth
+make build wire macos
 ```
 
 `make build` seul affiche les profils disponibles. Pour compiler, choisir
 `make build wire` ou `make build bluetooth`.
 Ajouter `debug` pour obtenir les logs USB, par exemple `make build bluetooth debug`.
+Ajouter une keymap avant `debug` pour choisir `multi`, `windows`, `macos` ou `linux`.
+Sans ce choix, la keymap reste `multi`.
 
 Le [guide de build](build-local.md) détaille les prérequis et les fichiers UF2 obtenus.
 Ces commandes ne flashent pas le clavier.

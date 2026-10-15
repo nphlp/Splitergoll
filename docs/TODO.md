@@ -41,9 +41,15 @@
 - [ ] Tester les consoles USB sur le matériel avec les deux profils, puis revenir aux firmwares normaux.
 - [ ] Tester le réveil de toutes les touches et des encodeurs.
 - [ ] Résoudre le drapeau réseau `DOCKER_INSECURE_NO_IPTABLES_RAW` au niveau du moteur Docker, sans masquer l’avertissement.
-- [ ] Sauvegarder dans Git la keymap `multi` actuelle et ses dépendances avant tout découpage.
-- [ ] Définir les profils de keymap `windows` avec jeu, `macos`, `linux`, `multi` et leurs paramètres de build.
-- [ ] Définir si l’OS de build est fixe ou seulement initial, et conserver le choix d’OS de `multi` après veille profonde. Le retour macOS vers Windows est confirmé.
+- [x] Conserver la sauvegarde intacte de `multi` et ses dépendances dans `archives/keymap-multi/`, avec empreintes, pour le commit du découpage.
+- [x] Séparer les keymaps `windows` avec jeu, `macos`, `linux` et `multi`, choisies après le matériel dans la commande de build.
+- [x] Choisir un OS fixe pour les profils spécialisés, conserver les bascules actuelles uniquement dans `multi`.
+- [x] Partager la couche de base entre les quatre keymaps et aligner les bindings des deux moitiés sous leurs schémas.
+- [x] Garder `splitergoll.keymap` et ses helpers historiques intacts, utiliser une composition `multi` indépendante avec les composants communs actifs.
+- [x] Regrouper cette archive hors du shield et des profils actifs, retirer le doublon de sauvegarde de la configuration.
+- [x] Valider les huit paires normales et leurs affectations compilées, plus `wire macos debug` et `bluetooth windows debug` : vingt UF2 contrôlés.
+- [ ] Tester au clavier les profils fixes : touches, encodeurs, accents, retour du pavé numérique, gaming Windows et démarrage après veille.
+- [ ] Conserver le choix d’OS de `multi` après veille profonde. Le retour macOS vers Windows est confirmé.
 - [x] Ajouter le Bluetooth direct sans dongle, conservé pendant la charge USB.
 - [ ] Ajouter les profils priorité USB et dongle.
 - [x] Documenter le [flash](flash-firmware.md) et l’[appairage](appairage-bluetooth.md) des profils actuels.

@@ -36,12 +36,25 @@ select_profile() {
     test -r "$PROFILE_CONFIGURATION" || fail "Configuration du profil absente : $PROFILE"
 }
 
+# Valide la keymap choisie indépendamment du profil matériel.
+select_keymap() {
+    KEYMAP_PROFILE=$1
+
+    case "$KEYMAP_PROFILE" in
+        multi|windows|macos|linux) ;;
+        *) fail "Keymap inconnue : $KEYMAP_PROFILE. Choisis multi, windows, macos ou linux" ;;
+    esac
+
+    KEYMAP_FILE="$REPOSITORY/config/keymaps/$KEYMAP_PROFILE.keymap"
+    test -r "$KEYMAP_FILE" || fail "Fichier de keymap absent : $KEYMAP_PROFILE"
+}
+
 # Valide le mode de compilation et distingue les caches et artefacts de diagnostic.
 select_build_mode() {
     BUILD_MODE=$1
     case "$BUILD_MODE" in
-        normal) BUILD_VARIANT=$PROFILE ;;
-        debug) BUILD_VARIANT="$PROFILE-debug" ;;
+        normal) BUILD_VARIANT="$PROFILE-$KEYMAP_PROFILE" ;;
+        debug) BUILD_VARIANT="$PROFILE-$KEYMAP_PROFILE-debug" ;;
         *) fail 'Mode de compilation inconnu : utilise l’argument debug ou aucun argument' ;;
     esac
 }
@@ -140,5 +153,5 @@ run_container() {
         --mount "type=bind,source=$workspace,target=$CONTAINER_WORKSPACE" \
         --workdir "$CONTAINER_WORKSPACE" \
         --entrypoint /bin/sh "$BUILD_IMAGE" \
-        "$CONTAINER_SOURCE/scripts/container.sh" "$action" "${PROFILE-}" "${BUILD_MODE-normal}"
+        "$CONTAINER_SOURCE/scripts/container.sh" "$action" "${PROFILE-}" "${KEYMAP_PROFILE-multi}" "${BUILD_MODE-normal}"
 }

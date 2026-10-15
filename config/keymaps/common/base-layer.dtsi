@@ -1,0 +1,32 @@
+// Couche de base commune à multi, Windows, macOS et Linux.
+// La keymap appelante fournit BASE_LAYER et les six bindings BASE_* du schéma.
+// Les paramètres sont retirés après inclusion pour ne pas affecter les autres couches.
+
+BASE_LAYER(
+// ┏━━━━━━━━━━━┳━━━━━━━━━━━┳━━━━━━━━━━━┳━━━━━━━━━━━┳━━━━━━━━━━━┳━━━━━━━━━━━┓   ┏━━━━━━━━━━━┳━━━━━━━━━━━┳━━━━━━━━━━━┳━━━━━━━━━━━┳━━━━━━━━━━━┳━━━━━━━━━━━┓
+// ┃    ESC    ┃     A     ┃     Z     ┃     E     ┃     R     ┃     T     ┃   ┃     Y     ┃     U     ┃     I     ┃     O     ┃     P     ┃   BSPACE  ┃
+// ┣━━━━━━━━━━━╋━━━━━━━━━━━╋━━━━━━━━━━━╋━━━━━━━━━━━╋━━━━━━━━━━━╋━━━━━━━━━━━┫   ┣━━━━━━━━━━━╋━━━━━━━━━━━╋━━━━━━━━━━━╋━━━━━━━━━━━╋━━━━━━━━━━━╋━━━━━━━━━━━┫
+// ┃    TAB    ┃     Q     ┃     S     ┃     D     ┃     F     ┃     G     ┃   ┃     H     ┃     J     ┃     K     ┃     L     ┃     M     ┃    DEL    ┃
+// ┗━━━━━━━━━━━╋━━━━━━━━━━━╋━━━━━━━━━━━╋━━━━━━━━━━━╋━━━━━━━━━━━╋━━━━━━━━━━━┫   ┣━━━━━━━━━━━╋━━━━━━━━━━━╋━━━━━━━━━━━╋━━━━━━━━━━━╋━━━━━━━━━━━╋━━━━━━━━━━━┛
+//             ┃     W     ┃     X     ┃     C     ┃     V     ┃     B     ┃   ┃     N     ┃   , ou ?  ┃  BASE_DOT ┃   ; ou /  ┃ BASE_BSLS ┃
+// ╭───────╮   ┗━━━━━━━━━━━┻━━━━━━━━━━━┻━━━━━━━━━━━┻━━━━━━━━━━━┻━━━━━━━━━━━┛   ┗━━━━━━━━━━━┻━━━━━━━━━━━┻━━━━━━━━━━━┻━━━━━━━━━━━┻━━━━━━━━━━━┛   ╭───────╮
+// │  VOL- │ ┏━━━━━━━━━━━┓ ┏━━━━━━━━━━━┳━━━━━━━━━━━┳━━━━━━━━━━━┳━━━━━━━━━━━┓   ┏━━━━━━━━━━━┳━━━━━━━━━━━┳━━━━━━━━━━━┳━━━━━━━━━━━┓ ┏━━━━━━━━━━━┓ │  LEFT │
+// │  VOL+ │ ┃ Play→Mute ┃ ┃ BASE_CTRL ┃  BASE_ALT ┃     L2    ┃   SPACE   ┃   ┃ SHIFT+LOCK┃     L1    ┃   ENTER   ┃  BASE_GUI ┃ ┃  BASE_OS  ┃ │ RIGHT │
+// ╰───────╯ ┗━━━━━━━━━━━┛ ┗━━━━━━━━━━━┻━━━━━━━━━━━┻━━━━━━━━━━━┻━━━━━━━━━━━┛   ┗━━━━━━━━━━━┻━━━━━━━━━━━┻━━━━━━━━━━━┻━━━━━━━━━━━┛ ┗━━━━━━━━━━━┛ ╰───────╯
+    &kp ESC     &kp _A      &kp _Z      &kp _E      &kp _R      &kp _T
+    &kp TAB     &kp _Q      &kp _S      &kp _D      &kp _F      &kp _G
+                &kp _W      &kp _X      &kp _C      &kp _V      &kp _B
+            &mt C_MUTE C_PP BASE_CTRL   BASE_ALT    &secPri     &kp SPACE
+                                                                                &kp _Y      &kp _U      &kp _I      &kp _O      &kp _P      &kp BSPC
+                                                                                &kp _H      &kp _J      &kp _K      &kp _L      &kp _M      &kp DEL
+                                                                                &kp _N      &comm_qmark BASE_DOT    &semi_slsh  BASE_BSLS
+                                                                                &shift_lock &priSec     &kp ENTER   BASE_GUI    BASE_OS
+, &inc_dec_kp C_VOL_DN C_VOL_UP                                                 &inc_dec_kp LEFT RIGHT)
+
+#undef BASE_LAYER
+#undef BASE_CTRL
+#undef BASE_ALT
+#undef BASE_DOT
+#undef BASE_BSLS
+#undef BASE_GUI
+#undef BASE_OS

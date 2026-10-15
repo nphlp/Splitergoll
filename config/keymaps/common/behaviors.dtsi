@@ -1,0 +1,124 @@
+// Comportements et codes de touches partagés par les quatre keymaps.
+#include <behaviors.dtsi>
+#include <dt-bindings/zmk/bt.h>
+#include <dt-bindings/zmk/keys.h>
+#include <dt-bindings/zmk/mouse.h>
+#include "function.h"
+#include "french_layout/windows.h"
+#include "french_layout/linux.h"
+#include "french_layout/macos.h"
+
+
+// Alias et ponctuation de base.
+#define no___ &none
+#define trs__  &trans
+MORPH(comm_qmark, LSFT, &kp _COMMA, &kp _QMARK)        // | ,         | ?          |
+MORPH(dot_excl, LSFT, &kp _DOT, &kp _EXCL)             // | .         | !          |
+MORPH(semi_slsh, LSFT, &kp _SEMI, &kp _SLASH)          // | ;         | /          |
+MORPH(colon_bsls, LSFT, &kp _COLON, &kp _BSLASH)       // | :         | backslash  |
+MORPH(shift_unlock, LSFT, &kp LSHIFT, &kt LSHIFT)      // | Shift     | Shft unlck |
+TAP_DANCE_2(shift_lock, &shift_unlock, &kt LSHIFT)             // | Shift     | Shft lock |           |
+TAP_DANCE_3(priSec, &mo PRIMARY, &mo SECONDARY, &to NUMPAD)    // | Primary   | Secondary |Numpad lock|
+TAP_DANCE_2(secPri, &mo SECONDARY, &mo PRIMARY)                // | Secondary | Primary   |           |
+
+// Ponctuation macOS.
+MORPH(m_dot_excl, LSFT, &kp _DOT, &kp M_EXCL)               // | .         | !          |
+MORPH(m_colon_bsls, LSFT, &kp _COLON, &kp M_BSLASH)         // | :         | backslash  |
+
+// Symboles de programmation.
+MORPH(quot, LSFT, &kp _QUOT, &kp _QUOT)     // | "         | "          |
+MORPH(squo, LSFT, &kp _SQUO, &kp _SQUO)     // | '         | '          |
+MORPH(lpar, LSFT, &kp _LPAR, &kp _LPAR)     // | (         | (          |
+MORPH(rpar, LSFT, &kp _RPAR, &kp _RPAR)     // | )         | )          |
+MORPH(lacc, LSFT, &kp _LACC, &kp _LACC)     // | {         | {          |
+MORPH(racc, LSFT, &kp _RACC, &kp _RACC)     // | }         | }          |
+MORPH(lcro, LSFT, &kp _LCRO, &kp _LCRO)     // | [         | [          |
+MORPH(rcro, LSFT, &kp _RCRO, &kp _RCRO)     // | ]         | ]          |
+MORPH(lche, LSFT, &kp _LCHE, &kp _LCHE)     // | <         | <          |
+MORPH(rche, LSFT, &kp _RCHE, &kp _RCHE)     // | >         | >          |
+MORPH(hash, LSFT, &kp _HASH, &kp _HASH)     // | #         | #          |
+MORPH(and, LSFT, &kp _AND, &kp _AND)        // | &         | &          |
+MORPH(pipe, LSFT, &kp _PIPE, &kp _PIPE)     // | |         | |          |
+MORPH(at, LSFT, &kp _AT, &kp _AT)           // | @         | @          |
+
+// Raccourcis de navigation.
+#define CLEFT LC(LEFT)
+#define CRIGHT LC(RIGHT)
+#define WCLEFT LG(LC(LEFT))
+#define WCRIGHT LG(LC(RIGHT))
+#define WCNEW LG(LC(D))
+#define WCSHW LG(TAB)
+#define WCDEL LG(LC(F4))
+
+// Noms affichés par les clics d’encodeur.
+MACRO_WRITE(win, &kp LS(_W) &kp _I &kp _N &kp _D &kp _O &kp _W &kp _S, &kp BSPC &kp BSPC &kp BSPC &kp BSPC &kp BSPC &kp BSPC &kp BSPC)
+MACRO_WRITE(linux, &kp LS(_L) &kp _I &kp _N &kp _U &kp _X, &kp BSPC &kp BSPC &kp BSPC &kp BSPC &kp BSPC)
+MACRO_WRITE(mac, &kp LS(_M) &kp _A &kp _C &kp LS(_O) &kp LS(_S), &kp BSPC &kp BSPC &kp BSPC &kp BSPC &kp BSPC)
+
+// Opérateurs et nombres.
+MORPH(plus, LSFT, &kp _PLUS, &kp _PLUS)     // | +         | +          |
+MORPH(mins, LSFT, &kp _MINS, &kp _MINS)     // | -         | -          |
+MORPH(astr, LSFT, &kp _ASTR, &kp _ASTR)     // | *         | *          |
+MORPH(divi, LSFT, &kp _DIVI, &kp _DIVI)     // | /         | /          |
+MORPH(eqal, LSFT, &kp _EQAL, &kp _EQAL)     // | =         | =          |
+MORPH(udsc, LSFT, &kp _UDSC, &kp _UDSC)     // | _         | _          |
+MORPH(dolr, LSFT, &kp _DOLR, &kp _DOLR)     // | $         | $          |
+MORPH(perc, LSFT, &kp _PERC, &kp _PERC)     // | %         | %          |
+MORPH(n_dt, LSFT, &kp KP_DOT, &kp KP_DOT)   // | .         | .          |
+MORPH(n_0, LSFT, &kp _0, &kp _0)            // | 0         | 0          |
+MORPH(n_1, LSFT, &kp _1, &kp _1)            // | 1         | 1          |
+MORPH(n_2, LSFT, &kp _2, &kp _2)            // | 2         | 2          |
+MORPH(n_3, LSFT, &kp _3, &kp _3)            // | 3         | 3          |
+MORPH(n_4, LSFT, &kp _4, &kp _4)            // | 4         | 4          |
+MORPH(n_5, LSFT, &kp _5, &kp _5)            // | 5         | 5          |
+MORPH(n_6, LSFT, &kp _6, &kp _6)            // | 6         | 6          |
+MORPH(n_7, LSFT, &kp _7, &kp _7)            // | 7         | 7          |
+MORPH(n_8, LSFT, &kp _8, &kp _8)            // | 8         | 8          |
+MORPH(n_9, LSFT, &kp _9, &kp _9)            // | 9         | 9          |
+
+// Accents et symboles communs.
+TAP_DANCE_3(ag_agu_ac, &kp _AG,  &fr_ac, &fr_agu)        // | à         | â          | À          |
+TAP_DANCE_2(cc_ccu,    &kp _CC,   &fr_ccu)               // | ç         | Ç          |            |
+TAP_DANCE_2(ea_eau,    &kp _EA,  &fr_eau)                // | é         | É          |            |
+TAP_DANCE_2(ec_ecu,    &fr_ec,  &fr_ecu)                 // | ê         | Ê          |            |
+TAP_DANCE_2(eg_et,     &kp _EG,   &fr_et)                // | è         | ë          |            |
+TAP_DANCE_3(ug_uc,     &kp _UG,   &fr_uc,   &kp _MU)     // | ù         | û          | μ          |
+TAP_DANCE_2(ic_it,     &fr_ic,   &fr_it)                 // | î         | ï          |            |
+TAP_DANCE_2(oc_ocu,    &fr_oc,   &fr_ocu)                // | ô         | Ô          |            |
+TAP_DANCE_2(oe_oeu,    &fr_oe,   &fr_oeu)                // | œ         | Œ          |            |
+TAP_DANCE_2(eu_li,    &kp _EURO, &kp _PND)               // | €         | £          |            |
+TAP_DANCE_3(nb_2_3,   &kp _NUMB, &kp _EX2, &fr_ex3)      // | °         | ²          | ³          |
+
+// Adaptations Linux.
+TAP_DANCE_3(l_ag_agu_ac,  &kp _AG,   &fr_ac, &kp L_AGU)  // | à         | â          | À          |
+TAP_DANCE_2(l_ea_eau,     &kp _EA,   &kp L_EAU)          // | é         | É          |            |
+TAP_DANCE_2(l_cc_ccu,   &kp _CC,   &kp L_CCU)            // | ç         | Ç          |            |
+TAP_DANCE_2(l_oe_oeu,   &kp L_OE,  &kp L_OEU)            // | œ         | Œ          |            |
+TAP_DANCE_3(l_nb_2_3,   &kp _NUMB, &kp _EX2, &kp L_EX3)  // | °         | ²          | ³          |
+
+// Adaptations macOS.
+TAP_DANCE_2(m_eu_li,     &kp M_EURO, &kp M_PND          ) // | €         | £          |            |
+TAP_DANCE_3(m_ag_agu_ac, &kp _AG,    &fr_ac,   &m_agu   ) // | à         | â          | À          |
+TAP_DANCE_2(m_cc_ccu,    &kp _CC,    &kp M_CCU          ) // | ç         | Ç          |            |
+TAP_DANCE_2(m_ea_eau,    &kp _EA,    &m_eau             ) // | é         | É          |            |
+TAP_DANCE_3(m_ug_uc,     &kp _UG,    &fr_uc,   &kp M_MU ) // | ù         | û          | μ          |
+TAP_DANCE_2(m_oe_oeu,    &kp M_OE,   &kp M_OEU          ) // | œ         | Œ          |            |
+
+// Accents morts.
+MORPH(grv, LSFT, &kp _GRV, &kp _GRV)        // | `         | `          |
+MORPH(cir, LSFT, &kp _CIR, &kp _CIR)        // | ^         | ^          |
+MORPH(tre, LSFT, &kp _TRE, &kp _TRE)        // | ¨         | ¨          |
+MORPH(tld, LSFT, &kp _TLD, &kp _TLD)        // | ~         | ~          |
+
+// Raccourcis AeroSpace de macOS.
+MORPH(MF_U, LSFT, &kp F_U, &kp M_U)         // | Focus Up    | Move Up    |
+MORPH(MF_D, LSFT, &kp F_D, &kp M_D)         // | Focus Down  | Move Down  |
+MORPH(MF_L, LSFT, &kp F_L, &kp M_L)         // | Focus Left  | Move Left  |
+MORPH(MF_R, LSFT, &kp F_R, &kp M_R)         // | Focus Right | Move Right |
+MORPH(MF_1, LSFT, &kp F_1, &kp M_1)         // | Focus 1     | Move 1     |
+MORPH(MF_2, LSFT, &kp F_2, &kp M_2)         // | Focus 2     | Move 2     |
+MORPH(MF_3, LSFT, &kp F_3, &kp M_3)         // | Focus 3     | Move 3     |
+
+// Noms des modes pavé numérique et jeu.
+MACRO_WRITE(numpad, &kp LS(_N) &kp _U &kp _M &kp _P &kp _A &kp _D, &kp BSPC &kp BSPC &kp BSPC &kp BSPC &kp BSPC &kp BSPC)
+MACRO_WRITE(gaming, &kp LS(_G) &kp _A &kp _M &kp _I &kp _N &kp _G, &kp BSPC &kp BSPC &kp BSPC &kp BSPC &kp BSPC &kp BSPC)

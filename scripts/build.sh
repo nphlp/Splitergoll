@@ -1,7 +1,8 @@
 #!/bin/bash
 
 # Compile les deux moitiés dans Docker et exporte les firmwares UF2 dans dist/.
-# Sans argument, affiche les profils disponibles. Un argument choisit le profil à compiler.
+# Sans argument, affiche les profils disponibles. Reçoit le matériel, puis la keymap facultative.
+# Sans keymap explicite, conserve multi et ses bascules OS.
 # L’argument debug ajoute les logs USB au profil choisi.
 # Appelé par make build, sans flasher le clavier.
 
@@ -10,12 +11,9 @@ set -eu
 . "$(dirname "$0")/build-common.sh"
 . "$(dirname "$0")/build-logs.sh"
 
-[ "$#" -le 2 ] || fail 'Utilise make build wire ou bluetooth, avec debug en option'
+[ "$#" -le 3 ] || fail 'Utilise make build <wire|bluetooth> [multi|windows|macos|linux] [debug]'
 if [ "$#" -eq 0 ]; then
     exec bash "$SCRIPT_DIRECTORY/help.sh" build
-fi
-if [ "$#" -eq 2 ] && [ "$2" != debug ]; then
-    fail 'Le seul second argument accepté est debug'
 fi
 
 # Exporte une paire complète et ses empreintes seulement après les deux compilations réussies.
@@ -30,17 +28,18 @@ export_firmware() {
         cp "$workspace/build/$name/zephyr/zmk.uf2" "$destination/$name.uf2"
     done
 
-    printf 'profile=%s\nhardware_profile=%s\nbuild_mode=%s\nvariant=%s\nenvironment=%s\nimage=%s\n' \
-        "$PROFILE" "$HARDWARE_PROFILE" "$BUILD_MODE" "$BUILD_VARIANT" "$identity" "$BUILD_IMAGE" > "$destination/build-info.txt"
+    printf 'profile=%s\nhardware_profile=%s\nkeymap_profile=%s\nbuild_mode=%s\nvariant=%s\nenvironment=%s\nimage=%s\n' \
+        "$PROFILE" "$HARDWARE_PROFILE" "$KEYMAP_PROFILE" "$BUILD_MODE" "$BUILD_VARIANT" "$identity" "$BUILD_IMAGE" > "$destination/build-info.txt"
 
     (cd "$destination" && shasum -a 256 ./*.uf2 > SHA256SUMS)
     printf '%s\n' "$destination" > "$RUN_LOG_DIRECTORY/artifacts-path"
 }
 
-# Compile et exporte le profil reçu en mode normal ou debug, avec son propre journal.
+# Compile le matériel et la keymap reçus, en mode normal ou debug, avec leur propre journal.
 build_profile() {
     select_profile "$1"
-    select_build_mode "$2"
+    select_keymap "$2"
+    select_build_mode "$3"
     start_logging build 4
     printf 'Profil : %s\n' "$BUILD_VARIANT"
     if [ "$BUILD_MODE" = debug ]; then
@@ -55,4 +54,20 @@ build_profile() {
     printf 'Firmwares : %s\n' "$(cat "$RUN_LOG_DIRECTORY/artifacts-path")"
 }
 
-build_profile "$1" "${2-normal}"
+profile=$1
+shift
+keymap=multi
+mode=normal
+
+if [ "$#" -gt 0 ] && [ "$1" != debug ]; then
+    keymap=$1
+    shift
+fi
+
+if [ "$#" -gt 0 ]; then
+    [ "$#" -eq 1 ] && [ "$1" = debug ] ||
+        fail 'L’argument debug doit apparaître une seule fois, après le matériel et la keymap'
+    mode=debug
+fi
+
+build_profile "$profile" "$keymap" "$mode"

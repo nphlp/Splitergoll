@@ -24,11 +24,13 @@ et sans USB. Cette configuration d’essai est désormais retirée :
   Réveiller la gauche permet à la droite de se reconnecter et de fonctionner.
 - Le choix macOS revient à Windows après la veille profonde. Le réveil redémarre
   le firmware, dont l’état des couches est en mémoire. La sélection d’OS n’est pas
-  sauvegardée et Windows est la base de démarrage actuelle.
+  sauvegardée et Windows est la base de démarrage de `multi`.
 
 Les essais portent sur des touches représentatives, pas sur toutes les touches
 et les encodeurs. La conservation de l’OS et une reprise depuis n’importe quelle
-moitié restent des améliorations à décider.
+moitié restent des améliorations à décider pour `multi`.
+Les profils fixes `macos`, `linux` et `windows` démarrent avec leur propre OS,
+qui reste la base après réveil. Leur validation matérielle reste à faire.
 
 ## Essai au chrono
 
@@ -57,7 +59,7 @@ sans firmware de reset. Cela rétablit l’inactivité à 30 secondes, la veille
 15 minutes et la mesure batterie à 60 secondes. Les appairages sont conservés.
 Le retour à ces deux firmwares est confirmé sur le clavier Mac. Les USB restent
 branchés pour charger, ce qui bloque la veille profonde pendant la charge.
-La première frappe de réveil et le retour à Windows restent les mêmes après
-une veille profonde, seul son délai change.
+Dans `multi`, la première frappe de réveil et le retour à Windows restent les mêmes
+après une veille profonde, seul son délai change.
 
 Pour flasher ou redémarrer le contrôleur : [flash du firmware](flash-firmware.md).
