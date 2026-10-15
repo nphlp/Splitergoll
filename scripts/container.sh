@@ -102,7 +102,7 @@ case "${1-}" in
         ;;
     build)
         select_profile "${2-}"
-        select_keymap "${3-multi}"
+        select_keymap "${3-}"
         select_build_mode "${4-normal}"
         check_dependencies
         west zephyr-export

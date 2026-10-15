@@ -19,31 +19,41 @@ show_command() {
     printf '  %s%-38s%s %s\n' "$LOG_SUCCESS" "$1" "$LOG_RESET" "$2"
 }
 
-if [ "${1-}" = build ]; then
-    printf '\n%sProfils firmware disponibles%s\n\n' "$LOG_HEADING" "$LOG_RESET"
-    show_command 'make build wire' 'USB vers l’ordinateur'
-    show_command 'make build bluetooth' 'Bluetooth direct, y compris pendant la charge'
-    show_command 'make build wire debug' 'Profil USB avec logs USB sur les deux moitiés'
-    show_command 'make build bluetooth debug' 'Profil Bluetooth avec logs USB sur les deux moitiés'
-    printf '\n%sKeymaps%s\n' "$LOG_HEADING" "$LOG_RESET"
-    printf '%s\n' '  multi (par défaut) : trois OS avec changement au clavier'
-    printf '%s\n' '  windows : Windows avec gaming'
-    printf '%s\n' '  macos / linux : OS fixe, sans gaming ni changement d’OS'
-    printf '\n'
+# Explique les deux choix obligatoires, l’option debug et des commandes complètes.
+show_build_help() {
+    printf '\n%sCompiler un firmware%s\n\n' "$LOG_HEADING" "$LOG_RESET"
+    printf '  %smake build <matériel> <keymap> [debug]%s\n' "$LOG_SUCCESS" "$LOG_RESET"
+    printf '%s\n' '  Matériel puis keymap obligatoires, aucun choix par défaut.'
+
+    printf '\n%s1. Matériel (obligatoire)%s\n' "$LOG_HEADING" "$LOG_RESET"
+    show_command 'wire' 'USB vers l’ordinateur, BLE entre les moitiés'
+    show_command 'bluetooth' 'Bluetooth direct, y compris pendant la charge USB'
+
+    printf '\n%s2. Keymap (obligatoire)%s\n' "$LOG_HEADING" "$LOG_RESET"
+    show_command 'multi' 'Windows, macOS et Linux, avec changement au clavier et gaming'
+    show_command 'windows' 'Windows avec gaming inclus'
+    show_command 'macos' 'macOS fixe, sans gaming'
+    show_command 'linux' 'Linux fixe, sans gaming'
+
+    printf '\n%sOption finale%s\n' "$LOG_HEADING" "$LOG_RESET"
+    show_command 'debug' 'Ajouter les logs USB sur les deux moitiés'
+
+    printf '\n%sExemples%s\n' "$LOG_HEADING" "$LOG_RESET"
     show_command 'make build wire macos' 'USB avec keymap macOS fixe'
+    show_command 'make build bluetooth multi' 'Bluetooth avec changement d’OS au clavier'
     show_command 'make build bluetooth windows debug' 'Bluetooth, Windows avec gaming et logs USB'
     printf '\n'
+}
+
+if [ "${1-}" = build ]; then
+    show_build_help
     exit 0
 fi
 
 printf '\n%sSplitergoll%s\n\n' "$LOG_HEADING" "$LOG_RESET"
-printf '%sFirmware%s\n' "$LOG_HEADING" "$LOG_RESET"
 show_command 'make setup' 'Préparer les sources et le build local'
-show_command 'make build' 'Afficher les profils firmware disponibles'
-show_command 'make build wire' 'Compiler le profil USB'
-show_command 'make build bluetooth' 'Compiler le profil Bluetooth direct'
-show_command 'make build <profil> debug' 'Ajouter les logs USB pour le diagnostic'
-show_command 'make build <profil> <keymap> [debug]' 'multi, windows avec gaming, macos ou linux'
+show_command 'make build' 'Afficher les choix de compilation'
+show_build_help
 
 printf '\n%sBatteries sur macOS%s\n' "$LOG_HEADING" "$LOG_RESET"
 show_command 'make bat' 'Lire les deux derniers niveaux annoncés'

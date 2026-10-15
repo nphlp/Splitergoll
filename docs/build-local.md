@@ -9,6 +9,9 @@ les fichiers UF2. GitHub Actions n’est pas nécessaire.
 Prérequis : Make, Bash, Docker démarré, `shasum` et un terminal macOS/Linux.
 Sur Windows, utiliser WSL avec Docker. La validation Windows reste à faire.
 
+Commande : `make build <matériel> <keymap> [debug]`.
+Le matériel et la keymap sont obligatoires, dans cet ordre. Aucun choix par défaut.
+
 ```sh
 make setup
 make build wire macos
@@ -16,15 +19,14 @@ make build bluetooth windows debug
 ```
 
 - `setup` télécharge l’image et les sources figées.
-- `build wire` compile les deux moitiés pour une sortie USB à gauche.
-- `build bluetooth` compile les deux moitiés pour une sortie Bluetooth directe.
-- Ajouter `multi`, `windows`, `macos` ou `linux` choisit la keymap. Sans cet argument, conserver `multi`.
+- Le matériel `wire` choisit une sortie USB à gauche, `bluetooth` une sortie Bluetooth directe.
+- La keymap doit être `multi`, `windows`, `macos` ou `linux`.
 - `windows` comprend le gaming. Les profils macOS et Linux restent sur leur OS.
-- `build wire debug` et `build bluetooth debug` ajoutent les logs USB, voir [logs-usb.md](logs-usb.md).
-- `build` sans profil affiche les profils disponibles, sans compilation ni Docker.
+- Ajouter `debug` après la keymap active les logs USB, voir [logs-usb.md](logs-usb.md).
+- `build` seul affiche l’aide, sans compilation ni Docker. Un choix incomplet ou invalide échoue avant Docker.
 - `stop` arrête les conteneurs de build de ce checkout, en conservant les fichiers.
 - `clear` les arrête puis supprime `.local/` et `dist/` pour toutes les versions.
-- `make -n build bluetooth` affiche les commandes sans les exécuter.
+- `make -n build bluetooth multi` affiche les commandes sans les exécuter.
 - `make help` affiche l’aide colorée. Les commandes batterie sont décrites dans [batteries.md](batteries.md).
 
 Après le premier `setup`, choisir le profil à compiler tant que les versions restent les mêmes.
@@ -81,7 +83,7 @@ Les mots après la commande sont ses arguments, vérifiés dans le script :
 - `scripts/clear.sh` : arrêt et suppression des fichiers locaux générés.
 
 Les chemins locaux sont calculés depuis le dépôt. Aucun `.env` n’est nécessaire.
-`make build bluetooth` appelle `build.sh bluetooth`, `make bat avg` appelle
+`make build bluetooth multi` appelle `build.sh bluetooth multi`, `make bat avg` appelle
 `batteries.sh avg`. Les scripts refusent les arguments qu’ils ne prennent pas en charge.
 
 ## Profils matériels
@@ -103,7 +105,7 @@ la centrale seulement. L’option `debug` ajoute le snippet natif `zmk-usb-loggi
 au même profil. Elle a ses propres caches et sorties, sans changer les délais.
 `KEYMAP_FILE` désigne `config/keymaps/<keymap>.keymap` dans ZMK. La commande vérifie
 que CMake a bien utilisé ce fichier avant d’exporter les UF2.
-`make build` seul affiche l’aide. Chaque compilation demande un profil explicite.
+`make build` seul affiche l’aide. Chaque compilation demande un matériel et une keymap explicites.
 `dongle` sera ajouté plus tard.
 
 ## Résultat

@@ -1,8 +1,7 @@
 #!/bin/bash
 
 # Compile les deux moitiés dans Docker et exporte les firmwares UF2 dans dist/.
-# Sans argument, affiche les profils disponibles. Reçoit le matériel, puis la keymap facultative.
-# Sans keymap explicite, conserve multi et ses bascules OS.
+# Sans argument, affiche l’aide. Le matériel et la keymap sont obligatoires, dans cet ordre.
 # L’argument debug ajoute les logs USB au profil choisi.
 # Appelé par make build, sans flasher le clavier.
 
@@ -11,9 +10,13 @@ set -eu
 . "$(dirname "$0")/build-common.sh"
 . "$(dirname "$0")/build-logs.sh"
 
-[ "$#" -le 3 ] || fail 'Utilise make build <wire|bluetooth> [multi|windows|macos|linux] [debug]'
 if [ "$#" -eq 0 ]; then
     exec bash "$SCRIPT_DIRECTORY/help.sh" build
+fi
+
+if [ "$#" -lt 2 ] || [ "$#" -gt 3 ]; then
+    bash "$SCRIPT_DIRECTORY/help.sh" build >&2
+    fail 'Précise le matériel puis la keymap : make build <wire|bluetooth> <multi|windows|macos|linux> [debug]'
 fi
 
 # Exporte une paire complète et ses empreintes seulement après les deux compilations réussies.
@@ -55,17 +58,11 @@ build_profile() {
 }
 
 profile=$1
-shift
-keymap=multi
+keymap=$2
 mode=normal
 
-if [ "$#" -gt 0 ] && [ "$1" != debug ]; then
-    keymap=$1
-    shift
-fi
-
-if [ "$#" -gt 0 ]; then
-    [ "$#" -eq 1 ] && [ "$1" = debug ] ||
+if [ "$#" -eq 3 ]; then
+    [ "$3" = debug ] ||
         fail 'L’argument debug doit apparaître une seule fois, après le matériel et la keymap'
     mode=debug
 fi

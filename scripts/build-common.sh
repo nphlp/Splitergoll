@@ -42,6 +42,7 @@ select_keymap() {
 
     case "$KEYMAP_PROFILE" in
         multi|windows|macos|linux) ;;
+        '') fail 'Keymap obligatoire : choisis multi, windows, macos ou linux' ;;
         *) fail "Keymap inconnue : $KEYMAP_PROFILE. Choisis multi, windows, macos ou linux" ;;
     esac
 
@@ -153,5 +154,5 @@ run_container() {
         --mount "type=bind,source=$workspace,target=$CONTAINER_WORKSPACE" \
         --workdir "$CONTAINER_WORKSPACE" \
         --entrypoint /bin/sh "$BUILD_IMAGE" \
-        "$CONTAINER_SOURCE/scripts/container.sh" "$action" "${PROFILE-}" "${KEYMAP_PROFILE-multi}" "${BUILD_MODE-normal}"
+        "$CONTAINER_SOURCE/scripts/container.sh" "$action" "${PROFILE-}" "${KEYMAP_PROFILE-}" "${BUILD_MODE-normal}"
 }

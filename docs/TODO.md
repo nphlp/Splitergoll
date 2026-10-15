@@ -25,7 +25,7 @@
 - [ ] Valider réellement l’arrêt d’un build avec `stop`.
 - [x] Ajouter des logs en direct repliables, les journaux complets et les durées du setup/build.
 - [x] Nommer les sorties par profil et date lisible : `wire-AAAA-MM-JJ-HH-MM-SS`.
-- [x] Choisir le profil avec `make build wire` ou `make build bluetooth`, conserver une keymap unique.
+- [x] Choisir explicitement le matériel et la keymap, par exemple `make build wire multi` ou `make build bluetooth macos`.
 - [x] Faire afficher les profils disponibles par `make build`, sans compilation implicite.
 - [x] Compiler et contrôler les quatre UF2 avec des caches séparés par profil et moitié.
 - [ ] Préparer la montée de version ZMK/Zephyr, adapter les noms de cartes et revalider les deux firmwares.
@@ -43,6 +43,7 @@
 - [ ] Résoudre le drapeau réseau `DOCKER_INSECURE_NO_IPTABLES_RAW` au niveau du moteur Docker, sans masquer l’avertissement.
 - [x] Conserver la sauvegarde intacte de `multi` et ses dépendances dans `archives/keymap-multi/`, avec empreintes, pour le commit du découpage.
 - [x] Séparer les keymaps `windows` avec jeu, `macos`, `linux` et `multi`, choisies après le matériel dans la commande de build.
+- [x] Rendre le matériel et la keymap obligatoires, sans sélection implicite, et expliquer leur ordre dans l’aide.
 - [x] Choisir un OS fixe pour les profils spécialisés, conserver les bascules actuelles uniquement dans `multi`.
 - [x] Partager la couche de base entre les quatre keymaps et aligner les bindings des deux moitiés sous leurs schémas.
 - [x] Garder `splitergoll.keymap` et ses helpers historiques intacts, utiliser une composition `multi` indépendante avec les composants communs actifs.

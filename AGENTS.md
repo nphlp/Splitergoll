@@ -183,12 +183,15 @@ Le mécanisme bootloader déprécié reste nécessaire à ZMK 0.3.0 : son rempla
 demande l’API de rétention, l’adaptation du comportement reset et des codes UF2.
 Ne pas désactiver `NRF_STORE_REBOOT_TYPE_GPREGRET` pour faire disparaître le warning.
 
-Le Makefile expose `help`, `setup`, `build wire`, `build bluetooth`, `bat`, `bat avg`,
-`stop` et `clear`, délégués aux scripts dédiés. Après le matériel, une keymap
-facultative choisit `multi` (défaut), `windows`, `macos` ou `linux`. L’argument
-final `debug` active les logs USB, sans cibles Make supplémentaires.
-`make build wire debug` reste valide et choisit `multi`. Les arguments sont
-validés avant Docker. `setup` ne dépend pas de la keymap.
+Le Makefile expose `help`, `setup`, `build <matériel> <keymap> [debug]`, `bat`, `bat avg`,
+`stop` et `clear`, délégués aux scripts dédiés. Le matériel (`wire` ou `bluetooth`)
+puis la keymap (`multi`, `windows`, `macos` ou `linux`) sont obligatoires, sans défaut.
+Windows inclut toujours le gaming. Seul l’argument final `debug` est facultatif
+et active les logs USB, sans cibles Make supplémentaires.
+`make build wire` et `make build wire debug` échouent avant Docker.
+Les arguments sont validés avant les journaux et les actions Docker.
+Ni le passage au conteneur ni son point d’entrée ne remplacent une keymap absente
+par `multi`. `setup` ne dépend pas de la keymap.
 Chaque commande a sa propre cible et son appel de script dans le Makefile.
 À la demande de l’utilisateur, le Makefile appelle directement chaque script avec
 ses arguments, sans validateur central ni variable d’environnement intermédiaire.
@@ -200,8 +203,9 @@ les arguments comme d’autres cibles, déjà traitées par le script de la comm
 Un mot inconnu seul est donc sans action. Ne pas ajouter de dispatch central ni
 de cibles individuelles pour chaque valeur d’argument.
 `make build` seul affiche les profils disponibles via `help.sh build`, sans Docker
-ni préparation requise. La compilation demande un matériel explicite : `wire`,
-`bluetooth`, puis la keymap et `debug` en option. Les deux moitiés du seul choix demandé sont compilées.
+ni préparation requise. L’aide présente l’ordre des deux choix obligatoires,
+les valeurs disponibles et des commandes complètes. Les deux moitiés du seul
+choix demandé sont compilées.
 `help.sh` affiche l’aide groupée, avec la palette partagée de `terminal-colors.sh`.
 Les constantes partagées sont en tête de `scripts/build-common.sh`. `container.sh`
 exécute `west` et vérifie les firmwares. Aucun `.env` n’est nécessaire.

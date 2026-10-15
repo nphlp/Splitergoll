@@ -32,15 +32,15 @@ Avec Make et Docker démarré, depuis la racine du dépôt :
 
 ```sh
 make setup
-make build bluetooth
+make build bluetooth multi
 make build wire macos
 ```
 
-`make build` seul affiche les profils disponibles. Pour compiler, choisir
-`make build wire` ou `make build bluetooth`.
-Ajouter `debug` pour obtenir les logs USB, par exemple `make build bluetooth debug`.
-Ajouter une keymap avant `debug` pour choisir `multi`, `windows`, `macos` ou `linux`.
-Sans ce choix, la keymap reste `multi`.
+`make build` seul affiche l’aide. Pour compiler, préciser le matériel (`wire` ou
+`bluetooth`), puis la keymap (`multi`, `windows`, `macos` ou `linux`).
+Les deux choix sont obligatoires, aucun n’est sélectionné par défaut.
+Windows inclut toujours le gaming. Ajouter `debug` à la fin pour les logs USB,
+par exemple `make build bluetooth windows debug`.
 
 Le [guide de build](build-local.md) détaille les prérequis et les fichiers UF2 obtenus.
 Ces commandes ne flashent pas le clavier.

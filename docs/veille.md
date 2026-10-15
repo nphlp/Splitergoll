@@ -54,7 +54,7 @@ qu’en veille profonde est une option à décider après les essais.
 
 ## Revenir aux délais normaux
 
-Reflasher les deux UF2 du profil `bluetooth`, disponibles après `make build bluetooth`,
+Reflasher les deux UF2 du profil `bluetooth`, disponibles après `make build bluetooth multi`,
 sans firmware de reset. Cela rétablit l’inactivité à 30 secondes, la veille à
 15 minutes et la mesure batterie à 60 secondes. Les appairages sont conservés.
 Le retour à ces deux firmwares est confirmé sur le clavier Mac. Les USB restent

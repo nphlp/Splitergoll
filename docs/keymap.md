@@ -16,8 +16,8 @@ un même firmware.
 | `linux` | Linux, sans gaming ni bascule OS | Linux |
 
 Par exemple : `make build wire macos` ou `make build bluetooth windows debug`.
-Sans argument de keymap, `multi` est conservé. Le matériel et la keymap sont
-deux choix indépendants.
+Le matériel et la keymap sont deux choix indépendants et obligatoires.
+Même `multi` doit être précisé, aucune keymap n’est choisie par défaut.
 
 Les profils fixes gardent leur OS après redémarrage et veille profonde. Le clic
 droit affiche toujours son nom sur la base, mais ne change plus d’OS avec `L1`.
