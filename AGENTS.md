@@ -24,9 +24,9 @@ L’AGENTS.md garde les invariants, preuves techniques et décisions utiles au p
   accents, Shift, macros, couches et encodeurs de `multi`. Les helpers, transforms et GPIO sont inchangés.
 - L’archive unique avant découpage est dans `archives/keymap-multi/` : keymap,
   couches, helpers, trois dispositions et `SHA256SUMS`. Les six sources restent
-  identiques à `4940bf8`, comme sauvegarde autonome. Aucun profil actif ne les inclut.
+  identiques à `e8bbfc1`, comme sauvegarde autonome. Aucun profil actif ne les inclut.
   Ne pas remettre de keymap historique ni ses helpers dans le dossier du shield.
-  Les builds locaux et la CI choisissent toujours `config/keymaps/<profil>.keymap`
+  Les builds locaux et le workflow manuel choisissent toujours `config/keymaps/<profil>.keymap`
   avec `KEYMAP_FILE`, sans utiliser la sélection automatique du shield.
 - Les quatre keymaps sont `multi`, `windows` avec jeu, `macos` et `linux`.
   `multi` garde ses quinze couches et son changement d’OS. Les trois profils fixes
@@ -62,7 +62,11 @@ L’AGENTS.md garde les invariants, preuves techniques et décisions utiles au p
 - Les branches `-minimal` sont des archives, exclues du chantier.
 - Les branches historiques restent intactes. `wire` archive `main` à `cbad9a0`,
   `wire-minimal` archive `main-minimal` à `27ed2b7`.
-- Le README reste au contenu validé du commit `a1f6c35` jusqu’à sa mise à jour finale.
+- Sur `unified-firmware`, l’historique antérieur à la refonte est regroupé dans
+  le commit initial `6cbbfe8`. Les commits de refonte sont conservés avec de nouveaux
+  identifiants. Cette racine n’a pas d’ancêtre commun avec `main` ou `dongle`.
+  La promotion vers `main` reste une opération distincte à valider.
+- Le README reste au contenu validé du commit `6f89015` jusqu’à sa mise à jour finale.
 - Distinguer l’OS, le rôle central/périphérique et la sortie USB/Bluetooth.
 - Le BLE entre moitiés reste nécessaire avec le câblage actuel. Le Bluetooth direct
   fonctionne sur le Mac avec alimentation USB et sur batterie seule. Veille et réveil
@@ -272,14 +276,16 @@ complets et l’ordre des couches sont identiques avant/après, hors numéros de
 La séparation de la sauvegarde est contrôlée de la même manière sur les vingt
 firmwares. Leurs fichiers `zephyr.dts.d` chargent une keymap active de `config/keymaps/`
 et ne référencent ni `splitergoll.keymap` ni ses helpers historiques. L’archive
-et ses cinq headers restent identiques à `4940bf8`. Son déplacement hors du shield
+et ses cinq headers restent identiques à `e8bbfc1`. Son déplacement hors du shield
 est revalidé avec les deux moitiés de `wire multi` et `bluetooth macos`.
 Empreintes SHA-256, famille nRF52840 et adresses de firmware sont vérifiées.
 Les consoles de ces nouveaux
 builds restent à tester sur le matériel, sans flash implicite. Les conteneurs de
 validation ont disparu, les trois services préexistants sont conservés.
-La matrice `build.yaml` couvre les seize UF2 normaux : deux matériels, quatre
-keymaps et deux moitiés. Sa liste de fichiers CMake
+Le workflow `.github/workflows/build.yml` ne se déclenche que manuellement via
+`workflow_dispatch`, jamais sur push ou pull request. Le build local reste la voie
+normale. La matrice `build.yaml` est conservée et couvre les seize UF2 normaux :
+deux matériels, quatre keymaps et deux moitiés. Sa liste de fichiers CMake
 est entre guillemets pour que le point-virgule ne soit pas interprété par le shell.
 Elle utilise `GITHUB_WORKSPACE` fourni par GitHub.
 

@@ -3,6 +3,8 @@
 Le Makefile lance Docker, puis `west`, l’outil de build de ZMK/Zephyr.
 CMake prépare la compilation et Ninja utilise le compilateur ARM pour produire
 les fichiers UF2. GitHub Actions n’est pas nécessaire.
+Le workflow GitHub Actions est uniquement manuel : aucun build n’est lancé lors
+d’un push ou d’une pull request. Sa matrice est conservée en complément du build local.
 
 ## Utilisation
 
