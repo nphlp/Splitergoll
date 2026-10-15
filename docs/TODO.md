@@ -15,6 +15,11 @@
 
 ## Étapes suivantes
 
+Ordre proposé : terminer les essais Mac/Windows et mesurer la latence, puis migrer
+ZMK/Zephyr. Les nouveaux modes matériels et la détection automatique d’OS restent
+des chantiers distincts. Les essais de veille et d’autonomie nécessitent le clavier
+sur batteries.
+
 - [x] Ajouter dans `keymap.md` les sept schémas du README avec les légendes de `dongle`.
 - [x] Préparer le futur README dans `docs/README.md`, index des autres documents.
 - [x] Alléger le Makefile et répartir le build dans des scripts séparés.
@@ -52,7 +57,8 @@
 - [ ] Tester au clavier les profils fixes : touches, encodeurs, accents, retour du pavé numérique, gaming Windows et démarrage après veille.
 - [ ] Conserver le choix d’OS de `multi` après veille profonde. Le retour macOS vers Windows est confirmé.
 - [x] Ajouter le Bluetooth direct sans dongle, conservé pendant la charge USB.
-- [ ] Ajouter les profils priorité USB et dongle.
+- [ ] Définir et ajouter le profil Bluetooth avec priorité USB : bascule à la connexion à l’ordinateur, retour Bluetooth au débranchement et comportement sur chargeur secteur.
+- [ ] Réintégrer le dongle XIAO BLE au build paramétrable, comme centrale des deux moitiés.
 - [x] Documenter le [flash](flash-firmware.md) et l’[appairage](appairage-bluetooth.md) des profils actuels.
 - [x] Ajouter `make flash` sur macOS : dernier build du profil et de la moitié, date complète et relative, confirmation unique avant copie.
 - [x] Valider le flash automatique sur les deux moitiés et leur fonctionnement avec `wire macos` sur le Mac.
@@ -66,17 +72,22 @@
 - [x] Ajouter `make bat` pour une lecture rapide et `make bat avg` pour une moyenne par moitié sur 30 secondes.
 - [x] Garder un Makefile direct : chaque commande appelle son script, qui valide ses arguments. L’aide colorée est dans un script Bash.
 - [ ] Étudier un affichage permanent des deux batteries sur le Mac, valider les notifications, l’autonomie et le sommeil de l’hôte.
-- [ ] Après les essais, choisir la veille profonde de la centrale ou son maintien en inactivité pour un réveil depuis la droite.
+- [ ] Comparer la veille profonde de la centrale et son maintien en inactivité : reprise depuis la droite, première frappe, délai de reconnexion et impact sur l’autonomie, puis choisir le comportement.
 - [ ] Tester branchement USB, débranchement, charge secteur et préférences sauvegardées.
 - [ ] Vérifier l’outillage de build sur Windows/WSL.
 - [ ] Promouvoir `docs/README.md` à la racine à la fin, adapter les liens et conserver les photos, conceptions et inspirations historiques.
 
 ## Idées
 
-- [ ] Étudier la détection automatique de l’OS de l’ordinateur connecté (Windows, macOS, Linux) pour proposer la keymap adaptée. Vérifier sa fiabilité en USB, Bluetooth direct et via dongle, avec un choix manuel de secours.
-- Garder le choix d’OS après les modes pavé numérique et jeu.
-- Réexaminer les macros de retour de mode qui écrivent puis effacent du texte.
-- Ajouter le scroll aux encodeurs et des informations de batterie/connexion.
-- Mesurer l’autonomie et améliorer la veille et la puissance BLE.
-- Étudier l’arrêt du Bluetooth vers le Mac pendant l’usage USB.
-- Étudier séparément un fonctionnement sans aucune radio et ses besoins matériels.
+- [ ] Détecter l’OS de l’ordinateur connecté (Windows, macOS, Linux) et sélectionner automatiquement la keymap adaptée.
+  L’objectif est une reconnaissance passive à la connexion USB ou Bluetooth, sans logiciel à installer,
+  sans association manuelle entre ordinateur et OS, ni profil ou keymap à changer à l’usage.
+  Évaluer les signatures réelles, la fiabilité et les limites en USB, Bluetooth direct et via dongle,
+  y compris après reconnexion et réveil. Une sélection manuelle ne remplit pas cet objectif.
+  Un programme compagnon reste une alternative à rediscuter si la reconnaissance passive ne suffit pas.
+- [ ] Garder le choix d’OS après les modes pavé numérique et jeu.
+- [ ] Réexaminer les macros de retour de mode qui écrivent puis effacent du texte.
+- [ ] Ajouter le scroll aux encodeurs et des informations de batterie/connexion.
+- [ ] Mesurer l’autonomie et améliorer la veille et la puissance BLE.
+- [ ] Étudier l’arrêt du Bluetooth vers le Mac pendant l’usage USB.
+- [ ] Étudier séparément un fonctionnement sans aucune radio et ses besoins matériels.
