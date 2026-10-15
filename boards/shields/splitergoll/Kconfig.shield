@@ -1,0 +1,8 @@
+config SHIELD_SPLITERGOLL_DONGLE
+    def_bool $(shields_list_contains,splitergoll_dongle)
+
+config SHIELD_SPLITERGOLL_LEFT
+    def_bool $(shields_list_contains,splitergoll_left)
+
+config SHIELD_SPLITERGOLL_RIGHT
+    def_bool $(shields_list_contains,splitergoll_right)
