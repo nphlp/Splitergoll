@@ -60,6 +60,8 @@ et `make bat avg` calcule une moyenne par moitié sur 30 secondes.
 - [Matériel et connexions](configuration-materielle.md) : cartes, rôles et limites.
 - [Essais wire](tests-wire.md) : vérifier le clavier sans batterie sur Mac et Windows.
 - [Latence](latence.md) : diagnostic rapide, mesures possibles et limites des logs USB.
+- [Migration ZMK](migration-zmk.md) : versions, nouveautés, ruptures et validation avant flash.
+- [Firmwares stables](firmwares-stables.md) : snapshot versionné et retour aux UF2 avant migration.
 - [Veille et réveil](veille.md) : états d’inactivité et reprise à la frappe.
 - [Flash du firmware](flash-firmware.md) : copie des UF2, bootloader et messages du Finder.
 - [Appairage Bluetooth](appairage-bluetooth.md) : clés de connexion, reset et diagnostic.

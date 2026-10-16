@@ -64,6 +64,16 @@ L’AGENTS.md garde les invariants, preuves techniques et décisions utiles au p
   adaptée à leurs appels de macros. Les fichiers Devicetree matériels gardent
   leur langage natif. Cette association ne change pas le build.
 - Les branches `-minimal` sont des archives, exclues du chantier.
+- `archives/firmware/zmk-0.3.0/` conserve le snapshot stable avant migration :
+  32 UF2, pour wire/bluetooth, quatre keymaps, normal/debug et gauche/droite.
+  Il est indépendant de `dist/` et doit rester intact lors des futures migrations.
+  `snapshot.json` référence les sources au commit `aa5c8abdd44d36d54c6b99615bc3b14b6d195f04`,
+  les versions ZMK/Zephyr, le digest Docker et les 32 empreintes individuelles.
+  Le manifeste West figé et les empreintes des sources sont inclus. Les dossiers
+  de paires gardent leur timestamp, leurs métadonnées et leur SHA256SUMS.
+  Le SHA256SUMS global contrôle les 67 autres fichiers, sans contenir sa propre empreinte.
+  Aucun log, NVS ou appairage n’est archivé. Le retour s’effectue avec le chemin
+  explicite d’un UF2, jamais par sélection implicite du dernier build de `dist/`.
 - Les branches historiques restent intactes. `wire` archive `main` à `cbad9a0`,
   `wire-minimal` archive `main-minimal` à `27ed2b7`.
 - Sur `unified-firmware`, l’historique antérieur à la refonte est regroupé dans
@@ -120,6 +130,39 @@ Le parcours complet des touches, encodeurs et couches reste à valider selon le
 L’ordre retenu est : diagnostic rapide de latence sur V1 et le Mac, migration
 ZMK/Zephyr, puis diagnostic d’auto-détection d’OS et autres améliorations du backlog.
 Le [guide de latence](docs/latence.md) distingue diagnostic et mesure complète.
+La [préparation de migration](docs/migration-zmk.md) conserve les versions,
+ruptures et validations. La recherche officielle du 16 octobre 2026 confirme
+que ZMK 0.3.0 reste la dernière release stable, publiée le 1er août 2025.
+La PR officielle #3024 prépare 0.4.0 mais reste ouverte. Ne pas présenter sa date
+automatique de changelog comme une date de publication.
+Le snapshot `main` examiné est `4dd95d7840eb3d5a3f59bb29fbf1ab054715ef85`,
+committé le 9 octobre 2026, avec 195 commits depuis 0.3.0, dont de la documentation
+et de la maintenance. Il utilise `v4.1.0+zmk-fixes`. Aucun changement de pin,
+d’image Docker, de firmware ni de keymap n’est appliqué pendant cette recherche.
+L’utilisateur retient un snapshot stable versionné et committé avant de migrer
+vers un commit de développement figé. Ne modifier aucun pin avant ce commit.
+Les seize paires du snapshot ont été compilées en 187 secondes et passent les
+contrôles de profils. Les 32 fichiers archivés passent SHA-256, les gardes UF2
+et la sélection par chemin de flash, sans écriture USB. Le wire macos normal
+est identique octet pour octet au build précédent `wire-macos-2026-10-16-11-56-08`.
+Le snapshot occupe environ 14 Mio. Cela ne valide pas physiquement les 32 UF2.
+Les seuls avertissements observés restent Docker insecure et GPREGRET déprécié.
+Les conteneurs éphémères ont disparu, les trois services préexistants sont conservés.
+Le [guide des firmwares stables](docs/firmwares-stables.md) décrit le retour arrière.
+La cible nice!nano v2 explicite devient `nice_nano@2.0.0//zmk`.
+Les partitions de la carte source examinée restent `0x26000` pour l’application
+et `0xEC000` / `0x8000` pour NVS. Revalider les sorties compilées avant flash.
+La rupture des couches est indépendante de Zephyr : `&to` et `&tog` activent
+`locking`, empêchant un comportement non verrouillant de désactiver leur couche.
+Vérifier les tap-dances partagés (`&mo PRIMARY`, `&mo SECONDARY`, `&to NUMPAD`),
+retours de pavé, gaming et bascules OS, sans se limiter à un diff des bindings.
+La préférence de sortie NVS migre de `endpoints/preferred` à `endpoints/preferred2`,
+avec suppression de l’ancienne clé. Un retour à 0.3.0 peut donc perdre cette
+préférence, sans que ce constat prouve un effacement des appairages Bluetooth.
+La demande native de détection d’OS #2553 reste ouverte. Les changements examinés
+n’apportent pas cette fonction. La pile USB utilisée reste `USB_DEVICE_STACK`,
+le remplacement par la nouvelle pile et le retrait de kscan ne font pas partie
+de cette migration ciblée. Ne pas ajouter de module OS tiers pendant ce lot.
 Dans ZMK 0.3.0, le périphérique transmet position/état sans timestamp d’origine,
 puis `split/central.c` recrée l’événement avec `k_uptime_get()` sur la centrale.
 Les horloges des moitiés ne sont pas synchronisées. Ne pas soustraire leurs logs

@@ -1,0 +1,7 @@
+profile=wire
+hardware_profile=wire
+keymap_profile=windows
+build_mode=debug
+variant=wire-windows-debug
+environment=000788d0acac6ba53d583ed289150c28d0d5356915775c4e11ddb66e7590deda
+image=zmkfirmware/zmk-build-arm:3.5@sha256:0979a8de325e3d822e48bd8d1d9efaee2984ad3750253119f920a342f0ce5cde

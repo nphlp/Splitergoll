@@ -37,7 +37,10 @@ La priorité USB est différée après l’auto-détection d’OS, pour viser un
 - [x] Choisir explicitement le matériel et la keymap, par exemple `make build wire multi` ou `make build bluetooth macos`.
 - [x] Faire afficher les profils disponibles par `make build`, sans compilation implicite.
 - [x] Compiler et contrôler les quatre UF2 avec des caches séparés par profil et moitié.
-- [ ] Préparer la montée de version ZMK/Zephyr : choisir une version officielle, revoir le manifeste figé, l’image Docker, les noms de cartes et les contrôles UF2, puis revalider les deux firmwares.
+- [x] Comparer les versions et identifier les ruptures : voir [la préparation de migration](migration-zmk.md). ZMK 0.3.0 reste la dernière stable, la 0.4 est en préparation.
+- [x] Compiler et archiver les 32 UF2 de ZMK 0.3.0 : deux matériels, quatre keymaps, deux modes et deux moitiés, avec métadonnées et empreintes. Voir [les firmwares stables](firmwares-stables.md).
+- [x] Retenir la migration vers un snapshot de développement figé avec Zephyr 4.1, après publication du snapshot stable pour le retour arrière.
+- [ ] Appliquer la montée de version retenue : manifeste, image Docker, noms de cartes et contrôles UF2. Revalider les huit paires normales et les variantes debug, puis les transitions de couches et les réglages persistants.
 - [ ] Migrer le bootloader vers l’API de rétention, conserver les codes UF2 et vérifier `&bootloader` / `&sys_reset` sur le matériel.
 - [x] Déclarer la matrice des deux moitiés comme source de réveil avec `wakeup-source`.
 - [x] Compiler les deux moitiés avec et sans veille, vérifier la gestion d’alimentation et la source de réveil.
