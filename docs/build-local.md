@@ -140,8 +140,9 @@ des deux moitiés est confirmée sur le Mac, avec alimentation USB et sur batter
 Le profil d’essai confirme un réveil sans reset sur chaque moitié, avec un premier
 appui sans saisie. La saisie USB `wire` sur le Mac est aussi confirmée avec la
 keymap `multi`. Le flash automatique et le fonctionnement des deux moitiés avec
-`wire macos` sont aussi confirmés. Les essais complets des touches et encodeurs,
-Windows et les autres keymaps fixes restent à faire.
+`wire macos` sont aussi confirmés. Le flash et le fonctionnement de V1 avec
+`wire windows`, gaming inclus, sont confirmés. Les essais complets
+des touches, encodeurs et couches des différents profils restent à faire.
 Les profils normaux compilent, avec les délais et le service auxiliaire batterie
 contrôlés. Les deux mesures ont aussi été lues sur le Mac. Le profil permanent
 aux délais courts est retiré après les essais.
@@ -150,7 +151,8 @@ affectations compilées. `multi` conserve ses couches, macros et encodeurs.
 Avec deux variantes debug représentatives, vingt UF2 sont contrôlés : empreintes,
 options, métadonnées et adresses. Les avertissements connus restent ceux du moteur
 Docker et du bootloader ZMK 0.3.0.
-La lecture des nouvelles consoles reste à tester sur le clavier.
+La lecture des deux consoles de V1 en `wire macos debug` est validée.
+La lecture du profil Bluetooth sur V2 reste à tester.
 Ces contrôles ne remplacent pas les essais matériels restants.
 Le nettoyage effectué avec `clear` a été vérifié avant une préparation complète.
 Le setup passe ensuite en mode normal et interactif, avec les 39 dépendances vérifiées.

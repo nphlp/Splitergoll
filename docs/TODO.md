@@ -10,15 +10,19 @@
 - [x] Préparer un Makefile avec `make setup` et `make build`.
 - [x] Compiler les deux moitiés et vérifier les UF2, leurs empreintes et les rôles.
 - [x] Confirmer le flash et la saisie USB des deux moitiés sur le Mac avec le clavier PC sans batterie, variante `wire debug`.
+- [x] Confirmer le flash et le fonctionnement de V1 avec `wire windows`, gaming inclus. Le parcours complet des couches reste distinct.
 - [ ] Terminer les essais `wire` sur Mac puis Windows : toutes les touches, encodeurs, accents, Shift, couches et redémarrages. Voir [les essais wire](tests-wire.md).
-- [ ] Mesurer la latence ressentie à droite en comparant les variantes normale et debug avant tout réglage radio.
+- [x] Réaliser le diagnostic court de latence sur V1 et le Mac. Aucun écart gauche/droite significatif reproduit, effet des lecteurs incertain, aucune mesure totale ni cause établie. Voir [le résultat et le protocole](latence.md).
 
 ## Étapes suivantes
 
-Ordre proposé : terminer les essais Mac/Windows et mesurer la latence, puis migrer
-ZMK/Zephyr. Les nouveaux modes matériels et la détection automatique d’OS restent
-des chantiers distincts. Les essais de veille et d’autonomie nécessitent le clavier
-sur batteries.
+Diagnostic rapide de latence clos. Suite retenue : migration ZMK/Zephyr,
+puis détection automatique d’OS et autres améliorations du backlog. Les essais
+complets des keymaps restent à terminer. Les essais de veille et d’autonomie
+nécessitent V2, le clavier sur batteries.
+
+La priorité USB est différée après l’auto-détection d’OS, pour viser un clavier
+« full auto » qui adapte sa keymap et sa sortie USB/Bluetooth à l’ordinateur connecté.
 
 - [x] Ajouter dans `keymap.md` les sept schémas du README avec les légendes de `dongle`.
 - [x] Préparer le futur README dans `docs/README.md`, index des autres documents.
@@ -33,7 +37,7 @@ sur batteries.
 - [x] Choisir explicitement le matériel et la keymap, par exemple `make build wire multi` ou `make build bluetooth macos`.
 - [x] Faire afficher les profils disponibles par `make build`, sans compilation implicite.
 - [x] Compiler et contrôler les quatre UF2 avec des caches séparés par profil et moitié.
-- [ ] Préparer la montée de version ZMK/Zephyr, adapter les noms de cartes et revalider les deux firmwares.
+- [ ] Préparer la montée de version ZMK/Zephyr : choisir une version officielle, revoir le manifeste figé, l’image Docker, les noms de cartes et les contrôles UF2, puis revalider les deux firmwares.
 - [ ] Migrer le bootloader vers l’API de rétention, conserver les codes UF2 et vérifier `&bootloader` / `&sys_reset` sur le matériel.
 - [x] Déclarer la matrice des deux moitiés comme source de réveil avec `wakeup-source`.
 - [x] Compiler les deux moitiés avec et sans veille, vérifier la gestion d’alimentation et la source de réveil.
@@ -43,7 +47,9 @@ sur batteries.
 - [x] Tester séparément le réveil gauche et droite : premier appui sans saisie, second appui fonctionnel après reconnexion. La droite seule ne réveille pas la gauche.
 - [x] Reflasher les deux moitiés avec les délais Bluetooth normaux après les essais, sans reset des appairages.
 - [x] Valider les builds `wire debug` et `bluetooth debug`, avec consoles USB et artefacts séparés.
-- [ ] Tester les consoles USB sur le matériel avec les deux profils, puis revenir aux firmwares normaux.
+- [x] Lire les deux consoles USB de V1 en `wire macos debug` et observer les événements de droite reçus par la gauche.
+- [ ] Confirmer le retour annoncé de V1 à `wire macos` normal après le diagnostic de latence.
+- [ ] Tester les consoles USB du profil Bluetooth sur V2, puis revenir aux firmwares normaux.
 - [ ] Tester le réveil de toutes les touches et des encodeurs.
 - [ ] Résoudre le drapeau réseau `DOCKER_INSECURE_NO_IPTABLES_RAW` au niveau du moteur Docker, sans masquer l’avertissement.
 - [x] Conserver la sauvegarde intacte de `multi` et ses dépendances dans `archives/keymap-multi/`, avec empreintes, pour le commit du découpage.

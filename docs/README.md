@@ -17,14 +17,17 @@ avec leurs USB branchés pour l’alimentation et sur batterie seule, sans dongl
 Le profil d’essai confirme un réveil sans reset et la lecture des deux batteries.
 Le premier appui réveille sans écrire. La gauche doit être éveillée pour recevoir
 la droite, et le choix d’OS revient à Windows après veille profonde.
-Le profil `wire` fonctionne aussi sur le Mac avec le clavier PC sans batterie.
-Le parcours complet de la keymap et les essais Windows restent à valider.
+Le Clavier V1 sans batterie fonctionne en `wire` sur le MacBook Pro M4 Max avec
+`macos`. Le flash et le fonctionnement du profil `windows` (gaming inclus) sont
+aussi confirmés sur V1. Le Clavier V2 au travail utilise ses batteries et le
+Bluetooth direct. Le parcours complet des keymaps reste à valider.
 
 La keymap historique reste disponible dans `multi`, avec changement d’OS au clavier.
 Les profils fixes `windows` avec jeu, `macos` et `linux` se choisissent au build
 et restent sur leur OS après redémarrage. Le flash automatique et le fonctionnement
 de `wire macos` sont confirmés sur les deux moitiés. Les essais complets des profils restent à faire.
-La priorité USB et `dongle` viendront ensuite. Les branches
+La priorité USB est différée après la détection automatique d’OS, pour viser une
+adaptation automatique de la keymap et de la sortie. `dongle` reste au backlog. Les branches
 historiques restent intactes et les variantes minimales sont des archives.
 
 ## Démarrer
@@ -56,6 +59,7 @@ et `make bat avg` calcule une moyenne par moitié sur 30 secondes.
 - [Logs USB](logs-usb.md) : firmwares de diagnostic et console de chaque moitié.
 - [Matériel et connexions](configuration-materielle.md) : cartes, rôles et limites.
 - [Essais wire](tests-wire.md) : vérifier le clavier sans batterie sur Mac et Windows.
+- [Latence](latence.md) : diagnostic rapide, mesures possibles et limites des logs USB.
 - [Veille et réveil](veille.md) : états d’inactivité et reprise à la frappe.
 - [Flash du firmware](flash-firmware.md) : copie des UF2, bootloader et messages du Finder.
 - [Appairage Bluetooth](appairage-bluetooth.md) : clés de connexion, reset et diagnostic.

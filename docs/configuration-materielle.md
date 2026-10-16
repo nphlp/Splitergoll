@@ -1,8 +1,17 @@
 # Matériel et connexions
 
-Deux claviers existent : PC Windows sans batterie avec deux câbles USB, MacBook avec batteries.
-Le Mac utilise maintenant le Bluetooth direct, son XIAO BLE reste disponible pour
-le profil dongle historique. La différence principale est la carte qui traite les touches.
+## Les équipements
+
+| Nom | Usage |
+| --- | --- |
+| PC Windows | Fixe assemblé à domicile, utilisé pour jouer et regarder des vidéos/séries |
+| MacBook Pro M4 Max | Travail et développement, au bureau comme en télétravail |
+| Clavier V1 | À domicile, sans batterie, profil `wire`, habituellement sur le PC Windows |
+| Clavier V2 | Au travail, une batterie par moitié, Bluetooth direct vers le Mac |
+
+V1 fonctionne aussi en `wire` sur le Mac en télétravail. Les noms V1/V2 désignent
+le matériel, indépendamment de l’ordinateur connecté. Le XIAO BLE de V2 reste
+disponible pour le profil dongle historique.
 
 ## Le matériel
 
@@ -11,13 +20,13 @@ le profil dongle historique. La différence principale est la carte qui traite l
 | Deux répliques de nice!nano v2 | Une par moitié : touches, encodeur, USB et BLE |
 | 42 touches et deux encodeurs cliquables | 21 touches et un encodeur par moitié, soit 44 positions |
 | Deux PCB et deux boîtiers | Câblage et support mécanique |
-| XIAO BLE | Centrale USB du clavier Mac en mode dongle |
-| Batteries du clavier Mac | Alimentation des moitiés sans câble permanent |
+| XIAO BLE | Centrale USB de V2 en mode dongle |
+| Batteries de V2 | Alimentation des moitiés sans câble permanent |
 
 Le Nordic des anciennes photos n’est pas utilisé. Les fichiers de
 [PCB](<../Design PCB/>) et de [boîtier](<../Design 3D/>) sont dans le dépôt.
 
-Sur le clavier Mac, distinguer l’interrupteur de batterie et l’alimentation USB.
+Sur V2, distinguer l’interrupteur de batterie et l’alimentation USB.
 Une moitié branchée en USB est alimentée même avec l’interrupteur sur arrêt.
 Pour la mettre réellement hors tension, débrancher l’USB et couper la batterie.
 Un câble USB ne signifie pas que les touches passent par USB : cela dépend du profil.
@@ -46,9 +55,10 @@ les deux câbles ne les relient pas entre elles.
 Veille profonde et reporting batterie sont désactivés. Les capacités BLE vers
 un hôte restent présentes, ce profil ne promet pas une radio arrêtée.
 
-**État :** saisie des deux moitiés par USB sur le Mac confirmée avec le clavier
-PC sans batterie et la variante de diagnostic. Les essais Windows et le parcours
-complet des touches restent à faire, voir [les essais wire](tests-wire.md).
+**État :** flash et fonctionnement de V1 confirmés sur le Mac avec `wire macos`.
+Le profil `wire windows` (gaming inclus) est aussi flashé et fonctionnel sur V1.
+La variante de diagnostic fonctionne aussi sur le Mac. Le parcours complet des touches et couches reste
+à faire, voir [les essais wire](tests-wire.md).
 
 ## Dongle, configuration historique
 
@@ -89,7 +99,8 @@ gauche doit être éveillée pour recevoir la droite. Toutes les touches et les
 encodeurs restent à vérifier, voir [veille et réveil](veille.md).
 Voir [la procédure de reset](appairage-bluetooth.md#réinitialiser-les-réglages)
 en cas d’appairage incohérent.
-La priorité USB pendant la charge reste une option future de cette architecture.
+La priorité USB est différée après l’auto-détection d’OS, pour viser un clavier
+qui adapte automatiquement sa keymap et sa sortie USB/Bluetooth.
 
 ## Affichage des batteries
 

@@ -17,8 +17,12 @@ L’AGENTS.md garde les invariants, preuves techniques et décisions utiles au p
 
 ## Invariants
 
-- Deux claviers : PC Windows sans batterie, alimenté par deux USB, MacBook sur batteries en Bluetooth direct.
-  Le XIAO BLE reste disponible pour le profil dongle historique.
+- `PC Windows` : fixe assemblé par l’utilisateur, à domicile, pour le jeu et les vidéos/séries.
+- `MacBook Pro M4 Max` : ordinateur de travail et de développement.
+- `Clavier V1` : clavier à domicile, sans batterie, alimenté par deux USB en profil
+  `wire`. Habituellement utilisé sur le PC Windows, également sur le Mac en télétravail.
+- `Clavier V2` : clavier au travail, une batterie par moitié, utilisé en Bluetooth
+  direct sur le Mac. Le XIAO BLE reste disponible pour le profil dongle historique.
 - Les moitiés sont des répliques de nice!nano v2. Le Nordic des photos n’est pas utilisé.
 - La keymap complète de `dongle` à `2584ca4` fait référence : conserver les 44 positions,
   accents, Shift, macros, couches et encodeurs de `multi`. Les helpers, transforms et GPIO sont inchangés.
@@ -71,20 +75,58 @@ L’AGENTS.md garde les invariants, preuves techniques et décisions utiles au p
 - Le BLE entre moitiés reste nécessaire avec le câblage actuel. Le Bluetooth direct
   fonctionne sur le Mac avec alimentation USB et sur batterie seule. Veille et réveil
   sont testés sur des touches représentatives, toutes les touches et encodeurs restent à vérifier.
-  La priorité USB est un profil futur.
+  La priorité USB est une amélioration différée après l’auto-détection d’OS,
+  pour viser une adaptation automatique de la keymap et de la sortie USB/Bluetooth.
 
 ## Étape active et validation
 
 Build local et profil `wire` : gauche centrale USB, droite périphérique BLE,
 alimentation USB, sans veille profonde ni reporting batterie.
-Le clavier PC sans batterie est maintenant flashé avec `wire macos` normal,
+Le Clavier V1 sans batterie est utilisé sur le MacBook Pro M4 Max en télétravail.
+Le flash `wire windows` (gaming inclus) et son fonctionnement sur V1 sont confirmés
+par l’utilisateur. Cela ne valide pas chaque touche ou couche de jeu.
+Le fonctionnement avec `wire macos` normal est également confirmé,
 via `make flash wire macos right` puis `left` : flash et fonctionnement des deux
 moitiés confirmés par l’utilisateur. Le parcours complet des touches reste à faire.
 Avec la précédente variante de diagnostic `multi`, le clic d’encodeur
-affichant l’OS paraît plus rapide qu’avec son ancien firmware. Une latence est
-ressentie à droite, sans mesure ni comparaison normal/debug. Ne pas conclure à
-sa cause. Les consoles USB, toutes les touches et les essais Windows restent
-à valider selon le [protocole wire](docs/tests-wire.md).
+affichant l’OS paraît plus rapide qu’avec son ancien firmware. Un écart gauche/droite
+a initialement été ressenti sur V1 en debug, puis était devenu imperceptible en normal.
+Le diagnostic court est clos à la demande de l’utilisateur : en `wire macos debug`,
+aucun écart net lecteurs fermés, impression des deux moitiés un peu plus lentes
+lecteurs ouverts, puis comparaison incertaine après fermeture. Aucun écart significatif
+n’est reproduit. Ne pas conclure à une latence nulle ni à une cause radio ou logging.
+L’utilisateur annonce reflasher les deux moitiés en `wire macos` normal, retour
+pas encore confirmé. La migration peut être préparée sans nouveau test de latence.
+
+Deux captures de 90 secondes valident la lecture des consoles et la réception des
+événements de droite sur la gauche, sans avertissement, erreur, déconnexion ou perte
+de logs signalée dans ces fenêtres. Aucun paramètre BLE négocié n’y est journalisé.
+La première capture n’était pas contrôlée, avec huit notifications et huit événements
+distants traités. La seconde a commencé après le signal de disponibilité de l’utilisateur.
+Les fichiers bruts restent privés dans `.local/logs/`. Les lecteurs sont fermés,
+absence vérifiée avec `lsof`. Sur ces connexions, `cu.usbmodem101` est la droite
+(événements périphériques) et `cu.usbmodem1101` la gauche (réceptions BLE).
+Réidentifier les ports après un changement de branchement.
+
+L’historique de session situe le premier signalement V1 au 15 octobre, avant toute
+lecture de sa console par l’agent retrouvée dans cette session. Les lectures droite
+puis gauche du 14 octobre concernaient l’appairage de V2. L’hypothèse d’un firmware
+ou lecteur de logs seulement à droite lors du premier ressenti V1 n’est pas vérifiée.
+L’essai droite seule proposé ensuite n’a pas été lancé, le diagnostic ayant été clos.
+Le debug est indépendant de la sortie USB/Bluetooth. Pour une éventuelle reprise,
+attendre le signal de disponibilité avant une capture et annoncer ouverture/fermeture.
+Le parcours complet des touches, encodeurs et couches reste à valider selon le
+[protocole wire](docs/tests-wire.md).
+L’ordre retenu est : diagnostic rapide de latence sur V1 et le Mac, migration
+ZMK/Zephyr, puis diagnostic d’auto-détection d’OS et autres améliorations du backlog.
+Le [guide de latence](docs/latence.md) distingue diagnostic et mesure complète.
+Dans ZMK 0.3.0, le périphérique transmet position/état sans timestamp d’origine,
+puis `split/central.c` recrée l’événement avec `k_uptime_get()` sur la centrale.
+Les horloges des moitiés ne sont pas synchronisées. Ne pas soustraire leurs logs
+pour annoncer un délai BLE, ni utiliser l’arrivée des lignes sur le Mac comme
+horodatage de l’appui : le logging debug est différé et peut perturber les timings.
+Les logs d’une même centrale permettent d’observer une portion du traitement,
+pas le trajet complet depuis le contact physique jusqu’à la réception par macOS.
 Profil `bluetooth` : mêmes rôles, sortie Bluetooth directe de la gauche, USB clavier
 désactivé même pendant la charge, veille après 15 minutes et reporting batterie activés.
 Le profil aux délais courts a été supprimé après validation matérielle. Les deux
@@ -159,7 +201,7 @@ jusqu’au contrôle des deux effacements, puis remettre les firmwares.
 Les artefacts temporaires de diagnostic et de reset restent dans `.local/flash/`.
 La [procédure d’appairage](docs/appairage-bluetooth.md) reste lisible pour l’utilisateur.
 Les preuves techniques sont conservées ci-dessous.
-Sur le clavier Mac, l’interrupteur coupe la batterie mais pas l’alimentation USB.
+Sur le Clavier V2, l’interrupteur coupe la batterie mais pas l’alimentation USB.
 Une moitié réellement hors tension a son USB débranché et sa batterie coupée.
 
 Le reset nice!nano v2 est indépendant du profil matériel. Les builds reset,
@@ -220,7 +262,14 @@ exécute `west` et vérifie les firmwares. Aucun `.env` n’est nécessaire.
 horodaté du profil exact, sans rabattement normal/debug ni retour à un build plus
 ancien si le dernier est incomplet. `make flash <chemin.uf2>` accepte un UF2 du
 dépôt resté dans son dossier horodaté, avec métadonnées et empreintes.
-`flash.sh` affiche date absolue et âge avant toute confirmation. La date du dossier
+`flash.sh` présente matériel, keymap, côté puis activation des logs USB,
+dans le même ordre que les arguments de la commande.
+L’affichage est compact sous un seul titre, sans sections pour le build ou le bootloader.
+Il affiche date absolue et âge sur deux lignes, avec les mois en français sans
+dépendre des locales installées et l’heure au format `11 h 50 min 08 s`.
+Une ligne vide précède le chemin UF2 relatif au dépôt et la ligne de bootloader
+avant confirmation. Le SHA-256 reste contrôlé en interne.
+La date du dossier
 est locale, sans fuseau embarqué. Windows inclut toujours le gaming.
 Le flash est limité à macOS, sans Docker. Le script vérifie les métadonnées, SHA-256
 et chaque bloc avec `uf2-check.awk` : famille nRF52840, blocs de 256 octets, adresses
@@ -231,6 +280,8 @@ La détection utilise `/Volumes/*/INFO_UF2.TXT`, le Board-ID historique observé
 Le bootloader ne révèle pas le côté : seule la moitié choisie doit être en bootloader.
 Refuser zéro ou plusieurs cibles compatibles. Une seule confirmation interactive
 est demandée, avec annulation par défaut et sans option d’approbation automatique.
+La question `Continue? [y/N]` lit une seule touche sans écho, sans attendre Entrée.
+Seuls `y` ou `Y` confirment, toute autre touche ou fin d’entrée annule.
 Après accord, recontrôler le SHA et l’identité du disque avant `cp -X`, sans effacement
 des réglages, éjection forcée ou nouvel essai automatique en cas d’erreur.
 Une copie réussie n’est pas une validation de saisie. Aucun flash matériel implicite

@@ -56,13 +56,15 @@ check_source() {
 
 # Lit la date du dossier de build, dans le même fuseau local que les exports.
 read_build_date() {
-    local name timestamp
+    local name timestamp month
+    local months=(janvier février mars avril mai juin juillet août septembre octobre novembre décembre)
     name=$(basename "$(dirname "$FIRMWARE")")
     [[ "$name" =~ ^$BUILD_VARIANT-[0-9]{4}(-[0-9]{2}){5}$ ]] || fail 'Le fichier doit rester dans son dossier de build horodaté'
     timestamp=${name#"$BUILD_VARIANT"-}
     BUILD_EPOCH=$(date -j -f '%Y-%m-%d-%H-%M-%S' "$timestamp" '+%s' 2>/dev/null) || fail 'Date du build illisible'
     [ "$(date -r "$BUILD_EPOCH" '+%Y-%m-%d-%H-%M-%S')" = "$timestamp" ] || fail 'Date du build invalide'
-    BUILD_DATE=$(date -r "$BUILD_EPOCH" '+%d/%m/%Y à %H:%M:%S %Z')
+    month=$(date -r "$BUILD_EPOCH" '+%m')
+    BUILD_DATE=$(date -r "$BUILD_EPOCH" "+%d ${months[$((10#$month - 1))]} %Y à %H h %M min %S s %Z")
 }
 
 # Formate l’âge du build, ou signale une date future plutôt que de la masquer.
@@ -82,6 +84,48 @@ describe_build_age() {
     else
         printf '%s %d s' "$prefix" "$age"
     fi
+}
+
+# Présente le chemin du firmware relativement au dépôt, sans dépendance supplémentaire.
+relative_firmware_path() {
+    local base="$REPOSITORY" prefix=''
+
+    while [[ "$FIRMWARE" != "$base/"* ]]; do
+        base=${base%/*}
+        prefix="../$prefix"
+    done
+
+    printf '%s%s' "$prefix" "${FIRMWARE#"$base/"}"
+}
+
+# Présente le profil dans l’ordre des arguments, puis la date et le fichier du build.
+show_firmware_summary() {
+    local keymap_label side_label logging_label
+
+    case "$KEYMAP_PROFILE" in
+        multi) keymap_label='multi (Windows, macOS, Linux)' ;;
+        windows) keymap_label='Windows + gaming' ;;
+        macos) keymap_label='macOS' ;;
+        linux) keymap_label='Linux' ;;
+    esac
+    case "$SIDE" in
+        left) side_label='gauche (left)' ;;
+        right) side_label='droite (right)' ;;
+    esac
+    case "$BUILD_MODE" in
+        debug) logging_label='activés (debug)' ;;
+        normal) logging_label='désactivés (normal)' ;;
+    esac
+
+    printf '\n%sProfil sélectionné%s\n' "$LOG_HEADING" "$LOG_RESET"
+    printf '  Matériel : %s\n' "$HARDWARE_PROFILE"
+    printf '  Keymap   : %s\n' "$keymap_label"
+    printf '  Côté     : %s\n' "$side_label"
+    printf '  Logs USB : %s\n' "$logging_label"
+
+    printf '\n  Build : %s\n' "$BUILD_DATE"
+    printf '          %s%s%s\n' "$LOG_DIM" "$(describe_build_age)" "$LOG_RESET"
+    printf '\n  Fichier : %s\n' "$(relative_firmware_path)"
 }
 
 # Lit un champ du volume interrogé avec diskutil, sans exécuter ses métadonnées.
@@ -118,15 +162,16 @@ find_bootloader() {
     BOOTLOADER_DEVICE=$(volume_field DeviceIdentifier)
 }
 
-# Demande un seul accord, puis recontrôle le fichier et le volume avant l’écriture.
+# Lit une confirmation d’une seule touche, puis recontrôle le fichier et le volume.
 confirm_and_flash() {
     local answer actual
     [ -t 0 ] || fail 'Confirmation interactive requise. Relance la commande depuis un terminal'
-    if ! IFS= read -r -p 'Flasher ce firmware ? [o/N] ' answer; then
+    if ! IFS= read -r -s -n 1 -p 'Continue? [y/N] ' answer; then
         answer=''
     fi
+    printf '\n'
     case "$answer" in
-        o|O|oui|Oui|OUI) ;;
+        y|Y) ;;
         *) printf '%s\n' 'Flash annulé, aucun fichier copié'; return ;;
     esac
 
@@ -173,12 +218,9 @@ fi
 
 check_source
 read_build_date
-printf '\n%sFirmware sélectionné%s\n' "$LOG_HEADING" "$LOG_RESET"
-printf 'Profil : %s | moitié : %s\n' "$BUILD_VARIANT" "$SIDE"
-printf 'Build : %s (%s)\n' "$BUILD_DATE" "$(describe_build_age)"
-printf 'Fichier : %s\n' "$FIRMWARE"
-printf 'SHA-256 : %sOK%s\n' "$LOG_SUCCESS" "$LOG_RESET"
+show_firmware_summary
 find_bootloader
-printf 'Bootloader : %s\n' "$BOOTLOADER_VOLUME"
-printf '%s\n\n' 'Le disque ne distingue pas gauche et droite. Seule la moitié choisie doit être en bootloader.'
+printf '  %sBootloader : %s%s\n' "$LOG_DIM" "$BOOTLOADER_VOLUME" "$LOG_RESET"
+printf '\n%sLe disque ne distingue pas gauche et droite.%s\n' "$LOG_WARNING" "$LOG_RESET"
+printf '%s\n\n' 'Seule la moitié choisie doit être en bootloader.'
 confirm_and_flash

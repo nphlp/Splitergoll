@@ -16,8 +16,12 @@ make flash wire macos left
 ```
 
 Chaque commande choisit le dernier build du matériel et de la keymap demandés.
-Elle affiche sa date complète, son ancienneté et le fichier retenu, puis demande
-une seule confirmation avant la copie. Entrée seule annule. Sans build correspondant,
+Elle présente le matériel, la keymap, le côté puis les logs USB, comme dans la commande.
+La date utilise le mois en français et une heure comme `11 h 50 min 08 s`.
+L’ancienneté suit sur une deuxième ligne. Une ligne vide précède le fichier
+relatif au dépôt et le bootloader. Le SHA-256 est contrôlé sans être affiché.
+La confirmation `Continue? [y/N]` réagit à une seule touche, sans Entrée :
+`y` ou `Y` confirme, `n`, Entrée ou toute autre touche annule. Sans build correspondant,
 elle s’arrête avec un message explicite. `make flash` affiche l’aide.
 
 Ajouter `debug` en dernier pour choisir un build avec logs USB, par exemple

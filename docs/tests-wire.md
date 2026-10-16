@@ -1,7 +1,8 @@
 # Essais wire sur Mac et Windows
 
-Utiliser le clavier PC sans batterie, avec les deux UF2 du même build `wire` et la
-keymap `multi` actuelle. Les [schémas de touches](keymap.md) restent la référence.
+Utiliser le Clavier V1 sans batterie, avec les deux UF2 du même build `wire`.
+Les [schémas de touches](keymap.md) restent la référence. La bascule d’OS décrite
+ci-dessous concerne `multi`. Les profils fixes utilisent directement leur OS.
 
 ## Résultats confirmés
 
@@ -11,11 +12,15 @@ l’OS paraît plus rapide qu’avec l’ancien firmware.
 
 Le flash automatique avec `make flash wire macos right` puis `left` et le
 fonctionnement des deux moitiés avec ce profil fixe sont aussi confirmés.
+Le flash de `wire windows`, gaming inclus, et son fonctionnement sur V1
+sont également confirmés. Le parcours détaillé des couches de jeu reste à vérifier.
 
-Une latence est ressentie à droite par rapport à gauche. Elle n’est pas mesurée :
-comparer les variantes normale et debug avant d’attribuer cet écart au BLE.
-La lecture des consoles USB, le parcours complet des touches et les essais
-Windows restent à faire.
+Une latence était ressentie à droite avec `wire macos debug`. Après un passage par
+`wire windows` normal, puis `wire macos` normal, l’écart est devenu imperceptible.
+Comparer normal/debug à keymap identique avant d’en attribuer la cause aux logs ou au BLE.
+La lecture des deux consoles USB est validée sur V1 en `wire macos debug`.
+Le parcours complet des touches et couches sur les deux OS reste à faire.
+Voir [le diagnostic de latence](latence.md).
 
 ## Préparer le clavier
 

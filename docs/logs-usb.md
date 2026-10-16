@@ -16,6 +16,8 @@ Le matériel et la keymap restent obligatoires, même en diagnostic.
 Les caches sont séparés. Les dossiers et UF2 portent par exemple `wire-multi-debug`
 ou `bluetooth-macos-debug`, et `build-info.txt` indique `build_mode=debug`.
 Les compilations sans `debug` gardent les logs USB désactivés.
+Les logs servent au diagnostic, ils ne mesurent pas à eux seuls la latence complète
+du clavier. Voir [les mesures possibles et leurs limites](latence.md).
 
 ## Lire la console
 
@@ -35,6 +37,9 @@ série. Sous Windows, choisir le port COM dans un terminal série.
 Avec deux USB branchés, chaque moitié a sa propre console. Un reset peut fermer le
 port, il faut alors rouvrir le terminal. Les logs peuvent exposer les touches et des données
 d’appairage : conserver les captures privées hors Git, par exemple dans `.local/logs/`.
+
+La lecture des deux consoles de V1 en `wire macos debug` est validée. La lecture
+du profil Bluetooth sur V2 reste à tester.
 
 Après le diagnostic, reflasher le profil sans `debug`, car les logs augmentent
 la consommation. La veille profonde reste
