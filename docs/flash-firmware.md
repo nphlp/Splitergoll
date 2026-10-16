@@ -65,6 +65,10 @@ Le contenu de `CURRENT.UF2` peut être comparé au build attendu dans le bootloa
 
 ## Touche bootloader
 
-Le comportement de la touche bootloader est conservé avec ZMK 0.3.0.
-L’avertissement `NRF_STORE_REBOOT_TYPE_GPREGRET` concerne son mécanisme interne,
-qui reste nécessaire jusqu’à la migration. Les détails sont dans `AGENTS.md`.
+Le build migré utilise la rétention de mode de démarrage de Zephyr et le code
+UF2 `0x57` du nice!nano. Le build contrôle ces options et les limites de mémoire.
+Le bootloader UF2 existant du contrôleur n’est pas remplacé par cette migration.
+L’accès par `&bootloader` et le retour par reset simple sont confirmés sur V1
+avec les nouveaux UF2. Le double appui reste à confirmer sur cette version.
+L’ancien mécanisme reste dans le [snapshot stable 0.3](firmwares-stables.md),
+récupérable dans l’historique Git.

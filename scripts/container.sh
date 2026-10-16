@@ -26,7 +26,7 @@ check_dependencies() {
     done < .west/projects.lock
 }
 
-# Contrôle les rôles, la sortie et l’alimentation du profil, puis la présence de l’UF2.
+# Contrôle le bootloader, les rôles, la sortie et l’alimentation, puis la présence de l’UF2.
 check_firmware() {
     side=$1
     directory=$2
@@ -34,6 +34,16 @@ check_firmware() {
 
     grep -Fxq "KEYMAP_FILE:STRING=$KEYMAP_FILE" "$directory/CMakeCache.txt" ||
         fail 'La keymap compilée ne correspond pas à celle demandée'
+
+    for option in \
+        CONFIG_ZMK_BOARD_COMPAT=y \
+        CONFIG_RETENTION_BOOT_MODE=y \
+        CONFIG_ZMK_BOOTMODE_TO_MAGIC_VALUE_MAPPER=y \
+        CONFIG_ZMK_BOOTMODE_BOOTLOADER_MAGIC_VALUE=0x57 \
+        CONFIG_FLASH_LOAD_OFFSET=0x26000 \
+        CONFIG_FLASH_LOAD_SIZE=0xc6000; do
+        grep -Fxq "$option" "$configuration" || fail "Configuration nice!nano ou bootloader incorrecte : $option"
+    done
 
     grep -qx 'CONFIG_ZMK_SPLIT=y' "$configuration" || fail 'Split désactivé'
     grep -qx 'CONFIG_ZMK_BLE=y' "$configuration" || fail 'BLE interne désactivé'

@@ -12,6 +12,13 @@ Sur `unified-firmware` : build local et profils `wire` / `bluetooth`, avec la
 keymap de `dongle`. La gauche envoie les touches par USB ou Bluetooth direct,
 la droite communique avec elle en BLE. Le profil Bluetooth garde la saisie en
 Bluetooth pendant la charge USB et active la veille sur batterie.
+
+Le build est migré vers un snapshot ZMK préparant la 0.4, avec Zephyr 4.1.
+Les 32 UF2 sont contrôlés. Les premiers essais sur V1 en `wire macos` confirment
+saisie, Shift, encodeurs, copier/coller, reconnexion et accès aux couches.
+La [validation détaillée](tests-wire.md) continue. Les essais Bluetooth et veille
+ci-dessous concernent encore la version stable 0.3.0.
+
 Les deux moitiés fonctionnent sur le Mac après réinitialisation et nouvel appairage,
 avec leurs USB branchés pour l’alimentation et sur batterie seule, sans dongle.
 Le profil d’essai confirme un réveil sans reset et la lecture des deux batteries.
@@ -61,7 +68,7 @@ et `make bat avg` calcule une moyenne par moitié sur 30 secondes.
 - [Essais wire](tests-wire.md) : vérifier le clavier sans batterie sur Mac et Windows.
 - [Latence](latence.md) : diagnostic rapide, mesures possibles et limites des logs USB.
 - [Migration ZMK](migration-zmk.md) : versions, nouveautés, ruptures et validation avant flash.
-- [Firmwares stables](firmwares-stables.md) : snapshot versionné et retour aux UF2 avant migration.
+- [Firmwares stables](firmwares-stables.md) : récupération du snapshot 0.3 depuis l’historique Git.
 - [Veille et réveil](veille.md) : états d’inactivité et reprise à la frappe.
 - [Flash du firmware](flash-firmware.md) : copie des UF2, bootloader et messages du Finder.
 - [Appairage Bluetooth](appairage-bluetooth.md) : clés de connexion, reset et diagnostic.

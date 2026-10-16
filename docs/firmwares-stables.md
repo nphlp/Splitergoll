@@ -1,9 +1,10 @@
 # Firmwares stables
 
-Le snapshot [ZMK 0.3.0](../archives/firmware/zmk-0.3.0/) conserve les firmwares
-avant la migration. Il est versionné dans Git, indépendant des fichiers de `dist/`.
+Le snapshot ZMK 0.3.0 avant migration reste dans l’historique Git au commit
+`7e7be6d`. Il a été retiré du checkout à la demande de l’utilisateur après les
+essais positifs de V1 en `wire macos`. Les autres profils et V2 restent à valider.
 
-## Contenu
+## Contenu conservé dans Git
 
 Les 32 UF2 couvrent toutes les combinaisons actuellement disponibles :
 
@@ -23,10 +24,18 @@ Tous les firmwares compilent et passent les contrôles de configuration et UF2.
 Cela ne signifie pas que chaque combinaison a été essayée physiquement : voir
 [les essais wire](tests-wire.md) et [les essais de veille](veille.md).
 
-## Revenir au firmware précédent
+## Récupérer et reflasher l’ancienne version
 
-Choisir le matériel et la keymap correspondant au clavier. Pour V1 sur le Mac,
-mettre uniquement la droite en bootloader, puis utiliser le chemin explicite :
+Depuis la racine du dépôt, récupérer uniquement les fichiers du snapshot,
+sans changer de branche ni remplacer la configuration actuelle :
+
+```sh
+git archive 7e7be6d archives/firmware/zmk-0.3.0 | tar -x
+```
+
+Cette commande recrée l’archive comme fichiers non suivis. Choisir ensuite le
+matériel et la keymap correspondant au clavier. Pour V1 sur le Mac, mettre
+uniquement la droite en bootloader, puis utiliser le chemin explicite :
 
 ```sh
 archive=archives/firmware/zmk-0.3.0/wire-macos-2026-10-16-15-54-47
@@ -47,6 +56,7 @@ L’archive restaure le programme, pas une sauvegarde des réglages NVS. Un reto
 après migration peut perdre la préférence de sortie USB/Bluetooth. Ne pas flasher
 de reset des réglages systématiquement. Vérifier ensuite la saisie des deux côtés.
 
-`make clear` conserve cette archive, mais supprime les caches et builds locaux.
-Pour reconstruire exactement cette version, utiliser le commit source indiqué
-dans `snapshot.json`, avec son manifeste et son image Docker figés.
+`make clear` supprime les caches et builds locaux, sans toucher à l’historique Git
+ni à cette archive si elle a été récupérée. Pour reconstruire exactement cette
+version, le commit source est indiqué dans `snapshot.json`, avec son manifeste
+et son image Docker figés.

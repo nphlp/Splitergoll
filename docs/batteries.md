@@ -1,6 +1,7 @@
 # Batteries des deux moitiés
 
 Configuration étudiée : ZMK 0.3.0. La saisie sur les deux batteries est validée.
+Le build migré conserve ces options, leur revalidation sur V2 reste à faire.
 Lors des essais aux délais courts, un lecteur CoreBluetooth sur le Mac a lu **63 % à gauche
 et 62 % à droite**, plusieurs fois. Les deux mesures remontent correctement.
 Le menu Bluetooth macOS affiche seulement 63 %, la mesure principale de gauche.

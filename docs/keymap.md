@@ -6,6 +6,9 @@ Les affectations, accents, macros et encodeurs sont conservés. Les branches
 Cette keymap constitue le profil `multi` actuel : les trois OS et le jeu dans
 un même firmware.
 
+La migration conserve ces affectations. Dans les comportements partagés, le nouveau
+verrouillage implicite de `&to` et `&tog` est désactivé pour garder les transitions de la 0.3.
+
 ## Choisir une keymap
 
 | Argument | Contenu | Démarrage |

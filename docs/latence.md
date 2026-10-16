@@ -60,5 +60,5 @@ BLE observables. Distinguer les paramètres demandés de ceux négociés.
 L’absence d’erreur ne prouve pas que le délai est faible. Garder les captures privées
 dans `.local/`, sans annoncer une latence totale à partir des seuls logs.
 
-La migration ZMK/Zephyr est le chantier suivant. Si une mesure chiffrée devient
+La migration ZMK/Zephyr est en cours de validation. Si une mesure chiffrée devient
 nécessaire, choisir une instrumentation adaptée séparément.

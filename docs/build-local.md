@@ -57,18 +57,22 @@ Voir [l’explication des mainteneurs Docker](https://github.com/moby/moby/pull/
 Le diagnostic sur le moteur OrbStack n’a pas identifié de réglage exposé pour
 corriger ce drapeau. Ce point reste ouvert côté moteur, sans modification système.
 
-L’avertissement `NRF_STORE_REBOOT_TYPE_GPREGRET` vient de ZMK 0.3.0, qui utilise
-encore ce mécanisme pour la touche bootloader. Le supprimer demande une adaptation
-du firmware. Voir [le bootloader](flash-firmware.md#touche-bootloader).
+Le build migré conserve deux avertissements du socle : `KSCAN` est déprécié et
+les tap-dances ZMK émettent un avertissement de qualification `const`.
+Ils restent visibles. Leur résolution est distincte de cette migration, voir
+[les détails et validations](migration-zmk.md). L’avertissement GPREGRET a disparu.
 
 Le dépôt est monté en lecture seule. Les dépendances et caches sont dans `.local/`.
-ZMK 0.3.0, Zephyr et leurs dépendances sont verrouillés dans `config/west.yml`.
+Le snapshot ZMK `4dd95d7840eb`, basé sur Zephyr 4.1 avec correctifs ZMK,
+et ses dépendances sont verrouillés dans `config/west.yml`.
 L’image officielle est figée par son digest dans `scripts/build-common.sh`.
 
 Ces hashes identifient les commits et l’image exacts pour retrouver le même
-environnement à chaque build. La version ZMK retenue correspond à `v0.3.0`.
-Le manifeste détaille les 59 projets normalement chargés par les imports
-ZMK/Zephyr, afin de verrouiller aussi les dépendances indirectes.
+environnement à chaque build. Cette version prépare ZMK 0.4, elle n’est pas une
+release stable publiée. Le manifeste détaille 68 projets, dont 45 actifs,
+pour verrouiller aussi les dépendances indirectes. L’image officielle 4.1 et
+la cible `nice_nano@2.0.0//zmk` remplacent le socle 3.5 et `nice_nano_v2`.
+Le [snapshot stable 0.3](firmwares-stables.md) reste récupérable dans l’historique Git pour revenir en arrière.
 
 ## Organisation
 
@@ -134,28 +138,17 @@ Les caches sont séparés par version, matériel, keymap, diagnostic et moitié.
 bloquent le build. Les rôles USB/BLE sont contrôlés après compilation.
 Le build ne flashe rien et ne supprime aucun appairage.
 
-Validation : `make setup` et les builds explicites passent sur le Mac ARM après le découpage
-en scripts. Les deux profils produisent chacun deux UF2 vérifiés. La saisie Bluetooth
-des deux moitiés est confirmée sur le Mac, avec alimentation USB et sur batterie seule.
-Le profil d’essai confirme un réveil sans reset sur chaque moitié, avec un premier
-appui sans saisie. La saisie USB `wire` sur le Mac est aussi confirmée avec la
-keymap `multi`. Le flash automatique et le fonctionnement des deux moitiés avec
-`wire macos` sont aussi confirmés. Le flash et le fonctionnement de V1 avec
-`wire windows`, gaming inclus, sont confirmés. Les essais complets
-des touches, encodeurs et couches des différents profils restent à faire.
-Les profils normaux compilent, avec les délais et le service auxiliaire batterie
-contrôlés. Les deux mesures ont aussi été lues sur le Mac. Le profil permanent
-aux délais courts est retiré après les essais.
-Les quatre keymaps compilent pour les deux matériels, avec comparaison des
-affectations compilées. `multi` conserve ses couches, macros et encodeurs.
-Avec deux variantes debug représentatives, vingt UF2 sont contrôlés : empreintes,
-options, métadonnées et adresses. Les avertissements connus restent ceux du moteur
-Docker et du bootloader ZMK 0.3.0.
-La lecture des deux consoles de V1 en `wire macos debug` est validée.
-La lecture du profil Bluetooth sur V2 reste à tester.
-Ces contrôles ne remplacent pas les essais matériels restants.
-Le nettoyage effectué avec `clear` a été vérifié avant une préparation complète.
-Le setup passe ensuite en mode normal et interactif, avec les 39 dépendances vérifiées.
-L’arrêt avec `stop` pendant un build reste à valider.
+Validation de migration : le setup passe sur le Mac ARM et les 32 UF2 compilent,
+soit les deux matériels, quatre keymaps, normal/debug et deux moitiés.
+Rôles, sorties, délais, proxy batterie, logs, bootloader, partitions, empreintes
+et blocs UF2 sont contrôlés. Les keymaps compilées, macros et paramètres matériels
+sont comparés au snapshot stable. Le nouveau verrouillage des couches est désactivé
+pour conserver leur comportement précédent.
+
+V1 en `wire macos` est flashé et les essais rapportés sont positifs : voir
+[les essais wire](tests-wire.md). Les autres profils restent à tester.
+Les résultats de [veille](veille.md) et [batteries](batteries.md) concernent
+encore ZMK 0.3.0. Leur revalidation après migration reste nécessaire.
+L’arrêt avec `stop` pendant un build reste aussi à valider.
 Voir [le matériel](configuration-materielle.md), [la keymap](keymap.md) et
 [les tâches restantes](TODO.md).

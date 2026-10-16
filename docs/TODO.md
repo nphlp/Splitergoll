@@ -38,10 +38,15 @@ La priorité USB est différée après l’auto-détection d’OS, pour viser un
 - [x] Faire afficher les profils disponibles par `make build`, sans compilation implicite.
 - [x] Compiler et contrôler les quatre UF2 avec des caches séparés par profil et moitié.
 - [x] Comparer les versions et identifier les ruptures : voir [la préparation de migration](migration-zmk.md). ZMK 0.3.0 reste la dernière stable, la 0.4 est en préparation.
-- [x] Compiler et archiver les 32 UF2 de ZMK 0.3.0 : deux matériels, quatre keymaps, deux modes et deux moitiés, avec métadonnées et empreintes. Voir [les firmwares stables](firmwares-stables.md).
+- [x] Compiler et archiver les 32 UF2 de ZMK 0.3.0 : deux matériels, quatre keymaps, deux modes et deux moitiés, avec métadonnées et empreintes. Le snapshot reste dans l’historique Git après son retrait du checkout. Voir [les firmwares stables](firmwares-stables.md).
 - [x] Retenir la migration vers un snapshot de développement figé avec Zephyr 4.1, après publication du snapshot stable pour le retour arrière.
-- [ ] Appliquer la montée de version retenue : manifeste, image Docker, noms de cartes et contrôles UF2. Revalider les huit paires normales et les variantes debug, puis les transitions de couches et les réglages persistants.
-- [ ] Migrer le bootloader vers l’API de rétention, conserver les codes UF2 et vérifier `&bootloader` / `&sys_reset` sur le matériel.
+- [x] Migrer le build vers ZMK `4dd95d7840eb` et Zephyr 4.1 : manifeste figé, image officielle, nom de carte et contrôles UF2. Compiler les 32 UF2 et comparer leurs keymaps et paramètres matériels au snapshot stable.
+- [x] Conserver les transitions de couches sans le nouveau verrouillage implicite, avec comparaison du moteur sur 245 952 séquences d’actions.
+- [x] Activer le bootloader par rétention via la variante nice!nano, contrôler le code UF2 `0x57` et le partitionnement.
+- [x] Valider les essais rapportés sur V1 en `wire macos` : saisie, Shift, encodeurs, copier/coller, reconnexion, couches, accents, triple appui pavé, accès par `&bootloader` et retour par reset.
+- [ ] Compléter la validation de migration : gestes non encore essayés, `&sys_reset`, double appui physique, autres profils, V2, BLE vers l’hôte, réglages persistants, veille et batteries.
+- [ ] Migrer la matrice vers l’API input dans un chantier distinct pour remplacer KSCAN déprécié.
+- [ ] Résoudre en amont l’avertissement `const` du driver tap-dance, sans masquer le diagnostic du compilateur.
 - [x] Déclarer la matrice des deux moitiés comme source de réveil avec `wakeup-source`.
 - [x] Compiler les deux moitiés avec et sans veille, vérifier la gestion d’alimentation et la source de réveil.
 - [x] Activer la veille après 15 minutes et le reporting batterie dans le profil `bluetooth`.
@@ -51,7 +56,7 @@ La priorité USB est différée après l’auto-détection d’OS, pour viser un
 - [x] Reflasher les deux moitiés avec les délais Bluetooth normaux après les essais, sans reset des appairages.
 - [x] Valider les builds `wire debug` et `bluetooth debug`, avec consoles USB et artefacts séparés.
 - [x] Lire les deux consoles USB de V1 en `wire macos debug` et observer les événements de droite reçus par la gauche.
-- [ ] Confirmer le retour annoncé de V1 à `wire macos` normal après le diagnostic de latence.
+- [x] Confirmer le retour de V1 à `wire macos` normal, désormais sur le firmware migré.
 - [ ] Tester les consoles USB du profil Bluetooth sur V2, puis revenir aux firmwares normaux.
 - [ ] Tester le réveil de toutes les touches et des encodeurs.
 - [ ] Résoudre le drapeau réseau `DOCKER_INSECURE_NO_IPTABLES_RAW` au niveau du moteur Docker, sans masquer l’avertissement.

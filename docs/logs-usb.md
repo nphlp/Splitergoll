@@ -45,4 +45,4 @@ Après le diagnostic, reflasher le profil sans `debug`, car les logs augmentent
 la consommation. La veille profonde reste
 bloquée tant que l’USB alimente le clavier, voir [veille et réveil](veille.md).
 
-[Snippet officiel ZMK 0.3.0](https://github.com/zmkfirmware/zmk/blob/v0.3.0/app/snippets/zmk-usb-logging/snippet.yml).
+[Snippet du snapshot ZMK utilisé](https://github.com/zmkfirmware/zmk/blob/4dd95d7840eb3d5a3f59bb29fbf1ab054715ef85/app/snippets/zmk-usb-logging/snippet.yml).

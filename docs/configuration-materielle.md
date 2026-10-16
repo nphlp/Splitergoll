@@ -25,6 +25,8 @@ disponible pour le profil dongle historique.
 
 Le Nordic des anciennes photos n’est pas utilisé. Les fichiers de
 [PCB](<../Design PCB/>) et de [boîtier](<../Design 3D/>) sont dans le dépôt.
+Aucune LED externe n’est installée, seules celles des microcontrôleurs sont présentes.
+La migration n’active pas d’indicateur LED supplémentaire.
 
 Sur V2, distinguer l’interrupteur de batterie et l’alimentation USB.
 Une moitié branchée en USB est alimentée même avec l’interrupteur sur arrêt.
@@ -125,7 +127,9 @@ restent à tester. [Sorties ZMK](https://zmk.dev/docs/keymaps/behaviors/outputs)
 ## Les fichiers de configuration
 
 La **board** décrit le contrôleur, le **shield** décrit le clavier monté dessus.
-ZMK 0.3.0 cible `nice_nano_v2` avec `splitergoll_left` ou `splitergoll_right`.
+Le build migré cible `nice_nano@2.0.0//zmk`, avec les shields
+`splitergoll_left` ou `splitergoll_right`. L’archive ZMK 0.3.0 garde l’ancien
+nom `nice_nano_v2`. Les essais matériels cités ici précèdent la migration.
 
 | Fichier | Rôle |
 | --- | --- |

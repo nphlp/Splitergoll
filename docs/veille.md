@@ -1,5 +1,8 @@
 # Veille et réveil
 
+Les essais matériels ci-dessous concernent ZMK 0.3.0. Le build migré conserve
+les délais et la matrice de réveil, à revalider sur V2.
+
 ## Délais
 
 | État | `bluetooth` | Comportement prévu |

@@ -6,7 +6,7 @@
 # Chemins relatifs au dépôt et image officielle figée.
 SCRIPT_DIRECTORY=$(CDPATH= cd "$(dirname "$0")" && pwd)
 REPOSITORY=$(CDPATH= cd "$SCRIPT_DIRECTORY/.." && pwd)
-BUILD_IMAGE='zmkfirmware/zmk-build-arm:3.5@sha256:0979a8de325e3d822e48bd8d1d9efaee2984ad3750253119f920a342f0ce5cde'
+BUILD_IMAGE='zmkfirmware/zmk-build-arm:4.1@sha256:edb1c953438c6f720ddb79c3762f3972013b7fbbaf4fff3592fc869983e7afc5'
 LOCAL_ROOT="$REPOSITORY/.local"
 OUTPUT_ROOT="$REPOSITORY/dist"
 LOG_ROOT="$LOCAL_ROOT/logs"
@@ -14,7 +14,7 @@ WORKSPACE_ROOT="$LOCAL_ROOT/zmk"
 ARTIFACT_ROOT="$OUTPUT_ROOT/firmware"
 CONTAINER_SOURCE='/work/splitergoll'
 CONTAINER_WORKSPACE='/work/zmk'
-BOARD='nice_nano_v2'
+BOARD='nice_nano@2.0.0//zmk'
 SIDES='left right'
 # Détection des bootloaders nice!nano sur macOS, sans chemin personnel.
 BOOTLOADER_VOLUME_ROOT='/Volumes'

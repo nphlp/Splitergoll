@@ -8,6 +8,15 @@
 #include "french_layout/linux.h"
 #include "french_layout/macos.h"
 
+// Conserve les transitions de couches de ZMK 0.3, sans le nouveau verrouillage implicite.
+&to {
+    /delete-property/ locking;
+};
+
+&tog {
+    /delete-property/ locking;
+};
+
 
 // Alias et ponctuation de base.
 #define no___ &none

@@ -24,6 +24,8 @@ L’AGENTS.md garde les invariants, preuves techniques et décisions utiles au p
 - `Clavier V2` : clavier au travail, une batterie par moitié, utilisé en Bluetooth
   direct sur le Mac. Le XIAO BLE reste disponible pour le profil dongle historique.
 - Les moitiés sont des répliques de nice!nano v2. Le Nordic des photos n’est pas utilisé.
+- Aucune LED externe n’est installée, seules celles des contrôleurs sont présentes.
+  Ne pas activer d’indicateur LED à l’occasion de la migration.
 - La keymap complète de `dongle` à `2584ca4` fait référence : conserver les 44 positions,
   accents, Shift, macros, couches et encodeurs de `multi`. Les helpers, transforms et GPIO sont inchangés.
 - L’archive unique avant découpage est dans `archives/keymap-multi/` : keymap,
@@ -64,16 +66,13 @@ L’AGENTS.md garde les invariants, preuves techniques et décisions utiles au p
   adaptée à leurs appels de macros. Les fichiers Devicetree matériels gardent
   leur langage natif. Cette association ne change pas le build.
 - Les branches `-minimal` sont des archives, exclues du chantier.
-- `archives/firmware/zmk-0.3.0/` conserve le snapshot stable avant migration :
-  32 UF2, pour wire/bluetooth, quatre keymaps, normal/debug et gauche/droite.
-  Il est indépendant de `dist/` et doit rester intact lors des futures migrations.
-  `snapshot.json` référence les sources au commit `aa5c8abdd44d36d54c6b99615bc3b14b6d195f04`,
-  les versions ZMK/Zephyr, le digest Docker et les 32 empreintes individuelles.
-  Le manifeste West figé et les empreintes des sources sont inclus. Les dossiers
-  de paires gardent leur timestamp, leurs métadonnées et leur SHA256SUMS.
-  Le SHA256SUMS global contrôle les 67 autres fichiers, sans contenir sa propre empreinte.
-  Aucun log, NVS ou appairage n’est archivé. Le retour s’effectue avec le chemin
-  explicite d’un UF2, jamais par sélection implicite du dernier build de `dist/`.
+- Le snapshot des 32 firmwares ZMK 0.3.0 est conservé dans l’historique Git au
+  commit `7e7be6d`. À la demande de l’utilisateur, `archives/firmware/zmk-0.3.0/`
+  est retiré du checkout après les essais positifs de V1. Cela ne valide pas V2
+  ni tous les autres profils. Le guide `docs/firmwares-stables.md` explique sa
+  récupération sans changer de branche. Les métadonnées et empreintes restent
+  dans ce commit, sans log privé, NVS ou appairage. L’archive de la keymap reste
+  distincte et inchangée dans `archives/keymap-multi/`.
 - Les branches historiques restent intactes. `wire` archive `main` à `cbad9a0`,
   `wire-minimal` archive `main-minimal` à `27ed2b7`.
 - Sur `unified-firmware`, l’historique antérieur à la refonte est regroupé dans
@@ -93,6 +92,26 @@ L’AGENTS.md garde les invariants, preuves techniques et décisions utiles au p
 Build local et profil `wire` : gauche centrale USB, droite périphérique BLE,
 alimentation USB, sans veille profonde ni reporting batterie.
 Le Clavier V1 sans batterie est utilisé sur le MacBook Pro M4 Max en télétravail.
+Sur le firmware migré vers Zephyr 4.1, l’utilisateur confirme sur V1 en `wire macos`
+la saisie, Shift, les encodeurs, copier/coller, la déconnexion/reconnexion et l’accès
+aux couches. Le triple appui droit active le pavé numérique. Le protocole distingue
+désormais les maintiens de couches des tap-dances, avec gestes et résultats précis.
+L’accès au bootloader par L1 + L2 puis clic sur l’encodeur gauche et le retour
+par reset sont confirmés par l’utilisateur. Les cas détaillés restent à valider. Les autres validations
+matérielles rapportées ci-dessous concernent ZMK 0.3.0.
+L’utilisateur confirme ensuite le verrouillage Shift (distinct de Caps Lock),
+les accents essayés dont le triple `à/â/À`, l’ordre des frappes alternées entre
+moitiés et une latence ressentie imperceptible, sans mesure instrumentée.
+Son signalement `ëè` sur trois appuis de F avec L2 correspond à la configuration
+historique : `eg_et` a deux actions (`&kp _EG`, `&fr_et`), pas trois. Le second
+appui atteint le maximum, le troisième commence une nouvelle séquence.
+Les bindings compilés et le délai 250 ms sont identiques dans les deux workspaces.
+Le code exécutable du moteur tap-dance est inchangé, seules les déclarations
+const des tableaux/configurations diffèrent. Le délai repart au dernier appui,
+jusqu’à résolution ou nombre maximal atteint. Ne pas augmenter les délais ni
+changer les macros d’accents pour corriger ce résultat attendu.
+Les repères du protocole sont corrigés : Y secondaire donne `=`, pas `7`.
+L’encodeur droit est vertical en secondaire et horizontal en tertiaire.
 Le flash `wire windows` (gaming inclus) et son fonctionnement sur V1 sont confirmés
 par l’utilisateur. Cela ne valide pas chaque touche ou couche de jeu.
 Le fonctionnement avec `wire macos` normal est également confirmé,
@@ -105,8 +124,8 @@ Le diagnostic court est clos à la demande de l’utilisateur : en `wire macos d
 aucun écart net lecteurs fermés, impression des deux moitiés un peu plus lentes
 lecteurs ouverts, puis comparaison incertaine après fermeture. Aucun écart significatif
 n’est reproduit. Ne pas conclure à une latence nulle ni à une cause radio ou logging.
-L’utilisateur annonce reflasher les deux moitiés en `wire macos` normal, retour
-pas encore confirmé. La migration peut être préparée sans nouveau test de latence.
+V1 fonctionne désormais en `wire macos` normal sur le firmware migré, selon les
+premiers essais ci-dessus. Aucun nouveau test de latence instrumenté n’est réalisé.
 
 Deux captures de 90 secondes valident la lecture des consoles et la réception des
 événements de droite sur la gauche, sans avertissement, erreur, déconnexion ou perte
@@ -137,25 +156,53 @@ La PR officielle #3024 prépare 0.4.0 mais reste ouverte. Ne pas présenter sa d
 automatique de changelog comme une date de publication.
 Le snapshot `main` examiné est `4dd95d7840eb3d5a3f59bb29fbf1ab054715ef85`,
 committé le 9 octobre 2026, avec 195 commits depuis 0.3.0, dont de la documentation
-et de la maintenance. Il utilise `v4.1.0+zmk-fixes`. Aucun changement de pin,
-d’image Docker, de firmware ni de keymap n’est appliqué pendant cette recherche.
-L’utilisateur retient un snapshot stable versionné et committé avant de migrer
-vers un commit de développement figé. Ne modifier aucun pin avant ce commit.
+et de la maintenance. La migration utilise ce commit et Zephyr
+`10ba6d0cb38bc3d258775d27982f707599320085` sur `v4.1.0+zmk-fixes`.
+Le snapshot stable a été committé et publié à `7e7be6d` avant toute migration.
 Les seize paires du snapshot ont été compilées en 187 secondes et passent les
 contrôles de profils. Les 32 fichiers archivés passent SHA-256, les gardes UF2
 et la sélection par chemin de flash, sans écriture USB. Le wire macos normal
 est identique octet pour octet au build précédent `wire-macos-2026-10-16-11-56-08`.
 Le snapshot occupe environ 14 Mio. Cela ne valide pas physiquement les 32 UF2.
-Les seuls avertissements observés restent Docker insecure et GPREGRET déprécié.
+Les avertissements de cette compilation stable étaient Docker insecure et GPREGRET déprécié.
 Les conteneurs éphémères ont disparu, les trois services préexistants sont conservés.
 Le [guide des firmwares stables](docs/firmwares-stables.md) décrit le retour arrière.
-La cible nice!nano v2 explicite devient `nice_nano@2.0.0//zmk`.
-Les partitions de la carte source examinée restent `0x26000` pour l’application
-et `0xEC000` / `0x8000` pour NVS. Revalider les sorties compilées avant flash.
+La cible nice!nano v2 est `nice_nano@2.0.0//zmk`. L’image officielle 4.1 est figée
+au digest `sha256:edb1c953438c6f720ddb79c3762f3972013b7fbbaf4fff3592fc869983e7afc5`.
+Le setup a contrôlé les 45 dépendances actives en 194 secondes. Le manifeste
+résout les imports officiels avec West et fige 68 projets, groupes facultatifs
+et babblesim désactivés. Le nouveau workspace est `.local/zmk/25d3fa3b79b2ce10/`,
+celui de la 0.3 reste intact. Aucun patch n’est appliqué aux dépendances.
+Les 32 UF2 migrés compilent et passent les gardes de profils, de rôles et de logs.
+`container.sh` impose la variante ZMK, la rétention de boot, le mapper de code
+UF2 `0x57`, l’offset `0x26000` et la taille d’application `0xc6000`.
+Les 32 arbres compilés ont été comparés à ceux du snapshot stable : `/keymap`,
+`/conditional_layers`, `/macros`, ordre des comportements et leurs propriétés
+sont identiques, sauf la nouvelle propriété `bootloader` attendue sur `&bootloader`.
+La matrice, son transform, les deux encodeurs, leurs capteurs et `vbatt` sont identiques.
+Les partitions restent `0x26000` / `0xc6000` pour l’application et `0xEC000` /
+`0x8000` pour NVS. Les deux nœuds de rétention et leurs références chosen sont vérifiés.
+Les empreintes, blocs, famille nRF52840 et adresses des 32 UF2 sont vérifiés.
+Les validations temporaires sont dans `.local/migration/`, sans nouvelle suite d’outillage.
+Tous les conteneurs de validation ont disparu, les trois services préexistants sont conservés.
 La rupture des couches est indépendante de Zephyr : `&to` et `&tog` activent
 `locking`, empêchant un comportement non verrouillant de désactiver leur couche.
-Vérifier les tap-dances partagés (`&mo PRIMARY`, `&mo SECONDARY`, `&to NUMPAD`),
-retours de pavé, gaming et bascules OS, sans se limiter à un diff des bindings.
+`common/behaviors.dtsi` retire cette propriété de `&to` et `&tog` pour conserver
+le comportement stable, sans modifier les affectations. Leur absence est contrôlée
+dans les arbres compilés. Un harnais temporaire utilisant les fonctions C réelles
+des deux versions compare 245 952 triplets d’actions d’activation, désactivation,
+toggle et to sur 5, 7 et 15 couches. Les états sont identiques sans verrouillage.
+Ce contrôle ne simule pas la file d’événements, la temporisation des tap-dances
+ou le matériel. Les tap-dances, retours de pavé, gaming et bascules OS restent à essayer.
+L’avertissement GPREGRET déprécié a disparu. Le symbole de compatibilité
+`NRF_STORE_REBOOT_TYPE_GPREGRET` reste à y dans ZMK, mais le chemin reset
+compilé utilise `RETENTION_BOOT_MODE`, pas l’ancienne implémentation Zephyr.
+Deux avertissements du socle restent visibles : KSCAN déprécié et qualification
+`const` perdue à l’initialisation des tap-dances (`behavior_tap_dance.c:269`).
+Le tableau de bindings est const, le pointeur de configuration ne l’est pas,
+et les fonctions press/release copient les bindings avant invocation.
+Ne pas masquer le diagnostic. Le remplacement de KSCAN par input et le correctif
+const amont restent des chantiers séparés, sans fork ou patch implicite de ZMK.
 La préférence de sortie NVS migre de `endpoints/preferred` à `endpoints/preferred2`,
 avec suppression de l’ancienne clé. Un retour à 0.3.0 peut donc perdre cette
 préférence, sans que ce constat prouve un effacement des appairages Bluetooth.
@@ -270,9 +317,12 @@ une reprise depuis la droite, sans promettre ce comportement avec sa radio coup�
 Le guide `docs/veille.md` distingue les capacités de ZMK des essais matériels.
 `docs/flash-firmware.md` couvre le flash et le bootloader, `docs/appairage-bluetooth.md`
 couvre les clés de connexion et le reset.
-Le mécanisme bootloader déprécié reste nécessaire à ZMK 0.3.0 : son remplacement
-demande l’API de rétention, l’adaptation du comportement reset et des codes UF2.
-Ne pas désactiver `NRF_STORE_REBOOT_TYPE_GPREGRET` pour faire disparaître le warning.
+Le build utilise le bootloader par rétention de la variante nice!nano ZMK et
+conserve le code UF2 `0x57`. Le bootloader installé sur les contrôleurs n’est pas
+mis à jour. L’accès par `&bootloader` est confirmé sur V1 après migration.
+Le retour par reset est confirmé. Tester encore `&sys_reset` et le double appui
+physique avant de considérer le parcours matériel complet validé.
+Le snapshot 0.3 dans l’historique Git garde son ancien mécanisme.
 
 Le Makefile expose `help`, `setup`, `build <matériel> <keymap> [debug]`, `flash`, `bat`, `bat avg`,
 `stop` et `clear`, délégués aux scripts dédiés. Le matériel (`wire` ou `bluetooth`)
@@ -336,8 +386,8 @@ de tests d’outillage n’est ajouté. L’utilisateur confirme le parcours ré
 fonctionnement des deux moitiés avec `make flash wire macos right` puis `left`.
 Le chemin UF2 explicite, debug, l’annulation et les autres OS restent à tester sur matériel.
 
-ZMK 0.3.0 et les
-59 projets résolus sont figés dans `config/west.yml`. Les workspaces sont séparés
+Le snapshot ZMK `4dd95d7840eb`, Zephyr 4.1 et les
+68 projets résolus sont figés dans `config/west.yml`. Les workspaces sont séparés
 par empreinte de l’environnement, les caches CMake par moitié.
 Les sorties sont dans `dist/firmware/<matériel>-<keymap>[-debug]-AAAA-MM-JJ-HH-MM-SS/`, en heure locale,
 sans suffixe aléatoire. Refuser un dossier existant plutôt que l’écraser.
