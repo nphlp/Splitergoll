@@ -1,0 +1,91 @@
+// Auto USB expérimental : attente neutre, puis Windows avec gaming ou macOS.
+// Les affectations et schémas viennent des mêmes couches que les profils fixes.
+#include "common/function.h"
+#include "common/auto-layers.h"
+
+// Les comportements partagés ciblent ici le groupe Windows.
+#define BASE AUTO_WINDOWS_BASE
+#define PRIMARY AUTO_WINDOWS_PRIMARY
+#define SECONDARY AUTO_WINDOWS_SECONDARY
+#define TERTIARY AUTO_WINDOWS_TERTIARY
+#define NUMPAD AUTO_WINDOWS_NUMPAD
+#define GAMING AUTO_WINDOWS_GAMING
+#define GAMING_2 AUTO_WINDOWS_GAMING_2
+#include "common/behaviors.dtsi"
+
+// Aucune touche ni rotation avant une décision, sans OS de repli implicite.
+#define SIX_NONE &none &none &none &none &none &none
+/ {
+    keymap {
+        compatible = "zmk,keymap";
+        PENDING_layer {
+            bindings = <
+                SIX_NONE SIX_NONE
+                SIX_NONE SIX_NONE
+                &none &none &none &none &none &none &none &none &none &none
+                &none &none &none &none &none &none &none &none &none &none
+            >;
+        };
+    };
+};
+#undef SIX_NONE
+
+// Les noms de nœuds distinguent les deux groupes sans dupliquer leurs sources.
+#undef LAYER
+#define LAYER(name, layout, sensors) \
+/ { \
+    keymap { \
+        compatible = "zmk,keymap"; \
+        windows_##name##_layer { \
+            bindings = <layout>; \
+            sensor-bindings = <sensors>; \
+        }; \
+    }; \
+};
+#include "layers/windows.dtsi"
+COND_LAYER(AUTO_WINDOWS_PRIMARY, AUTO_WINDOWS_SECONDARY, AUTO_WINDOWS_TERTIARY)
+#undef BASE
+#undef PRIMARY
+#undef SECONDARY
+#undef TERTIARY
+#undef NUMPAD
+#undef GAMING
+#undef GAMING_2
+#undef LAYER
+
+// Les tap-dances macOS ont leurs propres destinations dans le second groupe.
+#define BASE AUTO_MACOS_BASE
+#define PRIMARY AUTO_MACOS_PRIMARY
+#define SECONDARY AUTO_MACOS_SECONDARY
+#define TERTIARY AUTO_MACOS_TERTIARY
+#define NUMPAD AUTO_MACOS_NUMPAD
+#define priSec auto_macos_priSec
+#define secPri auto_macos_secPri
+TAP_DANCE_3(auto_macos_priSec, &mo PRIMARY, &mo SECONDARY, &to NUMPAD)
+TAP_DANCE_2(auto_macos_secPri, &mo SECONDARY, &mo PRIMARY)
+#define LAYER(name, layout, sensors) \
+/ { \
+    keymap { \
+        compatible = "zmk,keymap"; \
+        macos_##name##_layer { \
+            bindings = <layout>; \
+            sensor-bindings = <sensors>; \
+        }; \
+    }; \
+};
+#include "layers/macos.dtsi"
+COND_LAYER(AUTO_MACOS_PRIMARY, AUTO_MACOS_SECONDARY, AUTO_MACOS_TERTIARY)
+#undef priSec
+#undef secPri
+#undef BASE
+#undef PRIMARY
+#undef SECONDARY
+#undef TERTIARY
+#undef NUMPAD
+#undef LAYER
+
+/ {
+    os_auto: os_auto {
+        compatible = "splitergoll,os-auto";
+    };
+};

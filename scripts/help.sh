@@ -30,6 +30,7 @@ show_build_help() {
     show_command 'bluetooth' 'Bluetooth direct, y compris pendant la charge USB'
 
     printf '\n%s2. Keymap (obligatoire)%s\n' "$LOG_HEADING" "$LOG_RESET"
+    show_command 'auto' 'Détection USB macOS / Windows avec gaming (wire, expérimental)'
     show_command 'multi' 'Windows, macOS et Linux, avec changement au clavier et gaming'
     show_command 'windows' 'Windows avec gaming inclus'
     show_command 'macos' 'macOS fixe, sans gaming'
@@ -40,6 +41,7 @@ show_build_help() {
     show_command 'usb-trace' 'Observer les requêtes USB sur la gauche (wire uniquement)'
 
     printf '\n%sExemples%s\n' "$LOG_HEADING" "$LOG_RESET"
+    show_command 'make build wire auto' 'USB avec sélection automatique macOS / Windows'
     show_command 'make build wire macos' 'USB avec keymap macOS fixe'
     show_command 'make build bluetooth multi' 'Bluetooth avec changement d’OS au clavier'
     show_command 'make build bluetooth windows debug' 'Bluetooth, Windows avec gaming et logs USB'
@@ -51,7 +53,7 @@ show_flash_help() {
     printf '\n%sFlasher un firmware (macOS)%s\n\n' "$LOG_HEADING" "$LOG_RESET"
     printf '  %smake flash <matériel> <keymap> <left|right> [debug|usb-trace]%s\n' "$LOG_SUCCESS" "$LOG_RESET"
     printf '  %smake flash <chemin.uf2>%s\n\n' "$LOG_SUCCESS" "$LOG_RESET"
-    printf '%s\n' '  Matériel : wire ou bluetooth. Keymap : multi, windows, macos ou linux.'
+    printf '%s\n' '  Matériel : wire ou bluetooth. Keymap : auto (wire), multi, windows, macos ou linux.'
     printf '%s\n' '  Sans chemin, choisit le dernier build exact. debug et usb-trace doivent être explicites.'
     printf '%s\n' '  Affiche la date complète et l’ancienneté, puis demande confirmation avant copie.'
     printf '%s\n' '  Mettre uniquement la moitié choisie en bootloader par un double appui sur reset.'

@@ -22,11 +22,12 @@ make build bluetooth windows debug
 
 - `setup` télécharge l’image et les sources figées.
 - Le matériel `wire` choisit une sortie USB à gauche, `bluetooth` une sortie Bluetooth directe.
-- La keymap doit être `multi`, `windows`, `macos` ou `linux`.
+- La keymap doit être `auto`, `multi`, `windows`, `macos` ou `linux`.
+- `auto`, réservé à `wire`, sélectionne macOS ou Windows avec gaming : voir [le guide](keymap-auto.md).
 - `windows` comprend le gaming. Les profils macOS et Linux restent sur leur OS.
 - Ajouter `debug` après la keymap active les logs USB, voir [logs-usb.md](logs-usb.md).
 - `usb-trace`, réservé à `wire`, enregistre les requêtes de connexion de la gauche
-  sans changer la keymap : voir [le diagnostic d’OS](detection-os.md).
+  et affiche aussi la sélection appliquée avec `auto` : voir [le diagnostic d’OS](detection-os.md).
 - `build` seul affiche l’aide, sans compilation ni Docker. Un choix incomplet ou invalide échoue avant Docker.
 - `stop` arrête les conteneurs de build de ce checkout, en conservant les fichiers.
 - `clear` les arrête puis supprime `.local/` et `dist/` pour toutes les versions.

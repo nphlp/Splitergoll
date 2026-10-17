@@ -40,8 +40,14 @@ La priorité USB est différée après l’auto-détection d’OS, pour viser un
 - [x] Confirmer le retour au Mac avec le même firmware corrigé, sans nouveau flash.
   La keymap reste inchangée pendant cet essai.
 - [ ] Isoler les échanges du lecteur CDC, comparer les signatures avec Linux et
-  revalider avec les descripteurs normaux avant toute décision automatique.
+  revalider la sélection automatique avec les descripteurs normaux.
 - [x] Séparer les cycles USB dans le diagnostic et attendre la stabilisation des motifs de noms.
+- [x] Implémenter `wire auto` : sélection USB expérimentale macOS / Windows avec gaming, couches partagées avec les profils fixes, attente sans OS implicite.
+- [x] Confirmer la sélection de `wire auto usb-trace` sur V1 : noms macOS/Windows via l’encodeur droit, gaming puis retour Windows, fonctionnement habituel sur Mac.
+- [x] Flasher V1 avec `wire auto` normal, sans `usb-trace`.
+- [ ] Compléter les essais `auto` : raccourcis et accents représentatifs, retour du pavé, puis confirmer l’aller-retour sans CDC avec `wire auto`.
+- [x] Rendre `capture.ps1` autonome sous Windows : un seul fichier dans le dossier de travail, capture `.txt` directement dans le dossier courant.
+- [ ] Confirmer sur Windows la destination du lecteur autonome mis à jour.
 - [ ] Confirmer la séparation des cycles lors d’un reset du bus sans coupure d’alimentation.
   L’aller-retour Mac/Windows avec débranchement USB est validé.
 - [ ] Étudier ensuite les signatures Bluetooth sur V1 alimenté en USB, sans batterie.
@@ -121,7 +127,8 @@ La priorité USB est différée après l’auto-détection d’OS, pour viser un
   Évaluer les signatures réelles, la fiabilité et les limites en USB, Bluetooth direct et via dongle,
   y compris après reconnexion et réveil. Une sélection manuelle ne remplit pas cet objectif.
   Un programme compagnon reste une alternative à rediscuter si la reconnaissance passive ne suffit pas.
-- [ ] Garder le choix d’OS après les modes pavé numérique et jeu.
+- [ ] Lorsque `auto` couvrira les usages et sera validé, retirer `multi` des profils actifs en le conservant comme archive autonome.
+- [x] Conserver l’OS détecté dans `auto` après les modes pavé numérique et jeu. Couches compilées vérifiées, essai matériel encore à faire.
 - [ ] Réexaminer les macros de retour de mode qui écrivent puis effacent du texte.
 - [ ] Ajouter le scroll aux encodeurs et des informations de batterie/connexion.
 - [ ] Mesurer l’autonomie et améliorer la veille et la puissance BLE.

@@ -16,7 +16,7 @@ fi
 
 if [ "$#" -lt 2 ] || [ "$#" -gt 3 ]; then
     bash "$SCRIPT_DIRECTORY/help.sh" build >&2
-    fail 'Précise le matériel puis la keymap : make build <wire|bluetooth> <multi|windows|macos|linux> [debug|usb-trace]'
+    fail 'Précise le matériel puis la keymap : make build <wire|bluetooth> <auto|multi|windows|macos|linux> [debug|usb-trace]'
 fi
 
 # Exporte une paire complète et ses empreintes seulement après les deux compilations réussies.
@@ -48,7 +48,11 @@ build_profile() {
     if [ "$BUILD_MODE" = debug ]; then
         printf '%s\n' 'Diagnostic : logs USB activés sur les deux moitiés'
     elif [ "$BUILD_MODE" = usb-trace ]; then
-        printf '%s\n' 'Diagnostic : signature USB étudiée sur la gauche, hypothèse OS sans changement de keymap'
+        if [ "$KEYMAP_PROFILE" = auto ]; then
+            printf '%s\n' 'Auto USB : sélection macOS / Windows et trace de contrôle sur la gauche'
+        else
+            printf '%s\n' 'Diagnostic : signature USB étudiée sur la gauche, hypothèse OS sans changement de keymap'
+        fi
     fi
     run_step 'Vérification des prérequis' preflight
     resolve_workspace

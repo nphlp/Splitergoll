@@ -29,6 +29,10 @@ Le Clavier V1 sans batterie fonctionne en `wire` sur le MacBook Pro M4 Max avec
 aussi confirmés sur V1. Le Clavier V2 au travail utilise ses batteries et le
 Bluetooth direct. Le parcours complet des keymaps reste à valider.
 
+Le profil expérimental `wire auto` sélectionne macOS ou Windows avec gaming à la
+connexion USB. La sélection et le retour du gaming sont confirmés sur V1 avec
+le firmware instrumenté. L’essai sans port série reste à réaliser.
+
 La keymap historique reste disponible dans `multi`, avec changement d’OS au clavier.
 Les profils fixes `windows` avec jeu, `macos` et `linux` se choisissent au build
 et restent sur leur OS après redémarrage. Le flash automatique et le fonctionnement
@@ -48,7 +52,8 @@ make build wire macos
 ```
 
 `make build` seul affiche l’aide. Pour compiler, préciser le matériel (`wire` ou
-`bluetooth`), puis la keymap (`multi`, `windows`, `macos` ou `linux`).
+`bluetooth`), puis la keymap (`auto`, `multi`, `windows`, `macos` ou `linux`).
+`auto` est réservé à `wire`.
 Les deux choix sont obligatoires, aucun n’est sélectionné par défaut.
 Windows inclut toujours le gaming. Ajouter `debug` à la fin pour les logs USB,
 par exemple `make build bluetooth windows debug`.
@@ -74,5 +79,6 @@ et `make bat avg` calcule une moyenne par moitié sur 30 secondes.
 - [Flash du firmware](flash-firmware.md) : copie des UF2, bootloader et messages du Finder.
 - [Appairage Bluetooth](appairage-bluetooth.md) : clés de connexion, reset et diagnostic.
 - [Batteries](batteries.md) : mesure actuelle et affichage des deux niveaux.
+- [Keymap automatique USB](keymap-auto.md) : macOS ou Windows avec gaming, sélection à la connexion.
 - [Keymap](keymap.md) : organisation, couches et sept schémas de touches.
 - [TODO et idées](TODO.md) : suivi des tâches restantes.

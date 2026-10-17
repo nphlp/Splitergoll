@@ -2,12 +2,14 @@
 
 Objectif : reconnaître l’ordinateur à partir de sa connexion, sans logiciel
 compagnon permanent ni changement manuel d’OS. Le diagnostic observe les échanges
-et annonce une hypothèse. Il ne change pas encore la keymap.
+et annonce une hypothèse. Avec une keymap fixe, il ne change pas les couches. Le firmware
+[`auto`](keymap-auto.md) applique désormais la décision USB dans un profil expérimental.
 
 Tous les fichiers de cette étude sont dans `diagnostics/os-signature/` :
 `firmware/` pour la capture embarquée, `snippets/` pour son activation, `tests/`
 pour le stockage et `capture.sh`, `capture.ps1`, `check.awk` pour les lecteurs.
-Le code du clavier reste groupé dans `keyboard/`.
+L’observateur USB et le classifieur partagés sont dans `keyboard/src/os_detection/`,
+leurs interfaces dans `keyboard/include/splitergoll/` et leurs tests dans `keyboard/tests/`.
 
 ## Préparer V1 en USB
 
@@ -34,11 +36,13 @@ puis utiliser son nom exact, par exemple :
 make usb-capture /dev/cu.usbmodem123
 ```
 
-Sous Windows, trouver le port de gauche dans le Gestionnaire de périphériques,
-puis depuis la racine du dépôt, dans PowerShell :
+Sous Windows, copier uniquement [capture.ps1](../diagnostics/os-signature/capture.ps1)
+dans le dossier de son choix, par exemple `Documents/Splitergoll`. Aucun sous-dossier
+ni autre fichier du dépôt n’est nécessaire. Ouvrir PowerShell dans ce dossier,
+trouver le port gauche dans le Gestionnaire de périphériques, puis lancer :
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\diagnostics\os-signature\capture.ps1 -Port COM3
+powershell -NoProfile -ExecutionPolicy Bypass -File .\capture.ps1 -Port COM3
 ```
 
 L’option `Bypass` permet ce lancement si la politique d’exécution bloque les scripts.
@@ -50,9 +54,13 @@ lecteurs série. Brancher la droite sur un chargeur USB pendant cette identifica
 évite de confondre deux ports. Aucun logiciel supplémentaire n’est nécessaire pour
 le lecteur PowerShell, le pilote série natif doit être disponible.
 
-La lecture prend au plus 15 secondes après ouverture du port et reste dans
-`.local/usb-traces/`. Elle refuse une capture tronquée, désordonnée ou signalant
-des pertes. Seules les requêtes mémorisées sont restituées, pas les frappes.
+La capture Windows apparaît directement dans le dossier courant, sous le nom
+`windows-AAAA-MM-JJ-HH-MM-SS-xxxxxxxx.txt`, avec date UTC. C’est ce fichier qu’il faut
+transmettre. Le chemin du script ne détermine pas celui de la capture.
+Sur macOS/Linux, `make usb-capture` conserve ses fichiers dans `.local/usb-traces/`.
+Le lecteur attend au plus 15 secondes la réponse après sa demande et refuse une
+capture tronquée, désordonnée ou signalant des pertes. Seules les requêtes mémorisées
+sont restituées, pas les frappes.
 
 ## Comparer Mac et Windows
 
@@ -63,7 +71,7 @@ des pertes. Seules les requêtes mémorisées sont restituées, pas les frappes.
 5. Comparer les requêtes, leurs paramètres et leur ordre. Les temps seuls ne sont pas une signature fiable.
 
 Une fois des différences reproductibles identifiées, tester aussi Linux, les hubs,
-la reconnexion et le réveil avant d’activer une reconnaissance automatique.
+la reconnexion et le réveil pour élargir la validation de la reconnaissance automatique.
 
 ## Limites du diagnostic
 
@@ -77,7 +85,7 @@ Un échec d’énumération qui empêche l’apparition du port n’est pas lisi
 
 Les cinq captures Mac contiennent chacune 24 requêtes, les cinq Windows 57,
 58, 57, 53 et 53. Aucun rejet ni perte n’est signalé. Le lecteur PowerShell fonctionne sur
-le PC avec la commande ci-dessus. Les captures restent dans `.local/usb-traces/`.
+le PC. Ces captures de référence sont conservées dans `.local/usb-traces/`.
 
 Les motifs de noms sont cohérents entre les essais. Le début de l’énumération et
 les répétitions peuvent varier : la capture Windows sur le clavier commence sur 18
@@ -112,7 +120,9 @@ La lecture affiche `Signature USB : hypothèse macOS` ou `Windows`. La décision
 recalculée sur l’instantané au moment de la demande de capture, pas appliquée aux couches.
 L’aller-retour Mac → Windows → Mac est confirmé sur V1, sans nouveau flash entre
 Windows et le retour au Mac. La détection sans CDC, Linux et les hubs restent à tester.
-Aucune bascule de keymap n’est activée à ce stade.
+Ces captures ont validé le classifieur, pas encore l’application automatique des couches.
+Avec `wire auto usb-trace`, une ligne `Keymap automatique appliquée` indique la
+sélection réelle. Un résultat en attente signifie qu’aucun OS n’est encore activé.
 
 Le script `.ps1` est enregistré en UTF-8 avec BOM pour les accents sous Windows
 PowerShell. Les fichiers de capture restent en UTF-8 sans BOM pour leur analyse.

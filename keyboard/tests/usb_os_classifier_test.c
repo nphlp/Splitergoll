@@ -1,5 +1,5 @@
 // Vérifie les motifs de noms USB, leur stabilisation et les ambiguïtés sans matériel.
-#include "usb_os_classifier.h"
+#include <splitergoll/usb_os_classifier.h>
 
 #include <assert.h>
 #include <stdio.h>

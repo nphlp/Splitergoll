@@ -1,6 +1,7 @@
 {
   "files.associations": {
-    "**/keyboard/config/keymaps/common/*.dtsi": "cpp"
+    "**/keyboard/config/keymaps/common/*.dtsi": "cpp",
+    "**/keyboard/config/keymaps/layers/*.dtsi": "cpp"
   },
   "editor.tokenColorCustomizations": {
     "comments": {

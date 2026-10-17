@@ -1,5 +1,7 @@
 ﻿# Lit les en-têtes USB mémorisés par la centrale, avec le port série natif de Windows.
-# Reçoit -Port COMx. Aucun flash, reset, logiciel compagnon ou pilote supplémentaire.
+# Reçoit -Port COMx et fonctionne seul, sans dépôt ni arborescence imposée.
+# Écrit la capture directement dans le dossier courant de PowerShell.
+# Aucun flash, reset, logiciel compagnon ou pilote supplémentaire.
 param(
     [Parameter(Mandatory = $true)]
     [ValidatePattern('^COM[1-9][0-9]*$')]
@@ -7,8 +9,6 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-$Repository = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
-$TraceRoot = Join-Path $Repository '.local/usb-traces'
 $Capture = $null
 $Serial = $null
 
@@ -16,6 +16,11 @@ try {
     if ([Environment]::OSVersion.Platform -ne [PlatformID]::Win32NT) {
         throw 'Ce lecteur est réservé à Windows.'
     }
+    $WorkingDirectory = Get-Location
+    if ($WorkingDirectory.Provider.Name -ne 'FileSystem') {
+        throw 'Place-toi dans un dossier de fichiers avant de lancer la capture.'
+    }
+    $TraceRoot = $WorkingDirectory.ProviderPath
     if ([IO.Ports.SerialPort]::GetPortNames() -notcontains $Port) {
         throw "Port absent : $Port"
     }
@@ -25,7 +30,6 @@ try {
     $Serial.DtrEnable = $true
     $Serial.NewLine = "`n"
     $Serial.Open()
-    New-Item -ItemType Directory -Force -Path $TraceRoot | Out-Null
     $Stamp = [DateTime]::UtcNow.ToString('yyyy-MM-dd-HH-mm-ss')
     $Suffix = [Guid]::NewGuid().ToString('N').Substring(0, 8)
     $Capture = Join-Path $TraceRoot "windows-$Stamp-$Suffix.txt"
@@ -48,7 +52,8 @@ try {
         throw 'Capture refusée : format incorrect ou pertes signalées.'
     }
     $Expected = [int]$Matches[1]
-    $HasClassification = $Lines.Count -eq $Expected + 4
+    $HasActive = $Lines.Count -eq $Expected + 5
+    $HasClassification = $Lines.Count -eq $Expected + 4 -or $HasActive
     if ($Expected -lt 1 -or $Expected -gt 256 -or
         ($Lines.Count -ne $Expected + 3 -and -not $HasClassification)) {
         throw 'Capture refusée : nombre de requêtes incorrect.'
@@ -66,6 +71,13 @@ try {
         }
         $Result = $Matches[1]
     }
+    $Active = $null
+    if ($HasActive) {
+        if ($Lines[$Expected + 3] -notmatch '^USBTRACE ACTIVE result=(macos|windows|unknown)$') {
+            throw 'Capture refusée : sélection automatique incorrecte.'
+        }
+        $Active = $Matches[1]
+    }
     Write-Host "Capture complète : $Capture"
     switch ($Result) {
         'macos' { Write-Host 'Signature USB : hypothèse macOS' }
@@ -74,7 +86,12 @@ try {
         'unknown' { Write-Host 'Signature USB : indices insuffisants, OS inconnu' }
         default { Write-Host 'Classification absente : ancien firmware de capture' }
     }
-    Write-Host 'La keymap reste inchangée. Ce diagnostic ne sélectionne aucun OS.'
+    switch ($Active) {
+        'macos' { Write-Host 'Keymap automatique appliquée : macOS' }
+        'windows' { Write-Host 'Keymap automatique appliquée : Windows + gaming' }
+        'unknown' { Write-Host 'Keymap automatique en attente, saisie bloquée tant que l’OS reste inconnu.' }
+        default { Write-Host 'La keymap reste inchangée. Ce diagnostic ne sélectionne aucun OS.' }
+    }
 }
 catch {
     Write-Error "$_ Données conservées si disponibles : $Capture"

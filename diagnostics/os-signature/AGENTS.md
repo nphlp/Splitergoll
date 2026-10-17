@@ -7,17 +7,19 @@ La commande publique `make usb-capture` reste à la racine du dépôt.
 
 Le chantier actif est le diagnostic passif USB, puis BLE. V1 sans batterie peut
 tester les deux transports, avec alimentation USB. Ne pas confondre la source
-d’alimentation et l’hôte Bluetooth. L’hypothèse USB ne choisit pas encore la keymap.
+d’alimentation et l’hôte Bluetooth. Une keymap fixe garde ses couches, `wire auto` applique la décision via le module clavier.
 
 `make build wire <keymap> usb-trace` et le même argument final de `make flash`
 isolent caches, artefacts et métadonnées du normal et de `debug`. `usb-trace`
 est refusé en matériel `bluetooth`. La droite reste normale, la gauche ajoute
 le snippet local `splitergoll-usb-trace`. Son CDC est indépendant de la console
-ZMK, sans logs de frappes, clé BLE, modification de keymap ou effacement NVS.
+ZMK, sans logs de frappes, clé BLE ou effacement NVS. La sélection de couches dépend
+du choix explicite `auto`, pas de l’activation du diagnostic.
 La keymap doit rester identique entre les captures comparées.
 
 Le module local déclaré dans `firmware/zephyr/module.yml` compile `firmware/` uniquement
-avec `SPLITERGOLL_USB_TRACE`. Les dépendances figées restent intactes. Trois wrappers
+avec `SPLITERGOLL_USB_TRACE`. Les dépendances figées restent intactes. L’observateur partagé est compilé par le
+module `keyboard`. Trois wrappers
 de liens encadrent `usb_dc_ep_set_callback`, `usb_dc_ep_read` et
 `usb_dc_set_status_callback`, en transmettant
 les arguments et statuts originaux. Seuls les en-têtes SETUP de l’endpoint zéro OUT
@@ -32,8 +34,15 @@ restitue un instantané avec cadrage BEGIN/SETUP/END et compteurs, sans effaceme
 L’envoi vérifie DTR et borne l’attente par ligne. Un reset du bus ou une déconnexion efface les index et compteurs du cycle précédent.
 
 `make usb-capture <port>` lit sur macOS/Linux, `capture.ps1 -Port COMx`
-sur Windows. Les ports sont explicites, les captures restent ignorées dans
-`.local/usb-traces/`. Les lecteurs ont une échéance et refusent les pertes,
+sur Windows. Les ports sont explicites. Bash conserve les captures dans
+`.local/usb-traces/`. PowerShell est un fichier autonome à copier dans un dossier
+quelconque : aucun `$PSScriptRoot`, dépôt ou fichier voisin n’est nécessaire. Il écrit
+son `.txt` directement dans le dossier courant PowerShell (`Get-Location`), avec un
+chemin absolu basé sur `ProviderPath`, et refuse un provider autre que FileSystem.
+Ne pas utiliser le répertoire courant .NET, qui peut différer de celui de PowerShell.
+Ne pas créer d’arborescence ni déplacer la destination vers le parent du script.
+Les noms Windows sont ignorés par Git si la commande est lancée dans le dépôt.
+Les lecteurs ont une échéance et refusent les pertes,
 troncatures et indices incohérents. Aucun service permanent ni flash implicite.
 Les horodatages sont ceux du traitement firmware, pas une mesure de latence complète.
 
@@ -88,8 +97,8 @@ pas des réponses validées ni une preuve de fonctionnalité supportée.
 Les six captures instrumentées permettent de distinguer ces deux hôtes dans cet
 échantillon. Linux, d’autres versions d’OS, hubs et descripteurs normaux restent
 inconnus. Ne pas transformer l’absence d’un indice en certitude de l’autre OS.
-Le classifieur reste diagnostique d’abord, gère inconnu/ambigu et les répétitions.
-Aucun changement de keymap n’est activé par cette analyse.
+Les profils fixes restent passifs. Le même classifieur sert maintenant à `auto`,
+qui garde une attente explicite pour inconnu/ambigu.
 
 Le lecteur PowerShell est validé sur Windows avec `-ExecutionPolicy Bypass`,
 limité à cette invocation, pas une modification de politique persistante ou une
@@ -114,9 +123,10 @@ Les motifs publics et nos six captures servent de données, aucun code QMK ni mo
 externe n’est intégré. Ne pas activer BOS, modifier bcdUSB ni ajouter un fork ZMK
 pour ce diagnostic. Les tailles HID 176/240 ne participent plus à la décision.
 
-`firmware/usb_os_classifier.c/.h` est du C indépendant de Zephyr. Il analyse les
-records de l’instantané lors de la demande D, sans ajouter de classification au
-callback de réception USB. Ses bits décrivent des demandes, pas leurs réponses
+`../../keyboard/src/os_detection/usb_os_classifier.c` et son interface dans
+`../../keyboard/include/splitergoll/` sont du C indépendant de Zephyr.
+Le diagnostic rejoue les records au début de la demande D. L’observateur partagé
+met également à jour un état borné à la réception des SETUP pour le firmware auto. Ses bits décrivent des demandes, pas leurs réponses
 ni une probabilité. L’horloge de stabilisation est celle du firmware au début de
 l’instantané, jamais l’heure d’arrivée des lignes ni la fin de l’envoi UART.
 
@@ -143,7 +153,8 @@ Un dump qui change de génération est interrompu sans END pour être refusé pa
 lecteur, plutôt que mélanger des records de deux cycles. Les anciens octets ne sont
 plus lisibles par les index, sans memset du tableau dans le callback. Le contrôle
 de génération protège les lectures et la fin du dump. Aucun événement de couche
-n’est encore produit, cette gestion reste à confirmer sur le matériel.
+n’est produit par le stockage. La sélection propre à `auto` est détaillée dans
+`../../keyboard/src/os_detection/AGENTS.md`. Les cycles sans coupure restent à tester.
 
 La ligne facultative `USBTRACE OS result=<macos|windows|unknown|ambiguous> evidence=<4 hex>`
 précède END. Les lecteurs acceptent les captures version 1 sans cette ligne, signalent
@@ -151,8 +162,9 @@ son absence et ne recalculent pas la décision en Bash ou PowerShell. Les captur
 privées restent intactes. Les lecteurs Bash/PowerShell et leurs accents sont confirmés sur les deux hôtes
 par l’utilisateur. Aucun runtime PowerShell n’est disponible sur ce Mac.
 
-Les tests C lient chaque source à son test dans `tests/`, avec `-Ifirmware -std=c11
--Wall -Wextra -Werror -fsanitize=address,undefined` et assertions actives. Le classifieur
+Le stockage garde son test dans `tests/`, avec `-Ifirmware`. Le classifieur et son
+test sont dans `../../keyboard/`, avec `-I../../keyboard/include`. Les deux commandes
+emploient `-std=c11 -Wall -Wextra -Werror -fsanitize=address,undefined` et assertions actives. Le classifieur
 couvre motifs, ordre, répétitions, langues, perte, ambiguïté, débordement de capacité,
 perturbations CDC/HID, délai et horloge 32 bits. Le stockage vérifie aussi la séparation
 des générations, dont une lecture ancienne après remplacement de l’index zéro.
@@ -205,3 +217,27 @@ hors timestamps. L’aller-retour Mac/Windows/Mac est donc validé sur V1. Le d�
 Mac utilisait le diagnostic avant correction, Windows et le retour Mac le même
 firmware corrigé sans reflash entre les deux. Cela ne valide pas un reset de bus
 sans coupure d’alimentation, les autres ordinateurs, Linux, BLE ou le fonctionnement sans CDC.
+
+## Capture d’un firmware auto
+
+Le même `usb-trace` fonctionne avec `make build wire auto usb-trace`. Une ligne
+facultative `USBTRACE ACTIVE result=<macos|windows|unknown>` suit OS et précède END.
+Elle expose la sélection réellement appliquée pour le cycle actuel, pas l’hypothèse
+recalculée lors du dump. Les deux résultats peuvent diverger si des indices tardifs
+arrivent après la sélection figée, ou si une touche maintenue retarde son application.
+Les lecteurs acceptent les anciens formats sans ACTIVE, refusent doublons et ordre
+invalide, et n’affirment plus que toute capture laisse les couches inchangées.
+Le lecteur PowerShell modifié reste à essayer sur le PC, aucun runtime n’est disponible ici.
+
+## Usage Windows autonome
+
+Le script canonique reste `capture.ps1` ici, sa copie peut se placer à la racine de
+n’importe quel dossier de travail. La commande utilisateur est
+`powershell -NoProfile -ExecutionPolicy Bypass -File .\capture.ps1 -Port COMx`.
+Le fichier de capture est créé dans le dossier courant, sans sous-dossier. Son nom
+garde la date UTC, le suffixe aléatoire et le contenu UTF-8 sans BOM. Le source garde
+son BOM pour Windows PowerShell 5.1. Aucun module, fichier de validation voisin,
+mode administrateur ou modification persistante de la politique n’est demandé.
+Le changement de destination est contrôlé par revue du diff. Pas de runtime
+PowerShell disponible sur le Mac, donc la prochaine capture Windows doit confirmer
+le nouveau chemin en conditions réelles. Aucun test automatisé d’outillage ajouté.

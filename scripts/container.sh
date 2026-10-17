@@ -73,6 +73,22 @@ check_firmware() {
         fail 'Diagnostic USB présent hors de la centrale usb-trace'
     fi
 
+    if [ "$KEYMAP_PROFILE" = auto ] && [ "$side" = left ]; then
+        grep -qx 'CONFIG_SPLITERGOLL_OS_AUTO=y' "$configuration" || fail 'Sélection automatique absente'
+        for symbol in __wrap_zmk_event_manager_raise __wrap_zmk_keymap_layer_to; do
+            grep -Eq "0x[0-9a-f]+[[:space:]]+$symbol$" "$directory/zephyr/zmk.map" ||
+                fail "Garde de sélection automatique absente : $symbol"
+        done
+    elif grep -qx 'CONFIG_SPLITERGOLL_OS_AUTO=y' "$configuration"; then
+        fail 'Sélection automatique activée hors du profil auto central'
+    fi
+
+    if [ "$side" = left ] && { [ "$BUILD_MODE" = usb-trace ] || [ "$KEYMAP_PROFILE" = auto ]; }; then
+        grep -qx 'CONFIG_SPLITERGOLL_USB_OBSERVER=y' "$configuration" || fail 'Observateur USB absent'
+    elif grep -qx 'CONFIG_SPLITERGOLL_USB_OBSERVER=y' "$configuration"; then
+        fail 'Observation USB présente dans un firmware qui ne la demande pas'
+    fi
+
     if [ "$side" = left ]; then
         grep -qx 'CONFIG_ZMK_SPLIT_ROLE_CENTRAL=y' "$configuration" || fail 'Gauche non centrale'
     elif grep -Eq '^(CONFIG_ZMK_SPLIT_ROLE_CENTRAL|CONFIG_ZMK_USB)=y$' "$configuration"; then

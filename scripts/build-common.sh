@@ -44,15 +44,19 @@ select_profile() {
     test -r "$PROFILE_CONFIGURATION" || fail "Configuration du profil absente : $PROFILE"
 }
 
-# Valide la keymap choisie indépendamment du profil matériel.
+# Valide la keymap et sa compatibilité avec le transport demandé.
 select_keymap() {
     KEYMAP_PROFILE=$1
 
     case "$KEYMAP_PROFILE" in
-        multi|windows|macos|linux) ;;
-        '') fail 'Keymap obligatoire : choisis multi, windows, macos ou linux' ;;
-        *) fail "Keymap inconnue : $KEYMAP_PROFILE. Choisis multi, windows, macos ou linux" ;;
+        auto|multi|windows|macos|linux) ;;
+        '') fail 'Keymap obligatoire : choisis auto, multi, windows, macos ou linux' ;;
+        *) fail "Keymap inconnue : $KEYMAP_PROFILE. Choisis auto, multi, windows, macos ou linux" ;;
     esac
+
+    if [ "$KEYMAP_PROFILE" = auto ] && [ "$PROFILE" != wire ]; then
+        fail 'auto détecte uniquement l’hôte USB : utilise make build wire auto'
+    fi
 
     KEYMAP_FILE="$KEYBOARD_CONFIGURATION/keymaps/$KEYMAP_PROFILE.keymap"
     test -r "$KEYMAP_FILE" || fail "Fichier de keymap absent : $KEYMAP_PROFILE"

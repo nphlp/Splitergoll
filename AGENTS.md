@@ -34,7 +34,8 @@ L’AGENTS.md garde les invariants, preuves techniques et décisions utiles au p
   Ne pas remettre de keymap historique ni ses helpers dans le dossier du shield.
   Les builds locaux et le workflow manuel choisissent toujours `keyboard/config/keymaps/<profil>.keymap`
   avec `KEYMAP_FILE`, sans utiliser la sélection automatique du shield.
-- Les quatre keymaps sont `multi`, `windows` avec jeu, `macos` et `linux`.
+- Les quatre keymaps manuelles sont `multi`, `windows` avec jeu, `macos` et `linux`.
+  `auto` ajoute un profil USB expérimental macOS / Windows avec jeu.
   `multi` garde ses quinze couches et son changement d’OS. Les trois profils fixes
   démarrent sur leur OS en couche zéro, sans bascule OS. Windows a sept couches,
   macOS et Linux cinq, sans gaming. Les retours du pavé et du jeu ciblent leur base.
@@ -46,6 +47,8 @@ L’AGENTS.md garde les invariants, preuves techniques et décisions utiles au p
   `BASE_BSLS` et `BASE_OS`. `BASE_LAYER(bindings, sensors)` conserve le nom du nœud
   `WINDOWS_layer` dans `multi` et `BASE_layer` dans les profils fixes. Tous ces
   paramètres sont retirés après l’inclusion pour éviter toute fuite vers les autres couches.
+  Les couches Windows et macOS sont dans `keymaps/layers/*.dtsi`, partagées avec `auto`.
+  Leurs fichiers `.keymap` sélectionnent les numéros et comportements fixes.
   Les autres couches des profils fixes explicitent leurs affectations, après résolution
   des touches transparentes des adaptations OS. Ne pas garder une couche Windows
   active comme base cachée de macOS ou Linux. `multi.keymap` compose directement
@@ -326,7 +329,7 @@ Le snapshot 0.3 dans l’historique Git garde son ancien mécanisme.
 
 Le Makefile expose `help`, `setup`, `build <matériel> <keymap> [debug|usb-trace]`,
 `flash`, `bat`, `bat avg`, `usb-capture <port>`, `stop` et `clear`, délégués aux scripts dédiés. Le matériel (`wire` ou `bluetooth`)
-puis la keymap (`multi`, `windows`, `macos` ou `linux`) sont obligatoires, sans défaut.
+puis la keymap (`auto`, `multi`, `windows`, `macos` ou `linux`) sont obligatoires, sans défaut.
 Windows inclut toujours le gaming. L’argument final facultatif choisit `debug`
 pour les logs USB ou `usb-trace` pour le diagnostic de connexion wire.
 `make build wire` et `make build wire debug` échouent avant Docker.
@@ -428,8 +431,8 @@ builds restent à tester sur le matériel, sans flash implicite. Les conteneurs 
 validation ont disparu, les trois services préexistants sont conservés.
 Le workflow `.github/workflows/build.yml` ne se déclenche que manuellement via
 `workflow_dispatch`, jamais sur push ou pull request. Le build local reste la voie
-normale. La matrice `build.yaml` est conservée et couvre les seize UF2 normaux :
-deux matériels, quatre keymaps et deux moitiés. Sa liste de fichiers CMake
+normale. La matrice `build.yaml` conserve les seize UF2 manuels normaux :
+deux matériels, quatre keymaps et deux moitiés. Elle ajoute les deux UF2 `wire auto`. Sa liste de fichiers CMake
 est entre guillemets pour que le point-virgule ne soit pas interprété par le shell.
 Elle utilise `GITHUB_WORKSPACE` fourni par GitHub.
 
@@ -526,12 +529,19 @@ Les sources, GPIO et affectations ne changent pas lors de ce rangement.
 Le module est passé explicitement par `ZMK_EXTRA_MODULES` dans les builds locaux
 et la matrice manuelle.
 
-`diagnostics/os-signature/` regroupe toute l’étude des signatures : firmware de
-capture, snippet, lecteurs Bash/PowerShell, validateur et tests. Son
+`diagnostics/os-signature/` regroupe l’instrumentation d’étude : firmware de
+capture, snippet, lecteurs Bash/PowerShell, validateur et tests du stockage.
+L’observateur et le classifieur communs appartiennent désormais au code du clavier,
+dans `keyboard/src/os_detection/`, leurs interfaces dans `keyboard/include/splitergoll/`
+et leurs tests dans `keyboard/tests/`. Son
 [AGENTS.md](diagnostics/os-signature/AGENTS.md) conserve les mécanismes et preuves.
 Son module est ajouté seulement à la gauche de la variante `usb-trace`.
 Les scripts de build, flash et batteries restent dans `scripts/`.
-Les captures privées restent dans `.local/usb-traces/`, les guides humains dans `docs/`.
+Les captures privées macOS/Linux restent dans `.local/usb-traces/`, les guides humains
+dans `docs/`. Le lecteur Windows est autonome : copier seulement `capture.ps1` dans
+un dossier quelconque, l’exécuter depuis ce dossier, et récupérer le `.txt` directement
+dans le dossier courant. Aucune arborescence de dépôt imposée. Les captures Windows
+sont ignorées par Git si elles sont créées dans le checkout.
 
 Les caches CMake du nouveau rangement sont sous `build/keyboard/` dans le workspace
 existant. Ne pas réutiliser l’ancien ZMK_CONFIG mémorisé ni supprimer les anciens
@@ -546,14 +556,24 @@ les six captures existantes passent le validateur déplacé. L’initialisation 
 workflow manuel est vérifiée hors réseau avec West, pas exécutée sur GitHub.
 Les conteneurs éphémères sont supprimés, les trois services partagés sont conservés.
 
-Le firmware automatique macOS/Windows avec gaming n’est pas encore implémenté.
-Les quatre keymaps sont toujours explicites. `usb-trace` capture et annonce une
-hypothèse, sans appliquer de changement de couche. Le classifieur doit être testé
-sur les deux hôtes avant toute bascule de keymap, puis revalidé sans CDC.
-L’utilisateur confirme désormais sur V1 macOS, Windows après correction de la sonde
-initiale facultative, puis le retour macOS avec ce même firmware corrigé. Les captures
-Windows et retour Mac ont zéro perte/rejet. Le transport sans CDC et les cycles de
-bus sans coupure d’alimentation restent à valider, voir la spec du diagnostic.
+Le firmware expérimental `wire auto` est implémenté. Il compose la base neutre et les
+sept couches Windows puis les cinq macOS depuis les mêmes fragments que les profils
+fixes. Il ne dépend pas de `multi`. Les motifs USB ont été confirmés sur V1, macOS,
+Windows puis retour Mac, sans perte/rejet sur les deux dernières captures.
+L’utilisateur confirme ensuite sur V1 le nom macOS par l’encodeur droit sur le Mac,
+Windows sur le PC, l’entrée en gaming et le retour Windows, ainsi que le fonctionnement
+habituel sur Mac après flash des deux moitiés. Cela confirme la sélection effective
+avec la variante instrumentée de l’essai. L’utilisateur a ensuite flashé V1 avec
+`wire auto` normal, sans `usb-trace`. Le retour explicite sur la détection sans CDC,
+les gestes non essayés et les autres hôtes restent à obtenir.
+Les invariants et tests du nouveau moteur sont dans
+[keyboard/src/os_detection/AGENTS.md](keyboard/src/os_detection/AGENTS.md).
+Le guide humain est [docs/keymap-auto.md](docs/keymap-auto.md).
+`auto` est refusé avec Bluetooth. `usb-trace` reste passif avec une keymap fixe,
+mais expose aussi la sélection réellement appliquée avec `auto`.
+Lorsque `auto` couvrira les usages et sera validé, l’utilisateur souhaite retirer
+`multi` des profils actifs tout en le conservant comme archive autonome. Ce retrait
+n’est pas effectué maintenant, il reste suivi dans `docs/TODO.md`.
 
 ## Ideas / backlog
 

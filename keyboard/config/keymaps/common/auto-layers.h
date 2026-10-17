@@ -1,0 +1,17 @@
+// Numéros partagés par la composition Devicetree et le sélecteur embarqué.
+#ifndef SPLITERGOLL_AUTO_LAYERS_H
+#define SPLITERGOLL_AUTO_LAYERS_H
+#define AUTO_PENDING 0
+#define AUTO_WINDOWS_BASE 1
+#define AUTO_WINDOWS_PRIMARY 2
+#define AUTO_WINDOWS_SECONDARY 3
+#define AUTO_WINDOWS_TERTIARY 4
+#define AUTO_WINDOWS_NUMPAD 5
+#define AUTO_WINDOWS_GAMING 6
+#define AUTO_WINDOWS_GAMING_2 7
+#define AUTO_MACOS_BASE 8
+#define AUTO_MACOS_PRIMARY 9
+#define AUTO_MACOS_SECONDARY 10
+#define AUTO_MACOS_TERTIARY 11
+#define AUTO_MACOS_NUMPAD 12
+#endif

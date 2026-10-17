@@ -1,4 +1,4 @@
-// Hypothèses USB expérimentales, sans sélection de couche ni dépendance à Zephyr.
+// Classification USB partagée par le clavier et son diagnostic, sans dépendance à Zephyr.
 #ifndef SPLITERGOLL_USB_OS_CLASSIFIER_H
 #define SPLITERGOLL_USB_OS_CLASSIFIER_H
 

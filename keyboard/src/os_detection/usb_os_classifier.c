@@ -1,7 +1,7 @@
 // Implémentation propre à Splitergoll à partir de motifs USB publics et de nos captures.
 // Les demandes de noms suivent des motifs étudiés par QMK et FingerprintUSBHost.
 // Aucune copie de leur code, aucun descripteur modifié et aucun support BOS ajouté.
-#include "usb_os_classifier.h"
+#include <splitergoll/usb_os_classifier.h>
 
 #include <stddef.h>
 

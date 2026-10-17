@@ -13,13 +13,15 @@ verrouillage implicite de `&to` et `&tog` est désactivé pour garder les transi
 
 | Argument | Contenu | Démarrage |
 | --- | --- | --- |
+| `auto` | macOS ou Windows avec gaming, détection USB expérimentale | Attente puis OS reconnu |
 | `multi` | Keymap actuelle, trois OS et gaming, changement d’OS au clavier | Windows |
 | `windows` | Windows et les deux couches gaming | Windows |
 | `macos` | macOS, sans gaming ni bascule OS | macOS |
 | `linux` | Linux, sans gaming ni bascule OS | Linux |
 
 Par exemple : `make build wire macos` ou `make build bluetooth windows debug`.
-Le matériel et la keymap sont deux choix indépendants et obligatoires.
+Le matériel et la keymap sont deux choix obligatoires. `auto` est réservé à `wire`,
+voir [son fonctionnement et les essais](keymap-auto.md).
 Même `multi` doit être précisé, aucune keymap n’est choisie par défaut.
 
 Les profils fixes gardent leur OS après redémarrage et veille profonde. Le clic
@@ -36,8 +38,10 @@ le build les choisit explicitement avec `KEYMAP_FILE`.
 | Fichier | Rôle |
 | --- | --- |
 | `multi.keymap` | Composition active des quinze couches, avec changement d’OS |
-| `windows.keymap`, `macos.keymap`, `linux.keymap` | Paramètres de base et couches propres à chaque OS fixe |
-| `common/base-layer.dtsi` | 44 positions de la base, partagées par les quatre keymaps |
+| `windows.keymap`, `macos.keymap`, `linux.keymap` | Sélection de chaque OS fixe |
+| `layers/windows.dtsi`, `layers/macos.dtsi` | Couches et schémas communs aux profils fixes et à `auto` |
+| `auto.keymap`, `common/auto-layers.h` | Assemblage des deux groupes et numéros de couches automatiques |
+| `common/base-layer.dtsi` | 44 positions de la base, partagées par les keymaps |
 | `common/behaviors.dtsi` | Macros, tap dances et morphs partagés |
 | `common/fixed-layers.h` | Couches et combinaison `L1` + `L2` des profils fixes |
 | `common/multi-layers.h` | Numéros et combinaisons des couches de `multi` |
@@ -62,7 +66,7 @@ La configuration active ne dépend plus de la keymap de sauvegarde ni de ses hel
 Dans VS Code, `.vscode/settings.json` affiche les commentaires en style normal
 pour garder les schémas lisibles. Cette surcharge vaut uniquement pour le dépôt
 et conserve les couleurs du thème.
-Les fragments communs `.dtsi` utilisent la coloration C++, comme des `.h`,
+Les fragments de couches et les fichiers communs `.dtsi` utilisent la coloration C++, comme des `.h`,
 sans changer leur extension ni leur rôle dans le build.
 
 ## Comportement de multi

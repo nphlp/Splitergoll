@@ -1,4 +1,4 @@
-// Comportements et codes de touches partagés par les quatre keymaps.
+// Comportements et codes de touches partagés par les keymaps actives.
 #include <behaviors.dtsi>
 #include <dt-bindings/zmk/bt.h>
 #include <dt-bindings/zmk/keys.h>

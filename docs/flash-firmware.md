@@ -15,6 +15,9 @@ make flash wire macos right
 make flash wire macos left
 ```
 
+Le profil expérimental `make flash wire auto left usb-trace` suit les mêmes gardes,
+voir [la keymap automatique](keymap-auto.md).
+
 Chaque commande choisit le dernier build du matériel et de la keymap demandés.
 Elle présente le matériel, la keymap, le côté puis les logs USB, comme dans la commande.
 La date utilise le mois en français et une heure comme `11 h 50 min 08 s`.

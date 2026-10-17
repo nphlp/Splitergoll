@@ -2,7 +2,7 @@
 
 # Lit les requêtes mémorisées par la centrale usb-trace, sans flash ni reset.
 # Reçoit un port série explicite et conserve la capture dans .local/usb-traces/.
-# macOS/Linux uniquement. Sous Windows, utiliser capture.ps1 dans ce dossier.
+# macOS/Linux uniquement. Sous Windows, copier capture.ps1 dans le dossier de travail.
 set -euo pipefail
 
 DIAGNOSTIC_DIRECTORY=$(CDPATH= cd "$(dirname "$0")" && pwd)
@@ -25,7 +25,7 @@ port=$1
 case "$(uname -s)" in
     Darwin) host=macos ;;
     Linux) host=linux ;;
-    *) fail 'Sous Windows, utilise diagnostics/os-signature/capture.ps1 -Port COMx' ;;
+    *) fail 'Sous Windows, copie capture.ps1 dans ton dossier de travail et lance-le avec PowerShell (voir docs/detection-os.md)' ;;
 esac
 case "$port" in
     /dev/cu.usbmodem*|/dev/ttyACM*) ;;
@@ -86,4 +86,10 @@ case "$result" in
     unknown) printf '%s\n' 'Signature USB : indices insuffisants, OS inconnu' ;;
     '') printf '%s\n' 'Classification absente : ancien firmware de capture' ;;
 esac
-printf '%s\n' 'La keymap reste inchangée. Ce diagnostic ne sélectionne aucun OS.'
+active=$(awk '/^USBTRACE ACTIVE / { sub(/^result=/, "", $3); print $3 }' "$capture")
+case "$active" in
+    macos) printf '%s\n' 'Keymap automatique appliquée : macOS' ;;
+    windows) printf '%s\n' 'Keymap automatique appliquée : Windows + gaming' ;;
+    unknown) printf '%s\n' 'Keymap automatique en attente, saisie bloquée tant que l’OS reste inconnu.' ;;
+    '') printf '%s\n' 'La keymap reste inchangée. Ce diagnostic ne sélectionne aucun OS.' ;;
+esac

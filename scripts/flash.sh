@@ -103,6 +103,7 @@ show_firmware_summary() {
     local keymap_label side_label logging_label
 
     case "$KEYMAP_PROFILE" in
+        auto) keymap_label='auto USB (macOS / Windows + gaming)' ;;
         multi) keymap_label='multi (Windows, macOS, Linux)' ;;
         windows) keymap_label='Windows + gaming' ;;
         macos) keymap_label='macOS' ;;
@@ -190,7 +191,7 @@ confirm_and_flash() {
 if [ "$#" -eq 1 ]; then
     FIRMWARE=$1
     filename=$(basename "$FIRMWARE")
-    [[ "$filename" =~ ^splitergoll-(wire|bluetooth)-(multi|windows|macos|linux)(-(debug|usb-trace))?-(left|right)\.uf2$ ]] ||
+    [[ "$filename" =~ ^splitergoll-(wire|bluetooth)-(auto|multi|windows|macos|linux)(-(debug|usb-trace))?-(left|right)\.uf2$ ]] ||
         fail 'Précise un UF2 généré par ce dépôt, ou make flash <matériel> <keymap> <left|right> [debug|usb-trace]'
     profile=${BASH_REMATCH[1]}
     keymap=${BASH_REMATCH[2]}

@@ -1,7 +1,9 @@
 // Observe les SETUP de la centrale et restitue leur historique sur son port série USB.
 // Les wrappers délèguent aux pilotes existants, sans modifier les réponses ni la keymap.
 #include "usb_trace_store.h"
-#include "usb_os_classifier.h"
+#include <splitergoll/usb_os_classifier.h>
+#include <splitergoll/usb_observer.h>
+#include <splitergoll/usb_auto_state.h>
 
 #include <stdio.h>
 #include <string.h>
@@ -14,72 +16,24 @@
 
 static struct usb_trace_store store;
 static struct k_spinlock store_lock;
-static usb_dc_ep_callback setup_callback;
-static usb_dc_status_callback status_callback;
-static bool reading_setup;
 static struct k_spinlock transmit_lock;
 static const uint8_t *transmit_data;
 static size_t transmit_length;
 static size_t transmit_offset;
 K_SEM_DEFINE(transmit_done, 0, 1);
 
-// Points d’entrée réels du pilote, conservés par les redirections de l’éditeur de liens.
-int __real_usb_dc_ep_set_callback(uint8_t ep, usb_dc_ep_callback callback);
-int __real_usb_dc_ep_read(uint8_t ep, uint8_t *data, uint32_t size, uint32_t *read_bytes);
-void __real_usb_dc_set_status_callback(usb_dc_status_callback callback);
-
-// Sépare les énumérations USB sans modifier les événements transmis à Zephyr.
-static void observe_status(enum usb_dc_status_code status, const uint8_t *param) {
-    if (status == USB_DC_RESET || status == USB_DC_DISCONNECTED) {
-        k_spinlock_key_t key = k_spin_lock(&store_lock);
-        usb_trace_reset(&store);
-        k_spin_unlock(&store_lock, key);
-    }
-    usb_dc_status_callback callback = status_callback;
-    if (callback != NULL) {
-        callback(status, param);
-    }
+// Efface les compteurs du diagnostic au changement de cycle observé par le clavier.
+void splitergoll_usb_trace_reset(void) {
+    k_spinlock_key_t key = k_spin_lock(&store_lock);
+    usb_trace_reset(&store);
+    k_spin_unlock(&store_lock, key);
 }
 
-// Ajoute l’observation des cycles au callback natif, en conservant sa désinscription.
-void __wrap_usb_dc_set_status_callback(usb_dc_status_callback callback) {
-    status_callback = callback;
-    __real_usb_dc_set_status_callback(callback == NULL ? NULL : observe_status);
-}
-
-// Encadre le callback original pour distinguer un SETUP des données de contrôle.
-static void observe_endpoint(uint8_t ep, enum usb_dc_ep_cb_status_code status) {
-    reading_setup = status == USB_DC_EP_SETUP;
-    setup_callback(ep, status);
-    reading_setup = false;
-}
-
-// Observe seulement l’endpoint zéro OUT, sans changer les autres callbacks ni les erreurs.
-int __wrap_usb_dc_ep_set_callback(uint8_t ep, usb_dc_ep_callback callback) {
-    if (ep != 0 || callback == NULL) {
-        return __real_usb_dc_ep_set_callback(ep, callback);
-    }
-
-    usb_dc_ep_callback previous = setup_callback;
-    setup_callback = callback;
-    int result = __real_usb_dc_ep_set_callback(ep, observe_endpoint);
-    if (result != 0) {
-        setup_callback = previous;
-    }
-    return result;
-}
-
-// Copie l’en-tête déjà lu par le pilote, sans seconde lecture ni capture de payload.
-int __wrap_usb_dc_ep_read(uint8_t ep, uint8_t *data, uint32_t size, uint32_t *read_bytes) {
-    int result = __real_usb_dc_ep_read(ep, data, size, read_bytes);
-
-    if (reading_setup && ep == 0) {
-        size_t length = result == 0 ? (read_bytes == NULL ? size : *read_bytes) : 0;
-        k_spinlock_key_t key = k_spin_lock(&store_lock);
-        usb_trace_append(&store, k_uptime_get_32(), data, length);
-        k_spin_unlock(&store_lock, key);
-    }
-    return result;
+// Copie un en-tête observé dans le tampon borné, sans interpréter son contenu HID.
+void splitergoll_usb_trace_record(uint32_t timestamp_ms, const uint8_t *data, size_t length) {
+    k_spinlock_key_t key = k_spin_lock(&store_lock);
+    usb_trace_append(&store, timestamp_ms, data, length);
+    k_spin_unlock(&store_lock, key);
 }
 
 // Alimente le FIFO dans le callback UART et signale la copie complète de la ligne.
@@ -184,6 +138,13 @@ static void dump_trace(const struct device *uart) {
              usb_os_name(guess), (unsigned)classifier.evidence);
     if (!send_line(uart, line)) {
         return;
+    }
+    if (IS_ENABLED(CONFIG_SPLITERGOLL_OS_AUTO)) {
+        snprintf(line, sizeof(line), "USBTRACE ACTIVE result=%s\n",
+                 usb_os_name(splitergoll_usb_auto_selected()));
+        if (!send_line(uart, line)) {
+            return;
+        }
     }
     key = k_spin_lock(&store_lock);
     same_generation = store.generation == generation;
