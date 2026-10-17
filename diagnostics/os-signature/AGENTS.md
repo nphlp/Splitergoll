@@ -134,8 +134,10 @@ Les états par chaîne sont bornés à 16 couples index/langue. Un motif exige l
 sondage puis une relecture du même couple. La lecture de l’index zéro décrit les
 langues, elle est exclue. Les répétitions ou traductions d’un même index ne comptent
 pas comme plusieurs noms indépendants. macOS exige des motifs 2 puis complet sur
-deux noms distincts. Windows exige un motif 4 puis complet et des lectures sur 255
-pour deux noms distincts. Les sondes device sur 8/64 sont complémentaires, jamais
+deux noms distincts. Windows exige un motif 4 puis complet ou 255 puis 262 du même
+couple index/langue, et des lectures sur 255 pour deux noms distincts. Le second
+motif est celui du firmware HID normal, confirmé dans la capture ETW côté PC.
+Les sondes device sur 8/64 sont complémentaires, jamais
 obligatoires. Si présentes, elles peuvent contredire un motif de noms et le rendre ambigu. Sur nos trois captures Windows, seul le produit a le motif 4 puis 24,
 plusieurs fois : ne pas exiger deux noms différents pour ce motif-là.
 
@@ -160,7 +162,7 @@ La ligne facultative `USBTRACE OS result=<macos|windows|unknown|ambiguous> evide
 précède END. Les lecteurs acceptent les captures version 1 sans cette ligne, signalent
 son absence et ne recalculent pas la décision en Bash ou PowerShell. Les captures
 privées restent intactes. Les lecteurs Bash/PowerShell et leurs accents sont confirmés sur les deux hôtes
-par l’utilisateur. Aucun runtime PowerShell n’est disponible sur ce Mac.
+par l’utilisateur. Le lecteur doit toujours être validé sur Windows pour ses API natives.
 
 Le stockage garde son test dans `tests/`, avec `-Ifirmware`. Le classifieur et son
 test sont dans `../../keyboard/`, avec `-I../../keyboard/include`. Les deux commandes
@@ -168,7 +170,9 @@ emploient `-std=c11 -Wall -Wextra -Werror -fsanitize=address,undefined` et asser
 couvre motifs, ordre, répétitions, langues, perte, ambiguïté, débordement de capacité,
 perturbations CDC/HID, délai et horloge 32 bits. Le stockage vérifie aussi la séparation
 des générations, dont une lecture ancienne après remplacement de l’index zéro.
-Les six captures se rejouent avec le même C : trois macos 0005 et trois windows 003a.
+Les six captures initiales se rejouent avec le même C : trois Mac et trois Windows.
+L’ancienne evidence Windows 003a devient 00ba avec le motif 255 puis 262, sans
+changer leur résultat. Les cinq captures Mac conservent evidence 0005.
 Leurs résultats sont locaux à ces deux machines, sans garantie de généralité.
 
 Validation de cette version : les deux suites C passent avec ASan/UBSan. Le rejeu
@@ -227,7 +231,7 @@ recalculée lors du dump. Les deux résultats peuvent diverger si des indices ta
 arrivent après la sélection figée, ou si une touche maintenue retarde son application.
 Les lecteurs acceptent les anciens formats sans ACTIVE, refusent doublons et ordre
 invalide, et n’affirment plus que toute capture laisse les couches inchangées.
-Le lecteur PowerShell modifié reste à essayer sur le PC, aucun runtime n’est disponible ici.
+Le lecteur PowerShell modifié reste à essayer sur le PC, les API Windows ne sont pas exécutables ici.
 
 ## Usage Windows autonome
 
@@ -238,6 +242,81 @@ Le fichier de capture est créé dans le dossier courant, sans sous-dossier. Son
 garde la date UTC, le suffixe aléatoire et le contenu UTF-8 sans BOM. Le source garde
 son BOM pour Windows PowerShell 5.1. Aucun module, fichier de validation voisin,
 mode administrateur ou modification persistante de la politique n’est demandé.
-Le changement de destination est contrôlé par revue du diff. Pas de runtime
-PowerShell disponible sur le Mac, donc la prochaine capture Windows doit confirmer
-le nouveau chemin en conditions réelles. Aucun test automatisé d’outillage ajouté.
+Le changement de destination est contrôlé par revue du diff et le script passe le
+parseur PowerShell local. La prochaine capture Windows doit confirmer le nouveau
+chemin en conditions réelles. Aucun test automatisé d’outillage ajouté.
+
+## USB normal sur Windows
+
+L’utilisateur confirme macOS fonctionnel et zéro saisie Windows avec `wire auto`
+normal, malgré la réussite avec CDC. Les octets classe/sous-classe/protocole sont
+`00/00/00` dans l’ELF normal et `ef/02/01` dans l’ELF trace. Le classement inconnu est
+une piste, pas un résultat lu sur le matériel. Le mode COM ne peut observer ce firmware.
+
+Le même script autonome a deux jeux de paramètres exclusifs : `-Port COMx` (série)
+et `-UsbEvents` (ETW hôte). Le second exige un administrateur et les programmes natifs
+Logman/Tracerpt. Il démarre une session `SplitergollUsb-<GUID>` directement avec `-ets`,
+ajoute USBXHCI/UCX/USBHUB3 avec `Default,HeadersBusTrace`, puis affiche le signal de
+branchement. Capture de vingt secondes, arrêt de sa seule session dans `finally`.
+Aucun collecteur planifié persistant, aucune modification de pilote, de firmware
+ou de classifieur, aucune collecte lancée par l’agent. La commande d’arrêt manuel
+est affichée pour une fermeture brutale du processus. Les noms de sortie sont uniques,
+les fichiers préexistants sont refusés et chaque code de sortie natif est contrôlé.
+Les outils sont résolus dans le répertoire système Windows. Le nom ETL direct ou
+numéroté par Logman est accepté seulement pour ce préfixe unique, avec exactement
+un fichier attendu, sans choisir arbitrairement parmi plusieurs segments.
+
+Les sorties ETL, XML et résumé TXT sont directement dans le dossier courant. Garder
+le brut, examiner le résumé pour les pertes, puis les en-têtes et l’énumération dans
+le XML. HeadersBusTrace exclut les paquets de données, mais les événements peuvent
+décrire les autres périphériques USB, donc rester privés. Ne pas conclure à une
+règle prête sans données ni annoncer une sélection interne à partir d’ETW seulement.
+Les providers retenus ciblent la pile USB 3 de Windows 10/11. Un contrôleur USB 2
+historique nécessiterait une collecte adaptée, sans rabattement implicite.
+
+Sources : [capture ETW Microsoft](https://learn.microsoft.com/en-us/windows-hardware/drivers/usbcon/how-to-capture-a-usb-event-trace),
+[Logman](https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/logman-start-stop),
+[Tracerpt](https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/tracerpt).
+Le parseur PowerShell local est disponible dans `.local/tools/powershell-parser/`.
+Pas de PC Windows accessible à l’agent : parsing et gardes Mac validés, exécution
+ETW réelle confirmée ensuite par l’utilisateur : démarrage, arrêt et trois sorties
+dans son dossier courant. Pas de nouvelle suite automatisée d’outillage.
+
+## Syntaxe et guillemets PowerShell
+
+Les apostrophes typographiques sont aussi des délimiteurs PowerShell. Deux chaînes
+avec ce caractère non échappé produisaient les quatre ParserError transmis par
+l’utilisateur : MissingTypename aux lignes 156/167 et UnexpectedToken aux lignes
+199/200, avant toute collecte. Reproduction exacte avec le parseur officiel 7.6.7,
+puis zéro erreur après reformulation des deux messages. Aucun changement de regex
+USBTRACE nécessaire. Garder les délimiteurs ASCII et reformuler ou échapper les
+apostrophes dans les chaînes, y compris les caractères typographiques.
+
+L’archive portable officielle macOS arm64 est uniquement dans `.local/`, contrôlée
+contre le SHA-256 publié `50dde99bb066adacbb9a748182d09eb9beff25119dc3b12e85c84b6b6b1c5da9`.
+Aucune installation globale. `Parser.ParseFile` valide le fichier sans lancer ETW.
+Les lancements `-Port COM4` et `-UsbEvents` refusent explicitement macOS, le mélange
+des deux paramètres est refusé par le binder. Cela ne valide ni Windows PowerShell
+5.1 ni Logman/Tracerpt en conditions réelles. Refaire le parsing à chaque modification
+PS, sans nouveau framework de tests d’outillage.
+
+L’utilisateur confirme le son de connexion Windows avec le firmware normal.
+Il ne voit pas de COM4 : absence attendue puisque CDC est désactivé. Chercher le
+clavier sous les catégories Claviers ou Périphériques d’interface utilisateur,
+ainsi que les erreurs éventuelles sous Contrôleurs de bus USB. Le son ne prouve
+ni un HID opérationnel ni le résultat du classifieur. La capture utilise `-UsbEvents`,
+sans numéro COM.
+
+La capture privée `5663dfa5` donne 2 075 événements XML, autant que le résumé, sans
+perte déclarée. Tracerpt signale des événements hors schéma : cela ne garantit pas
+que tous les champs sont décodés, malgré le compte complet. Les 22 SETUP dispatchés
+de notre cible sont lisibles, leurs terminaisons appariées aussi. L’énumération
+termine à NTSTATUS 0. Deux requêtes sont refusées : qualifier et SET_IDLE. Ce refus
+de SET_IDLE correspond au socle Zephyr sans USB_DEVICE_SOF, pas à une modification
+de notre classifieur. Aucune lecture de la sélection interne ne peut être déduite
+d’ETW. La suite du diagnostic et le motif 255 puis 262 sont dans la spec clavier.
+Le script utilise désormais `tracerpt -lr` pour le décodage au mieux des événements
+hors schéma, selon Microsoft. Ce mode de conversion reste à essayer sur le PC,
+sans promettre la disparition de l’avertissement ni une récupération exhaustive.
+Le brut ETL et XML restent privés, seules les 22 demandes anonymes sont reprises
+dans le test du classifieur. Aucun besoin de nouvelle collecte pour ce correctif.

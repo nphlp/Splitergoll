@@ -8,3 +8,8 @@
 
 # Captures autonomes Windows, quel que soit le dossier de lancement.
 windows-????-??-??-??-??-??-????????.txt
+
+# Traces système USB Windows, brutes et décodées.
+windows-usb-*.etl
+windows-usb-*.xml
+windows-usb-*.txt

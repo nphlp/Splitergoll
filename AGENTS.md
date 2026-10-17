@@ -564,8 +564,44 @@ L’utilisateur confirme ensuite sur V1 le nom macOS par l’encodeur droit sur 
 Windows sur le PC, l’entrée en gaming et le retour Windows, ainsi que le fonctionnement
 habituel sur Mac après flash des deux moitiés. Cela confirme la sélection effective
 avec la variante instrumentée de l’essai. L’utilisateur a ensuite flashé V1 avec
-`wire auto` normal, sans `usb-trace`. Le retour explicite sur la détection sans CDC,
-les gestes non essayés et les autres hôtes restent à obtenir.
+`wire auto` normal, sans `usb-trace`. Il confirme maintenant le fonctionnement sur
+macOS et aucune saisie sur Windows. La capture ETW et son rejeu révèlent ensuite
+un motif insuffisant, sans donner directement l’état interne du firmware.
+Les descripteurs compilés diffèrent : classe/sous-classe/protocole `00/00/00` en normal,
+`ef/02/01` en trace, avec les mêmes VID/PID et les mêmes index de noms. Le motif
+Windows sur quatre octets est absent de la capture normale, avec des demandes de
+noms sur 255 puis 262 octets. Ne pas attribuer son origine à un pilote précis sans preuve.
+`capture.ps1 -UsbEvents` prépare une capture ETW hôte sans port COM ni modification
+du firmware. Fichier autonome, sorties à la racine du dossier courant, PowerShell
+administrateur requis pour ce mode uniquement. Le guide est
+[docs/capture-usb-windows.md](docs/capture-usb-windows.md). Le correctif ajoute le motif
+255 puis 262 du même index/langue, plus deux noms distincts lus sur 255, sans
+Windows par défaut. Les veto, gardes d’appuis et keymaps restent inchangés.
+Les trois suites C passent et les dix captures précédentes gardent leur OS.
+Les 22 demandes ETW reproduisent inconnu avant correction, Windows après, y compris
+sans la sonde initiale 64. Après flash du correctif, l’utilisateur confirme sur V1
+la saisie et la reconnaissance Windows puis macOS, en débranchant/rebranchant
+le même firmware normal entre les deux hôtes, sans reflash intermédiaire.
+Les essais détaillés de raccourcis, pavé et gaming normal restent distincts,
+ainsi que la veille, le reset du bus sans coupure et les autres ordinateurs.
+L’utilisateur signale ensuite un démarrage irrégulier sur Mac, reproduit même en
+Mac vers Mac : le premier aller-retour réussi ne valide donc pas la fiabilité.
+Mesurer un branchement sans frappe avant de modifier le code. Les appuis pendant
+l’attente repoussent le garde de 750 ms, sans preuve que ce soit la cause observée.
+Pas de persistance Windows démontrée. Le diagnostic détaillé est dans la spec
+`keyboard/src/os_detection/AGENTS.md`.
+L’essai suivant avec cinq secondes sans frappe fonctionne du premier coup,
+ce qui concorde avec l’attente repoussée par les positions ignorées. Ce n’est
+pas une corruption de signature et les cinq secondes ne sont pas un délai codé.
+L’amélioration du garde est au TODO, sans modification de code ou de délai pour l’instant.
+L’utilisateur confirme finalement
+le son de connexion Windows, mais pas de port COM4 : cette absence est attendue
+sans CDC. L’ETW confirme l’énumération terminée sans erreur globale, avec 2 075 événements
+et zéro perte déclarée. Les champs utiles sont lisibles malgré un avertissement
+de schéma Tracerpt. Le script utilise désormais son mode de décodage `-lr`, encore
+à essayer sur le PC. Aucun besoin de refaire la capture pour le correctif actuel. Le script
+PowerShell a eu deux chaînes cassées par des apostrophes typographiques, corrigées
+après reproduction exacte avec le parseur officiel local. Les regex ne changent pas.
 Les invariants et tests du nouveau moteur sont dans
 [keyboard/src/os_detection/AGENTS.md](keyboard/src/os_detection/AGENTS.md).
 Le guide humain est [docs/keymap-auto.md](docs/keymap-auto.md).

@@ -5,8 +5,13 @@ la centrale gauche observe les demandes USB de l’ordinateur et active le group
 de couches reconnu. Aucun logiciel compagnon ni changement manuel d’OS.
 La sélection est confirmée sur V1 : l’encodeur droit affiche macOS sur le Mac et
 Windows sur le PC, le gaming puis son retour à Windows fonctionnent. L’usage sur
-Mac est confirmé. Le firmware normal sans port série est ensuite flashé sur V1,
-son aller-retour Mac/Windows reste à confirmer.
+Mac est confirmé. Après correction du motif Windows sans port série, l’utilisateur
+confirme aussi la saisie et la détection Windows puis macOS avec le même firmware
+normal, sans reflash entre les ordinateurs. Le retour au Mac reste toutefois
+irrégulier : un délai est aussi signalé après débranchement/rebranchement Mac vers
+Mac. Un essai avec cinq secondes sans toucher au clavier fonctionne du premier
+coup. Cela concorde avec le délai repoussé par les frappes pendant l’attente,
+sans prouver que tous les retards ont cette cause. La fiabilité reste à vérifier.
 
 ```sh
 make build wire auto
@@ -21,6 +26,8 @@ Les quatre profils précédents restent disponibles.
 - Les indices doivent se stabiliser pendant 250 ms. La sélection attend aussi
   que toutes les touches soient relâchées et que la saisie soit inactive depuis 750 ms.
 - Avant la sélection, les touches et encodeurs sont ignorés, sans rejouer les appuis.
+- Les appuis pendant cette attente repoussent le délai de 750 ms. Pour tester le
+  démarrage, laisser le clavier intact cinq secondes, puis essayer une seule touche gauche.
 - Un OS inconnu ou ambigu laisse le clavier en attente, sans supposer Windows.
 - Le choix reste fixe pendant le cycle USB. Un reset du bus ou une déconnexion
   impose une nouvelle reconnaissance, sans effacer les appairages.

@@ -24,6 +24,7 @@ enum usb_os_evidence {
     USB_OS_QUALIFIER = 0x10,
     USB_OS_STRINGS_255 = 0x20,
     USB_OS_STRING_OVERFLOW = 0x40,
+    USB_OS_STRINGS_262 = 0x80,
 };
 
 struct usb_os_string {
@@ -34,6 +35,7 @@ struct usb_os_string {
     bool pair_2;
     bool pair_4;
     bool bulk;
+    bool pair_262;
 };
 
 struct usb_os_classifier {

@@ -39,13 +39,22 @@ La priorité USB est différée après l’auto-détection d’OS, pour viser un
 - [x] Reflasher le correctif de sonde initiale facultative et confirmer Windows sur V1.
 - [x] Confirmer le retour au Mac avec le même firmware corrigé, sans nouveau flash.
   La keymap reste inchangée pendant cet essai.
-- [ ] Isoler les échanges du lecteur CDC, comparer les signatures avec Linux et
-  revalider la sélection automatique avec les descripteurs normaux.
+- [x] Isoler les échanges du lecteur CDC et valider la sélection automatique sur
+  V1 Mac/Windows avec les descripteurs normaux.
+- [ ] Comparer les signatures avec Linux avant d’ajouter sa reconnaissance automatique.
 - [x] Séparer les cycles USB dans le diagnostic et attendre la stabilisation des motifs de noms.
 - [x] Implémenter `wire auto` : sélection USB expérimentale macOS / Windows avec gaming, couches partagées avec les profils fixes, attente sans OS implicite.
 - [x] Confirmer la sélection de `wire auto usb-trace` sur V1 : noms macOS/Windows via l’encodeur droit, gaming puis retour Windows, fonctionnement habituel sur Mac.
 - [x] Flasher V1 avec `wire auto` normal, sans `usb-trace`.
-- [ ] Compléter les essais `auto` : raccourcis et accents représentatifs, retour du pavé, puis confirmer l’aller-retour sans CDC avec `wire auto`.
+- [x] Confirmer `wire auto` normal sur macOS. Sur Windows, le premier essai ne produit aucune saisie.
+- [x] Capturer l’énumération Windows du firmware normal avec `capture.ps1 -UsbEvents`, contrôler les pertes et comparer les requêtes avant de modifier le classifieur.
+- [x] Reproduire le classement inconnu sans CDC et reconnaître le motif de noms 255 puis 262, avec tests de régression et rejeu des captures précédentes.
+- [x] Confirmer le correctif sur V1 : `wire auto` normal, saisie et détection Windows puis retour macOS, sans nouveau flash entre les hôtes.
+- [ ] Fiabiliser l’initialisation `wire auto` sur Mac : l’essai avec cinq secondes sans frappe fonctionne du premier coup. Éviter que les appuis ignorés prolongent inutilement l’attente de sélection, tout en conservant les gardes de relâchement et de comportements différés.
+- [x] Corriger les apostrophes des chaînes PowerShell et reproduire les ParserError avec le parseur officiel avant/après, sans modifier les regex USBTRACE.
+- [x] Valider le nouveau mode ETW sur Windows : démarrage/arrêt de sa seule session et export des fichiers dans le dossier courant.
+- [ ] Confirmer le décodage Tracerpt avec `-lr` sur le PC lors d’une prochaine capture utile.
+- [ ] Compléter les essais `auto` normal : raccourcis et accents représentatifs, pavé et gaming avec retour à la base de chaque OS.
 - [x] Rendre `capture.ps1` autonome sous Windows : un seul fichier dans le dossier de travail, capture `.txt` directement dans le dossier courant.
 - [ ] Confirmer sur Windows la destination du lecteur autonome mis à jour.
 - [ ] Confirmer la séparation des cycles lors d’un reset du bus sans coupure d’alimentation.

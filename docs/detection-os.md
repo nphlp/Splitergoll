@@ -80,6 +80,9 @@ signatures décrivent donc un clavier instrumenté, pas encore le firmware norma
 Le lecteur peut lui-même ajouter des requêtes série. Il faudra isoler ces échanges
 et revalider les signatures sans cette interface avant d’en faire une fonctionnalité.
 Un échec d’énumération qui empêche l’apparition du port n’est pas lisible par ce canal.
+Sur V1, le firmware normal fonctionne sur macOS mais ne produit aucune saisie sur
+Windows. Utiliser [la capture côté Windows](capture-usb-windows.md) avec `-UsbEvents`
+pour étudier ce cas sans ajouter d’interface série au clavier.
 
 ## Résultats sur V1
 
@@ -95,7 +98,7 @@ Les requêtes CDC sont isolées, car elles dépendent aussi du pilote et du lect
 | Demande observée | Mac | PC Windows |
 | --- | --- | --- |
 | Début de la capture du descripteur du périphérique | 8 octets | 64 ou 18 octets selon le cycle |
-| Lecture des noms du clavier | 2 octets puis lecture complète | Lectures sur 255 octets, sondage sur 4 puis lecture complète du nom du produit |
+| Lecture des noms du clavier | 2 octets puis lecture complète | Lectures sur 255 octets, puis 4 et complet avec CDC ou 262 sans CDC |
 
 Le code est propre à Splitergoll, inspiré des motifs étudiés par
 [QMK](https://docs.qmk.fm/features/os_detection) et
@@ -105,8 +108,10 @@ puis confronté à nos captures. Aucun module externe ni changement de descripte
 ## Comment la décision est prise
 
 Le classifieur associe chaque sondage à sa relecture, pour le même nom et la même
-langue. Deux motifs « 2 puis complet » suggèrent macOS. Un motif « 4 puis complet »
-et des lectures sur 255 pour deux noms distincts suggèrent Windows. Les sondes
+langue. Deux motifs « 2 puis complet » suggèrent macOS. Windows demande deux noms
+distincts sur 255 octets, avec soit un motif « 4 puis complet », soit une relecture
+du même nom sur « 255 puis 262 ». Ce second motif vient de la capture du firmware
+normal, sans port série. Une seule taille ou des répétitions ne suffisent pas. Les sondes
 8/64 sont complémentaires : leur absence ne bloque pas la décision, leur
 contradiction la rend ambiguë. Répéter un même nom ne renforce pas l’indice.
 Les tailles des rapports HID et les requêtes du lecteur série sont ignorées.
@@ -119,8 +124,13 @@ Un reset du bus USB ou une déconnexion efface les indices du cycle précédent.
 La lecture affiche `Signature USB : hypothèse macOS` ou `Windows`. La décision est
 recalculée sur l’instantané au moment de la demande de capture, pas appliquée aux couches.
 L’aller-retour Mac → Windows → Mac est confirmé sur V1, sans nouveau flash entre
-Windows et le retour au Mac. La détection sans CDC, Linux et les hubs restent à tester.
-Ces captures ont validé le classifieur, pas encore l’application automatique des couches.
+Windows et le retour au Mac. La sélection automatique est ensuite confirmée avec CDC.
+Sans CDC, le Mac fonctionne mais Windows restait bloqué : sa capture ETW ne contient
+aucun sondage sur 4 octets. Le motif « 255 puis 262 » corrige le rejeu, puis
+l’utilisateur confirme la saisie et la détection Windows puis macOS avec le même
+firmware normal sur V1, sans reflash entre les hôtes. Il signale ensuite un délai
+irrégulier de démarrage sur Mac, même de Mac vers Mac. Ce cas reste ouvert,
+sans preuve d’une ancienne sélection Windows conservée. Linux et les hubs restent à tester.
 Avec `wire auto usb-trace`, une ligne `Keymap automatique appliquée` indique la
 sélection réelle. Un résultat en attente signifie qu’aucun OS n’est encore activé.
 

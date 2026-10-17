@@ -36,6 +36,7 @@ static void update_string_evidence(struct usb_os_classifier *classifier) {
     unsigned pairs_2 = 0;
     unsigned pairs_4 = 0;
     unsigned bulk_strings = 0;
+    bool pair_262 = false;
     for (uint8_t i = 0; i < classifier->string_count; i++) {
         bool counted_2 = false;
         bool counted_4 = false;
@@ -50,6 +51,7 @@ static void update_string_evidence(struct usb_os_classifier *classifier) {
         pairs_2 += classifier->strings[i].pair_2 && !counted_2;
         pairs_4 += classifier->strings[i].pair_4 && !counted_4;
         bulk_strings += classifier->strings[i].bulk && !counted_bulk;
+        pair_262 |= classifier->strings[i].pair_262;
     }
     if (pairs_2 >= 2) {
         classifier->evidence |= USB_OS_STRINGS_2;
@@ -59,6 +61,9 @@ static void update_string_evidence(struct usb_os_classifier *classifier) {
     }
     if (bulk_strings >= 2) {
         classifier->evidence |= USB_OS_STRINGS_255;
+    }
+    if (pair_262) {
+        classifier->evidence |= USB_OS_STRINGS_262;
     }
 }
 
@@ -74,6 +79,8 @@ static void observe_string(struct usb_os_classifier *classifier, uint8_t index,
         return;
     }
 
+    // Le HID Windows normal peut relire un nom sur 262 octets sans aucun sondage sur 4.
+    string->pair_262 |= length == 262 && string->bulk;
     string->bulk |= length == 255;
     if (length == 2) {
         string->probe_2 = true;
@@ -135,7 +142,8 @@ enum usb_os_guess usb_os_result(const struct usb_os_classifier *classifier, uint
     uint16_t probes = USB_OS_DEVICE_8 | USB_OS_DEVICE_64;
     bool mixed_device_probes = (classifier->evidence & probes) == probes;
     bool macos_pattern = (classifier->evidence & USB_OS_STRINGS_2) != 0;
-    bool windows_pattern = (classifier->evidence & USB_OS_STRINGS_4) != 0;
+    uint16_t windows_strings = USB_OS_STRINGS_4 | USB_OS_STRINGS_262;
+    bool windows_pattern = (classifier->evidence & windows_strings) != 0;
     bool contradictory = mixed_device_probes || (macos_pattern && windows_pattern) ||
                          (macos_pattern && (classifier->evidence & USB_OS_DEVICE_64) != 0) ||
                          (windows_pattern && (classifier->evidence & USB_OS_DEVICE_8) != 0);

@@ -31,7 +31,11 @@ Bluetooth direct. Le parcours complet des keymaps reste à valider.
 
 Le profil expérimental `wire auto` sélectionne macOS ou Windows avec gaming à la
 connexion USB. La sélection et le retour du gaming sont confirmés sur V1 avec
-le firmware instrumenté. L’essai sans port série reste à réaliser.
+le firmware instrumenté. Après correction de la signature Windows, la saisie et
+la détection Windows puis macOS sont aussi confirmées sans port série, avec le
+même firmware normal sur V1. Un démarrage irrégulier au branchement sur le Mac
+est ensuite signalé, y compris de Mac vers Mac : la fiabilité reste à vérifier.
+Les autres ordinateurs restent à tester.
 
 La keymap historique reste disponible dans `multi`, avec changement d’OS au clavier.
 Les profils fixes `windows` avec jeu, `macos` et `linux` se choisissent au build
@@ -73,6 +77,7 @@ et `make bat avg` calcule une moyenne par moitié sur 30 secondes.
 - [Essais wire](tests-wire.md) : vérifier le clavier sans batterie sur Mac et Windows.
 - [Latence](latence.md) : diagnostic rapide, mesures possibles et limites des logs USB.
 - [Migration ZMK](migration-zmk.md) : versions, nouveautés, ruptures et validation avant flash.
+- [Capture USB Windows](capture-usb-windows.md) : observer le firmware normal sans port série.
 - [Détection d’OS](detection-os.md) : préparer et comparer les captures de connexion USB, puis BLE.
 - [Firmwares stables](firmwares-stables.md) : récupération du snapshot 0.3 depuis l’historique Git.
 - [Veille et réveil](veille.md) : états d’inactivité et reprise à la frappe.

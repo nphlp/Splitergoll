@@ -165,6 +165,86 @@ static void test_missing_initial_device_probe(void) {
     assert(usb_os_result(&macos, 1000, true) == USB_OS_AMBIGUOUS);
 }
 
+// Rejoue les 22 SETUP du firmware HID normal capturés côté Windows, sans interface CDC.
+static void test_windows_without_cdc(void) {
+    const uint16_t requests[][5] = {
+        {0x80, 0x06, 0x0100, 0, 64},
+        {0x80, 0x06, 0x0100, 0, 18},
+        {0x80, 0x06, 0x0200, 0, 255},
+        {0x80, 0x06, 0x0303, 0x0409, 255},
+        {0x80, 0x06, 0x0300, 0, 255},
+        {0x80, 0x06, 0x0302, 0x0409, 255},
+        {0x80, 0x06, 0x0600, 0, 10},
+        {0x80, 0x06, 0x0100, 0, 18},
+        {0x80, 0x06, 0x0200, 0, 9},
+        {0x80, 0x06, 0x0200, 0, 34},
+        {0x00, 0x09, 1, 0, 0},
+        {0x21, 0x0a, 0, 0, 0},
+        {0x81, 0x06, 0x2200, 0, 240},
+        {0x80, 0x06, 0x0302, 0x0409, 262},
+        {0x80, 0x06, 0x0300, 0, 255},
+        {0x80, 0x06, 0x0301, 0x0409, 255},
+        {0x80, 0x06, 0x0302, 0x0409, 255},
+        {0x80, 0x06, 0x0300, 0, 255},
+        {0x80, 0x06, 0x0301, 0x0409, 255},
+        {0x80, 0x06, 0x0302, 0x0409, 255},
+        {0x80, 0x06, 0x0302, 0x0409, 262},
+        {0x80, 0x06, 0x0302, 0x0409, 262},
+    };
+    for (unsigned start = 0; start <= 1; start++) {
+        struct usb_os_classifier classifier = {0};
+        for (unsigned i = start; i < sizeof requests / sizeof requests[0]; i++) {
+            const uint16_t *r = requests[i];
+            observe(&classifier, r[0], r[1], r[2], r[3], r[4]);
+        }
+        assert(usb_os_result(&classifier, 349, true) == USB_OS_UNKNOWN);
+        assert(usb_os_result(&classifier, 350, true) == USB_OS_WINDOWS);
+        assert(usb_os_result(&classifier, 1000, false) == USB_OS_UNKNOWN);
+    }
+}
+
+// Exige le même nom et la même langue dans l’ordre 255 puis 262, plus un autre nom sur 255.
+static void test_windows_wide_string_guards(void) {
+    struct usb_os_classifier classifier = {0};
+    observe(&classifier, 0x80, 0x06, 0x0307, 0x040c, 262);
+    assert(usb_os_result(&classifier, 1000, true) == USB_OS_UNKNOWN);
+    observe(&classifier, 0x80, 0x06, 0x0307, 0x040c, 255);
+    observe(&classifier, 0x80, 0x06, 0x0309, 0x040c, 255);
+    assert(usb_os_result(&classifier, 1000, true) == USB_OS_UNKNOWN);
+
+    observe(&classifier, 0x80, 0x06, 0x0307, 0x0409, 262);
+    observe(&classifier, 0x80, 0x06, 0x0308, 0x040c, 262);
+    observe(&classifier, 0x80, 0x06, 0x0307, 0x040c, 260);
+    observe(&classifier, 0x80, 0x06, 0x0307, 0x040c, 263);
+    observe(&classifier, 0x81, 0x06, 0x0307, 0x040c, 262);
+    observe(&classifier, 0xa1, 0x06, 0x0307, 0x040c, 262);
+    observe(&classifier, 0x80, 0x07, 0x0307, 0x040c, 262);
+    observe(&classifier, 0x80, 0x06, 0x0300, 0, 262);
+    observe(&classifier, 0x80, 0x06, 0x0200, 0, 262);
+    assert(usb_os_result(&classifier, 1000, true) == USB_OS_UNKNOWN);
+    observe(&classifier, 0x80, 0x06, 0x0307, 0x040c, 262);
+    assert(classifier.evidence == (USB_OS_STRINGS_255 | USB_OS_STRINGS_262));
+    assert(usb_os_result(&classifier, 1000, true) == USB_OS_WINDOWS);
+
+    classifier = (struct usb_os_classifier){0};
+    for (unsigned i = 0; i < 50; i++) {
+        string_pair(&classifier, 7, 0x040c, 255, 262);
+        string_pair(&classifier, 7, 0x0409, 255, 262);
+    }
+    assert(usb_os_result(&classifier, 1000, true) == USB_OS_UNKNOWN);
+    observe(&classifier, 0x80, 0x06, 0x0309, 0x040c, 255);
+    assert(usb_os_result(&classifier, 1000, true) == USB_OS_WINDOWS);
+
+    observe(&classifier, 0x80, 0x06, 0x0100, 0, 8);
+    assert(usb_os_result(&classifier, 1000, true) == USB_OS_AMBIGUOUS);
+    classifier = (struct usb_os_classifier){0};
+    string_pair(&classifier, 7, 0x040c, 255, 262);
+    observe(&classifier, 0x80, 0x06, 0x0309, 0x040c, 255);
+    string_pair(&classifier, 1, 0x040c, 2, 18);
+    string_pair(&classifier, 2, 0x040c, 2, 24);
+    assert(usb_os_result(&classifier, 1000, true) == USB_OS_AMBIGUOUS);
+}
+
 // Les relectures doivent suivre le sondage, les fragments dans l’ordre inverse restent insuffisants.
 static void test_probe_order(void) {
     struct usb_os_classifier classifier = {0};
@@ -256,6 +336,8 @@ static void test_names(void) {
 
 // Lance les tests du classifieur réel avec assertions et sanitizers côté hôte.
 int main(void) {
+    test_windows_without_cdc();
+    test_windows_wide_string_guards();
     test_positive_patterns();
     test_repetition_and_language();
     test_windows_bulk_diversity();
