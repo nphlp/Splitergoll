@@ -19,7 +19,11 @@ struct usb_trace_store {
     size_t count;
     uint32_t dropped;
     uint32_t rejected;
+    uint32_t generation;
 };
+
+// Ouvre un nouveau cycle USB et invalide les lectures de l’ancien, sans parcourir les records.
+void usb_trace_reset(struct usb_trace_store *store);
 
 // Copie un en-tête complet, conserve les premiers et compte les pertes sans écrasement.
 bool usb_trace_append(struct usb_trace_store *store, uint32_t timestamp_ms,
@@ -28,5 +32,9 @@ bool usb_trace_append(struct usb_trace_store *store, uint32_t timestamp_ms,
 // Copie un enregistrement existant sans exposer le tampon interne à l’appelant.
 bool usb_trace_get(const struct usb_trace_store *store, size_t index,
                    struct usb_trace_record *record);
+
+// Refuse une lecture si le bus a changé de cycle pendant la restitution de l’instantané.
+bool usb_trace_get_generation(const struct usb_trace_store *store, uint32_t generation,
+                              size_t index, struct usb_trace_record *record);
 
 #endif

@@ -1,8 +1,8 @@
 # Diagnostic de détection d’OS
 
 Objectif : reconnaître l’ordinateur à partir de sa connexion, sans logiciel
-compagnon permanent ni changement manuel d’OS. Pour l’instant, le diagnostic
-observe les échanges. Il ne choisit aucun OS et ne change pas la keymap.
+compagnon permanent ni changement manuel d’OS. Le diagnostic observe les échanges
+et annonce une hypothèse. Il ne change pas encore la keymap.
 
 Tous les fichiers de cette étude sont dans `diagnostics/os-signature/` :
 `firmware/` pour la capture embarquée, `snippets/` pour son activation, `tests/`
@@ -21,8 +21,8 @@ aussi son UF2, mais seul celui de gauche ajoute le diagnostic. Aucun reset des
 réglages n’est nécessaire. Sur Windows, conserver cette même keymap pour comparer
 exactement le même firmware, sans attendre des raccourcis macOS qu’ils soient adaptés.
 
-La centrale conserve les 256 premiers en-têtes SETUP de huit octets depuis son
-démarrage, avec leur ordre et un horodatage local. Aucun contenu de frappe ni
+La centrale conserve les 256 premiers en-têtes SETUP de huit octets de chaque
+cycle USB, avec leur ordre et un horodatage local. Aucun contenu de frappe ni
 clé Bluetooth n’est enregistré. Une lecture ne vide pas cette mémoire.
 
 ## Lire une capture
@@ -75,30 +75,48 @@ Un échec d’énumération qui empêche l’apparition du port n’est pas lisi
 
 ## Résultats sur V1
 
-Les trois captures Mac contiennent chacune 24 requêtes, les trois Windows 57, 58
-et 57. Aucun rejet ni perte n’est signalé. Le lecteur PowerShell fonctionne sur
+Les cinq captures Mac contiennent chacune 24 requêtes, les cinq Windows 57,
+58, 57, 53 et 53. Aucun rejet ni perte n’est signalé. Le lecteur PowerShell fonctionne sur
 le PC avec la commande ci-dessus. Les captures restent dans `.local/usb-traces/`.
 
-Les trois séquences Mac sont identiques hors temps. Deux séquences Windows sont
-identiques, la troisième répète sa première demande de descripteur une fois de plus.
+Les motifs de noms sont cohérents entre les essais. Le début de l’énumération et
+les répétitions peuvent varier : la capture Windows sur le clavier commence sur 18
+octets, sans sonde de 64 visible.
 Les requêtes CDC sont isolées, car elles dépendent aussi du pilote et du lecteur série.
 
-| Demande observée dans les trois essais de chaque machine | Mac | PC Windows |
+| Demande observée | Mac | PC Windows |
 | --- | --- | --- |
-| Première lecture du descripteur du périphérique | 8 octets demandés | 64 octets demandés |
-| Device qualifier | Absente | Demandée sur 10 octets |
-| Descripteur de rapport HID | 176 octets demandés | 240 octets demandés |
-| HID SET_IDLE | Absent | Présent |
+| Début de la capture du descripteur du périphérique | 8 octets | 64 ou 18 octets selon le cycle |
+| Lecture des noms du clavier | 2 octets puis lecture complète | Lectures sur 255 octets, sondage sur 4 puis lecture complète du nom du produit |
 
-Ces différences sont des candidates pour une détection, pas des garanties pour
-tous les Mac, Windows ou Linux. Elles ne dépendent pas d’un seuil de temps.
-Le prochain classificateur devra tolérer les répétitions, conserver un résultat
-inconnu/ambigu et être essayé avec les descripteurs usuels. Aucune bascule de keymap
-n’est activée à ce stade.
+Le code est propre à Splitergoll, inspiré des motifs étudiés par
+[QMK](https://docs.qmk.fm/features/os_detection) et
+[Cormoran](https://github.com/cormoran/zmk-feature-os-detection/blob/main/docs/fingerprints.md),
+puis confronté à nos captures. Aucun module externe ni changement de descripteur USB n’est ajouté.
+
+## Comment la décision est prise
+
+Le classifieur associe chaque sondage à sa relecture, pour le même nom et la même
+langue. Deux motifs « 2 puis complet » suggèrent macOS. Un motif « 4 puis complet »
+et des lectures sur 255 pour deux noms distincts suggèrent Windows. Les sondes
+8/64 sont complémentaires : leur absence ne bloque pas la décision, leur
+contradiction la rend ambiguë. Répéter un même nom ne renforce pas l’indice.
+Les tailles des rapports HID et les requêtes du lecteur série sont ignorées.
+
+Il attend 250 ms sans nouvelle demande utile avant d’annoncer son hypothèse.
+Ce délai concerne la décision d’OS, pas la saisie des touches. Des indices insuffisants
+donnent « inconnu », des motifs contradictoires donnent « ambigu ».
+Un reset du bus USB ou une déconnexion efface les indices du cycle précédent.
+
+La lecture affiche `Signature USB : hypothèse macOS` ou `Windows`. La décision est
+recalculée sur l’instantané au moment de la demande de capture, pas appliquée aux couches.
+L’aller-retour Mac → Windows → Mac est confirmé sur V1, sans nouveau flash entre
+Windows et le retour au Mac. La détection sans CDC, Linux et les hubs restent à tester.
+Aucune bascule de keymap n’est activée à ce stade.
 
 Le script `.ps1` est enregistré en UTF-8 avec BOM pour les accents sous Windows
 PowerShell. Les fichiers de capture restent en UTF-8 sans BOM pour leur analyse.
-Le nouvel affichage des accents reste à confirmer sur le PC.
+Le lecteur mis à jour et l’affichage des accents sont confirmés sur le PC.
 
 ## Suite Bluetooth
 

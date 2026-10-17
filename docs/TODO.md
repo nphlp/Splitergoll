@@ -33,10 +33,17 @@ La priorité USB est différée après l’auto-détection d’OS, pour viser un
   une demande initiale est répétée dans un essai Windows.
 - [x] Regrouper le code du clavier dans `keyboard/` et séparer toute l’étude des
   signatures dans `diagnostics/os-signature/`, sans modifier les commandes Make.
-- [ ] Préparer un classificateur diagnostique qui tolère les répétitions et les
+- [x] Préparer un classificateur diagnostique qui tolère les répétitions et les
   indices contradictoires, avec résultat inconnu, sans changer la keymap avant validation.
+- [x] Flasher le classifieur diagnostique sur V1 et confirmer son hypothèse macOS.
+- [x] Reflasher le correctif de sonde initiale facultative et confirmer Windows sur V1.
+- [x] Confirmer le retour au Mac avec le même firmware corrigé, sans nouveau flash.
+  La keymap reste inchangée pendant cet essai.
 - [ ] Isoler les échanges du lecteur CDC, comparer les signatures avec Linux et
   revalider avec les descripteurs normaux avant toute décision automatique.
+- [x] Séparer les cycles USB dans le diagnostic et attendre la stabilisation des motifs de noms.
+- [ ] Confirmer la séparation des cycles lors d’un reset du bus sans coupure d’alimentation.
+  L’aller-retour Mac/Windows avec débranchement USB est validé.
 - [ ] Étudier ensuite les signatures Bluetooth sur V1 alimenté en USB, sans batterie.
 
 - [x] Ajouter dans `keymap.md` les sept schémas du README avec les légendes de `dongle`.

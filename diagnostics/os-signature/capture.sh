@@ -77,3 +77,13 @@ done
 awk -f "$DIAGNOSTIC_DIRECTORY/check.awk" "$capture" ||
     fail "Capture refusée (pertes ou format incorrect). Données conservées : $capture"
 printf 'Capture complète : %s\n' "$capture"
+
+result=$(awk '/^USBTRACE OS / { sub(/^result=/, "", $3); print $3 }' "$capture")
+case "$result" in
+    macos) printf '%s\n' 'Signature USB : hypothèse macOS' ;;
+    windows) printf '%s\n' 'Signature USB : hypothèse Windows' ;;
+    ambiguous) printf '%s\n' 'Signature USB : indices contradictoires, résultat ambigu' ;;
+    unknown) printf '%s\n' 'Signature USB : indices insuffisants, OS inconnu' ;;
+    '') printf '%s\n' 'Classification absente : ancien firmware de capture' ;;
+esac
+printf '%s\n' 'La keymap reste inchangée. Ce diagnostic ne sélectionne aucun OS.'

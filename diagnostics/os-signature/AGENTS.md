@@ -7,7 +7,7 @@ La commande publique `make usb-capture` reste à la racine du dépôt.
 
 Le chantier actif est le diagnostic passif USB, puis BLE. V1 sans batterie peut
 tester les deux transports, avec alimentation USB. Ne pas confondre la source
-d’alimentation et l’hôte Bluetooth. Aucun OS n’est encore classé automatiquement.
+d’alimentation et l’hôte Bluetooth. L’hypothèse USB ne choisit pas encore la keymap.
 
 `make build wire <keymap> usb-trace` et le même argument final de `make flash`
 isolent caches, artefacts et métadonnées du normal et de `debug`. `usb-trace`
@@ -17,8 +17,9 @@ ZMK, sans logs de frappes, clé BLE, modification de keymap ou effacement NVS.
 La keymap doit rester identique entre les captures comparées.
 
 Le module local déclaré dans `firmware/zephyr/module.yml` compile `firmware/` uniquement
-avec `SPLITERGOLL_USB_TRACE`. Les dépendances figées restent intactes. Deux wrappers
-de liens encadrent `usb_dc_ep_set_callback` et `usb_dc_ep_read`, en transmettant
+avec `SPLITERGOLL_USB_TRACE`. Les dépendances figées restent intactes. Trois wrappers
+de liens encadrent `usb_dc_ep_set_callback`, `usb_dc_ep_read` et
+`usb_dc_set_status_callback`, en transmettant
 les arguments et statuts originaux. Seuls les en-têtes SETUP de l’endpoint zéro OUT
 sont copiés après lecture. Aucun payload de contrôle ni rapport HID n’est conservé.
 La pile nouvelle, LTO et les SoC autres que nRF52840 sont refusés par CMake.
@@ -28,7 +29,7 @@ pertes et tailles incorrectes avec saturation. Le pilote lit les SETUP complets
 de huit octets, avec une longueur de retour NULL dans la pile figée actuelle.
 Le verrou protège uniquement les copies, jamais l’envoi série. La commande D
 restitue un instantané avec cadrage BEGIN/SETUP/END et compteurs, sans effacement.
-L’envoi vérifie DTR et borne l’attente par ligne. Un redémarrage efface le tampon.
+L’envoi vérifie DTR et borne l’attente par ligne. Un reset du bus ou une déconnexion efface les index et compteurs du cycle précédent.
 
 `make usb-capture <port>` lit sur macOS/Linux, `capture.ps1 -Port COMx`
 sur Windows. Les ports sont explicites, les captures restent ignorées dans
@@ -53,7 +54,7 @@ Aucun flash ou commit n’est implicite dans ce chantier.
 Les huit UF2 macOS usuels sont identiques octet pour octet aux builds précédents.
 Les quatre sous-arbres keymap, behaviors, conditional_layers et macros de la
 variante trace sont identiques au normal sur les deux moitiés, après normalisation
-des phandles. Les appels vers les deux wrappers sont vérifiés dans le désassemblage
+des phandles. Les appels vers les wrappers de lecture et endpoint sont vérifiés dans le désassemblage
 ARM, pas seulement par leur présence dans le code source. Dix UF2 passent les
 contrôles SHA-256 et des blocs. Le stockage passe les tests C avec ASan/UBSan.
 Les préflights normal, debug et usb-trace de flash, par profil et chemin explicite,
@@ -87,8 +88,8 @@ pas des réponses validées ni une preuve de fonctionnalité supportée.
 Les six captures instrumentées permettent de distinguer ces deux hôtes dans cet
 échantillon. Linux, d’autres versions d’OS, hubs et descripteurs normaux restent
 inconnus. Ne pas transformer l’absence d’un indice en certitude de l’autre OS.
-Un classificateur futur doit rester diagnostique d’abord, gérer inconnu/ambigu et
-les répétitions. Aucun changement de keymap n’est activé par cette analyse.
+Le classifieur reste diagnostique d’abord, gère inconnu/ambigu et les répétitions.
+Aucun changement de keymap n’est activé par cette analyse.
 
 Le lecteur PowerShell est validé sur Windows avec `-ExecutionPolicy Bypass`,
 limité à cette invocation, pas une modification de politique persistante ou une
@@ -103,3 +104,104 @@ les fichiers Windows sans conversion ni modification des originaux.
 Le message Make indiquant que le port est à jour est sans rapport avec le succès
 de la collecte : le chemin du périphérique est aussi traité comme une cible Make.
 
+## Classifieur USB
+
+Le code est propre à Splitergoll. Les références sont la
+[documentation QMK](https://docs.qmk.fm/features/os_detection),
+[FingerprintUSBHost](https://github.com/keyboardio/FingerprintUSBHost) et les
+[captures Cormoran](https://github.com/cormoran/zmk-feature-os-detection/blob/3052679f645b8fc1997275c2eaa6b86bdd55ca01/docs/fingerprints.md).
+Les motifs publics et nos six captures servent de données, aucun code QMK ni module
+externe n’est intégré. Ne pas activer BOS, modifier bcdUSB ni ajouter un fork ZMK
+pour ce diagnostic. Les tailles HID 176/240 ne participent plus à la décision.
+
+`firmware/usb_os_classifier.c/.h` est du C indépendant de Zephyr. Il analyse les
+records de l’instantané lors de la demande D, sans ajouter de classification au
+callback de réception USB. Ses bits décrivent des demandes, pas leurs réponses
+ni une probabilité. L’horloge de stabilisation est celle du firmware au début de
+l’instantané, jamais l’heure d’arrivée des lignes ni la fin de l’envoi UART.
+
+Les états par chaîne sont bornés à 16 couples index/langue. Un motif exige le
+sondage puis une relecture du même couple. La lecture de l’index zéro décrit les
+langues, elle est exclue. Les répétitions ou traductions d’un même index ne comptent
+pas comme plusieurs noms indépendants. macOS exige des motifs 2 puis complet sur
+deux noms distincts. Windows exige un motif 4 puis complet et des lectures sur 255
+pour deux noms distincts. Les sondes device sur 8/64 sont complémentaires, jamais
+obligatoires. Si présentes, elles peuvent contredire un motif de noms et le rendre ambigu. Sur nos trois captures Windows, seul le produit a le motif 4 puis 24,
+plusieurs fois : ne pas exiger deux noms différents pour ce motif-là.
+
+Le qualifier reste un indice affiché, sans décider de l’OS. CDC et HID ne contribuent
+ni à l’OS ni à sa stabilisation. Les sondages contradictoires ou les deux familles de
+motifs donnent ambigu. Un motif incomplet, une perte/rejet ou un dépassement de
+capacité donne inconnu. Aucun OS par défaut et aucune règle Linux ne sont inventés.
+250 ms sans nouvelle demande utile sont nécessaires, avec soustraction uint32 pour
+le passage de l’horloge par zéro. Ce délai ne bloque pas la saisie.
+
+Le callback de statut remet count/dropped/rejected à zéro sur USB_DC_RESET et
+USB_DC_DISCONNECTED et change la génération. Il transmet l’événement original à
+Zephyr, y compris les paramètres, sans modifier suspend/resume ni demander un reboot.
+Un dump qui change de génération est interrompu sans END pour être refusé par le
+lecteur, plutôt que mélanger des records de deux cycles. Les anciens octets ne sont
+plus lisibles par les index, sans memset du tableau dans le callback. Le contrôle
+de génération protège les lectures et la fin du dump. Aucun événement de couche
+n’est encore produit, cette gestion reste à confirmer sur le matériel.
+
+La ligne facultative `USBTRACE OS result=<macos|windows|unknown|ambiguous> evidence=<4 hex>`
+précède END. Les lecteurs acceptent les captures version 1 sans cette ligne, signalent
+son absence et ne recalculent pas la décision en Bash ou PowerShell. Les captures
+privées restent intactes. Les lecteurs Bash/PowerShell et leurs accents sont confirmés sur les deux hôtes
+par l’utilisateur. Aucun runtime PowerShell n’est disponible sur ce Mac.
+
+Les tests C lient chaque source à son test dans `tests/`, avec `-Ifirmware -std=c11
+-Wall -Wextra -Werror -fsanitize=address,undefined` et assertions actives. Le classifieur
+couvre motifs, ordre, répétitions, langues, perte, ambiguïté, débordement de capacité,
+perturbations CDC/HID, délai et horloge 32 bits. Le stockage vérifie aussi la séparation
+des générations, dont une lecture ancienne après remplacement de l’index zéro.
+Les six captures se rejouent avec le même C : trois macos 0005 et trois windows 003a.
+Leurs résultats sont locaux à ces deux machines, sans garantie de généralité.
+
+Validation de cette version : les deux suites C passent avec ASan/UBSan. Le rejeu
+garde les octets, timestamps et uptime_ms d’origine des six captures. `wire macos`
+et `wire macos usb-trace` compilent et passent les gardes, SHA-256 et le contrôle des
+quatre UF2. Les deux UF2 normaux et la droite trace restent identiques aux précédents.
+Keymap, conditions, comportements et macros compilés sont identiques. La garde de
+build exige aussi le wrapper de statut. Les essais matériels sont décrits ci-dessous.
+Les conteneurs de validation ont disparu et les trois services partagés sont conservés.
+
+## Validation sur V1 et sonde initiale facultative
+
+L’utilisateur a flashé le diagnostic sur V1. La capture Mac p5lqtj contient
+24 requêtes et annonce macos 0005. La capture Windows 59f3534e fournie dans Downloads
+est copiée sous .local/usb-traces sans modifier l’original, avec 53 requêtes, zéro
+perte et zéro rejet. Elle annonce unknown 0038 avant correction. Tous les motifs
+Windows sont présents : sondage produit 4 puis 24, lectures sur 255 de plusieurs
+noms, qualifier sur 10. Son premier device est demandé sur 18, aucun 64 n’est visible.
+Le délai de stabilisation est largement écoulé. Le veto était la condition obligatoire
+de première lecture sur 64, pas un échec du lecteur ou des communications du clavier.
+
+Le reset par cycle peut retirer une phase de sondage antérieure. Sans journal de
+statut dans cette capture, ne pas présenter cette origine comme prouvée : on sait
+seulement que la sonde 64 n’est pas dans le cycle collecté. Les motifs de noms
+suffisent désormais, les sondes 8/64 restent des indices et des veto si contradictoires.
+Le test de régression échoue sur l’ancien C, puis passe après correction. Il couvre
+Windows et macOS commençant sur 18, le délai, les pertes et une sonde contraire tardive.
+Le rejeu C des huit captures donne quatre macOS, trois Windows 003a et un Windows 0038.
+La reconnaissance Windows corrigée est confirmée après nouveau flash par l’utilisateur.
+
+Le build correctif `wire macos usb-trace` passe en 11 secondes. Les deux UF2 passent
+les gardes, SHA-256 et les bornes mémoire. Droite et firmwares normaux sont inchangés.
+Les deux suites C passent avec ASan/UBSan. Le conteneur éphémère a disparu et les
+trois services partagés sont conservés. Les copies UF2 sont effectuées par l’utilisateur.
+
+L’utilisateur fournit ensuite la capture Windows 97b7bcbd dans son message. Elle est
+conservée dans .local/usb-traces en LF telle que reçue, pas comme copie binaire du
+fichier Windows. Son cadrage est valide : 53 SETUP, zéro perte/rejet, puis
+result=windows evidence=0038. Le rejeu avec le C réel confirme ce résultat.
+Le device commence encore sur 18. Les motifs et paramètres des SETUP sont identiques
+à 59f3534e, hors timestamps, mais le firmware annonce cette fois Windows.
+Le retour au Mac avec ce même firmware corrigé est confirmé par la capture hLZ5V6 :
+24 SETUP, dropped=0, rejected=0, result=macos evidence=0005. Le validateur et le rejeu
+C la confirment. Les paramètres et l’ordre des requêtes sont identiques à p5lqtj,
+hors timestamps. L’aller-retour Mac/Windows/Mac est donc validé sur V1. Le départ
+Mac utilisait le diagnostic avant correction, Windows et le retour Mac le même
+firmware corrigé sans reflash entre les deux. Cela ne valide pas un reset de bus
+sans coupure d’alimentation, les autres ordinateurs, Linux, BLE ou le fonctionnement sans CDC.

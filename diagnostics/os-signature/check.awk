@@ -1,5 +1,5 @@
 # Contrôle le cadrage, l’ordre et l’absence de pertes d’une capture USBTRACE version 1.
-BEGIN { count = 0; started = 0; ended = 0; invalid = 0 }
+BEGIN { count = 0; started = 0; ended = 0; classified = 0; invalid = 0 }
 # Accepte aussi les fins de ligne CRLF du lecteur Windows, sans changer les champs.
 { sub(/\r$/, "") }
 /^#/ { next }
@@ -12,8 +12,13 @@ BEGIN { count = 0; started = 0; ended = 0; invalid = 0 }
     next
 }
 /^USBTRACE SETUP [0-9]+ [0-9]+ [[:xdigit:]][[:xdigit:]] [[:xdigit:]][[:xdigit:]] [[:xdigit:]][[:xdigit:]][[:xdigit:]][[:xdigit:]] [[:xdigit:]][[:xdigit:]][[:xdigit:]][[:xdigit:]] [[:xdigit:]][[:xdigit:]][[:xdigit:]][[:xdigit:]]$/ {
-    if (!started || ended || $3 + 0 != count) invalid = 1
+    if (!started || ended || classified || $3 + 0 != count) invalid = 1
     count++
+    next
+}
+/^USBTRACE OS result=(macos|windows|unknown|ambiguous) evidence=[[:xdigit:]][[:xdigit:]][[:xdigit:]][[:xdigit:]]$/ {
+    if (!started || ended || classified || count != expected) invalid = 1
+    classified = 1
     next
 }
 /^USBTRACE END$/ {

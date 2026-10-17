@@ -547,8 +547,13 @@ workflow manuel est vérifiée hors réseau avec West, pas exécutée sur GitHub
 Les conteneurs éphémères sont supprimés, les trois services partagés sont conservés.
 
 Le firmware automatique macOS/Windows avec gaming n’est pas encore implémenté.
-Les quatre keymaps sont toujours explicites, `usb-trace` ne fait que capturer.
-Le prochain classifieur doit être testé en diagnostic avant toute bascule de keymap.
+Les quatre keymaps sont toujours explicites. `usb-trace` capture et annonce une
+hypothèse, sans appliquer de changement de couche. Le classifieur doit être testé
+sur les deux hôtes avant toute bascule de keymap, puis revalidé sans CDC.
+L’utilisateur confirme désormais sur V1 macOS, Windows après correction de la sonde
+initiale facultative, puis le retour macOS avec ce même firmware corrigé. Les captures
+Windows et retour Mac ont zéro perte/rejet. Le transport sans CDC et les cycles de
+bus sans coupure d’alimentation restent à valider, voir la spec du diagnostic.
 
 ## Ideas / backlog
 

@@ -3,6 +3,14 @@
 
 #include <string.h>
 
+// Réinitialise les métadonnées, les anciens octets deviennent inaccessibles par leur index.
+void usb_trace_reset(struct usb_trace_store *store) {
+    store->count = 0;
+    store->dropped = 0;
+    store->rejected = 0;
+    store->generation++;
+}
+
 // Incrémente un compteur de perte sans revenir à zéro en cas de dépassement.
 static void increment_saturated(uint32_t *value) {
     if (*value != UINT32_MAX) {
@@ -38,4 +46,10 @@ bool usb_trace_get(const struct usb_trace_store *store, size_t index,
 
     *record = store->records[index];
     return true;
+}
+
+// Ne permet jamais de relire un nouvel enregistrement sous l’identité du cycle précédent.
+bool usb_trace_get_generation(const struct usb_trace_store *store, uint32_t generation,
+                              size_t index, struct usb_trace_record *record) {
+    return store->generation == generation && usb_trace_get(store, index, record);
 }

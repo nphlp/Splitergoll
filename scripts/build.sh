@@ -48,7 +48,7 @@ build_profile() {
     if [ "$BUILD_MODE" = debug ]; then
         printf '%s\n' 'Diagnostic : logs USB activés sur les deux moitiés'
     elif [ "$BUILD_MODE" = usb-trace ]; then
-        printf '%s\n' 'Diagnostic : requêtes USB mémorisées sur la gauche, sans détection ni changement de keymap'
+        printf '%s\n' 'Diagnostic : signature USB étudiée sur la gauche, hypothèse OS sans changement de keymap'
     fi
     run_step 'Vérification des prérequis' preflight
     resolve_workspace

@@ -67,6 +67,8 @@ check_firmware() {
         grep -q 'splitergoll_usb_trace_uart' "$directory/zephyr/zephyr.dts" || fail 'Port dédié absent du matériel'
         grep -Eq '0x[0-9a-f]+[[:space:]]+__wrap_usb_dc_ep_read$' "$directory/zephyr/zmk.map" || fail 'Observation des lectures USB absente du firmware'
         grep -Eq '0x[0-9a-f]+[[:space:]]+__wrap_usb_dc_ep_set_callback$' "$directory/zephyr/zmk.map" || fail 'Observation des SETUP absente du firmware'
+        grep -Eq '0x[0-9a-f]+[[:space:]]+usb_os_result$' "$directory/zephyr/zmk.map" || fail 'Classifieur USB absent du diagnostic'
+        grep -Eq '0x[0-9a-f]+[[:space:]]+__wrap_usb_dc_set_status_callback$' "$directory/zephyr/zmk.map" || fail 'Séparation des cycles USB absente du diagnostic'
     elif grep -qx 'CONFIG_SPLITERGOLL_USB_TRACE=y' "$configuration"; then
         fail 'Diagnostic USB présent hors de la centrale usb-trace'
     fi

@@ -61,11 +61,36 @@ static void test_capacity(void) {
     assert(store.dropped == UINT32_MAX);
 }
 
+// Isole deux cycles, y compris si une lecture de l’ancien est encore en cours.
+static void test_generation(void) {
+    struct usb_trace_store store = {0};
+    struct usb_trace_record record;
+    uint8_t setup[8] = {0x80, 6, 0, 1, 0, 0, 8, 0};
+    uint32_t generation = store.generation;
+    assert(usb_trace_append(&store, 10, setup, sizeof(setup)));
+    assert(usb_trace_get_generation(&store, generation, 0, &record));
+    store.dropped = 12;
+    store.rejected = 8;
+    usb_trace_reset(&store);
+    assert(store.generation == generation + 1);
+    assert(store.count == 0 && store.dropped == 0 && store.rejected == 0);
+    assert(!usb_trace_get(&store, 0, &record));
+    setup[6] = 64;
+    assert(usb_trace_append(&store, 20, setup, sizeof(setup)));
+    assert(!usb_trace_get_generation(&store, generation, 0, &record));
+    assert(usb_trace_get_generation(&store, store.generation, 0, &record));
+    assert(record.timestamp_ms == 20 && record.setup[6] == 64);
+    usb_trace_reset(&store);
+    assert(!usb_trace_get_generation(&store, generation + 1, 0, &record));
+    assert(store.count == 0);
+}
+
 // Lance les tests du code embarqué avec des assertions actives.
 int main(void) {
     test_records();
     test_invalid_reads();
     test_capacity();
+    test_generation();
     puts("USB trace store: OK");
     return 0;
 }

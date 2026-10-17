@@ -48,7 +48,9 @@ try {
         throw 'Capture refusée : format incorrect ou pertes signalées.'
     }
     $Expected = [int]$Matches[1]
-    if ($Expected -lt 1 -or $Expected -gt 256 -or $Lines.Count -ne $Expected + 3) {
+    $HasClassification = $Lines.Count -eq $Expected + 4
+    if ($Expected -lt 1 -or $Expected -gt 256 -or
+        ($Lines.Count -ne $Expected + 3 -and -not $HasClassification)) {
         throw 'Capture refusée : nombre de requêtes incorrect.'
     }
     for ($Index = 0; $Index -lt $Expected; $Index++) {
@@ -57,7 +59,22 @@ try {
             throw 'Capture refusée : requêtes manquantes ou désordonnées.'
         }
     }
+    $Result = $null
+    if ($HasClassification) {
+        if ($Lines[$Expected + 2] -notmatch '^USBTRACE OS result=(macos|windows|unknown|ambiguous) evidence=[0-9a-f]{4}$') {
+            throw 'Capture refusée : diagnostic OS incorrect.'
+        }
+        $Result = $Matches[1]
+    }
     Write-Host "Capture complète : $Capture"
+    switch ($Result) {
+        'macos' { Write-Host 'Signature USB : hypothèse macOS' }
+        'windows' { Write-Host 'Signature USB : hypothèse Windows' }
+        'ambiguous' { Write-Host 'Signature USB : indices contradictoires, résultat ambigu' }
+        'unknown' { Write-Host 'Signature USB : indices insuffisants, OS inconnu' }
+        default { Write-Host 'Classification absente : ancien firmware de capture' }
+    }
+    Write-Host 'La keymap reste inchangée. Ce diagnostic ne sélectionne aucun OS.'
 }
 catch {
     Write-Error "$_ Données conservées si disponibles : $Capture"

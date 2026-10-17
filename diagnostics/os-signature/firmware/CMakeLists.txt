@@ -5,9 +5,10 @@ if(CONFIG_SPLITERGOLL_USB_TRACE)
   endif()
 
   zephyr_library()
-  zephyr_library_sources(usb_trace.c usb_trace_store.c)
+  zephyr_library_sources(usb_trace.c usb_trace_store.c usb_os_classifier.c)
   zephyr_link_libraries(
     -Wl,--wrap=usb_dc_ep_set_callback
     -Wl,--wrap=usb_dc_ep_read
+    -Wl,--wrap=usb_dc_set_status_callback
   )
 endif()
