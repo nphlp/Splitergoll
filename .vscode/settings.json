@@ -1,6 +1,6 @@
 {
   "files.associations": {
-    "**/config/keymaps/common/*.dtsi": "cpp"
+    "**/keyboard/config/keymaps/common/*.dtsi": "cpp"
   },
   "editor.tokenColorCustomizations": {
     "comments": {
@@ -13,5 +13,6 @@
         "italic": false
       }
     }
-  }
+  },
+  "cmake.sourceDirectory": "${workspaceFolder}/diagnostics/os-signature/firmware"
 }

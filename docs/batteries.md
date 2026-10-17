@@ -13,7 +13,7 @@ La gauche est la seule connectée au Mac. Son service Battery Service annonce
 sa mesure locale. L’intervalle est de 60 secondes. Il avait été raccourci à
 5 secondes pendant les essais, cette configuration temporaire est retirée.
 
-`config/profiles/bluetooth-left.conf` active maintenant la récupération de la
+`keyboard/config/profiles/bluetooth-left.conf` active maintenant la récupération de la
 mesure droite et son proxy vers l’hôte. La droite garde son rôle de périphérique.
 Le service principal annonce toujours la gauche, le service auxiliaire la droite.
 Il ne calcule ni moyenne ni somme des deux batteries.

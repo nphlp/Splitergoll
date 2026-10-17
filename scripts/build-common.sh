@@ -6,6 +6,11 @@
 # Chemins relatifs au dépôt et image officielle figée.
 SCRIPT_DIRECTORY=$(CDPATH= cd "$(dirname "$0")" && pwd)
 REPOSITORY=$(CDPATH= cd "$SCRIPT_DIRECTORY/.." && pwd)
+KEYBOARD_ROOT="$REPOSITORY/keyboard"
+KEYBOARD_CONFIGURATION="$KEYBOARD_ROOT/config"
+KEYBOARD_MANIFEST="$KEYBOARD_ROOT/west.yml"
+OS_DIAGNOSTIC_ROOT="$REPOSITORY/diagnostics/os-signature"
+BUILD_CACHE_ROOT='build/keyboard'
 BUILD_IMAGE='zmkfirmware/zmk-build-arm:4.1@sha256:edb1c953438c6f720ddb79c3762f3972013b7fbbaf4fff3592fc869983e7afc5'
 LOCAL_ROOT="$REPOSITORY/.local"
 OUTPUT_ROOT="$REPOSITORY/dist"
@@ -35,7 +40,7 @@ select_profile() {
         *) fail "Profil inconnu : $PROFILE. Choisis wire ou bluetooth" ;;
     esac
 
-    PROFILE_CONFIGURATION="$REPOSITORY/config/profiles/$HARDWARE_PROFILE.conf"
+    PROFILE_CONFIGURATION="$KEYBOARD_CONFIGURATION/profiles/$HARDWARE_PROFILE.conf"
     test -r "$PROFILE_CONFIGURATION" || fail "Configuration du profil absente : $PROFILE"
 }
 
@@ -49,7 +54,7 @@ select_keymap() {
         *) fail "Keymap inconnue : $KEYMAP_PROFILE. Choisis multi, windows, macos ou linux" ;;
     esac
 
-    KEYMAP_FILE="$REPOSITORY/config/keymaps/$KEYMAP_PROFILE.keymap"
+    KEYMAP_FILE="$KEYBOARD_CONFIGURATION/keymaps/$KEYMAP_PROFILE.keymap"
     test -r "$KEYMAP_FILE" || fail "Fichier de keymap absent : $KEYMAP_PROFILE"
 }
 
@@ -59,7 +64,11 @@ select_build_mode() {
     case "$BUILD_MODE" in
         normal) BUILD_VARIANT="$PROFILE-$KEYMAP_PROFILE" ;;
         debug) BUILD_VARIANT="$PROFILE-$KEYMAP_PROFILE-debug" ;;
-        *) fail 'Mode de compilation inconnu : utilise l’argument debug ou aucun argument' ;;
+        usb-trace)
+            [ "$PROFILE" = wire ] || fail 'usb-trace observe la connexion USB : utilise le matériel wire'
+            BUILD_VARIANT="$PROFILE-$KEYMAP_PROFILE-usb-trace"
+            ;;
+        *) fail 'Mode de compilation inconnu : utilise debug, usb-trace ou aucun argument' ;;
     esac
 }
 
@@ -71,7 +80,7 @@ select_side_configuration() {
     esac
 
     FIRMWARE_CONFIGURATION=$PROFILE_CONFIGURATION
-    side_configuration="$REPOSITORY/config/profiles/$HARDWARE_PROFILE-$1.conf"
+    side_configuration="$KEYBOARD_CONFIGURATION/profiles/$HARDWARE_PROFILE-$1.conf"
 
     if [ -f "$side_configuration" ]; then
         test -r "$side_configuration" || fail "Configuration de moitié illisible : $1"
@@ -126,9 +135,9 @@ require_idle_checkout() {
 
 # Isole le cache selon le manifeste et l’image pour éviter de mélanger les versions.
 resolve_workspace() {
-    test -r "$REPOSITORY/config/west.yml" || fail 'Manifeste ZMK absent'
+    test -r "$KEYBOARD_MANIFEST" || fail 'Manifeste ZMK absent'
     identity=$(
-        { cat "$REPOSITORY/config/west.yml"; printf '%s' "$BUILD_IMAGE"; } |
+        { cat "$KEYBOARD_MANIFEST"; printf '%s' "$BUILD_IMAGE"; } |
             shasum -a 256 | cut -d ' ' -f 1
     )
     prefix=$(printf '%s' "$identity" | cut -c 1-16)
@@ -141,7 +150,7 @@ require_setup() {
     test "$(cat "$workspace/.splitergoll")" = "$identity" ||
         fail 'Le workspace ne correspond pas au build figé'
     test -d "$workspace/.west" || fail 'Préparation incomplète : relance make setup'
-    cmp "$REPOSITORY/config/west.yml" "$workspace/config/west.yml" ||
+    cmp "$KEYBOARD_MANIFEST" "$workspace/config/west.yml" ||
         fail 'Le manifeste local a changé : relance make setup'
 }
 

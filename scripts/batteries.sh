@@ -12,7 +12,7 @@ BATTERY_CACHE="$LOCAL_ROOT/tools/batteries"
 BATTERY_BINARY="$BATTERY_CACHE/batteries"
 BATTERY_SOURCE="$SCRIPT_DIRECTORY/batteries.swift"
 BATTERY_INFO="$SCRIPT_DIRECTORY/batteries-info.plist"
-CENTRAL_CONFIGURATION="$REPOSITORY/boards/shields/splitergoll/splitergoll_left.conf"
+CENTRAL_CONFIGURATION="$KEYBOARD_ROOT/boards/shields/splitergoll/splitergoll_left.conf"
 
 [ "$#" -le 1 ] || fail 'Utilise make bat ou make bat avg'
 case "${1-}" in

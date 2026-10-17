@@ -133,11 +133,11 @@ nom `nice_nano_v2`. Les essais matériels cités ici précèdent la migration.
 
 | Fichier | Rôle |
 | --- | --- |
-| [config/splitergoll.conf](../config/splitergoll.conf) | Options communes : split, BLE, encodeurs et macros |
-| [left.conf](../boards/shields/splitergoll/splitergoll_left.conf) / [right.conf](../boards/shields/splitergoll/splitergoll_right.conf) | Gauche centrale avec USB par défaut, droite périphérique |
-| [wire.conf](../config/profiles/wire.conf) / [bluetooth.conf](../config/profiles/bluetooth.conf) | Sortie et alimentation propres à chaque profil |
-| [splitergoll.dtsi](../boards/shields/splitergoll/splitergoll.dtsi) | Matrice, ordre des 44 positions et encodeurs |
-| [Overlay gauche](../boards/shields/splitergoll/splitergoll_left.overlay) / [droite](../boards/shields/splitergoll/splitergoll_right.overlay) | GPIO de chaque moitié et encodeur actif |
+| [keyboard/config/splitergoll.conf](../keyboard/config/splitergoll.conf) | Options communes : split, BLE, encodeurs et macros |
+| [left.conf](../keyboard/boards/shields/splitergoll/splitergoll_left.conf) / [right.conf](../keyboard/boards/shields/splitergoll/splitergoll_right.conf) | Gauche centrale avec USB par défaut, droite périphérique |
+| [wire.conf](../keyboard/config/profiles/wire.conf) / [bluetooth.conf](../keyboard/config/profiles/bluetooth.conf) | Sortie et alimentation propres à chaque profil |
+| [splitergoll.dtsi](../keyboard/boards/shields/splitergoll/splitergoll.dtsi) | Matrice, ordre des 44 positions et encodeurs |
+| [Overlay gauche](../keyboard/boards/shields/splitergoll/splitergoll_left.overlay) / [droite](../keyboard/boards/shields/splitergoll/splitergoll_right.overlay) | GPIO de chaque moitié et encodeur actif |
 | [build.yaml](../build.yaml) | Deux profils matériels, quatre keymaps et deux moitiés pour le workflow GitHub manuel |
 
 Chaque moitié scanne quatre lignes et six colonnes. Le transform associe les

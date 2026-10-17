@@ -61,6 +61,16 @@ check_firmware() {
         fail 'Logs USB activés dans un firmware normal'
     fi
 
+    if [ "$BUILD_MODE" = usb-trace ] && [ "$side" = left ]; then
+        grep -qx 'CONFIG_SPLITERGOLL_USB_TRACE=y' "$configuration" || fail 'Trace USB absente de la centrale'
+        grep -qx 'CONFIG_USB_CDC_ACM=y' "$configuration" || fail 'Port de lecture USB absent'
+        grep -q 'splitergoll_usb_trace_uart' "$directory/zephyr/zephyr.dts" || fail 'Port dédié absent du matériel'
+        grep -Eq '0x[0-9a-f]+[[:space:]]+__wrap_usb_dc_ep_read$' "$directory/zephyr/zmk.map" || fail 'Observation des lectures USB absente du firmware'
+        grep -Eq '0x[0-9a-f]+[[:space:]]+__wrap_usb_dc_ep_set_callback$' "$directory/zephyr/zmk.map" || fail 'Observation des SETUP absente du firmware'
+    elif grep -qx 'CONFIG_SPLITERGOLL_USB_TRACE=y' "$configuration"; then
+        fail 'Diagnostic USB présent hors de la centrale usb-trace'
+    fi
+
     if [ "$side" = left ]; then
         grep -qx 'CONFIG_ZMK_SPLIT_ROLE_CENTRAL=y' "$configuration" || fail 'Gauche non centrale'
     elif grep -Eq '^(CONFIG_ZMK_SPLIT_ROLE_CENTRAL|CONFIG_ZMK_USB)=y$' "$configuration"; then
@@ -119,15 +129,21 @@ case "${1-}" in
 
         for side in $SIDES; do
             select_side_configuration "$side"
-            directory="build/splitergoll-$BUILD_VARIANT-$side"
+            # Un cache neuf évite l’ancien ZMK_CONFIG mémorisé par CMake, sans le supprimer.
+            directory="$BUILD_CACHE_ROOT/splitergoll-$BUILD_VARIANT-$side"
+            modules="$KEYBOARD_ROOT"
             set --
             if [ "$BUILD_MODE" = debug ]; then
                 set -- -S zmk-usb-logging
+            elif [ "$BUILD_MODE" = usb-trace ] && [ "$side" = left ]; then
+                set -- -S splitergoll-usb-trace
+                modules="$modules;$OS_DIAGNOSTIC_ROOT/firmware"
             fi
             west build -p auto -s zmk/app -d "$directory" -b "$BOARD" "$@" -- \
                 -DSHIELD="splitergoll_$side" \
-                -DZMK_CONFIG="$REPOSITORY/config" \
-                -DZMK_EXTRA_MODULES="$REPOSITORY" \
+                -DZMK_CONFIG="$KEYBOARD_CONFIGURATION" \
+                -DZMK_EXTRA_MODULES="$modules" \
+                -DSNIPPET_ROOT="$OS_DIAGNOSTIC_ROOT" \
                 -DKEYMAP_FILE:STRING="$KEYMAP_FILE" \
                 -DEXTRA_CONF_FILE="$FIRMWARE_CONFIGURATION"
             check_firmware "$side" "$directory"

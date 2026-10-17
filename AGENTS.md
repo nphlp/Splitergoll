@@ -32,7 +32,7 @@ L’AGENTS.md garde les invariants, preuves techniques et décisions utiles au p
   couches, helpers, trois dispositions et `SHA256SUMS`. Les six sources restent
   identiques à `e8bbfc1`, comme sauvegarde autonome. Aucun profil actif ne les inclut.
   Ne pas remettre de keymap historique ni ses helpers dans le dossier du shield.
-  Les builds locaux et le workflow manuel choisissent toujours `config/keymaps/<profil>.keymap`
+  Les builds locaux et le workflow manuel choisissent toujours `keyboard/config/keymaps/<profil>.keymap`
   avec `KEYMAP_FILE`, sans utiliser la sélection automatique du shield.
 - Les quatre keymaps sont `multi`, `windows` avec jeu, `macos` et `linux`.
   `multi` garde ses quinze couches et son changement d’OS. Les trois profils fixes
@@ -40,7 +40,7 @@ L’AGENTS.md garde les invariants, preuves techniques et décisions utiles au p
   macOS et Linux cinq, sans gaming. Les retours du pavé et du jeu ciblent leur base.
   Le clic d’encodeur droit avec L1 est sans action dans les profils fixes.
   Le pavé macOS utilise Command/Control et les symboles de son OS.
-- `config/keymaps/common/behaviors.dtsi` partage les comportements historiques.
+- `keyboard/config/keymaps/common/behaviors.dtsi` partage les comportements historiques.
   `common/base-layer.dtsi` porte les 44 positions de la base commune aux quatre
   keymaps. Chaque appelant définit `BASE_CTRL`, `BASE_ALT`, `BASE_GUI`, `BASE_DOT`,
   `BASE_BSLS` et `BASE_OS`. `BASE_LAYER(bindings, sensors)` conserve le nom du nœud
@@ -62,7 +62,7 @@ L’AGENTS.md garde les invariants, preuves techniques et décisions utiles au p
   schéma concret dans chaque profil et son schéma paramétré dans le fichier commun.
 - `.vscode/settings.json` garde les commentaires en style normal pour lire les
   schémas, via les réglages TextMate et sémantiques du workspace, sans fixer de thème.
-  Les fragments `config/keymaps/common/*.dtsi` utilisent la coloration `cpp`,
+  Les fragments `keyboard/config/keymaps/common/*.dtsi` utilisent la coloration `cpp`,
   adaptée à leurs appels de macros. Les fichiers Devicetree matériels gardent
   leur langage natif. Cette association ne change pas le build.
 - Les branches `-minimal` sont des archives, exclues du chantier.
@@ -222,8 +222,8 @@ désactivé même pendant la charge, veille après 15 minutes et reporting batte
 Le profil aux délais courts a été supprimé après validation matérielle. Les deux
 profils disponibles sont `wire` et `bluetooth`. L’option transversale `debug` ajoute
 le snippet natif `zmk-usb-logging` à chaque moitié, sans toucher aux timings, rôles
-ou keymaps. `BUILD_MODE` vaut `normal` ou `debug`, `BUILD_VARIANT` nomme matériel et keymap
-avec suffixe `-debug` uniquement en diagnostic. Caches et artefacts sont séparés,
+ou keymaps. `BUILD_MODE` vaut `normal`, `debug` ou `usb-trace`, `BUILD_VARIANT` nomme
+matériel et keymap avec suffixe `-debug` ou `-usb-trace` pour ces diagnostics. Caches et artefacts sont séparés,
 et les métadonnées indiquent le mode. Valider les quatre paires de builds et conserver
 les contrôles d’absence de reset dans tous les modes. Le logging doit être présent
 en debug et absent en normal. Le guide court est [logs-usb.md](docs/logs-usb.md).
@@ -324,11 +324,11 @@ Le retour par reset est confirmé. Tester encore `&sys_reset` et le double appui
 physique avant de considérer le parcours matériel complet validé.
 Le snapshot 0.3 dans l’historique Git garde son ancien mécanisme.
 
-Le Makefile expose `help`, `setup`, `build <matériel> <keymap> [debug]`, `flash`, `bat`, `bat avg`,
-`stop` et `clear`, délégués aux scripts dédiés. Le matériel (`wire` ou `bluetooth`)
+Le Makefile expose `help`, `setup`, `build <matériel> <keymap> [debug|usb-trace]`,
+`flash`, `bat`, `bat avg`, `usb-capture <port>`, `stop` et `clear`, délégués aux scripts dédiés. Le matériel (`wire` ou `bluetooth`)
 puis la keymap (`multi`, `windows`, `macos` ou `linux`) sont obligatoires, sans défaut.
-Windows inclut toujours le gaming. Seul l’argument final `debug` est facultatif
-et active les logs USB, sans cibles Make supplémentaires.
+Windows inclut toujours le gaming. L’argument final facultatif choisit `debug`
+pour les logs USB ou `usb-trace` pour le diagnostic de connexion wire.
 `make build wire` et `make build wire debug` échouent avant Docker.
 Les arguments sont validés avant les journaux et les actions Docker.
 Ni le passage au conteneur ni son point d’entrée ne remplacent une keymap absente
@@ -351,7 +351,7 @@ choix demandé sont compilées.
 Les constantes partagées sont en tête de `scripts/build-common.sh`. `container.sh`
 exécute `west` et vérifie les firmwares. Aucun `.env` n’est nécessaire.
 
-`make flash <matériel> <keymap> <left|right> [debug]` choisit le dernier dossier
+`make flash <matériel> <keymap> <left|right> [debug|usb-trace]` choisit le dernier dossier
 horodaté du profil exact, sans rabattement normal/debug ni retour à un build plus
 ancien si le dernier est incomplet. `make flash <chemin.uf2>` accepte un UF2 du
 dépôt resté dans son dossier horodaté, avec métadonnées et empreintes.
@@ -387,7 +387,7 @@ fonctionnement des deux moitiés avec `make flash wire macos right` puis `left`.
 Le chemin UF2 explicite, debug, l’annulation et les autres OS restent à tester sur matériel.
 
 Le snapshot ZMK `4dd95d7840eb`, Zephyr 4.1 et les
-68 projets résolus sont figés dans `config/west.yml`. Les workspaces sont séparés
+68 projets résolus sont figés dans `keyboard/west.yml`. Les workspaces sont séparés
 par empreinte de l’environnement, les caches CMake par moitié.
 Les sorties sont dans `dist/firmware/<matériel>-<keymap>[-debug]-AAAA-MM-JJ-HH-MM-SS/`, en heure locale,
 sans suffixe aléatoire. Refuser un dossier existant plutôt que l’écraser.
@@ -396,7 +396,7 @@ Les caches sont séparés selon les mêmes choix, les métadonnées indiquent
 `keymap_profile`. Les anciens artefacts ne sont ni renommés ni supprimés.
 `dongle` nommera un futur profil, il n’est pas encore compilable.
 
-`config/splitergoll.conf` contient les options communes. Les fichiers `.conf` des
+`keyboard/config/splitergoll.conf` contient les options communes. Les fichiers `.conf` des
 moitiés fixent leurs rôles. `EXTRA_CONF_FILE` charge le profil matériel, puis une
 configuration de moitié optionnelle. Le snippet USB logging est ajouté avec
 `west build -S zmk-usb-logging` en mode debug uniquement.
@@ -418,7 +418,7 @@ sans nouvelle suite de tests d’outillage. Les essais physiques restent nécess
 Le partage de la base est revalidé sur les mêmes vingt firmwares : les devicetrees
 complets et l’ordre des couches sont identiques avant/après, hors numéros de phandle.
 La séparation de la sauvegarde est contrôlée de la même manière sur les vingt
-firmwares. Leurs fichiers `zephyr.dts.d` chargent une keymap active de `config/keymaps/`
+firmwares. Leurs fichiers `zephyr.dts.d` chargent une keymap active de `keyboard/config/keymaps/`
 et ne référencent ni `splitergoll.keymap` ni ses helpers historiques. L’archive
 et ses cinq headers restent identiques à `e8bbfc1`. Son déplacement hors du shield
 est revalidé avec les deux moitiés de `wire multi` et `bluetooth macos`.
@@ -511,6 +511,44 @@ Ne jamais en copier les valeurs dans Git. Les firmwares normaux sans logs sont i
 ## TODO
 
 Voir [docs/TODO.md](docs/TODO.md), source unique du suivi.
+
+## Organisation du code
+
+Le manifeste reste à `keyboard/west.yml`. Le workflow manuel utilise `config_path: keyboard`
+pour initialiser West à la racine du checkout, puis chaque entrée de `build.yaml`
+impose `ZMK_CONFIG=keyboard/config` et le module `keyboard`. Ne pas donner le dossier
+imbriqué `keyboard/config` à `west init -l`, son workspace serait au mauvais niveau.
+
+`keyboard/` regroupe le code du clavier : `config/` pour keymaps et profils,
+`west.yml` pour les dépendances, `boards/` pour les shields et `zephyr/module.yml`
+pour leur découverte.
+Les sources, GPIO et affectations ne changent pas lors de ce rangement.
+Le module est passé explicitement par `ZMK_EXTRA_MODULES` dans les builds locaux
+et la matrice manuelle.
+
+`diagnostics/os-signature/` regroupe toute l’étude des signatures : firmware de
+capture, snippet, lecteurs Bash/PowerShell, validateur et tests. Son
+[AGENTS.md](diagnostics/os-signature/AGENTS.md) conserve les mécanismes et preuves.
+Son module est ajouté seulement à la gauche de la variante `usb-trace`.
+Les scripts de build, flash et batteries restent dans `scripts/`.
+Les captures privées restent dans `.local/usb-traces/`, les guides humains dans `docs/`.
+
+Les caches CMake du nouveau rangement sont sous `build/keyboard/` dans le workspace
+existant. Ne pas réutiliser l’ancien ZMK_CONFIG mémorisé ni supprimer les anciens
+caches. Le manifeste et l’image n’ont pas changé, un nouveau setup n’est pas requis.
+
+Après rangement, les huit paires normales, les paires `wire macos debug`,
+`bluetooth windows debug` et `wire macos usb-trace` compilent. Les 22 UF2 sont
+identiques octet pour octet aux précédents. Les arbres compilés conservent keymaps,
+comportements, conditions, macros, matrice, encodeurs et batterie. Les sources du
+clavier et le manifeste conservent leurs empreintes. Le stockage passe ASan/UBSan,
+les six captures existantes passent le validateur déplacé. L’initialisation du
+workflow manuel est vérifiée hors réseau avec West, pas exécutée sur GitHub.
+Les conteneurs éphémères sont supprimés, les trois services partagés sont conservés.
+
+Le firmware automatique macOS/Windows avec gaming n’est pas encore implémenté.
+Les quatre keymaps sont toujours explicites, `usb-trace` ne fait que capturer.
+Le prochain classifieur doit être testé en diagnostic avant toute bascule de keymap.
 
 ## Ideas / backlog
 

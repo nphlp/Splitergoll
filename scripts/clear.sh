@@ -9,7 +9,7 @@ set -eu
 
 [ "$#" -eq 0 ] || fail 'Utilise make clear sans argument'
 
-test -f "$REPOSITORY/Makefile" && test -f "$REPOSITORY/config/west.yml" ||
+test -f "$REPOSITORY/Makefile" && test -f "$KEYBOARD_MANIFEST" ||
     fail 'Nettoyage refusé : racine du dépôt non reconnue'
 test "$LOCAL_ROOT" = "$REPOSITORY/.local" && test "$OUTPUT_ROOT" = "$REPOSITORY/dist" ||
     fail 'Nettoyage refusé : chemins inattendus'

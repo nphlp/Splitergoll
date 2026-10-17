@@ -1,0 +1,6 @@
+# Options des diagnostics propres à Splitergoll, désactivées dans les builds usuels.
+config SPLITERGOLL_USB_TRACE
+    bool "Record USB setup requests without selecting an OS"
+    depends on USB_DEVICE_STACK && USB_CDC_ACM
+    depends on ZMK_SPLIT_ROLE_CENTRAL
+    default n

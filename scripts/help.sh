@@ -22,7 +22,7 @@ show_command() {
 # Explique les deux choix obligatoires, l’option debug et des commandes complètes.
 show_build_help() {
     printf '\n%sCompiler un firmware%s\n\n' "$LOG_HEADING" "$LOG_RESET"
-    printf '  %smake build <matériel> <keymap> [debug]%s\n' "$LOG_SUCCESS" "$LOG_RESET"
+    printf '  %smake build <matériel> <keymap> [debug|usb-trace]%s\n' "$LOG_SUCCESS" "$LOG_RESET"
     printf '%s\n' '  Matériel puis keymap obligatoires, aucun choix par défaut.'
 
     printf '\n%s1. Matériel (obligatoire)%s\n' "$LOG_HEADING" "$LOG_RESET"
@@ -37,6 +37,7 @@ show_build_help() {
 
     printf '\n%sOption finale%s\n' "$LOG_HEADING" "$LOG_RESET"
     show_command 'debug' 'Ajouter les logs USB sur les deux moitiés'
+    show_command 'usb-trace' 'Observer les requêtes USB sur la gauche (wire uniquement)'
 
     printf '\n%sExemples%s\n' "$LOG_HEADING" "$LOG_RESET"
     show_command 'make build wire macos' 'USB avec keymap macOS fixe'
@@ -48,10 +49,10 @@ show_build_help() {
 # Présente la sélection du build et la confirmation requise avant un flash USB.
 show_flash_help() {
     printf '\n%sFlasher un firmware (macOS)%s\n\n' "$LOG_HEADING" "$LOG_RESET"
-    printf '  %smake flash <matériel> <keymap> <left|right> [debug]%s\n' "$LOG_SUCCESS" "$LOG_RESET"
+    printf '  %smake flash <matériel> <keymap> <left|right> [debug|usb-trace]%s\n' "$LOG_SUCCESS" "$LOG_RESET"
     printf '  %smake flash <chemin.uf2>%s\n\n' "$LOG_SUCCESS" "$LOG_RESET"
     printf '%s\n' '  Matériel : wire ou bluetooth. Keymap : multi, windows, macos ou linux.'
-    printf '%s\n' '  Sans chemin, choisit le dernier build du profil exact. debug doit être explicite.'
+    printf '%s\n' '  Sans chemin, choisit le dernier build exact. debug et usb-trace doivent être explicites.'
     printf '%s\n' '  Affiche la date complète et l’ancienneté, puis demande confirmation avant copie.'
     printf '%s\n' '  Mettre uniquement la moitié choisie en bootloader par un double appui sur reset.'
     printf '\n%sExemples%s\n' "$LOG_HEADING" "$LOG_RESET"
@@ -79,6 +80,9 @@ show_command 'make flash wire macos right' 'Flasher le dernier build corresponda
 printf '\n%sBatteries sur macOS%s\n' "$LOG_HEADING" "$LOG_RESET"
 show_command 'make bat' 'Lire les deux derniers niveaux annoncés'
 show_command 'make bat avg' 'Calculer une moyenne par moitié sur 30 secondes'
+
+printf '\n%sDiagnostic de connexion USB%s\n' "$LOG_HEADING" "$LOG_RESET"
+show_command 'make usb-capture <port-série-gauche>' 'Lire les requêtes du firmware wire avec option usb-trace'
 
 printf '\n%sEntretien%s\n' "$LOG_HEADING" "$LOG_RESET"
 show_command 'make stop' 'Arrêter les conteneurs de build de ce checkout'

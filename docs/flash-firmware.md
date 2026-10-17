@@ -65,6 +65,10 @@ Le contenu de `CURRENT.UF2` peut être comparé au build attendu dans le bootloa
 
 ## Touche bootloader
 
+L’option finale `usb-trace` sélectionne uniquement les builds de diagnostic USB,
+par exemple `make flash wire macos left usb-trace`. Elle ne se rabat pas sur un
+firmware normal ou `debug`. Voir [le diagnostic d’OS](detection-os.md).
+
 Le build migré utilise la rétention de mode de démarrage de Zephyr et le code
 UF2 `0x57` du nice!nano. Le build contrôle ces options et les limites de mémoire.
 Le bootloader UF2 existant du contrôleur n’est pas remplacé par cette migration.

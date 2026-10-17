@@ -1,6 +1,6 @@
 .DEFAULT_GOAL := help
 
-.PHONY: help setup build flash bat stop clear
+.PHONY: help setup build flash bat usb-capture stop clear
 
 # Récupère les mots après la commande et protège chaque argument pour le shell.
 ARGS = $(foreach arg,$(filter-out $@,$(MAKECMDGOALS)),'$(subst ','"'"',$(arg))')
@@ -19,6 +19,9 @@ flash:
 
 bat:
 	@bash scripts/batteries.sh $(ARGS)
+
+usb-capture:
+	@bash diagnostics/os-signature/capture.sh $(ARGS)
 
 stop:
 	@sh scripts/stop.sh $(ARGS)

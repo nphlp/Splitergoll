@@ -24,6 +24,21 @@ nécessitent V2, le clavier sur batteries.
 La priorité USB est différée après l’auto-détection d’OS, pour viser un clavier
 « full auto » qui adapte sa keymap et sa sortie USB/Bluetooth à l’ordinateur connecté.
 
+- [x] Préparer le diagnostic USB sans bascule de keymap et valider une première
+  lecture sur V1 et le Mac : 24 requêtes sans perte, voir [le protocole](detection-os.md).
+- [x] Comparer trois démarrages sur le Mac : les 24 requêtes ont les mêmes
+  paramètres et le même ordre, sans perte ni rejet.
+- [x] Lire et comparer trois captures Windows avec le même firmware : 57, 58 et
+  57 requêtes sans perte. Plusieurs différences Mac/Windows sont stables,
+  une demande initiale est répétée dans un essai Windows.
+- [x] Regrouper le code du clavier dans `keyboard/` et séparer toute l’étude des
+  signatures dans `diagnostics/os-signature/`, sans modifier les commandes Make.
+- [ ] Préparer un classificateur diagnostique qui tolère les répétitions et les
+  indices contradictoires, avec résultat inconnu, sans changer la keymap avant validation.
+- [ ] Isoler les échanges du lecteur CDC, comparer les signatures avec Linux et
+  revalider avec les descripteurs normaux avant toute décision automatique.
+- [ ] Étudier ensuite les signatures Bluetooth sur V1 alimenté en USB, sans batterie.
+
 - [x] Ajouter dans `keymap.md` les sept schémas du README avec les légendes de `dongle`.
 - [x] Préparer le futur README dans `docs/README.md`, index des autres documents.
 - [x] Alléger le Makefile et répartir le build dans des scripts séparés.

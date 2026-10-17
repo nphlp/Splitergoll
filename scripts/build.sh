@@ -2,7 +2,7 @@
 
 # Compile les deux moitiés dans Docker et exporte les firmwares UF2 dans dist/.
 # Sans argument, affiche l’aide. Le matériel et la keymap sont obligatoires, dans cet ordre.
-# L’argument debug ajoute les logs USB au profil choisi.
+# L’argument debug ajoute les logs USB, usb-trace observe les requêtes de la centrale wire.
 # Appelé par make build, sans flasher le clavier.
 
 set -eu
@@ -16,7 +16,7 @@ fi
 
 if [ "$#" -lt 2 ] || [ "$#" -gt 3 ]; then
     bash "$SCRIPT_DIRECTORY/help.sh" build >&2
-    fail 'Précise le matériel puis la keymap : make build <wire|bluetooth> <multi|windows|macos|linux> [debug]'
+    fail 'Précise le matériel puis la keymap : make build <wire|bluetooth> <multi|windows|macos|linux> [debug|usb-trace]'
 fi
 
 # Exporte une paire complète et ses empreintes seulement après les deux compilations réussies.
@@ -28,7 +28,7 @@ export_firmware() {
 
     for side in $SIDES; do
         name="splitergoll-$BUILD_VARIANT-$side"
-        cp "$workspace/build/$name/zephyr/zmk.uf2" "$destination/$name.uf2"
+        cp "$workspace/$BUILD_CACHE_ROOT/$name/zephyr/zmk.uf2" "$destination/$name.uf2"
     done
 
     printf 'profile=%s\nhardware_profile=%s\nkeymap_profile=%s\nbuild_mode=%s\nvariant=%s\nenvironment=%s\nimage=%s\n' \
@@ -47,6 +47,8 @@ build_profile() {
     printf 'Profil : %s\n' "$BUILD_VARIANT"
     if [ "$BUILD_MODE" = debug ]; then
         printf '%s\n' 'Diagnostic : logs USB activés sur les deux moitiés'
+    elif [ "$BUILD_MODE" = usb-trace ]; then
+        printf '%s\n' 'Diagnostic : requêtes USB mémorisées sur la gauche, sans détection ni changement de keymap'
     fi
     run_step 'Vérification des prérequis' preflight
     resolve_workspace
@@ -62,9 +64,10 @@ keymap=$2
 mode=normal
 
 if [ "$#" -eq 3 ]; then
-    [ "$3" = debug ] ||
-        fail 'L’argument debug doit apparaître une seule fois, après le matériel et la keymap'
-    mode=debug
+    case "$3" in
+        debug|usb-trace) mode=$3 ;;
+        *) fail 'L’argument final doit être debug ou usb-trace' ;;
+    esac
 fi
 
 build_profile "$profile" "$keymap" "$mode"

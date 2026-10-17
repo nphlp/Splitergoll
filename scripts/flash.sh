@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Sélectionne un UF2 local, affiche sa date et le copie après confirmation.
-# Reçoit matériel, keymap, left/right et éventuellement debug, ou un chemin UF2.
+# Reçoit matériel, keymap, left/right et éventuellement debug ou usb-trace, ou un chemin UF2.
 # macOS uniquement. Aucun build, reset des réglages ou flash sans confirmation.
 
 set -euo pipefail
@@ -114,6 +114,7 @@ show_firmware_summary() {
     esac
     case "$BUILD_MODE" in
         debug) logging_label='activés (debug)' ;;
+        usb-trace) logging_label='trace des requêtes USB (centrale gauche)' ;;
         normal) logging_label='désactivés (normal)' ;;
     esac
 
@@ -189,28 +190,30 @@ confirm_and_flash() {
 if [ "$#" -eq 1 ]; then
     FIRMWARE=$1
     filename=$(basename "$FIRMWARE")
-    [[ "$filename" =~ ^splitergoll-(wire|bluetooth)-(multi|windows|macos|linux)(-debug)?-(left|right)\.uf2$ ]] ||
-        fail 'Précise un UF2 généré par ce dépôt, ou make flash <matériel> <keymap> <left|right> [debug]'
+    [[ "$filename" =~ ^splitergoll-(wire|bluetooth)-(multi|windows|macos|linux)(-(debug|usb-trace))?-(left|right)\.uf2$ ]] ||
+        fail 'Précise un UF2 généré par ce dépôt, ou make flash <matériel> <keymap> <left|right> [debug|usb-trace]'
     profile=${BASH_REMATCH[1]}
     keymap=${BASH_REMATCH[2]}
-    mode=${BASH_REMATCH[3]}
-    SIDE=${BASH_REMATCH[4]}
+    mode=${BASH_REMATCH[4]}
+    SIDE=${BASH_REMATCH[5]}
     select_profile "$profile"
     select_keymap "$keymap"
-    if [ "$mode" = -debug ]; then select_build_mode debug; else select_build_mode normal; fi
+    select_build_mode "${mode:-normal}"
     directory=$(CDPATH= cd "$(dirname "$FIRMWARE")" && pwd) || fail 'Dossier du firmware absent'
     FIRMWARE="$directory/$filename"
 else
-    [ "$#" -eq 3 ] || [ "$#" -eq 4 ] || fail 'Utilise make flash <matériel> <keymap> <left|right> [debug]'
+    [ "$#" -eq 3 ] || [ "$#" -eq 4 ] || fail 'Utilise make flash <matériel> <keymap> <left|right> [debug|usb-trace]'
     select_profile "$1"
     select_keymap "$2"
     SIDE=$3
     case "$SIDE" in left|right) ;; *) fail 'Moitié attendue : left ou right' ;; esac
     mode=normal
     if [ "$#" -eq 4 ]; then
-        [ "$4" = debug ] || fail 'Seul debug est accepté après la moitié'
-        mode=debug
-        DEBUG_ARGUMENT=' debug'
+        case "$4" in
+            debug|usb-trace) mode=$4 ;;
+            *) fail 'Utilise debug ou usb-trace après la moitié' ;;
+        esac
+        DEBUG_ARGUMENT=" $mode"
     fi
     select_build_mode "$mode"
     select_latest_firmware

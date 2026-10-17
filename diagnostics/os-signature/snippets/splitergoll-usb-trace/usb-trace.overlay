@@ -1,0 +1,6 @@
+// Port dédié au diagnostic, indépendant de la console ZMK habituelle.
+&zephyr_udc0 {
+    splitergoll_usb_trace_uart: splitergoll_usb_trace_uart {
+        compatible = "zephyr,cdc-acm-uart";
+    };
+};

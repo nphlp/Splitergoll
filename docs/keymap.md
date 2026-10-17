@@ -30,7 +30,7 @@ moitiés est confirmé, le parcours complet des touches et les autres profils re
 
 ## Organisation
 
-Les fichiers de sélection sont dans `config/keymaps/` :
+Les fichiers de sélection sont dans `keyboard/config/keymaps/` :
 le build les choisit explicitement avec `KEYMAP_FILE`.
 
 | Fichier | Rôle |
@@ -47,7 +47,7 @@ L’archive autonome est dans [`archives/keymap-multi/`](../archives/keymap-mult
 Elle conserve `splitergoll.keymap`, ses cinq headers d’origine et leurs empreintes,
 sans être utilisée par les builds. Faire évoluer les profils actifs, pas cette archive.
 
-Le matériel reste dans `boards/shields/splitergoll/` :
+Le matériel reste dans `keyboard/boards/shields/splitergoll/` :
 
 | Fichier | Rôle |
 | --- | --- |

@@ -11,7 +11,7 @@ d’un push ou d’une pull request. Sa matrice est conservée en complément du
 Prérequis : Make, Bash, Docker démarré, `shasum` et un terminal macOS/Linux.
 Sur Windows, utiliser WSL avec Docker. La validation Windows reste à faire.
 
-Commande : `make build <matériel> <keymap> [debug]`.
+Commande : `make build <matériel> <keymap> [debug|usb-trace]`.
 Le matériel et la keymap sont obligatoires, dans cet ordre. Aucun choix par défaut.
 
 ```sh
@@ -25,6 +25,8 @@ make build bluetooth windows debug
 - La keymap doit être `multi`, `windows`, `macos` ou `linux`.
 - `windows` comprend le gaming. Les profils macOS et Linux restent sur leur OS.
 - Ajouter `debug` après la keymap active les logs USB, voir [logs-usb.md](logs-usb.md).
+- `usb-trace`, réservé à `wire`, enregistre les requêtes de connexion de la gauche
+  sans changer la keymap : voir [le diagnostic d’OS](detection-os.md).
 - `build` seul affiche l’aide, sans compilation ni Docker. Un choix incomplet ou invalide échoue avant Docker.
 - `stop` arrête les conteneurs de build de ce checkout, en conservant les fichiers.
 - `clear` les arrête puis supprime `.local/` et `dist/` pour toutes les versions.
@@ -64,7 +66,7 @@ Ils restent visibles. Leur résolution est distincte de cette migration, voir
 
 Le dépôt est monté en lecture seule. Les dépendances et caches sont dans `.local/`.
 Le snapshot ZMK `4dd95d7840eb`, basé sur Zephyr 4.1 avec correctifs ZMK,
-et ses dépendances sont verrouillés dans `config/west.yml`.
+et ses dépendances sont verrouillés dans `keyboard/west.yml`.
 L’image officielle est figée par son digest dans `scripts/build-common.sh`.
 
 Ces hashes identifient les commits et l’image exacts pour retrouver le même
@@ -75,6 +77,11 @@ la cible `nice_nano@2.0.0//zmk` remplacent le socle 3.5 et `nice_nano_v2`.
 Le [snapshot stable 0.3](firmwares-stables.md) reste récupérable dans l’historique Git pour revenir en arrière.
 
 ## Organisation
+
+`keyboard/` regroupe les keymaps et profils dans `config/`, les shields dans
+`boards/`, leur déclaration de module dans `zephyr/` et le manifeste `west.yml`.
+L’étude des signatures
+est séparée dans `diagnostics/os-signature/`, son firmware n’est ajouté qu’au build `usb-trace`.
 
 Chaque commande a sa propre cible dans le Makefile et appelle directement son script.
 Les mots après la commande sont ses arguments, vérifiés dans le script :
@@ -90,6 +97,8 @@ Les mots après la commande sont ses arguments, vérifiés dans le script :
 - `scripts/clear.sh` : arrêt et suppression des fichiers locaux générés.
 
 Les chemins locaux sont calculés depuis le dépôt. Aucun `.env` n’est nécessaire.
+Les caches CMake du nouveau rangement utilisent `build/keyboard/` dans le workspace
+préparé. Les anciens caches sont conservés, un nouveau `make setup` n’est pas nécessaire.
 `make build bluetooth multi` appelle `build.sh bluetooth multi`, `make bat avg` appelle
 `batteries.sh avg`. Les scripts refusent les arguments qu’ils ne prennent pas en charge.
 
@@ -102,15 +111,15 @@ Les chemins locaux sont calculés depuis le dépôt. Aucun `.env` n’est néces
 
 Dans les deux cas, la droite communique avec la gauche en BLE. Le choix de keymap
 est indépendant : `multi` conserve la référence de `dongle`, les autres profils
-gardent un seul OS. `config/splitergoll.conf` contient le socle commun,
-les fichiers des moitiés fixent leurs rôles, et `config/profiles/<profil>.conf`
+gardent un seul OS. `keyboard/config/splitergoll.conf` contient le socle commun,
+les fichiers des moitiés fixent leurs rôles, et `keyboard/config/profiles/<profil>.conf`
 est ajouté en dernier via `EXTRA_CONF_FILE`. Le nom du profil est transmis
 au script Docker comme argument. Les versions ZMK et l’image restent identiques.
-Le build charge aussi `config/profiles/<profil matériel>-<moitié>.conf` lorsqu’il
+Le build charge aussi `keyboard/config/profiles/<profil matériel>-<moitié>.conf` lorsqu’il
 existe. `bluetooth-left.conf` active la récupération et le proxy de batterie sur
 la centrale seulement. L’option `debug` ajoute le snippet natif `zmk-usb-logging`
 au même profil. Elle a ses propres caches et sorties, sans changer les délais.
-`KEYMAP_FILE` désigne `config/keymaps/<keymap>.keymap` dans ZMK. La commande vérifie
+`KEYMAP_FILE` désigne `keyboard/config/keymaps/<keymap>.keymap` dans ZMK. La commande vérifie
 que CMake a bien utilisé ce fichier avant d’exporter les UF2.
 `make build` seul affiche l’aide. Chaque compilation demande un matériel et une keymap explicites.
 `dongle` sera ajouté plus tard.

@@ -21,7 +21,7 @@ prepare_workspace() {
 
     mkdir -p "$workspace/config"
     printf '%s\n' "$identity" > "$workspace/.splitergoll"
-    cp "$REPOSITORY/config/west.yml" "$workspace/config/west.yml"
+    cp "$KEYBOARD_MANIFEST" "$workspace/config/west.yml"
 }
 
 start_logging setup 4
