@@ -46,10 +46,10 @@ int __wrap_zmk_event_manager_raise(zmk_event_t *event) {
     bool forward;
     if (position != NULL) {
         forward = usb_auto_position(&state, position->position, position->state, now_ms);
+    } else if (sensor != NULL) {
+        forward = usb_auto_sensor(&state, now_ms);
     } else {
-        state.last_activity_ms = now_ms;
-        // Les relâchements des comportements de l’ancien cycle restent nécessaires.
-        forward = state.selected != USB_OS_UNKNOWN || (keycode != NULL && !keycode->state);
+        forward = usb_auto_keycode(&state, keycode->state, now_ms);
     }
     int result = forward ? __real_zmk_event_manager_raise(event) : 0;
     k_mutex_unlock(&state_mutex);

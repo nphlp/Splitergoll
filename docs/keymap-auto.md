@@ -3,15 +3,11 @@
 `auto` réunit macOS et Windows avec gaming dans un seul firmware. À la connexion,
 la centrale gauche observe les demandes USB de l’ordinateur et active le groupe
 de couches reconnu. Aucun logiciel compagnon ni changement manuel d’OS.
-La sélection est confirmée sur V1 : l’encodeur droit affiche macOS sur le Mac et
-Windows sur le PC, le gaming puis son retour à Windows fonctionnent. L’usage sur
-Mac est confirmé. Après correction du motif Windows sans port série, l’utilisateur
-confirme aussi la saisie et la détection Windows puis macOS avec le même firmware
-normal, sans reflash entre les ordinateurs. Le retour au Mac reste toutefois
-irrégulier : un délai est aussi signalé après débranchement/rebranchement Mac vers
-Mac. Un essai avec cinq secondes sans toucher au clavier fonctionne du premier
-coup. Cela concorde avec le délai repoussé par les frappes pendant l’attente,
-sans prouver que tous les retards ont cette cause. La fiabilité reste à vérifier.
+Sur V1, l’utilisateur confirme le fonctionnement des layouts sur Mac et Windows,
+le gaming et les bascules automatiques avec le firmware normal, sans port série.
+L’optimisation actuelle concerne uniquement le délai au branchement, sans changer
+les affectations. L’utilisateur constate un démarrage nettement plus rapide après
+flash de cette première optimisation, sans mesure chronométrée.
 
 ```sh
 make build wire auto
@@ -24,14 +20,19 @@ Les quatre profils précédents restent disponibles.
 ## Comportement
 
 - Les indices doivent se stabiliser pendant 250 ms. La sélection attend aussi
-  que toutes les touches soient relâchées et que la saisie soit inactive depuis 750 ms.
+  que l’USB clavier soit prêt et que toutes les touches soient relâchées.
 - Avant la sélection, les touches et encodeurs sont ignorés, sans rejouer les appuis.
-- Les appuis pendant cette attente repoussent le délai de 750 ms. Pour tester le
-  démarrage, laisser le clavier intact cinq secondes, puis essayer une seule touche gauche.
+- Les appuis ignorés ne repoussent plus le démarrage. Aucune pause supplémentaire
+  de 750 ms n’est imposée à l’allumage. Après un reset du bus d’un clavier déjà actif,
+  cette marge reste nécessaire pour terminer les anciens comportements différés.
 - Un OS inconnu ou ambigu laisse le clavier en attente, sans supposer Windows.
 - Le choix reste fixe pendant le cycle USB. Un reset du bus ou une déconnexion
   impose une nouvelle reconnaissance, sans effacer les appairages.
 - Suspendre puis reprendre l’USB sans reset conserve le choix. Le réveil réel reste à tester.
+
+Les 250 ms partent de la dernière demande USB utile, pas du branchement du câble.
+L’initialisation par l’ordinateur s’ajoute à ce délai, aucun démarrage instantané
+n’est garanti. La vérification de sélection se fait toutes les 20 ms.
 
 Cette version ne reconnaît ni Linux ni l’OS Bluetooth. Les signatures sont des
 heuristiques, pas une preuve d’identité : d’autres machines ou un hub peuvent les

@@ -50,11 +50,12 @@ La priorité USB est différée après l’auto-détection d’OS, pour viser un
 - [x] Capturer l’énumération Windows du firmware normal avec `capture.ps1 -UsbEvents`, contrôler les pertes et comparer les requêtes avant de modifier le classifieur.
 - [x] Reproduire le classement inconnu sans CDC et reconnaître le motif de noms 255 puis 262, avec tests de régression et rejeu des captures précédentes.
 - [x] Confirmer le correctif sur V1 : `wire auto` normal, saisie et détection Windows puis retour macOS, sans nouveau flash entre les hôtes.
-- [ ] Fiabiliser l’initialisation `wire auto` sur Mac : l’essai avec cinq secondes sans frappe fonctionne du premier coup. Éviter que les appuis ignorés prolongent inutilement l’attente de sélection, tout en conservant les gardes de relâchement et de comportements différés.
+- [x] Optimiser l’initialisation `wire auto` : retirer les 750 ms au démarrage à froid et empêcher les appuis ignorés de prolonger l’attente, avec maintien des gardes de relâchement et de comportements différés.
+- [ ] Valider le démarrage optimisé sur V1 Mac et Windows, y compris en tapant tôt et avec une touche maintenue au branchement.
 - [x] Corriger les apostrophes des chaînes PowerShell et reproduire les ParserError avec le parseur officiel avant/après, sans modifier les regex USBTRACE.
 - [x] Valider le nouveau mode ETW sur Windows : démarrage/arrêt de sa seule session et export des fichiers dans le dossier courant.
 - [ ] Confirmer le décodage Tracerpt avec `-lr` sur le PC lors d’une prochaine capture utile.
-- [ ] Compléter les essais `auto` normal : raccourcis et accents représentatifs, pavé et gaming avec retour à la base de chaque OS.
+- [x] Confirmer l’usage des layouts `auto` normal sur Mac et Windows et du gaming : l’utilisateur rapporte un fonctionnement correct, sans problème de bascule ou de disposition.
 - [x] Rendre `capture.ps1` autonome sous Windows : un seul fichier dans le dossier de travail, capture `.txt` directement dans le dossier courant.
 - [ ] Confirmer sur Windows la destination du lecteur autonome mis à jour.
 - [ ] Confirmer la séparation des cycles lors d’un reset du bus sans coupure d’alimentation.

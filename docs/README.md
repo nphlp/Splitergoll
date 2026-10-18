@@ -33,8 +33,9 @@ Le profil expérimental `wire auto` sélectionne macOS ou Windows avec gaming à
 connexion USB. La sélection et le retour du gaming sont confirmés sur V1 avec
 le firmware instrumenté. Après correction de la signature Windows, la saisie et
 la détection Windows puis macOS sont aussi confirmées sans port série, avec le
-même firmware normal sur V1. Un démarrage irrégulier au branchement sur le Mac
-est ensuite signalé, y compris de Mac vers Mac : la fiabilité reste à vérifier.
+même firmware normal sur V1. L’utilisateur confirme les layouts et le gaming.
+Le délai au branchement est optimisé en supprimant l’attente initiale de 750 ms
+et son report par les frappes ignorées. Ce démarrage reste à essayer après flash.
 Les autres ordinateurs restent à tester.
 
 La keymap historique reste disponible dans `multi`, avec changement d’OS au clavier.

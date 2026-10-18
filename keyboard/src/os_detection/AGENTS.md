@@ -13,9 +13,10 @@ absence du motif de noms sur 4 octets. Le nouveau motif 255 puis 262 corrige le 
 et l’utilisateur confirme après flash la saisie et la reconnaissance Windows puis
 macOS sur V1, par débranchement/rebranchement et sans reflash entre les deux hôtes.
 Il signale ensuite des démarrages irréguliers sur Mac, même de Mac vers Mac.
-La fiabilité de l’initialisation n’est donc pas validée. Aucun délai précis ni
-état interne du cas bloqué n’est encore observé. Cela ne valide pas chaque
-raccourci, couche ou scénario de reprise.
+L’utilisateur précise ensuite que les layouts sur Mac et Windows et le gaming
+fonctionnent correctement en usage normal. Ne pas lui redemander de revalider ce
+fonctionnement comme un chantier ouvert. Le démarrage optimisé, les resets et la
+reprise restent des essais distincts. Aucun délai matériel précis n’est encore mesuré.
 Aucun OS par défaut n’est ajouté.
 Aucun flash implicite.
 Les quatre profils manuels et l’archive de `multi` restent disponibles et inchangés.
@@ -61,11 +62,17 @@ sur la file système vérifie l’état toutes les 20 ms, avec mutex partagé pa
 Le classifieur exige 250 ms sans nouveau descripteur utile, ignore CDC/HID et ne suppose
 jamais Windows par défaut. Les motifs et limites sont détaillés dans la spec du diagnostic.
 
-La sélection exige aussi HID prêt, zéro touche physique maintenue et 750 ms sans
-position, rotation ou événement de keycode. Cette pause dépasse les tap-dances 250 ms,
-le hold-tap 200 ms et l’attente 500 ms des macros actuelles. Réexaminer ce garde si les
-comportements différés changent. La décision est figée jusqu’au cycle suivant, même
-si un motif tardif change ensuite l’hypothèse. Aucune écriture NVS.
+La sélection exige aussi HID prêt et zéro touche physique maintenue. À froid,
+`wait_for_behaviors` vaut false : aucun comportement de l’ancien cycle n’est à
+terminer, donc pas de pause supplémentaire. Un reset après sélection, une position
+admise, une rotation admise ou un keycode arme le garde des comportements différés.
+Il exige alors 750 ms depuis la dernière activité susceptible de produire un
+comportement. Ce délai dépasse les tap-dances 250 ms, le hold-tap 200 ms et l’attente
+500 ms des macros actuelles. Réexaminer ce garde si ces comportements changent.
+Les positions et rotations ignorées ne le réarment pas, leurs touches restent
+suivies jusqu’au relâchement. Un keycode différé, même bloqué, le réarme, et ses
+releases passent toujours. La décision reste figée jusqu’au cycle suivant, même
+si un motif tardif change l’hypothèse. Aucune écriture NVS.
 
 Le wrapper `zmk_event_manager_raise` filtre les appuis physiques avant les listeners
 ZMK, donc avant les tap-dances et les modificateurs. Tant que l’OS est inconnu, appuis
@@ -96,9 +103,9 @@ compilées contre les profils fixes après traduction des numéros. Comparer les
 paires normales existantes à leurs binaires et Devicetrees précédents. Ne pas remplacer
 les essais matériels par ces contrôles. Aucun test supplémentaire des wrappers Bash.
 
-Essais attendus : Mac → Windows → Mac sans nouveau flash, raccourcis, accents,
-encodeurs, pavé, gaming, démarrage avec touche tenue, reset du bus et réveil. Refaire
-l’aller-retour sans CDC après la version instrumentée. Linux, autres versions d’OS,
+Les layouts Mac/Windows et le gaming sont validés par le retour utilisateur en
+normal. Essais restants : démarrage optimisé, touche tenue, reset du bus et réveil,
+avec le firmware normal. Linux, autres versions d’OS,
 hubs, KVM et BIOS sont inconnus et peuvent donner une mauvaise reconnaissance.
 Le Bluetooth exigera ses propres observations, l’USB d’alimentation ne révèle pas son hôte.
 Les tâches restent centralisées dans `docs/TODO.md`.
@@ -160,18 +167,18 @@ nécessaire pour cet essai. Les conteneurs éphémères ont disparu, les trois s
 préexistants sont conservés. Aucun Dockerfile, Compose, variable d’environnement,
 partition, keymap ou appairage n’est modifié. L’utilisateur confirme ensuite la
 saisie et la détection Windows puis macOS avec le même firmware normal, en
-débranchant/rebranchant V1 entre les hôtes, sans reflash intermédiaire. Ne pas
-étendre cette validation au gaming normal, aux raccourcis, à la veille, au reset
-du bus sans coupure, à Linux ou à d’autres ordinateurs sans essais spécifiques.
+débranchant/rebranchant V1 entre les hôtes, sans reflash intermédiaire. Il confirme
+ensuite les layouts et le gaming en usage normal. Les essais de veille, reset du
+bus sans coupure, Linux et autres ordinateurs restent distincts.
 
 Un nouveau retour utilisateur signale un délai irrégulier sur Mac après changement
 d’hôte, puis le reproduit aussi en Mac vers Mac. Ne pas conclure à une persistance
 Windows. Le choix n’est pas sauvegardé en NVS, le callback efface les indices sur
 RESET/DISCONNECTED, et le démarrage RAM initialise l’état à zéro. Cela vérifie le
 chemin prévu, pas les événements effectivement reçus sur le branchement en échec.
-La sélection attend signature stabilisée, HID prêt, aucune touche tenue et 750 ms
-depuis la dernière activité. Chaque appui/relâchement ignoré remet ce dernier délai
-à zéro. Le premier essai contrôlé est Mac vers Mac, USB gauche débranché puis
+Avant optimisation, la sélection attendait signature stabilisée, HID prêt, aucune
+touche tenue et 750 ms depuis la dernière activité. Chaque appui/relâchement ignoré
+remettait ce dernier délai à zéro. Le premier essai contrôlé est Mac vers Mac, USB gauche débranché puis
 rebranché, cinq secondes sans toucher touches/encodeurs, puis une touche gauche.
 Mesurer avant de changer les heuristiques ou les gardes. Si la saisie reste bloquée,
 garder le branchement en place pour distinguer présence USB et attente interne.
@@ -184,4 +191,34 @@ indices du classifieur : elles retardent la politique de sélection. Les cinq
 secondes sont une marge de protocole, pas un nouveau délai firmware. Étudier
 la distinction entre activité admise et appuis ignorés avant d’alléger ce garde,
 en conservant touche maintenue, releases d’ancien cycle et comportements différés.
-Le code et les délais ne sont pas modifiés à ce stade.
+Ce constat motive l’optimisation suivante, sans changer les heuristiques d’OS.
+
+## Démarrage optimisé
+
+`USB_AUTO_DRAIN_MS` conserve les 750 ms uniquement pour vider un ancien comportement,
+pas comme attente initiale. Le filtre délègue désormais positions, capteurs et
+keycodes à la politique pure, afin de tester la distinction admis/ignoré réellement
+utilisée dans ZMK. Les positions ignorées ne créent pas de comportement ni de
+release orpheline, mais une touche encore tenue bloque toujours la sélection.
+Le relâchement d’une position admise avant reset et tout keycode différé repoussent
+la marge de sécurité. Un reset répété pendant cette marge la réarme également.
+La stabilisation des signatures reste 250 ms et le contrôle périodique 20 ms :
+ils ne constituent pas une mesure depuis le branchement du câble.
+
+Le test de non-report par des frappes ignorées échoue avec l’ancien code et passe
+avec l’optimisation. La suite couvre aussi sélection sans attente à froid, touches
+tenues, rotations ignorées, reset après un cycle actif, reset répété, anciens
+relâchements, keycodes différés, inconnus/ambiguïtés, HID absent et horloge 32 bits.
+Aucun changement de keymap, de descripteur USB, de dépendance ou de partition.
+L’utilisateur rapporte ensuite un démarrage nettement plus rapide avec cette
+optimisation, sans mesure chronométrée. Le maintien d’une touche, les resets du
+bus et la reprise ne sont pas validés par ce ressenti.
+
+Validation de l’optimisation : trois suites C avec ASan/UBSan, trois paires auto
+normal/debug/usb-trace compilées et six UF2 contrôlés. Les six arbres auto gardent
+les mêmes couches que les profils fixes, les seize UF2 manuels restent identiques
+aux références. Les dix captures de signatures gardent leur résultat. Les droites
+sont identiques aux versions précédentes : seul le flash gauche est nécessaire.
+Aucun avertissement nouveau dans notre code, KSCAN et le drapeau Docker restent
+ceux du socle. Les trois conteneurs de build sont supprimés automatiquement,
+les trois services préexistants sont conservés. Aucun flash matériel effectué.

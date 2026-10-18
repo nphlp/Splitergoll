@@ -582,8 +582,8 @@ Les 22 demandes ETW reproduisent inconnu avant correction, Windows après, y com
 sans la sonde initiale 64. Après flash du correctif, l’utilisateur confirme sur V1
 la saisie et la reconnaissance Windows puis macOS, en débranchant/rebranchant
 le même firmware normal entre les deux hôtes, sans reflash intermédiaire.
-Les essais détaillés de raccourcis, pavé et gaming normal restent distincts,
-ainsi que la veille, le reset du bus sans coupure et les autres ordinateurs.
+L’utilisateur confirme ensuite les layouts et le gaming en usage normal.
+Les essais de veille, reset du bus sans coupure et autres ordinateurs restent distincts.
 L’utilisateur signale ensuite un démarrage irrégulier sur Mac, reproduit même en
 Mac vers Mac : le premier aller-retour réussi ne valide donc pas la fiabilité.
 Mesurer un branchement sans frappe avant de modifier le code. Les appuis pendant
@@ -593,7 +593,14 @@ Pas de persistance Windows démontrée. Le diagnostic détaillé est dans la spe
 L’essai suivant avec cinq secondes sans frappe fonctionne du premier coup,
 ce qui concorde avec l’attente repoussée par les positions ignorées. Ce n’est
 pas une corruption de signature et les cinq secondes ne sont pas un délai codé.
-L’amélioration du garde est au TODO, sans modification de code ou de délai pour l’instant.
+L’utilisateur confirme ensuite le fonctionnement des layouts et du gaming sur
+Mac et Windows. Ces usages sont validés par son retour, le chantier porte sur
+le délai au branchement. L’optimisation retire l’attente initiale de 750 ms et
+son réarmement par les positions/rotations ignorées. Le relâchement complet reste
+requis, la marge de 750 ms est conservée après un cycle actif et pour les keycodes
+différés. La stabilisation de signature reste 250 ms, le contrôle 20 ms. Le nouveau
+démarrage est ressenti nettement plus rapide après essai utilisateur, sans mesure
+chronométrée. Les keymaps et les descripteurs sont inchangés.
 L’utilisateur confirme finalement
 le son de connexion Windows, mais pas de port COM4 : cette absence est attendue
 sans CDC. L’ETW confirme l’énumération terminée sans erreur globale, avec 2 075 événements
