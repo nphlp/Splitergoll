@@ -102,6 +102,7 @@ La priorité USB est différée après l’auto-détection d’OS, pour viser un
 - [ ] Tester le réveil de toutes les touches et des encodeurs.
 - [ ] Résoudre le drapeau réseau `DOCKER_INSECURE_NO_IPTABLES_RAW` au niveau du moteur Docker, sans masquer l’avertissement.
 - [x] Conserver la sauvegarde intacte de `multi` et ses dépendances dans `archives/keymap-multi/`, avec empreintes, pour le commit du découpage.
+- [x] Retirer `archives/`, `.github/` et l’ancienne matrice `build.yaml` du checkout à la demande de l’utilisateur, conserver les anciennes sources dans l’historique Git et actualiser les références.
 - [x] Séparer les keymaps `windows` avec jeu, `macos`, `linux` et `multi`, choisies après le matériel dans la commande de build.
 - [x] Rendre le matériel et la keymap obligatoires, sans sélection implicite, et expliquer leur ordre dans l’aide.
 - [x] Choisir un OS fixe pour les profils spécialisés, conserver les bascules actuelles uniquement dans `multi`.

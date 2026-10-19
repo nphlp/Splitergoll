@@ -28,11 +28,12 @@ L’AGENTS.md garde les invariants, preuves techniques et décisions utiles au p
   Ne pas activer d’indicateur LED à l’occasion de la migration.
 - La keymap complète de `dongle` à `2584ca4` fait référence : conserver les 44 positions,
   accents, Shift, macros, couches et encodeurs de `multi`. Les helpers, transforms et GPIO sont inchangés.
-- L’archive unique avant découpage est dans `archives/keymap-multi/` : keymap,
-  couches, helpers, trois dispositions et `SHA256SUMS`. Les six sources restent
-  identiques à `e8bbfc1`, comme sauvegarde autonome. Aucun profil actif ne les inclut.
+- L’archive unique avant découpage est conservée dans l’historique Git, par exemple
+  à `df55c35` sous `archives/keymap-multi/` : keymap, couches, helpers, trois
+  dispositions et `SHA256SUMS`. L’utilisateur a retiré `archives/` du checkout.
+  Les six sources archivées restent identiques à `e8bbfc1`. Aucun profil actif ne les inclut.
   Ne pas remettre de keymap historique ni ses helpers dans le dossier du shield.
-  Les builds locaux et le workflow manuel choisissent toujours `keyboard/config/keymaps/<profil>.keymap`
+  Les builds locaux choisissent toujours `keyboard/config/keymaps/<profil>.keymap`
   avec `KEYMAP_FILE`, sans utiliser la sélection automatique du shield.
 - Les quatre keymaps manuelles sont `multi`, `windows` avec jeu, `macos` et `linux`.
   `auto` ajoute un profil USB expérimental macOS / Windows avec jeu.
@@ -74,8 +75,8 @@ L’AGENTS.md garde les invariants, preuves techniques et décisions utiles au p
   est retiré du checkout après les essais positifs de V1. Cela ne valide pas V2
   ni tous les autres profils. Le guide `docs/firmwares-stables.md` explique sa
   récupération sans changer de branche. Les métadonnées et empreintes restent
-  dans ce commit, sans log privé, NVS ou appairage. L’archive de la keymap reste
-  distincte et inchangée dans `archives/keymap-multi/`.
+  dans ce commit, sans log privé, NVS ou appairage. L’archive de la keymap est
+  distincte et reste également récupérable dans l’historique Git.
 - Les branches historiques restent intactes. `wire` archive `main` à `cbad9a0`,
   `wire-minimal` archive `main-minimal` à `27ed2b7`.
 - Sur `unified-firmware`, l’historique antérieur à la refonte est regroupé dans
@@ -423,18 +424,16 @@ complets et l’ordre des couches sont identiques avant/après, hors numéros de
 La séparation de la sauvegarde est contrôlée de la même manière sur les vingt
 firmwares. Leurs fichiers `zephyr.dts.d` chargent une keymap active de `keyboard/config/keymaps/`
 et ne référencent ni `splitergoll.keymap` ni ses helpers historiques. L’archive
-et ses cinq headers restent identiques à `e8bbfc1`. Son déplacement hors du shield
+conservée dans Git et ses cinq headers sont identiques à `e8bbfc1`. Son déplacement hors du shield
 est revalidé avec les deux moitiés de `wire multi` et `bluetooth macos`.
 Empreintes SHA-256, famille nRF52840 et adresses de firmware sont vérifiées.
 Les consoles de ces nouveaux
 builds restent à tester sur le matériel, sans flash implicite. Les conteneurs de
 validation ont disparu, les trois services préexistants sont conservés.
-Le workflow `.github/workflows/build.yml` ne se déclenche que manuellement via
-`workflow_dispatch`, jamais sur push ou pull request. Le build local reste la voie
-normale. La matrice `build.yaml` conserve les seize UF2 manuels normaux :
-deux matériels, quatre keymaps et deux moitiés. Elle ajoute les deux UF2 `wire auto`. Sa liste de fichiers CMake
-est entre guillemets pour que le point-virgule ne soit pas interprété par le shell.
-Elle utilise `GITHUB_WORKSPACE` fourni par GitHub.
+L’utilisateur a supprimé `.github/` : aucun workflow GitHub Actions ne reste dans
+le checkout. L’ancienne matrice `build.yaml` est également retirée, aucun script
+local ne l’utilisait. Le build local fonctionne indépendamment.
+Ne pas recréer le workflow, sa matrice ou l’archive supprimés implicitement.
 
 Valider la syntaxe Make/shell, les erreurs de sélection, le manifeste, la conservation
 de la keymap et les deux builds réels. Pas de nouveaux tests automatisés d’outillage
@@ -517,10 +516,10 @@ Voir [docs/TODO.md](docs/TODO.md), source unique du suivi.
 
 ## Organisation du code
 
-Le manifeste reste à `keyboard/west.yml`. Le workflow manuel utilise `config_path: keyboard`
-pour initialiser West à la racine du checkout, puis chaque entrée de `build.yaml`
-impose `ZMK_CONFIG=keyboard/config` et le module `keyboard`. Ne pas donner le dossier
-imbriqué `keyboard/config` à `west init -l`, son workspace serait au mauvais niveau.
+Le manifeste source reste à `keyboard/west.yml`. Le setup prépare un workspace
+isolé dans `.local/`, avec sa copie du manifeste. Le build compile `zmk/app` et
+transmet explicitement la configuration, la keymap et le module local `keyboard`.
+L’ancienne initialisation du workflow GitHub ne fait plus partie du parcours actif.
 
 `keyboard/` regroupe le code du clavier : `config/` pour keymaps et profils,
 `west.yml` pour les dépendances, `boards/` pour les shields et `zephyr/module.yml`

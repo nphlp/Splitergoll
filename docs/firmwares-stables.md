@@ -6,7 +6,7 @@ essais positifs de V1 en `wire macos`. Les autres profils et V2 restent à valid
 
 ## Contenu conservé dans Git
 
-Les 32 UF2 couvrent toutes les combinaisons actuellement disponibles :
+Les 32 UF2 couvrent les combinaisons manuelles disponibles au moment du snapshot :
 
 - Matériel : `wire` et `bluetooth`.
 - Keymap : `multi`, `windows` avec gaming, `macos` et `linux`.

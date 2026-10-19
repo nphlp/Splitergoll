@@ -47,9 +47,9 @@ le build les choisit explicitement avec `KEYMAP_FILE`.
 | `common/multi-layers.h` | Numéros et combinaisons des couches de `multi` |
 | `common/function.h`, `common/french_layout/` | Helpers et codes de touches de la configuration active |
 
-L’archive autonome est dans [`archives/keymap-multi/`](../archives/keymap-multi/).
-Elle conserve `splitergoll.keymap`, ses cinq headers d’origine et leurs empreintes,
-sans être utilisée par les builds. Faire évoluer les profils actifs, pas cette archive.
+La sauvegarde autonome avant découpage reste dans l’historique Git, par exemple
+au commit `df55c35` sous `archives/keymap-multi/`. Le dossier `archives/` a été retiré
+du checkout à la demande de l’utilisateur. Aucun profil actif n’utilisait ces copies.
 
 Le matériel reste dans `keyboard/boards/shields/splitergoll/` :
 

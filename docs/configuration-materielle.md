@@ -138,7 +138,6 @@ nom `nice_nano_v2`. Les essais matériels cités ici précèdent la migration.
 | [wire.conf](../keyboard/config/profiles/wire.conf) / [bluetooth.conf](../keyboard/config/profiles/bluetooth.conf) | Sortie et alimentation propres à chaque profil |
 | [splitergoll.dtsi](../keyboard/boards/shields/splitergoll/splitergoll.dtsi) | Matrice, ordre des 44 positions et encodeurs |
 | [Overlay gauche](../keyboard/boards/shields/splitergoll/splitergoll_left.overlay) / [droite](../keyboard/boards/shields/splitergoll/splitergoll_right.overlay) | GPIO de chaque moitié et encodeur actif |
-| [build.yaml](../build.yaml) | Profils manuels et `wire auto`, deux moitiés, workflow GitHub manuel |
 
 Chaque moitié scanne quatre lignes et six colonnes. Le transform associe les
 positions câblées à la keymap. Les rotations des encodeurs sont distinctes de leurs clics.
