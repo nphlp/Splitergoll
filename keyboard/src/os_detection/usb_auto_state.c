@@ -70,8 +70,15 @@ bool usb_auto_keycode(struct usb_auto_state *state, bool pressed, uint32_t now_m
 bool usb_auto_can_select(const struct usb_auto_state *state, enum usb_os_guess guess,
                          bool hid_ready, uint32_t now_ms) {
     bool known = guess == USB_OS_MACOS || guess == USB_OS_WINDOWS;
-    bool drained = !state->wait_for_behaviors ||
-                   (uint32_t)(now_ms - state->last_activity_ms) >= USB_AUTO_DRAIN_MS;
     return state->selected == USB_OS_UNKNOWN && known && hid_ready && state->held == 0 &&
-           drained;
+           usb_auto_drain_remaining(state, now_ms) == 0;
+}
+
+// Ne programme aucun délai à froid, et borne la soustraction lors du débordement de l’horloge.
+uint32_t usb_auto_drain_remaining(const struct usb_auto_state *state, uint32_t now_ms) {
+    uint32_t elapsed = now_ms - state->last_activity_ms;
+    if (!state->wait_for_behaviors || elapsed >= USB_AUTO_DRAIN_MS) {
+        return 0;
+    }
+    return USB_AUTO_DRAIN_MS - elapsed;
 }

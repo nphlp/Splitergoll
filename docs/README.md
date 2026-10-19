@@ -34,8 +34,10 @@ connexion USB. La sélection et le retour du gaming sont confirmés sur V1 avec
 le firmware instrumenté. Après correction de la signature Windows, la saisie et
 la détection Windows puis macOS sont aussi confirmées sans port série, avec le
 même firmware normal sur V1. L’utilisateur confirme les layouts et le gaming.
-Le délai au branchement est optimisé en supprimant l’attente initiale de 750 ms
-et son report par les frappes ignorées. Ce démarrage reste à essayer après flash.
+La suppression de l’attente initiale et de son report par les frappes ignorées
+est ressentie plus rapide. La sélection est désormais déclenchée par les événements
+USB, sans attente fixe de détection. L’essai Mac → Windows → Mac confirme le bon
+OS à l’encodeur et un démarrage ressenti très rapide, sans mesure chronométrée.
 Les autres ordinateurs restent à tester.
 
 La keymap historique reste disponible dans `multi`, avec changement d’OS au clavier.

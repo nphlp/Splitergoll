@@ -42,7 +42,7 @@ La priorité USB est différée après l’auto-détection d’OS, pour viser un
 - [x] Isoler les échanges du lecteur CDC et valider la sélection automatique sur
   V1 Mac/Windows avec les descripteurs normaux.
 - [ ] Comparer les signatures avec Linux avant d’ajouter sa reconnaissance automatique.
-- [x] Séparer les cycles USB dans le diagnostic et attendre la stabilisation des motifs de noms.
+- [x] Séparer les cycles USB dans le diagnostic et exiger des motifs de noms suffisants et concordants.
 - [x] Implémenter `wire auto` : sélection USB expérimentale macOS / Windows avec gaming, couches partagées avec les profils fixes, attente sans OS implicite.
 - [x] Confirmer la sélection de `wire auto usb-trace` sur V1 : noms macOS/Windows via l’encodeur droit, gaming puis retour Windows, fonctionnement habituel sur Mac.
 - [x] Flasher V1 avec `wire auto` normal, sans `usb-trace`.
@@ -51,7 +51,10 @@ La priorité USB est différée après l’auto-détection d’OS, pour viser un
 - [x] Reproduire le classement inconnu sans CDC et reconnaître le motif de noms 255 puis 262, avec tests de régression et rejeu des captures précédentes.
 - [x] Confirmer le correctif sur V1 : `wire auto` normal, saisie et détection Windows puis retour macOS, sans nouveau flash entre les hôtes.
 - [x] Optimiser l’initialisation `wire auto` : retirer les 750 ms au démarrage à froid et empêcher les appuis ignorés de prolonger l’attente, avec maintien des gardes de relâchement et de comportements différés.
-- [ ] Valider le démarrage optimisé sur V1 Mac et Windows, y compris en tapant tôt et avec une touche maintenue au branchement.
+- [x] Constater un démarrage plus rapide après la première optimisation, selon le ressenti utilisateur, sans mesure chronométrée.
+- [x] Déclencher la sélection sur les requêtes et événements USB, sans stabilisation fixe de 250 ms ni contrôle périodique de 20 ms.
+- [x] Valider le démarrage sur événements : Mac → Windows → Mac, bon OS affiché par l’encodeur et rapidité ressentie à chaque branchement, sans mesure chronométrée.
+- [ ] Tester les cas particuliers au branchement : frappe précoce et touche maintenue.
 - [x] Corriger les apostrophes des chaînes PowerShell et reproduire les ParserError avec le parseur officiel avant/après, sans modifier les regex USBTRACE.
 - [x] Valider le nouveau mode ETW sur Windows : démarrage/arrêt de sa seule session et export des fichiers dans le dossier courant.
 - [ ] Confirmer le décodage Tracerpt avec `-lr` sur le PC lors d’une prochaine capture utile.

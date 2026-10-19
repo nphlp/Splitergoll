@@ -116,8 +116,9 @@ normal, sans port série. Une seule taille ou des répétitions ne suffisent pas
 contradiction la rend ambiguë. Répéter un même nom ne renforce pas l’indice.
 Les tailles des rapports HID et les requêtes du lecteur série sont ignorées.
 
-Il attend 250 ms sans nouvelle demande utile avant d’annoncer son hypothèse.
-Ce délai concerne la décision d’OS, pas la saisie des touches. Des indices insuffisants
+Il annonce son hypothèse dès que les motifs sont suffisants, sans délai fixe.
+La sélection automatique attend aussi que l’USB clavier soit prêt et que les
+touches soient relâchées. Des indices insuffisants
 donnent « inconnu », des motifs contradictoires donnent « ambigu ».
 Un reset du bus USB ou une déconnexion efface les indices du cycle précédent.
 

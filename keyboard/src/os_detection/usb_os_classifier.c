@@ -99,8 +99,7 @@ static void observe_string(struct usb_os_classifier *classifier, uint8_t index,
 }
 
 // Observe uniquement les descripteurs standard, sans utiliser les requêtes CDC ou les tailles HID.
-void usb_os_observe(struct usb_os_classifier *classifier, const uint8_t setup[8],
-                    uint32_t timestamp_ms) {
+void usb_os_observe(struct usb_os_classifier *classifier, const uint8_t setup[8]) {
     uint16_t value = read_u16(&setup[2]);
     uint16_t index = read_u16(&setup[4]);
     uint16_t length = read_u16(&setup[6]);
@@ -115,7 +114,6 @@ void usb_os_observe(struct usb_os_classifier *classifier, const uint8_t setup[8]
     if (!device && !string && !qualifier) {
         return;
     }
-    classifier->last_observation_ms = timestamp_ms;
 
     if (device) {
         if (length == 8) {
@@ -132,9 +130,8 @@ void usb_os_observe(struct usb_os_classifier *classifier, const uint8_t setup[8]
     }
 }
 
-// Refuse les contradictions, les pertes et les motifs encore en train de se compléter.
-enum usb_os_guess usb_os_result(const struct usb_os_classifier *classifier, uint32_t now_ms,
-                                bool reliable) {
+// Refuse les contradictions, les pertes et les motifs incomplets sans attente chronométrée.
+enum usb_os_guess usb_os_result(const struct usb_os_classifier *classifier, bool reliable) {
     if (!reliable || (classifier->evidence & USB_OS_STRING_OVERFLOW) != 0) {
         return USB_OS_UNKNOWN;
     }
@@ -151,10 +148,6 @@ enum usb_os_guess usb_os_result(const struct usb_os_classifier *classifier, uint
         return USB_OS_AMBIGUOUS;
     }
 
-    uint32_t quiet_ms = now_ms - classifier->last_observation_ms;
-    if (quiet_ms < USB_OS_SETTLE_MS) {
-        return USB_OS_UNKNOWN;
-    }
     // Un reset USB peut précéder notre instantané : les sondages 8/64 ne sont pas obligatoires.
     if (macos_pattern) {
         return USB_OS_MACOS;

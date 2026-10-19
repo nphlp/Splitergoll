@@ -11,8 +11,11 @@ struct usb_os_snapshot {
     enum usb_os_guess guess;
 };
 
-// Lit une hypothèse stabilisée et le cycle auquel elle appartient.
+// Lit une hypothèse fondée sur les requêtes déjà reçues et son cycle USB.
 struct usb_os_snapshot splitergoll_usb_os_snapshot(void);
+
+// Réveille le sélecteur hors du callback USB, uniquement dans le profil auto.
+void splitergoll_usb_auto_notify(void);
 
 // Points de capture facultatifs, implémentés uniquement par le module de diagnostic.
 void splitergoll_usb_trace_reset(void);

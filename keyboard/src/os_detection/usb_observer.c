@@ -32,6 +32,9 @@ static void observe_status(enum usb_dc_status_code status, const uint8_t *param)
     if (callback != NULL) {
         callback(status, param);
     }
+    if (IS_ENABLED(CONFIG_SPLITERGOLL_OS_AUTO) && status != USB_DC_SOF) {
+        splitergoll_usb_auto_notify();
+    }
 }
 
 // Conserve aussi la désinscription du callback natif.
@@ -66,17 +69,19 @@ int __wrap_usb_dc_ep_read(uint8_t ep, uint8_t *data, uint32_t size, uint32_t *re
     int result = __real_usb_dc_ep_read(ep, data, size, read_bytes);
     if (reading_setup && ep == 0) {
         size_t length = result == 0 ? (read_bytes == NULL ? size : *read_bytes) : 0;
-        uint32_t timestamp_ms = k_uptime_get_32();
         k_spinlock_key_t key = k_spin_lock(&observer_lock);
         if (data != NULL && length == 8) {
-            usb_os_observe(&classifier, data, timestamp_ms);
+            usb_os_observe(&classifier, data);
         } else {
             reliable = false;
         }
         if (IS_ENABLED(CONFIG_SPLITERGOLL_USB_TRACE)) {
-            splitergoll_usb_trace_record(timestamp_ms, data, length);
+            splitergoll_usb_trace_record(k_uptime_get_32(), data, length);
         }
         k_spin_unlock(&observer_lock, key);
+        if (IS_ENABLED(CONFIG_SPLITERGOLL_OS_AUTO)) {
+            splitergoll_usb_auto_notify();
+        }
     }
     return result;
 }
@@ -86,7 +91,7 @@ struct usb_os_snapshot splitergoll_usb_os_snapshot(void) {
     k_spinlock_key_t key = k_spin_lock(&observer_lock);
     struct usb_os_snapshot snapshot = {
         .generation = generation,
-        .guess = usb_os_result(&classifier, k_uptime_get_32(), reliable),
+        .guess = usb_os_result(&classifier, reliable),
     };
     k_spin_unlock(&observer_lock, key);
     return snapshot;

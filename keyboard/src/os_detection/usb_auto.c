@@ -6,6 +6,7 @@
 #include <zephyr/kernel.h>
 #include <zephyr/init.h>
 #include <zephyr/logging/log.h>
+#include <zephyr/sys/atomic.h>
 #include <zmk/event_manager.h>
 #include <zmk/events/keycode_state_changed.h>
 #include <zmk/events/position_state_changed.h>
@@ -19,6 +20,7 @@ BUILD_ASSERT(ZMK_KEYMAP_LEN == USB_AUTO_POSITION_COUNT, "Auto requires the 44-ke
 BUILD_ASSERT(ZMK_KEYMAP_LAYERS_LEN == 13, "Auto requires both complete fixed layer groups");
 
 static struct usb_auto_state state;
+static atomic_t auto_ready;
 K_MUTEX_DEFINE(state_mutex);
 
 // Les appels réels restent ceux du moteur ZMK figé, sans patch de dépendance.
@@ -52,7 +54,11 @@ int __wrap_zmk_event_manager_raise(zmk_event_t *event) {
         forward = usb_auto_keycode(&state, keycode->state, now_ms);
     }
     int result = forward ? __real_zmk_event_manager_raise(event) : 0;
+    bool waiting = state.selected == USB_OS_UNKNOWN;
     k_mutex_unlock(&state_mutex);
+    if (waiting) {
+        splitergoll_usb_auto_notify();
+    }
     return result;
 }
 
@@ -77,34 +83,48 @@ enum usb_os_guess splitergoll_usb_auto_selected(void) {
     return selected;
 }
 
-// Vérifie périodiquement la stabilisation, sans modifier la keymap depuis le callback USB.
+// Applique les indices disponibles hors callback USB, ou attend seulement un ancien comportement.
 static void select_os(struct k_work *work) {
     k_mutex_lock(&state_mutex, K_FOREVER);
     struct usb_os_snapshot snapshot = splitergoll_usb_os_snapshot();
     uint32_t now_ms = k_uptime_get_32();
     usb_auto_sync(&state, snapshot.generation, now_ms);
     bool known = snapshot.guess == USB_OS_MACOS || snapshot.guess == USB_OS_WINDOWS;
+    bool hid_ready = zmk_usb_is_hid_ready();
     if (state.selected == USB_OS_UNKNOWN && known &&
-        usb_auto_can_select(&state, snapshot.guess, zmk_usb_is_hid_ready(), now_ms)) {
+        usb_auto_can_select(&state, snapshot.guess, hid_ready, now_ms)) {
         uint8_t base = snapshot.guess == USB_OS_MACOS ? AUTO_MACOS_BASE : AUTO_WINDOWS_BASE;
         int result = __real_zmk_keymap_layer_to(base, true);
         // Un reset arrivé pendant la transition invalide immédiatement son résultat.
         struct usb_os_snapshot after = splitergoll_usb_os_snapshot();
-        if (result == 0 && snapshot.generation == after.generation) {
+        if (result == 0 && snapshot.generation == after.generation &&
+            snapshot.guess == after.guess) {
             state.selected = snapshot.guess;
             LOG_INF("USB OS selected: %s", usb_os_name(state.selected));
         }
     }
+    uint32_t remaining = usb_auto_drain_remaining(&state, now_ms);
+    if (state.selected == USB_OS_UNKNOWN && known && hid_ready && state.held == 0 &&
+        remaining != 0) {
+        // Un événement déjà en file doit garder la priorité sur cette échéance.
+        k_work_schedule(k_work_delayable_from_work(work), K_MSEC(remaining));
+    }
     k_mutex_unlock(&state_mutex);
-    struct k_work_delayable *delayable = k_work_delayable_from_work(work);
-    k_work_reschedule(delayable, K_MSEC(20));
 }
 
 K_WORK_DELAYABLE_DEFINE(selection_work, select_os);
 
+// Les notifications se regroupent en un travail, sans attente fixe ni boucle périodique.
+void splitergoll_usb_auto_notify(void) {
+    if (atomic_get(&auto_ready)) {
+        k_work_reschedule(&selection_work, K_NO_WAIT);
+    }
+}
+
 // Démarre le contrôle après l’initialisation du clavier, sans thread série supplémentaire.
 static int auto_init(void) {
-    k_work_schedule(&selection_work, K_NO_WAIT);
+    atomic_set(&auto_ready, 1);
+    splitergoll_usb_auto_notify();
     return 0;
 }
 

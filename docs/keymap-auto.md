@@ -5,9 +5,9 @@ la centrale gauche observe les demandes USB de l’ordinateur et active le group
 de couches reconnu. Aucun logiciel compagnon ni changement manuel d’OS.
 Sur V1, l’utilisateur confirme le fonctionnement des layouts sur Mac et Windows,
 le gaming et les bascules automatiques avec le firmware normal, sans port série.
-L’optimisation actuelle concerne uniquement le délai au branchement, sans changer
-les affectations. L’utilisateur constate un démarrage nettement plus rapide après
-flash de cette première optimisation, sans mesure chronométrée.
+La sélection sur événements est aussi validée après flash : Mac → Windows → Mac,
+avec le bon nom d’OS affiché par l’encodeur et un démarrage ressenti très rapide
+à chaque branchement. Aucun délai précis n’a été mesuré.
 
 ```sh
 make build wire auto
@@ -19,8 +19,8 @@ Les quatre profils précédents restent disponibles.
 
 ## Comportement
 
-- Les indices doivent se stabiliser pendant 250 ms. La sélection attend aussi
-  que l’USB clavier soit prêt et que toutes les touches soient relâchées.
+- La sélection se déclenche dès que le motif USB est suffisant, que l’USB clavier
+  est prêt et que toutes les touches sont relâchées, sans pause fixe de détection.
 - Avant la sélection, les touches et encodeurs sont ignorés, sans rejouer les appuis.
 - Les appuis ignorés ne repoussent plus le démarrage. Aucune pause supplémentaire
   de 750 ms n’est imposée à l’allumage. Après un reset du bus d’un clavier déjà actif,
@@ -30,9 +30,11 @@ Les quatre profils précédents restent disponibles.
   impose une nouvelle reconnaissance, sans effacer les appairages.
 - Suspendre puis reprendre l’USB sans reset conserve le choix. Le réveil réel reste à tester.
 
-Les 250 ms partent de la dernière demande USB utile, pas du branchement du câble.
-L’initialisation par l’ordinateur s’ajoute à ce délai, aucun démarrage instantané
-n’est garanti. La vérification de sélection se fait toutes les 20 ms.
+Les requêtes, changements d’état USB et relâchements réveillent directement le
+sélecteur. Il n’attend plus 250 ms et ne vérifie plus périodiquement toutes les 20 ms.
+L’initialisation par l’ordinateur reste nécessaire, aucun délai total n’est garanti.
+Le choix est fait sur les indices déjà reçus : un indice contradictoire arrivé
+après sélection ne change pas la keymap avant le prochain cycle USB.
 
 Cette version ne reconnaît ni Linux ni l’OS Bluetooth. Les signatures sont des
 heuristiques, pas une preuve d’identité : d’autres machines ou un hub peuvent les

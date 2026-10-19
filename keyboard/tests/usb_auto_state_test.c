@@ -28,6 +28,7 @@ static void test_initial_selection(void) {
     usb_auto_sync(&state, 1, 6000);
     assert(usb_auto_can_select(&state, USB_OS_MACOS, true, 6000));
     assert(!state.wait_for_behaviors);
+    assert(usb_auto_drain_remaining(&state, 6000) == 0);
     state.selected = USB_OS_MACOS;
     assert(!usb_auto_can_select(&state, USB_OS_WINDOWS, true, 5000));
     assert(!usb_auto_can_select(&state, USB_OS_AMBIGUOUS, true, 5000));
@@ -76,11 +77,14 @@ static void test_recovery_ignores_unadmitted_activity(void) {
     struct usb_auto_state state = {.selected = USB_OS_WINDOWS};
     usb_auto_sync(&state, 1, 1000);
     assert(state.wait_for_behaviors);
+    assert(usb_auto_drain_remaining(&state, 1000) == 750);
     assert(!usb_auto_position(&state, 43, true, 1500));
     assert(!usb_auto_sensor(&state, 1600));
     assert(!usb_auto_position(&state, 43, false, 1700));
     assert(!usb_auto_can_select(&state, USB_OS_MACOS, true, 1749));
+    assert(usb_auto_drain_remaining(&state, 1749) == 1);
     assert(usb_auto_can_select(&state, USB_OS_MACOS, true, 1750));
+    assert(usb_auto_drain_remaining(&state, 1750) == 0);
 
     usb_auto_sync(&state, 2, 1800);
     assert(!usb_auto_can_select(&state, USB_OS_MACOS, true, 2549));
@@ -129,7 +133,9 @@ static void test_counter_wrap(void) {
     usb_auto_sync(&state, 0, UINT32_MAX - 200);
     assert(state.selected == USB_OS_UNKNOWN);
     assert(!usb_auto_can_select(&state, USB_OS_MACOS, true, 548));
+    assert(usb_auto_drain_remaining(&state, 548) == 1);
     assert(usb_auto_can_select(&state, USB_OS_MACOS, true, 549));
+    assert(usb_auto_drain_remaining(&state, 549) == 0);
 }
 
 // Lance les scénarios indépendants, avec assertions et sanitizers activés par la commande de test.

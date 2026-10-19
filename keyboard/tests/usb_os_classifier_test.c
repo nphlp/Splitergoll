@@ -1,23 +1,17 @@
-// Vérifie les motifs de noms USB, leur stabilisation et les ambiguïtés sans matériel.
+// Vérifie les motifs de noms USB, leur disponibilité et les ambiguïtés sans matériel.
 #include <splitergoll/usb_os_classifier.h>
 
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
 
-// Encode une demande de test et permet de contrôler l’horloge indépendamment du processeur.
-static void observe_at(struct usb_os_classifier *classifier, uint8_t type, uint8_t request,
-                       uint16_t value, uint16_t index, uint16_t length, uint32_t timestamp_ms) {
+// Encode les champs USB little-endian sans dépendance à une horloge.
+static void observe(struct usb_os_classifier *classifier, uint8_t type, uint8_t request,
+                    uint16_t value, uint16_t index, uint16_t length) {
     uint8_t setup[8] = {type, request, (uint8_t)value, (uint8_t)(value >> 8),
                         (uint8_t)index, (uint8_t)(index >> 8),
                         (uint8_t)length, (uint8_t)(length >> 8)};
-    usb_os_observe(classifier, setup, timestamp_ms);
-}
-
-// Place les demandes ordinaires à 100 ms pour lire leurs résultats stabilisés à 1000 ms.
-static void observe(struct usb_os_classifier *classifier, uint8_t type, uint8_t request,
-                    uint16_t value, uint16_t index, uint16_t length) {
-    observe_at(classifier, type, request, value, index, length, 100);
+    usb_os_observe(classifier, setup);
 }
 
 // Demande le même nom dans la même langue en deux lectures, sans imposer sa taille finale.
@@ -52,19 +46,42 @@ static void test_positive_patterns(void) {
     struct usb_os_classifier windows = {0};
     macos_requests(&macos);
     windows_requests(&windows);
-    assert(usb_os_result(&macos, 1000, true) == USB_OS_MACOS);
-    assert(usb_os_result(&windows, 1000, true) == USB_OS_WINDOWS);
+    assert(usb_os_result(&macos, true) == USB_OS_MACOS);
+    assert(usb_os_result(&windows, true) == USB_OS_WINDOWS);
     assert(macos.evidence == (USB_OS_DEVICE_8 | USB_OS_STRINGS_2));
     assert(windows.evidence == (USB_OS_DEVICE_64 | USB_OS_STRINGS_4 |
                                 USB_OS_STRINGS_255 | USB_OS_QUALIFIER));
-    assert(usb_os_result(&macos, 1000, false) == USB_OS_UNKNOWN);
-    assert(usb_os_result(&windows, 1000, false) == USB_OS_UNKNOWN);
+    assert(usb_os_result(&macos, false) == USB_OS_UNKNOWN);
+    assert(usb_os_result(&windows, false) == USB_OS_UNKNOWN);
 
     macos = (struct usb_os_classifier){0};
     observe(&macos, 0x80, 0x06, 0x0100, 0, 8);
     string_pair(&macos, 7, 0x040c, 2, 4);
     string_pair(&macos, 9, 0x040c, 2, 98);
-    assert(usb_os_result(&macos, 1000, true) == USB_OS_MACOS);
+    assert(usb_os_result(&macos, true) == USB_OS_MACOS);
+}
+
+// Un motif complet est disponible dès sa réception, sans attendre une durée arbitraire.
+static void test_immediate_result(void) {
+    struct usb_os_classifier classifier = {0};
+    string_pair(&classifier, 1, 0x0409, 2, 18);
+    assert(usb_os_result(&classifier, true) == USB_OS_UNKNOWN);
+    observe(&classifier, 0x80, 0x06, 0x0302, 0x0409, 2);
+    assert(usb_os_result(&classifier, true) == USB_OS_UNKNOWN);
+    observe(&classifier, 0x80, 0x06, 0x0302, 0x0409, 24);
+    assert(usb_os_result(&classifier, true) == USB_OS_MACOS);
+    assert(usb_os_result(&classifier, false) == USB_OS_UNKNOWN);
+
+    // Une contradiction tardive reste visible, même après une hypothèse complète.
+    string_pair(&classifier, 3, 0x0409, 255, 262);
+    assert(usb_os_result(&classifier, true) == USB_OS_AMBIGUOUS);
+
+    classifier = (struct usb_os_classifier){0};
+    observe(&classifier, 0x80, 0x06, 0x0301, 0x0409, 255);
+    observe(&classifier, 0x80, 0x06, 0x0302, 0x0409, 255);
+    assert(usb_os_result(&classifier, true) == USB_OS_UNKNOWN);
+    observe(&classifier, 0x80, 0x06, 0x0302, 0x0409, 262);
+    assert(usb_os_result(&classifier, true) == USB_OS_WINDOWS);
 }
 
 // Un nom relu plusieurs fois ou dans deux langues ne vaut pas deux noms indépendants.
@@ -75,21 +92,21 @@ static void test_repetition_and_language(void) {
         string_pair(&classifier, 1, 0x0409, 2, 18);
     }
     string_pair(&classifier, 1, 0x040c, 2, 22);
-    assert(usb_os_result(&classifier, 1000, true) == USB_OS_UNKNOWN);
+    assert(usb_os_result(&classifier, true) == USB_OS_UNKNOWN);
     assert(classifier.string_count == 2);
 
     observe(&classifier, 0x80, 0x06, 0x0302, 0x0409, 2);
     observe(&classifier, 0x80, 0x06, 0x0302, 0x040c, 30);
-    assert(usb_os_result(&classifier, 1000, true) == USB_OS_UNKNOWN);
+    assert(usb_os_result(&classifier, true) == USB_OS_UNKNOWN);
     observe(&classifier, 0x80, 0x06, 0x0302, 0x0409, 30);
-    assert(usb_os_result(&classifier, 1000, true) == USB_OS_MACOS);
+    assert(usb_os_result(&classifier, true) == USB_OS_MACOS);
 
     classifier = (struct usb_os_classifier){0};
     for (unsigned i = 0; i < 50; i++) {
         windows_requests(&classifier);
     }
     assert(classifier.string_count == 2);
-    assert(usb_os_result(&classifier, 1000, true) == USB_OS_WINDOWS);
+    assert(usb_os_result(&classifier, true) == USB_OS_WINDOWS);
 }
 
 // Les lectures larges répétées d’un seul nom, même traduit, ne suffisent pas pour Windows.
@@ -101,18 +118,18 @@ static void test_windows_bulk_diversity(void) {
         observe(&classifier, 0x80, 0x06, 0x0301, 0x0409, 255);
         observe(&classifier, 0x80, 0x06, 0x0301, 0x040c, 255);
     }
-    assert(usb_os_result(&classifier, 1000, true) == USB_OS_UNKNOWN);
+    assert(usb_os_result(&classifier, true) == USB_OS_UNKNOWN);
     observe(&classifier, 0x80, 0x06, 0x0302, 0x0409, 255);
-    assert(usb_os_result(&classifier, 1000, true) == USB_OS_WINDOWS);
+    assert(usb_os_result(&classifier, true) == USB_OS_WINDOWS);
 }
 
 // N’invente pas de résultat à partir d’une sonde initiale ou d’un motif Linux publié seul.
 static void test_incomplete_patterns(void) {
     struct usb_os_classifier classifier = {0};
-    assert(usb_os_result(&classifier, 1000, true) == USB_OS_UNKNOWN);
+    assert(usb_os_result(&classifier, true) == USB_OS_UNKNOWN);
     observe(&classifier, 0x80, 0x06, 0x0100, 0, 8);
     string_pair(&classifier, 1, 0x0409, 2, 18);
-    assert(usb_os_result(&classifier, 1000, true) == USB_OS_UNKNOWN);
+    assert(usb_os_result(&classifier, true) == USB_OS_UNKNOWN);
 
     classifier = (struct usb_os_classifier){0};
     observe(&classifier, 0x80, 0x06, 0x0100, 0, 64);
@@ -120,21 +137,21 @@ static void test_incomplete_patterns(void) {
         observe(&classifier, 0x80, 0x06, 0x0300 | i, 0x0409, 255);
     }
     observe(&classifier, 0x80, 0x06, 0x0600, 0, 10);
-    assert(usb_os_result(&classifier, 1000, true) == USB_OS_UNKNOWN);
+    assert(usb_os_result(&classifier, true) == USB_OS_UNKNOWN);
     string_pair(&classifier, 2, 0x0409, 4, 24);
-    assert(usb_os_result(&classifier, 1000, true) == USB_OS_WINDOWS);
+    assert(usb_os_result(&classifier, true) == USB_OS_WINDOWS);
 
     classifier = (struct usb_os_classifier){0};
     observe(&classifier, 0x80, 0x06, 0x0100, 0, 64);
     string_pair(&classifier, 1, 0x0409, 4, 18);
     string_pair(&classifier, 2, 0x0409, 4, 22);
-    assert(usb_os_result(&classifier, 1000, true) == USB_OS_UNKNOWN);
+    assert(usb_os_result(&classifier, true) == USB_OS_UNKNOWN);
     observe(&classifier, 0x80, 0x06, 0x0300, 0, 255);
-    assert(usb_os_result(&classifier, 1000, true) == USB_OS_UNKNOWN);
+    assert(usb_os_result(&classifier, true) == USB_OS_UNKNOWN);
     observe(&classifier, 0x80, 0x06, 0x0301, 0x0409, 255);
-    assert(usb_os_result(&classifier, 1000, true) == USB_OS_UNKNOWN);
+    assert(usb_os_result(&classifier, true) == USB_OS_UNKNOWN);
     observe(&classifier, 0x80, 0x06, 0x0302, 0x0409, 255);
-    assert(usb_os_result(&classifier, 1000, true) == USB_OS_WINDOWS);
+    assert(usb_os_result(&classifier, true) == USB_OS_WINDOWS);
 
 }
 
@@ -147,22 +164,21 @@ static void test_missing_initial_device_probe(void) {
     observe(&windows, 0x80, 0x06, 0x0600, 0, 10);
     string_pair(&windows, 2, 0x0409, 4, 24);
     assert(windows.evidence == (USB_OS_STRINGS_4 | USB_OS_STRINGS_255 | USB_OS_QUALIFIER));
-    assert(usb_os_result(&windows, 349, true) == USB_OS_UNKNOWN);
-    assert(usb_os_result(&windows, 350, true) == USB_OS_WINDOWS);
-    assert(usb_os_result(&windows, 1000, false) == USB_OS_UNKNOWN);
+    assert(usb_os_result(&windows, true) == USB_OS_WINDOWS);
+    assert(usb_os_result(&windows, false) == USB_OS_UNKNOWN);
 
     struct usb_os_classifier macos = {0};
     observe(&macos, 0x80, 0x06, 0x0100, 0, 18);
     string_pair(&macos, 1, 0x0409, 2, 18);
     string_pair(&macos, 2, 0x0409, 2, 38);
     assert(macos.evidence == USB_OS_STRINGS_2);
-    assert(usb_os_result(&macos, 1000, true) == USB_OS_MACOS);
+    assert(usb_os_result(&macos, true) == USB_OS_MACOS);
 
     // Une sonde contraire conserve son rôle de veto, même si elle arrive plus tard.
     observe(&windows, 0x80, 0x06, 0x0100, 0, 8);
     observe(&macos, 0x80, 0x06, 0x0100, 0, 64);
-    assert(usb_os_result(&windows, 1000, true) == USB_OS_AMBIGUOUS);
-    assert(usb_os_result(&macos, 1000, true) == USB_OS_AMBIGUOUS);
+    assert(usb_os_result(&windows, true) == USB_OS_AMBIGUOUS);
+    assert(usb_os_result(&macos, true) == USB_OS_AMBIGUOUS);
 }
 
 // Rejoue les 22 SETUP du firmware HID normal capturés côté Windows, sans interface CDC.
@@ -197,9 +213,8 @@ static void test_windows_without_cdc(void) {
             const uint16_t *r = requests[i];
             observe(&classifier, r[0], r[1], r[2], r[3], r[4]);
         }
-        assert(usb_os_result(&classifier, 349, true) == USB_OS_UNKNOWN);
-        assert(usb_os_result(&classifier, 350, true) == USB_OS_WINDOWS);
-        assert(usb_os_result(&classifier, 1000, false) == USB_OS_UNKNOWN);
+            assert(usb_os_result(&classifier, true) == USB_OS_WINDOWS);
+        assert(usb_os_result(&classifier, false) == USB_OS_UNKNOWN);
     }
 }
 
@@ -207,10 +222,10 @@ static void test_windows_without_cdc(void) {
 static void test_windows_wide_string_guards(void) {
     struct usb_os_classifier classifier = {0};
     observe(&classifier, 0x80, 0x06, 0x0307, 0x040c, 262);
-    assert(usb_os_result(&classifier, 1000, true) == USB_OS_UNKNOWN);
+    assert(usb_os_result(&classifier, true) == USB_OS_UNKNOWN);
     observe(&classifier, 0x80, 0x06, 0x0307, 0x040c, 255);
     observe(&classifier, 0x80, 0x06, 0x0309, 0x040c, 255);
-    assert(usb_os_result(&classifier, 1000, true) == USB_OS_UNKNOWN);
+    assert(usb_os_result(&classifier, true) == USB_OS_UNKNOWN);
 
     observe(&classifier, 0x80, 0x06, 0x0307, 0x0409, 262);
     observe(&classifier, 0x80, 0x06, 0x0308, 0x040c, 262);
@@ -221,28 +236,28 @@ static void test_windows_wide_string_guards(void) {
     observe(&classifier, 0x80, 0x07, 0x0307, 0x040c, 262);
     observe(&classifier, 0x80, 0x06, 0x0300, 0, 262);
     observe(&classifier, 0x80, 0x06, 0x0200, 0, 262);
-    assert(usb_os_result(&classifier, 1000, true) == USB_OS_UNKNOWN);
+    assert(usb_os_result(&classifier, true) == USB_OS_UNKNOWN);
     observe(&classifier, 0x80, 0x06, 0x0307, 0x040c, 262);
     assert(classifier.evidence == (USB_OS_STRINGS_255 | USB_OS_STRINGS_262));
-    assert(usb_os_result(&classifier, 1000, true) == USB_OS_WINDOWS);
+    assert(usb_os_result(&classifier, true) == USB_OS_WINDOWS);
 
     classifier = (struct usb_os_classifier){0};
     for (unsigned i = 0; i < 50; i++) {
         string_pair(&classifier, 7, 0x040c, 255, 262);
         string_pair(&classifier, 7, 0x0409, 255, 262);
     }
-    assert(usb_os_result(&classifier, 1000, true) == USB_OS_UNKNOWN);
+    assert(usb_os_result(&classifier, true) == USB_OS_UNKNOWN);
     observe(&classifier, 0x80, 0x06, 0x0309, 0x040c, 255);
-    assert(usb_os_result(&classifier, 1000, true) == USB_OS_WINDOWS);
+    assert(usb_os_result(&classifier, true) == USB_OS_WINDOWS);
 
     observe(&classifier, 0x80, 0x06, 0x0100, 0, 8);
-    assert(usb_os_result(&classifier, 1000, true) == USB_OS_AMBIGUOUS);
+    assert(usb_os_result(&classifier, true) == USB_OS_AMBIGUOUS);
     classifier = (struct usb_os_classifier){0};
     string_pair(&classifier, 7, 0x040c, 255, 262);
     observe(&classifier, 0x80, 0x06, 0x0309, 0x040c, 255);
     string_pair(&classifier, 1, 0x040c, 2, 18);
     string_pair(&classifier, 2, 0x040c, 2, 24);
-    assert(usb_os_result(&classifier, 1000, true) == USB_OS_AMBIGUOUS);
+    assert(usb_os_result(&classifier, true) == USB_OS_AMBIGUOUS);
 }
 
 // Les relectures doivent suivre le sondage, les fragments dans l’ordre inverse restent insuffisants.
@@ -251,42 +266,28 @@ static void test_probe_order(void) {
     observe(&classifier, 0x80, 0x06, 0x0100, 0, 8);
     string_pair(&classifier, 1, 0x0409, 18, 2);
     string_pair(&classifier, 2, 0x0409, 22, 2);
-    assert(usb_os_result(&classifier, 1000, true) == USB_OS_UNKNOWN);
+    assert(usb_os_result(&classifier, true) == USB_OS_UNKNOWN);
     observe(&classifier, 0x80, 0x06, 0x0301, 0x0409, 18);
     observe(&classifier, 0x80, 0x06, 0x0302, 0x0409, 22);
-    assert(usb_os_result(&classifier, 1000, true) == USB_OS_MACOS);
+    assert(usb_os_result(&classifier, true) == USB_OS_MACOS);
 }
 
-// Attend 250 ms après les demandes utiles et gère le débordement de l’horloge 32 bits.
-static void test_settle_time(void) {
-    struct usb_os_classifier classifier = {0};
-    macos_requests(&classifier);
-    assert(usb_os_result(&classifier, 349, true) == USB_OS_UNKNOWN);
-    assert(usb_os_result(&classifier, 350, true) == USB_OS_MACOS);
-    observe_at(&classifier, 0x80, 0x06, 0x0301, 0x0409, 18, 500);
-    assert(usb_os_result(&classifier, 749, true) == USB_OS_UNKNOWN);
-    assert(usb_os_result(&classifier, 750, true) == USB_OS_MACOS);
-    observe_at(&classifier, 0x80, 0x06, 0x0301, 0x0409, 18, UINT32_MAX - 100);
-    assert(usb_os_result(&classifier, 148, true) == USB_OS_UNKNOWN);
-    assert(usb_os_result(&classifier, 149, true) == USB_OS_MACOS);
-}
-
-// Les requêtes CDC, HID et les langues ne changent ni l’hypothèse ni son horloge.
+// Les requêtes CDC, HID et les langues ne changent pas l’hypothèse.
 static void test_noise(void) {
     struct usb_os_classifier classifier = {0};
     macos_requests(&classifier);
     uint16_t evidence = classifier.evidence;
-    observe_at(&classifier, 0x21, 0x20, 0, 0, 7, 999);
-    observe_at(&classifier, 0x21, 0x22, 3, 0, 0, 999);
-    observe_at(&classifier, 0xa1, 0x21, 0, 0, 7, 999);
-    observe_at(&classifier, 0x81, 0x06, 0x2200, 255, 240, 999);
-    observe_at(&classifier, 0x21, 0x0a, 0, 255, 0, 999);
-    observe_at(&classifier, 0x80, 0x06, 0x0300, 0, 255, 999);
-    observe_at(&classifier, 0x81, 0x06, 0x0301, 0x0409, 4, 999);
-    observe_at(&classifier, 0x80, 0x07, 0x0301, 0x0409, 4, 999);
-    observe_at(&classifier, 0x80, 0x06, 0x0100, 1, 64, 999);
+    observe(&classifier, 0x21, 0x20, 0, 0, 7);
+    observe(&classifier, 0x21, 0x22, 3, 0, 0);
+    observe(&classifier, 0xa1, 0x21, 0, 0, 7);
+    observe(&classifier, 0x81, 0x06, 0x2200, 255, 240);
+    observe(&classifier, 0x21, 0x0a, 0, 255, 0);
+    observe(&classifier, 0x80, 0x06, 0x0300, 0, 255);
+    observe(&classifier, 0x81, 0x06, 0x0301, 0x0409, 4);
+    observe(&classifier, 0x80, 0x07, 0x0301, 0x0409, 4);
+    observe(&classifier, 0x80, 0x06, 0x0100, 1, 64);
     assert(classifier.evidence == evidence);
-    assert(usb_os_result(&classifier, 1000, true) == USB_OS_MACOS);
+    assert(usb_os_result(&classifier, true) == USB_OS_MACOS);
 }
 
 // Des motifs contraires invalident une hypothèse, même si un côté semblait déjà complet.
@@ -295,19 +296,19 @@ static void test_contradictions(void) {
     macos_requests(&classifier);
     string_pair(&classifier, 3, 0x0409, 4, 18);
     string_pair(&classifier, 4, 0x0409, 4, 22);
-    assert(usb_os_result(&classifier, 1000, true) == USB_OS_AMBIGUOUS);
-    assert(usb_os_result(&classifier, 1000, false) == USB_OS_UNKNOWN);
+    assert(usb_os_result(&classifier, true) == USB_OS_AMBIGUOUS);
+    assert(usb_os_result(&classifier, false) == USB_OS_UNKNOWN);
 
     classifier = (struct usb_os_classifier){0};
     windows_requests(&classifier);
     macos_requests(&classifier);
-    assert(usb_os_result(&classifier, 1000, true) == USB_OS_AMBIGUOUS);
+    assert(usb_os_result(&classifier, true) == USB_OS_AMBIGUOUS);
 
     classifier = (struct usb_os_classifier){0};
     observe(&classifier, 0x80, 0x06, 0x0100, 0, 64);
     string_pair(&classifier, 1, 0x0409, 2, 18);
     string_pair(&classifier, 2, 0x0409, 2, 22);
-    assert(usb_os_result(&classifier, 1000, true) == USB_OS_AMBIGUOUS);
+    assert(usb_os_result(&classifier, true) == USB_OS_AMBIGUOUS);
 }
 
 // Le nombre de noms suivis est borné et un dépassement ne produit pas un résultat trompeur.
@@ -318,11 +319,11 @@ static void test_capacity(void) {
         string_pair(&classifier, i, 0x0409, 2, 18);
     }
     assert(classifier.string_count == USB_OS_STRING_CAPACITY);
-    assert(usb_os_result(&classifier, 1000, true) == USB_OS_MACOS);
+    assert(usb_os_result(&classifier, true) == USB_OS_MACOS);
     string_pair(&classifier, 17, 0x0409, 2, 18);
     assert(classifier.string_count == USB_OS_STRING_CAPACITY);
     assert((classifier.evidence & USB_OS_STRING_OVERFLOW) != 0);
-    assert(usb_os_result(&classifier, 1000, true) == USB_OS_UNKNOWN);
+    assert(usb_os_result(&classifier, true) == USB_OS_UNKNOWN);
 }
 
 // Vérifie les noms du protocole et le traitement d’une valeur d’enum invalide.
@@ -336,6 +337,7 @@ static void test_names(void) {
 
 // Lance les tests du classifieur réel avec assertions et sanitizers côté hôte.
 int main(void) {
+    test_immediate_result();
     test_windows_without_cdc();
     test_windows_wide_string_guards();
     test_positive_patterns();
@@ -344,7 +346,6 @@ int main(void) {
     test_incomplete_patterns();
     test_missing_initial_device_probe();
     test_probe_order();
-    test_settle_time();
     test_noise();
     test_contradictions();
     test_capacity();

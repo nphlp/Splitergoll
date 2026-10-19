@@ -598,9 +598,21 @@ Mac et Windows. Ces usages sont validés par son retour, le chantier porte sur
 le délai au branchement. L’optimisation retire l’attente initiale de 750 ms et
 son réarmement par les positions/rotations ignorées. Le relâchement complet reste
 requis, la marge de 750 ms est conservée après un cycle actif et pour les keycodes
-différés. La stabilisation de signature reste 250 ms, le contrôle 20 ms. Le nouveau
+différés. Cette première optimisation conservait 250 ms de stabilisation et un
+contrôle toutes les 20 ms. Le nouveau
 démarrage est ressenti nettement plus rapide après essai utilisateur, sans mesure
 chronométrée. Les keymaps et les descripteurs sont inchangés.
+La première optimisation est publiée à `c83c146`. La seconde retire les 250 ms et
+le contrôle périodique : les requêtes et statuts USB réveillent directement la
+sélection, ainsi que les événements pendant l’attente. Le classifieur n’utilise
+plus d’horloge. La sélection reste hors callback USB, après disponibilité HID et
+relâchement complet. Le seul minuteur est le reste de la marge des anciens
+comportements après reset. Les contradictions avant sélection restent refusées,
+celles arrivées après le choix figé peuvent ne pas être prises en compte.
+L’utilisateur confirme après flash l’aller-retour Mac → Windows → Mac : les noms
+affichés par le clic d’encodeur correspondent à chaque OS et le démarrage est
+ressenti très rapide à chaque branchement. Aucun chronométrage. Les cas de touche
+maintenue, reset du bus sans coupure et réveil restent distincts.
 L’utilisateur confirme finalement
 le son de connexion Windows, mais pas de port COM4 : cette absence est attendue
 sans CDC. L’ETW confirme l’énumération terminée sans erreur globale, avec 2 075 événements

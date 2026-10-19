@@ -127,8 +127,8 @@ pour ce diagnostic. Les tailles HID 176/240 ne participent plus à la décision.
 `../../keyboard/include/splitergoll/` sont du C indépendant de Zephyr.
 Le diagnostic rejoue les records au début de la demande D. L’observateur partagé
 met également à jour un état borné à la réception des SETUP pour le firmware auto. Ses bits décrivent des demandes, pas leurs réponses
-ni une probabilité. L’horloge de stabilisation est celle du firmware au début de
-l’instantané, jamais l’heure d’arrivée des lignes ni la fin de l’envoi UART.
+ni une probabilité. Les timestamps restent dans les records pour leur chronologie,
+mais le classifieur n’utilise plus d’horloge ni de délai de stabilisation.
 
 Les états par chaîne sont bornés à 16 couples index/langue. Un motif exige le
 sondage puis une relecture du même couple. La lecture de l’index zéro décrit les
@@ -142,11 +142,12 @@ obligatoires. Si présentes, elles peuvent contredire un motif de noms et le ren
 plusieurs fois : ne pas exiger deux noms différents pour ce motif-là.
 
 Le qualifier reste un indice affiché, sans décider de l’OS. CDC et HID ne contribuent
-ni à l’OS ni à sa stabilisation. Les sondages contradictoires ou les deux familles de
+pas à l’OS. Les sondages contradictoires ou les deux familles de
 motifs donnent ambigu. Un motif incomplet, une perte/rejet ou un dépassement de
 capacité donne inconnu. Aucun OS par défaut et aucune règle Linux ne sont inventés.
-250 ms sans nouvelle demande utile sont nécessaires, avec soustraction uint32 pour
-le passage de l’horloge par zéro. Ce délai ne bloque pas la saisie.
+L’hypothèse est disponible dès que les motifs sont suffisants. Le délai de 250 ms
+est retiré du diagnostic comme de l’auto. Les timestamps de capture restent
+présents dans le protocole et ne mesurent pas le temps complet de démarrage.
 
 Le callback de statut remet count/dropped/rejected à zéro sur USB_DC_RESET et
 USB_DC_DISCONNECTED et change la génération. Il transmet l’événement original à
@@ -168,7 +169,7 @@ Le stockage garde son test dans `tests/`, avec `-Ifirmware`. Le classifieur et s
 test sont dans `../../keyboard/`, avec `-I../../keyboard/include`. Les deux commandes
 emploient `-std=c11 -Wall -Wextra -Werror -fsanitize=address,undefined` et assertions actives. Le classifieur
 couvre motifs, ordre, répétitions, langues, perte, ambiguïté, débordement de capacité,
-perturbations CDC/HID, délai et horloge 32 bits. Le stockage vérifie aussi la séparation
+perturbations CDC/HID et disponibilité immédiate du motif complet. Le stockage vérifie aussi la séparation
 des générations, dont une lecture ancienne après remplacement de l’index zéro.
 Les six captures initiales se rejouent avec le même C : trois Mac et trois Windows.
 L’ancienne evidence Windows 003a devient 00ba avec le motif 255 puis 262, sans

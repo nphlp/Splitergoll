@@ -15,8 +15,10 @@ macOS sur V1, par débranchement/rebranchement et sans reflash entre les deux h�
 Il signale ensuite des démarrages irréguliers sur Mac, même de Mac vers Mac.
 L’utilisateur précise ensuite que les layouts sur Mac et Windows et le gaming
 fonctionnent correctement en usage normal. Ne pas lui redemander de revalider ce
-fonctionnement comme un chantier ouvert. Le démarrage optimisé, les resets et la
-reprise restent des essais distincts. Aucun délai matériel précis n’est encore mesuré.
+fonctionnement comme un chantier ouvert. Le démarrage sur événements est ensuite
+confirmé sur Mac → Windows → Mac, avec le bon nom d’OS à l’encodeur et un ressenti
+très rapide. Les touches maintenues, resets et reprise restent des essais distincts.
+Aucun délai matériel précis n’est encore mesuré.
 Aucun OS par défaut n’est ajouté.
 Aucun flash implicite.
 Les quatre profils manuels et l’archive de `multi` restent disponibles et inchangés.
@@ -57,10 +59,12 @@ macOS. La couche zéro neutre reste présente selon les invariants du moteur ZMK
 ## Cycle et sûreté des appuis
 
 Un reset ou une déconnexion USB vide les indices et change la génération sous spinlock.
-Suspend/resume ne les efface pas. Aucun callback USB n’active de couche. Un travail
-sur la file système vérifie l’état toutes les 20 ms, avec mutex partagé par la saisie.
-Le classifieur exige 250 ms sans nouveau descripteur utile, ignore CDC/HID et ne suppose
-jamais Windows par défaut. Les motifs et limites sont détaillés dans la spec du diagnostic.
+Suspend/resume ne les efface pas. Aucun callback USB n’active de couche. Les SETUP
+et changements de statut réveillent un travail sur la file système, avec mutex
+partagé par la saisie. La notification de statut vient après le callback natif,
+pour que la disponibilité HID soit à jour. Les SOF ne réveillent pas le sélecteur.
+Le classifieur ignore CDC/HID, n’utilise plus d’horloge et ne suppose jamais Windows
+par défaut. Les motifs et limites sont détaillés dans la spec du diagnostic.
 
 La sélection exige aussi HID prêt et zéro touche physique maintenue. À froid,
 `wait_for_behaviors` vaut false : aucun comportement de l’ancien cycle n’est à
@@ -93,7 +97,7 @@ La capture auto ajoute ACTIVE pour distinguer hypothèse et groupe effectivement
 Depuis la racine du dépôt : compiler chaque source C pure avec son test homonyme,
 `-Ikeyboard/include -std=c11 -Wall -Wextra -Werror -fsanitize=address,undefined`, puis
 exécuter le binaire. Classifieur : motifs, répétitions/langues, sonde initiale absente,
-indices contradictoires, overflow et stabilisation. État : HID absent, inconnu/ambigu,
+indices contradictoires, overflow et disponibilité immédiate des motifs. État : HID absent, inconnu/ambigu,
 appuis ignorés, touche maintenue, reset pendant raccourci, releases, doublons et compteurs.
 Le stockage du diagnostic conserve sa suite avec `-Idiagnostics/os-signature/firmware`.
 
@@ -147,7 +151,7 @@ Le classifieur conserve le motif Windows 4 puis complet et ajoute le motif 255 p
 La taille 262 est une taille demandée, jamais la longueur du nom réellement reçu.
 Aucun numéro de nom, langue, longueur de produit ou identifiant de machine n’est
 codé dans la règle. Linux n’est toujours pas reconnu. Les veto 8/64, conflits Mac,
-pertes, capacité et stabilisation restent actifs. Une application sur un autre OS
+pertes et capacité restent actifs. Une application sur un autre OS
 peut reproduire ces requêtes : il s’agit toujours d’une heuristique expérimentale.
 
 Le test natif reprend les 22 en-têtes anonymes, avec et sans la sonde initiale.
@@ -202,8 +206,8 @@ utilisée dans ZMK. Les positions ignorées ne créent pas de comportement ni de
 release orpheline, mais une touche encore tenue bloque toujours la sélection.
 Le relâchement d’une position admise avant reset et tout keycode différé repoussent
 la marge de sécurité. Un reset répété pendant cette marge la réarme également.
-La stabilisation des signatures reste 250 ms et le contrôle périodique 20 ms :
-ils ne constituent pas une mesure depuis le branchement du câble.
+Cette première optimisation conservait encore la stabilisation de 250 ms et le
+contrôle périodique de 20 ms, retirés dans l’étape événementielle ci-dessous.
 
 Le test de non-report par des frappes ignorées échoue avec l’ancien code et passe
 avec l’optimisation. La suite couvre aussi sélection sans attente à froid, touches
@@ -222,3 +226,55 @@ sont identiques aux versions précédentes : seul le flash gauche est nécessair
 Aucun avertissement nouveau dans notre code, KSCAN et le drapeau Docker restent
 ceux du socle. Les trois conteneurs de build sont supprimés automatiquement,
 les trois services préexistants sont conservés. Aucun flash matériel effectué.
+
+## Sélection sur événements
+
+La première optimisation est publiée à `c83c146`. L’étape suivante retire le délai
+de 250 ms du classifieur et ses paramètres d’horloge. Les mêmes motifs sont évalués
+dès chaque nouvelle requête, y compris dans le dump du diagnostic. Les timestamps
+restent uniquement dans les records et le protocole de capture.
+
+Le travail de sélection est réveillé par SETUP, statut USB et événement physique
+ou keycode tant que le choix est inconnu. Les notifications sont faites hors
+spinlock, sans activation de couche ni attente de mutex depuis le pilote USB.
+`auto_ready`, atomique, empêche son exécution avant SYS_INIT du sélecteur.
+L’initialisation réveille une fois le travail pour couvrir les événements reçus
+plus tôt. Les notifications se regroupent avec `k_work_reschedule(K_NO_WAIT)`.
+Une touche encore tenue attend son relâchement, HID absent attend son statut,
+un motif incomplet attend une requête : pas de boucle périodique.
+
+Seule la récupération d’anciens comportements utilise une échéance : le travail
+programme exactement `usb_auto_drain_remaining()`, borné à 750 ms, lorsqu’aucun
+autre garde ne bloque. `k_work_schedule` dans le travail préserve une notification
+immédiate déjà en file. Le code figé de Zephyr `kernel/work.c:1023` accepte la
+programmation d’un travail en cours s’il n’a pas déjà une exécution en attente.
+Les notifications ultérieures peuvent avancer cette échéance. L’horloge uint32
+et les relâchements de l’ancien cycle gardent leurs protections.
+
+Après activation de couche, génération et hypothèse sont revérifiées avant de
+publier le choix. Une contradiction après publication ne le change pas avant le
+prochain cycle, comme auparavant. Retirer la marge augmente la fenêtre possible
+d’une contradiction tardive : c’est le compromis explicite du choix au plus tôt,
+sans promesse universelle de reconnaissance. Aucun OS implicite ni nouveau motif.
+
+Le test de résultat immédiat échoue avant retrait du délai et passe après. Le
+test de stabilisation devenu sans objet est remplacé par des préfixes incomplets,
+la dernière requête complétant Mac/Windows et une contradiction après hypothèse.
+La politique teste aussi le reste exact du garde, dont 1 ms avant échéance et le
+débordement de l’horloge. Le rejeu de chaque préfixe des dix captures reste inconnu
+ou du bon OS, puis finit sur cinq Mac et cinq Windows. Les deux rejeux ETW anonymes
+restent Windows. Leurs timestamps synthétiques ne sont pas des mesures de vitesse.
+Les files USB et système ne sont pas simulées par ces tests natifs. L’utilisateur
+confirme ensuite après flash Mac → Windows → Mac, à chaque fois très rapide, avec
+les noms d’OS corrects au clic d’encodeur. Ce retour valide les branchements
+essayés, sans mesure chronométrée ni validation implicite des touches maintenues,
+resets de bus ou réveils.
+
+Les trois suites natives passent avec ASan/UBSan. Les trois paires auto et la paire
+fixe `wire macos usb-trace` compilent, les huit UF2 passent les gardes et SHA-256.
+Cette dernière vérifie le diagnostic sans sélecteur auto après changement d’API.
+Les six arbres auto restent conformes aux profils fixes et les seize UF2 manuels
+normaux restent identiques aux références. Les droites auto sont inchangées.
+Le harnais privé de rejeu est `.local/validation/usb-events/replay.c`. Ses résultats
+sur des captures anciennes ne mesurent pas la vitesse du nouveau firmware.
+Les conteneurs de validation ont disparu, les trois services partagés sont conservés.

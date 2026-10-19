@@ -115,7 +115,7 @@ static void dump_trace(const struct device *uart) {
             return;
         }
 
-        usb_os_observe(&classifier, record.setup, record.timestamp_ms);
+        usb_os_observe(&classifier, record.setup);
 
         snprintf(line, sizeof(line), "USBTRACE SETUP %u %u %02x %02x %04x %04x %04x\n",
                  (unsigned)i, record.timestamp_ms, record.setup[0], record.setup[1],
@@ -132,8 +132,7 @@ static void dump_trace(const struct device *uart) {
     if (!same_generation) {
         return;
     }
-    enum usb_os_guess guess = usb_os_result(&classifier, snapshot_ms,
-                                           dropped == 0 && rejected == 0);
+    enum usb_os_guess guess = usb_os_result(&classifier, dropped == 0 && rejected == 0);
     snprintf(line, sizeof(line), "USBTRACE OS result=%s evidence=%04x\n",
              usb_os_name(guess), (unsigned)classifier.evidence);
     if (!send_line(uart, line)) {
