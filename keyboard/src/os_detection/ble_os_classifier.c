@@ -1,5 +1,5 @@
 // Compare des métadonnées ATT publiques, sans modifier les échanges Bluetooth.
-#include "ble_os_classifier.h"
+#include <splitergoll/ble_os_classifier.h>
 
 #include <string.h>
 

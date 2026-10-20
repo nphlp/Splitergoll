@@ -54,10 +54,6 @@ select_keymap() {
         *) fail "Keymap inconnue : $KEYMAP_PROFILE. Choisis auto, multi, windows, macos ou linux" ;;
     esac
 
-    if [ "$KEYMAP_PROFILE" = auto ] && [ "$PROFILE" != wire ]; then
-        fail 'auto détecte uniquement l’hôte USB : utilise make build wire auto'
-    fi
-
     KEYMAP_FILE="$KEYBOARD_CONFIGURATION/keymaps/$KEYMAP_PROFILE.keymap"
     test -r "$KEYMAP_FILE" || fail "Fichier de keymap absent : $KEYMAP_PROFILE"
 }

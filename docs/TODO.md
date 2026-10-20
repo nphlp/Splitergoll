@@ -107,6 +107,14 @@ Les premiers appairages restent à revalider, aucun effacement n’est autorisé
 - [x] Valider sur V1 la restauration des deux OS après reset et reconnexion :
   `stored=macos` et `stored=windows`, `state=saved`, `learning=0`, sans erreur ni perte.
   Windows retrouve son OS malgré une reconnexion sans signature suffisante.
+- [x] Préparer `bluetooth auto` avec les mêmes couches que les profils fixes,
+  depuis l’OS mémorisé de l’appareil sélectionné, avec garde des touches et sans OS par défaut.
+- [x] Flasher la gauche `bluetooth auto ble-trace` et lire son état sur V1 : Mac sélectionné,
+  `stored=macos`, `state=saved`, sans nouvel apprentissage ni erreur. Windows reste déconnecté.
+- [ ] Tester `bluetooth auto` sur Mac puis Windows : nom d’OS à l’encodeur,
+  raccourcis, pavé, gaming, reconnexion et transitions sûres. Voir [le guide](keymap-auto-bluetooth.md).
+- [ ] Choisir le raccourci de changement d’appareil après le premier essai `bluetooth auto`,
+  conformément au choix utilisateur. L1 + clic encodeur droit reste une proposition, pas une affectation.
 - [ ] Compléter les essais matériels de mémoire : remplacement d’appairage,
   correction manuelle et veille profonde sur V2. Les tests natifs ne remplacent
   pas ces essais. Ne pas déduire Windows d’une absence de lectures ni de l’index du slot.

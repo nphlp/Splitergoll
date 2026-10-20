@@ -1,9 +1,12 @@
-# Sélection automatique de l’OS USB
+# Sélection automatique de l’OS
 
 ## Intention et périmètre
 
 Implémentation propre à Splitergoll, sans module tiers ni modification de ZMK/Zephyr.
-`wire auto` est expérimental : Windows avec gaming et macOS, sans profil Linux ou BLE.
+`auto` est expérimental : Windows avec gaming et macOS, sans profil Linux.
+Le wire utilise la signature USB. Le Bluetooth utilise l’OS mémorisé de l’appareil
+sélectionné, avec premier essai matériel à faire. Le choix automatique de l’appareil
+et le raccourci viendront après cet essai, à la demande explicite de l’utilisateur.
 Les signatures de nos deux hôtes et la sélection de couches sont confirmées avec
 CDC sur V1. L’utilisateur voit macOS sur le Mac et Windows sur le PC via l’encodeur
 droit, confirme gaming puis retour Windows et le fonctionnement habituel sur Mac.
@@ -35,8 +38,8 @@ Les quatre profils manuels et l’archive de `multi` restent disponibles et inch
 - Instrumentation de capture et lecteurs : `../../../diagnostics/os-signature/`.
 
 Le module clavier conserve board_root, ajoute dts_root, CMake et Kconfig. Le nœud
-`compatible = "splitergoll,os-auto"` active le sélecteur seulement sur la centrale USB.
-L’observateur est compilé uniquement pour auto ou la centrale usb-trace. Les autres
+`compatible = "splitergoll,os-auto"` active le sélecteur sur la centrale du transport choisi.
+L’observateur USB est compilé pour wire auto ou la centrale usb-trace. Les autres
 firmwares n’ajoutent pas de code embarqué. La nouvelle pile USB, LTO et les SoC autres
 que nRF52840 sont refusés. Les dépendances, l’image et les partitions sont inchangées.
 
@@ -111,7 +114,7 @@ Les layouts Mac/Windows et le gaming sont validés par le retour utilisateur en
 normal. Essais restants : démarrage optimisé, touche tenue, reset du bus et réveil,
 avec le firmware normal. Linux, autres versions d’OS,
 hubs, KVM et BIOS sont inconnus et peuvent donner une mauvaise reconnaissance.
-Le Bluetooth exigera ses propres observations, l’USB d’alimentation ne révèle pas son hôte.
+Le Bluetooth utilise ses propres observations et sa mémoire, l’USB d’alimentation ne révèle pas son hôte.
 Les tâches restent centralisées dans `docs/TODO.md`.
 
 Validation réalisée : les trois suites C (état, classifieur, stockage) passent avec
@@ -283,8 +286,8 @@ Les conteneurs de validation ont disparu, les trois services partagés sont cons
 
 `ble_os_memory.c` est la politique pure, `ble_os_settings.c` le backend NVS.
 Les interfaces et tests suivent les dossiers clavier existants. La fonction
-`SPLITERGOLL_BLE_MEMORY` est activée seulement par le diagnostic gauche `ble-trace`.
-La keymap fixe, les deux sorties et les firmwares normaux restent indépendants.
+`SPLITERGOLL_BLE_MEMORY` est activée par le diagnostic gauche `ble-trace` ou par
+`bluetooth auto` gauche, dans tous ses modes. Les profils fixes normaux ne changent pas.
 
 L’enregistrement `splitergoll/ble-os/<index>` fait 40 octets : schéma 1, règles 1,
 OS, origine, preuves, réserves et empreinte SHA-256 opaque. L’empreinte porte sur
@@ -309,7 +312,8 @@ de chargement. Les accès NVS sont exécutés par le worker dédié du diagnosti
 callbacks radio ou la lecture USB. Aucune écriture périodique ni réessai infini.
 Une erreur conserve l’état sale et le diagnostic n’annonce pas cet OS comme stocké.
 Une coupure avant sauvegarde réussie ne garantit pas la conservation du résultat.
-L’identité est revérifiée aux connexions. La mémoire ne pilote encore aucune couche.
+L’identité est revérifiée aux connexions. `bluetooth auto` applique l’OS mémorisé
+aux couches, les diagnostics construits avec une keymap fixe n’en changent pas.
 
 Validation : suite `keyboard/tests/ble_os_memory_test.c` avec ASan/UBSan, plus
 harnais local exécutant le vrai backend et le vrai worker avec doubles settings/BLE.
@@ -350,3 +354,88 @@ signature suffisante sur cette reconnexion, mais stored windows est retrouvé sa
 apprentissage : le chemin NVS et son contrôle d’identité sont validés sur V1 et
 ces deux appareils. La veille profonde V2 reste à tester. Les captures et étapes
 sont suivies dans l’AGENTS du diagnostic et docs/TODO.md.
+
+## Keymap automatique Bluetooth
+
+`SPLITERGOLL_OS_AUTO` choisit un seul adaptateur selon ZMK_USB : usb_auto.c ou
+ble_auto.c. Aucun observateur USB dans le firmware Bluetooth normal. Les deux
+adaptateurs utilisent les mêmes treize couches et les mêmes fichiers Windows/macOS.
+Les affectations de `auto.keymap` ne changent pas. Le raccourci de changement d’appareil
+sera choisi après le premier essai, le choix manuel forcé d’OS est reporté séparément.
+
+Le moteur auparavant diagnostique est regroupé dans keyboard : ble_events.h et
+ble_att.c pour les métadonnées ATT admises, ble_os_classifier.c pour les règles,
+ble_observer.c pour les callbacks et l’unique wrapper bt_l2cap_recv, ble_acquisition.c
+pour le worker et son état. Les noms BLE_TRACE des métadonnées sont conservés pour
+le protocole et les tests existants, sans imposer d’historique en fonctionnement normal.
+Le diagnostic reçoit ces observations via un hook optionnel. Aucune copie de valeurs,
+adresses, clés, rapports HID ni trace RAM historique dans le firmware normal.
+Les indices, le format mémoire 1 et les identités NVS sont inchangés.
+
+L’instantané d’acquisition expose une connexion courante distincte de l’OS sauvegardé.
+Le sélecteur exige : appareil sélectionné connecté, chiffrement courant au moins L2,
+session sécurisée, transport d’acquisition fiable, cache présent/vérifié/propre/sans erreur,
+et OS pris en charge. Aucun OS depuis l’USB de charge, ni reclassification en reconnexion.
+Une génération atomique par index de connexion change dès les notifications radio
+connexion/sécurité/déconnexion et lors d’un nouvel appairage. L’instantané du worker
+doit porter cette même génération, sinon aucun appui n’est admis. Cela ferme la
+fenêtre où une ancienne mémoire vérifiée pourrait précéder le traitement de la
+nouvelle connexion. Ce garde est testé dans la politique pure et les harnais.
+Inconnu, ambigu ou Linux reste bloqué. Une erreur tardive ou un cache invalidé retire
+la sélection. Aucun profil Linux automatique ou mode de secours arbitraire.
+
+ble_auto_state.c invalide le groupe lors d’un changement d’appareil, de session,
+d’OS ou de disponibilité. Il réutilise usb_auto_state.c, politique pure indépendante
+du transport malgré son nom historique : appuis admis/ignorés, relâchements et
+750 ms après un ancien comportement. Aucun délai à froid ni polling.
+Les événements d’acquisition et de profil réveillent un travail sur événements.
+Les positions, encodeurs et keycodes sont filtrés avant les comportements ZMK.
+Le rapport HID doit aussi être vide avant une transition. `&to` garde la base de
+l’OS sous le pavé ou le jeu, comme en wire auto. Les commandes de diagnostic
+partagent le mutex récursif du filtre, sans second wrapper d’événements en auto.
+
+Validation attendue : huit suites C strictes avec ASan/UBSan, harnais du vrai
+worker/backend après déplacement, rejeu des captures et callbacks de l’observateur.
+Comparer les quatre sous-arbres des couches aux builds auto USB, vérifier les rôles,
+les symboles, les options normal/debug/ble-trace et les UF2. Conserver les essais
+physiques comme étape distincte, sans effacement ni flash automatique. Vérifier Mac,
+Windows, gaming et retour, reconnexion, appuis maintenus, keymap normale sans console.
+
+Validation réalisée pour ce lot : huit suites natives avec -Wall/-Wextra/-Werror,
+ASan et UBSan. Le harnais du vrai worker/backend conserve apprentissage, inconnus,
+restauration, remplacement, ambiguïté, erreurs NVS et suppression ciblée. Il vérifie
+également qu’un instantané est périmé jusqu’au traitement de la génération radio.
+Le harnais des callbacks réels vérifie deux hôtes, exclusion de la moitié droite,
+reconnexion, mise à jour du profil et séparation des fiabilités ATT/UUID. Douze
+captures valides, 43 sessions, donnent les mêmes classifications après déplacement.
+Un fichier incomplet est explicitement exclu des captures de référence.
+
+Les trois paires bluetooth auto normal/debug/ble-trace et les contrôles wire auto,
+bluetooth macos normal et bluetooth macos ble-trace passent les gardes de build.
+Les douze UF2 passent SHA-256, famille, blocs et bornes de l’application. Les treize
+couches, macros, conditions et comportements des trois auto BLE sont identiques à
+wire auto. Les deux UF2 wire auto restent identiques au build du 18 octobre, les
+deux bluetooth macos normaux à ceux du prototype mémoire avant ce lot.
+Le normal auto BLE n’expose ni HID USB, CDC, console UART, observateur USB ou
+historique BLE. L’observateur et la mémoire seuls sont nécessaires en normal.
+La RAM gauche est de 69 596 octets / 256 Kio en normal et 83 836 avec ble-trace,
+la flash de 265 152 / 792 Kio et 272 684 respectivement. Aucun avertissement dans
+notre C, les diagnostics KSCAN/tap-dance et Docker restent ceux du socle.
+
+Le build final pour le premier essai est bluetooth-auto-ble-trace-2026-10-20-17-30-04,
+le normal bluetooth-auto-2026-10-20-17-30-13 et le debug USB à 17-30-24. La droite
+ble-trace a exactement l’empreinte du firmware installé par l’utilisateur, seul
+le flash gauche est nécessaire. Aucun flash, changement de sélection ou effacement
+matériel par l’agent dans ce lot. Les conteneurs éphémères ont disparu,
+les trois services préexistants sont conservés. Aucune dépendance, image, partition,
+clé NVS, variable d’environnement, Dockerfile ou Compose n’est modifié.
+Les preuves temporaires restent dans .local/validation/ble-auto/.
+
+L’utilisateur confirme ensuite son flash gauche avant de demander le commit.
+S annonce Mac 0 actif/connecté, Windows 1 appairé/déconnecté. M retrouve Mac
+stored macos, origin initial, state saved, learning 0, evidence 0003, error 0 et
+dropped 0. Windows reste origin initial, evidence 005c, state unverified et error 0,
+sans connexion de ce démarrage pour revérifier son identité. Lectures passives
+seulement, port fermé et lsof sans lecteur. Captures privées : profil 3MR9Gs,
+mémoire l9dFX6. Cela confirme la restauration du cache Mac après ce flash, pas
+encore la saisie, le nom d’OS à l’encodeur ou les transitions de bluetooth auto.

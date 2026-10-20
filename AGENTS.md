@@ -40,7 +40,8 @@ techniques. Distinguer clairement comportement prévu, implémenté et testé.
   Les builds locaux choisissent toujours `keyboard/config/keymaps/<profil>.keymap`
   avec `KEYMAP_FILE`, sans utiliser la sélection automatique du shield.
 - Les quatre keymaps manuelles sont `multi`, `windows` avec jeu, `macos` et `linux`.
-  `auto` ajoute un profil USB expérimental macOS / Windows avec jeu.
+  `auto` ajoute un profil expérimental macOS / Windows avec jeu : signature USB
+  en wire, mémoire d’OS de l’appareil sélectionné en Bluetooth.
   `multi` garde ses quinze couches et son changement d’OS. Les trois profils fixes
   démarrent sur leur OS en couche zéro, sans bascule OS. Windows a sept couches,
   macOS et Linux cinq, sans gaming. Les retours du pavé et du jeu ciblent leur base.
@@ -662,8 +663,8 @@ diffèrent sur nos deux hôtes mais ne prouvent pas un OS universel. Ne pas ajou
 Windows par absence d’indices. Le prochain choix est d’enrichir l’observation ou
 d’étudier une mémoire automatique d’OS appris par appairage authentifié, avec gestion
 des remplacements et changements d’OS. Le classifieur C pur dans
-`diagnostics/os-signature/firmware/ble_os_classifier.c/.h` est désormais compilé dans
-le seul diagnostic BLE gauche. Le dump calcule une hypothèse par session après les
+Le classifieur BLE est maintenant dans `keyboard/src/os_detection/ble_os_classifier.c`,
+son interface dans `keyboard/include/splitergoll/`. Le dump calcule une hypothèse par session après les
 ATTR, dans le thread USB, sans ajouter de calcul dans les callbacks radio.
 Les lecteurs acceptent les anciennes captures et les nouvelles lignes `BLETRACE OS`.
 Après flash de gauche par l’utilisateur, la lecture réelle sur V1/Mac confirme
@@ -685,8 +686,9 @@ tester sur matériel. Ni keymap, ni préférence
 de sortie, ni appairage, ni firmware normal ne changent dans ce lot.
 Le rejeu des cinq fichiers existants reconnaît les sessions Mac et la découverte
 initiale Windows, mais laisse sa reconnexion limitée au MTU/batterie inconnue.
-Aucune sélection BLE automatique n’est implémentée. Le prototype mémoire suivant
-ajoute l’apprentissage initial et sa persistance au seul diagnostic gauche.
+La mémoire validée est maintenant partagée par `bluetooth auto` et le diagnostic
+gauche. Le sélecteur de keymap BLE est préparé, son essai matériel reste à faire.
+La sélection automatique de destination BLE reste un chantier distinct.
 Le fonctionnement et les essais sont décrits dans [memoire-os.md](docs/memoire-os.md)
 et dans les AGENTS des modules clavier et diagnostic.
 L’utilisateur a désormais flashé ce build : acquisition initiale et reconnexion
@@ -745,6 +747,34 @@ Pour reconnecter Windows, réutiliser 1 explicitement, jamais `free` après l’
 Les prochains essais peuvent garder les USB sur le Mac pendant la liaison BLE
 Windows. Le [guide de capture Mac](docs/capture-bluetooth-mac.md) évite PowerShell
 et les transferts de fichiers. Le champ host de la capture désigne seulement le collecteur.
+
+## Bluetooth auto, première intégration
+
+La mémoire validée est publiée au commit 11f7a87. Le lot suivant active
+`make build bluetooth auto` et ses variantes debug/ble-trace. Le moteur BLE commun
+est regroupé dans keyboard, le diagnostic n’en garde que la présentation et
+l’historique optionnel. La keymap partage exactement les treize couches de wire auto.
+Les identités et le format de mémoire sont compatibles avec les appairages actuels.
+Une connexion sécurisée, une mémoire vérifiée et une génération radio à jour sont
+requises avant la saisie, sans OS implicite ni délai de détection initial.
+Les gardes de touches et comportements différés sont partagées avec l’auto USB.
+
+Huit suites C, le worker/backend réels en harnais et douze captures / 43 sessions
+passent. Les six paires de build et douze UF2 sont contrôlés. Wire auto et le
+Bluetooth macOS fixe normal restent identiques aux versions validées. Les couches
+des trois variantes auto BLE sont identiques à wire auto. Le guide court est
+[keymap-auto-bluetooth.md](docs/keymap-auto-bluetooth.md). L’utilisateur confirme
+le flash gauche. Les lectures passives retrouvent Mac actif/connecté, stored macos,
+state saved, learning 0 et error 0, sans perte. Windows reste appairé/déconnecté,
+son cache chargé mais unverified. La saisie, l’affichage d’OS et les transitions
+de cette keymap BLE restent à confirmer. La droite est identique à celle installée.
+Aucun firmware normal ne doit être présenté comme testé sur matériel sur la base
+de ces contrôles logiciels.
+
+L’utilisateur reporte le choix du raccourci après ce premier essai. Ne pas affecter
+L1 + clic encodeur droit pour le moment. La sélection automatique d’appareil suit
+cet essai et le raccourci. Le choix manuel forcé d’OS sera discuté plus tard.
+Aucun des trois n’est livré par cette première intégration de keymap BLE automatique.
 
 ## Ideas / backlog
 

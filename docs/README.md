@@ -60,7 +60,7 @@ make build wire macos
 
 `make build` seul affiche l’aide. Pour compiler, préciser le matériel (`wire` ou
 `bluetooth`), puis la keymap (`auto`, `multi`, `windows`, `macos` ou `linux`).
-`auto` est réservé à `wire`.
+`auto` utilise la signature USB en `wire`, ou l’OS mémorisé par appareil en `bluetooth`.
 Les deux choix sont obligatoires, aucun n’est sélectionné par défaut.
 Windows inclut toujours le gaming. Ajouter `debug` à la fin pour les logs USB,
 par exemple `make build bluetooth windows debug`.
@@ -94,5 +94,6 @@ et `make bat avg` calcule une moyenne par moitié sur 30 secondes.
 - [Appairage Bluetooth](appairage-bluetooth.md) : clés de connexion, reset et diagnostic.
 - [Batteries](batteries.md) : mesure actuelle et affichage des deux niveaux.
 - [Keymap automatique USB](keymap-auto.md) : macOS ou Windows avec gaming, sélection à la connexion.
+- [Keymap automatique Bluetooth](keymap-auto-bluetooth.md) : couches de l’OS mémorisé pour l’appareil sélectionné, validation de saisie et de bascule à faire.
 - [Keymap](keymap.md) : organisation, couches et sept schémas de touches.
 - [TODO et idées](TODO.md) : suivi des tâches restantes.

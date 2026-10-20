@@ -1,4 +1,4 @@
-// Auto USB expérimental : attente neutre, puis Windows avec gaming ou macOS.
+// Auto expérimental : attente neutre, puis Windows avec gaming ou macOS selon l’hôte.
 // Les affectations et schémas viennent des mêmes couches que les profils fixes.
 #include "common/function.h"
 #include "common/auto-layers.h"

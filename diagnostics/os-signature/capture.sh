@@ -195,7 +195,7 @@ if [ "$protocol" = BLETRACE ]; then
         }
         END { if (!reports) print "Classification absente : ancien firmware de capture" }
     ' "$capture"
-    printf '%s\n' 'Diagnostic Bluetooth uniquement. Aucune sélection automatique d’OS.'
+    printf '%s\n' 'Signatures de session uniquement. Pour l’OS mémorisé, utilise make ble-memory <port>.'
     exit 0
 fi
 

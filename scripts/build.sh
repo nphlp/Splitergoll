@@ -54,7 +54,11 @@ build_profile() {
             printf '%s\n' 'Diagnostic : signature USB étudiée sur la gauche, hypothèse OS sans changement de keymap'
         fi
     elif [ "$BUILD_MODE" = ble-trace ]; then
-        printf '%s\n' 'Diagnostic : échanges de l’hôte Bluetooth sur la gauche, sans sélection automatique d’OS'
+        if [ "$KEYMAP_PROFILE" = auto ]; then
+            printf '%s\n' 'Auto Bluetooth : OS mémorisé de l’appareil sélectionné et trace de contrôle sur la gauche'
+        else
+            printf '%s\n' 'Diagnostic : échanges de l’hôte Bluetooth sur la gauche, sans sélection automatique d’OS'
+        fi
     fi
     run_step 'Vérification des prérequis' preflight
     resolve_workspace

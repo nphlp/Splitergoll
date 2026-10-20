@@ -2,8 +2,9 @@
 
 Objectif : reconnaître l’ordinateur connecté en Bluetooth, puis choisir sa keymap
 automatiquement. On commence par comparer les échanges sur le Mac puis Windows.
-**La keymap reste celle du build.** Le diagnostic récent ajoute une mémoire d’OS,
-à valider séparément avec [ses essais](tests-memoire-os.md).
+**Une keymap fixe reste fixe.** Le diagnostic partage le moteur de mémoire avec
+[la keymap automatique Bluetooth](keymap-auto-bluetooth.md). Les observations et
+la [validation de mémoire](tests-memoire-os.md) restent distinctes de la sélection des couches.
 
 V1 fonctionne sans batterie : ses deux USB fournissent l’alimentation. La gauche
 transmet les touches en Bluetooth et expose un port série USB pour la capture.
@@ -105,7 +106,8 @@ de l’acquisition initiale, voir [la mémoire d’OS](memoire-os.md).
 Les [captures publiques de Cormoran](https://github.com/cormoran/zmk-feature-os-detection/blob/main/docs/fingerprints.md#ble)
 montrent des pistes, mais aussi une ambiguïté Windows/Linux et un résultat macOS
 par défaut trop fragile pour notre usage. Le contrôleur radio et les paramètres
-ne prouvent pas un OS. La mémoire expérimentale ne pilote pas encore les couches BLE.
+ne prouvent pas un OS. `bluetooth auto` utilise désormais la mémoire pour choisir
+les couches, avec essai matériel à faire.
 
 ## Hypothèses du diagnostic
 
@@ -143,9 +145,10 @@ La sélection Mac → Windows → Mac est confirmée par les statuts, sans coupe
 Bluetooth. Aucune frappe d’essai n’a été envoyée pendant cet aller-retour.
 Ces essais conservent les appairages existants, ils ne valident pas la répétabilité
 d’un premier appairage.
-Le calcul s’effectue pendant la lecture USB, sans modifier la keymap, la destination
-des touches ou les appairages. La mémoire travaille indépendamment de cette lecture,
-uniquement pendant l’acquisition d’un nouvel appairage.
+Le calcul de signature de session s’effectue pendant la lecture USB. Cette lecture
+ne modifie pas la keymap, la destination des touches ou les appairages.
+La mémoire apprend uniquement pendant l’acquisition d’un nouvel appairage.
+Le sélecteur `auto` reprend son résultat aux reconnexions, indépendamment du lecteur USB.
 
 ## Pistes retenues
 

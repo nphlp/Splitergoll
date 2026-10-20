@@ -2,7 +2,7 @@
 #ifndef SPLITERGOLL_BLE_OS_CLASSIFIER_H
 #define SPLITERGOLL_BLE_OS_CLASSIFIER_H
 
-#include "ble_trace_store.h"
+#include <splitergoll/ble_events.h>
 
 enum ble_os_guess {
     BLE_OS_UNKNOWN,

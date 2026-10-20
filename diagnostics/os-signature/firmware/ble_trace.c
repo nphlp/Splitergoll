@@ -1,161 +1,40 @@
-// Observe uniquement les connexions où la centrale clavier est périphérique de l’ordinateur.
-// La droite, les adresses Bluetooth, SMP et les valeurs HID ne sont jamais enregistrés.
+// Historique optionnel des observations du clavier, sans collecte en fonctionnement normal.
 #include "ble_trace_store.h"
-#include "ble_os_classifier.h"
-#include "ble_trace_memory.h"
+#include <splitergoll/ble_os_classifier.h>
+#include <splitergoll/ble_observer.h>
 #include "trace_console.h"
-
 #include <stdio.h>
 #include <string.h>
-#include <zephyr/bluetooth/conn.h>
 #include <zephyr/bluetooth/gatt.h>
 #include <zephyr/bluetooth/uuid.h>
 #include <zephyr/kernel.h>
-#include <zephyr/init.h>
-#include <zephyr/net_buf.h>
-#include <zephyr/sys/byteorder.h>
 #include <zmk/ble.h>
 
 static struct ble_trace_store store;
 static struct k_spinlock store_lock;
-BUILD_ASSERT(CONFIG_BT_MAX_CONN <= BLE_TRACE_CONNECTION_LIMIT);
 
-// Vérifie le rôle local, sans supposer qu’un index de connexion désigne toujours le Mac.
-static bool is_host(struct bt_conn *conn) {
-    struct bt_conn_info info;
-    return bt_conn_get_info(conn, &info) == 0 && info.type == BT_CONN_TYPE_LE &&
-           info.role == BT_CONN_ROLE_PERIPHERAL;
-}
-
-// Normalise les erreurs ZMK en emplacement inconnu, notamment avant le premier appairage.
-static int host_profile(struct bt_conn *conn) {
+// Le moteur de production transmet une copie de ses métadonnées, jamais une valeur GATT.
+void splitergoll_ble_trace_event(struct bt_conn *conn, enum ble_trace_kind kind,
+                                const uint32_t data[5], uint16_t uuid, bool reliable) {
+    ARG_UNUSED(uuid);
+    unsigned connection = bt_conn_index(conn);
     int profile = zmk_ble_profile_index(bt_conn_get_dst(conn));
-    return profile < 0 ? -1 : profile;
-}
-
-// Copie des métadonnées brèves sous verrou, sans accès série dans le callback Bluetooth.
-static void record(struct bt_conn *conn, enum ble_trace_kind kind,
-                   uint32_t a, uint32_t b, uint32_t c, uint32_t d, uint32_t e) {
-    if (!is_host(conn)) {
-        return;
-    }
-    unsigned connection = bt_conn_index(conn);
-    int profile = host_profile(conn);
-    const uint32_t data[5] = {a, b, c, d, e};
+    if (profile < 0) profile = -1;
     k_spinlock_key_t key = k_spin_lock(&store_lock);
-    if (connection < BLE_TRACE_CONNECTION_LIMIT && store.connections[connection].session != 0) {
+    if (kind == BLE_TRACE_CONNECTED) {
+        ble_trace_connect(&store, connection, profile, k_uptime_get_32(),
+                           data[0], data[1], data[2], data[3]);
+    } else if (connection < BLE_TRACE_CONNECTION_LIMIT && store.connections[connection].session != 0) {
         ble_trace_profile(&store, connection, profile);
-        ble_trace_append(&store, connection, k_uptime_get_32(), kind, data);
-    }
-    k_spin_unlock(&store_lock, key);
-    ble_trace_memory_event(conn, kind, data, 0, true);
-}
-
-// Ouvre une session numérotée, en ne conservant que le type d’adresse publique ou aléatoire.
-static void connected(struct bt_conn *conn, uint8_t error) {
-    struct bt_conn_info info;
-    if (error || !is_host(conn) || bt_conn_get_info(conn, &info) != 0) {
-        return;
-    }
-    int profile = host_profile(conn);
-    k_spinlock_key_t key = k_spin_lock(&store_lock);
-    ble_trace_connect(&store, bt_conn_index(conn), profile, k_uptime_get_32(), info.le.interval, info.le.latency,
-                      info.le.timeout, info.le.dst->type);
-    k_spin_unlock(&store_lock, key);
-    const uint32_t data[5] = {0, 0, 0, 0, (uint32_t)(profile + 1)};
-    ble_trace_memory_event(conn, BLE_TRACE_CONNECTED, data, 0, true);
-}
-
-// Garde la déconnexion pour distinguer premier appairage et reconnexions dans un même dump.
-static void disconnected(struct bt_conn *conn, uint8_t reason) {
-    if (!is_host(conn)) {
-        return;
-    }
-    unsigned connection = bt_conn_index(conn);
-    int profile = host_profile(conn);
-    k_spinlock_key_t key = k_spin_lock(&store_lock);
-    if (connection < BLE_TRACE_CONNECTION_LIMIT && store.connections[connection].session != 0) {
-        ble_trace_profile(&store, connection, profile);
-        ble_trace_disconnect(&store, connection, k_uptime_get_32(), reason);
-    }
-    k_spin_unlock(&store_lock, key);
-    const uint32_t data[5] = {reason, 0, 0, 0, 0};
-    ble_trace_memory_event(conn, BLE_TRACE_DISCONNECTED, data, 0, true);
-}
-
-// Observe les paramètres proposés, puis laisse les callbacks ZMK décider normalement.
-static bool parameter_request(struct bt_conn *conn, struct bt_le_conn_param *parameters) {
-    record(conn, BLE_TRACE_PARAM_REQUEST, parameters->interval_min, parameters->interval_max,
-           parameters->latency, parameters->timeout, 0);
-    return true;
-}
-
-// Conserve aussi les paramètres effectivement négociés, distincts de la proposition.
-static void parameter_updated(struct bt_conn *conn, uint16_t interval, uint16_t latency,
-                               uint16_t timeout) {
-    record(conn, BLE_TRACE_PARAM_UPDATED, interval, latency, timeout, 0, 0);
-}
-
-// Note le niveau de sécurité et l’erreur, sans lire les clés ou modifier l’appairage.
-static void security_changed(struct bt_conn *conn, bt_security_t level, enum bt_security_err error) {
-    record(conn, BLE_TRACE_SECURITY, level, error, 0, 0, 0);
-}
-
-// Observe les fonctionnalités déjà échangées par Zephyr, sans activer de requête de version.
-static void remote_info(struct bt_conn *conn, struct bt_conn_remote_info *info) {
-    if (info->type == BT_CONN_TYPE_LE && info->le.features != NULL) {
-        record(conn, BLE_TRACE_FEATURES, sys_get_le32(info->le.features),
-               sys_get_le32(info->le.features + 4), 0, 0, 0);
-    }
-}
-
-BT_CONN_CB_DEFINE(ble_trace_callbacks) = {
-    .connected = connected,
-    .disconnected = disconnected,
-    .le_param_req = parameter_request,
-    .le_param_updated = parameter_updated,
-    .security_changed = security_changed,
-    .remote_info_available = remote_info,
-};
-
-// Enregistre le MTU négocié dans les deux directions, sans lancer d’échange supplémentaire.
-static void mtu_updated(struct bt_conn *conn, uint16_t tx, uint16_t rx) {
-    record(conn, BLE_TRACE_MTU, tx, rx, 0, 0, 0);
-}
-
-// Déclare le callback GATT avant l’initialisation Bluetooth de ZMK.
-static int trace_init(void) {
-    static struct bt_gatt_cb callbacks = {.att_mtu_updated = mtu_updated};
-    bt_gatt_cb_register(&callbacks);
-    return 0;
-}
-
-SYS_INIT(trace_init, APPLICATION, 0);
-
-// Signature interne figée de Zephyr 4.1, appelée entre conn.c et l2cap.c sans LTO.
-void __real_bt_l2cap_recv(struct bt_conn *conn, struct net_buf *buffer, bool complete);
-
-// Résout plus bas les handles nécessaires au classifieur en ligne, sans lire leur valeur.
-static uint16_t attribute_uuid(const struct ble_trace_record *event, bool *reliable);
-
-// Lit sans consommer le tampon, puis délègue exactement une fois au traitement natif.
-void __wrap_bt_l2cap_recv(struct bt_conn *conn, struct net_buf *buffer, bool complete) {
-    if (is_host(conn)) {
-        unsigned connection = bt_conn_index(conn);
-        k_spinlock_key_t key = k_spin_lock(&store_lock);
-        if (connection < BLE_TRACE_CONNECTION_LIMIT && store.connections[connection].session != 0) {
-            ble_trace_l2cap(&store, connection, k_uptime_get_32(), buffer->data, buffer->len, complete);
-        }
-        k_spin_unlock(&store_lock, key);
-        struct ble_trace_record event = {.kind = BLE_TRACE_ATT};
-        int decoded = ble_trace_decode(buffer->data, buffer->len, complete, event.data);
-        if (decoded != 0) {
-            bool reliable = decoded > 0;
-            uint16_t uuid = reliable ? attribute_uuid(&event, &reliable) : 0;
-            ble_trace_memory_event(conn, BLE_TRACE_ATT, event.data, uuid, reliable);
+        if (kind == BLE_TRACE_DISCONNECTED) {
+            ble_trace_disconnect(&store, connection, k_uptime_get_32(), data[0]);
+        } else if (!reliable) {
+            if (store.rejected != UINT32_MAX) store.rejected++;
+        } else {
+            ble_trace_append(&store, connection, k_uptime_get_32(), kind, data);
         }
     }
-    __real_bt_l2cap_recv(conn, buffer, complete);
+    k_spin_unlock(&store_lock, key);
 }
 
 struct attribute_dump {
@@ -177,42 +56,6 @@ static uint8_t dump_attribute(const struct bt_gatt_attr *attribute, uint16_t han
     }
     dump->count++;
     return BT_GATT_ITER_CONTINUE;
-}
-
-struct attribute_lookup {
-    uint16_t uuid;
-    bool found;
-};
-
-// Lit le type de l’attribut local sans demander sa valeur au pilote GATT.
-static uint8_t lookup_attribute(const struct bt_gatt_attr *attribute, uint16_t handle, void *context) {
-    ARG_UNUSED(handle);
-    struct attribute_lookup *lookup = context;
-    if (attribute->uuid != NULL) {
-        lookup->found = true;
-        if (attribute->uuid->type == BT_UUID_TYPE_16) {
-            lookup->uuid = BT_UUID_16(attribute->uuid)->val;
-        }
-    }
-    return BT_GATT_ITER_STOP;
-}
-
-// Résout uniquement les UUID publics des lectures/écritures directes du clavier.
-static uint16_t attribute_uuid(const struct ble_trace_record *event, bool *reliable) {
-    if (event->kind != BLE_TRACE_ATT || (event->data[0] != 0x0a && event->data[0] != 0x12)) {
-        return 0;
-    }
-    uint32_t handle = event->data[2];
-    if (handle == 0 || handle > UINT16_MAX) {
-        *reliable = false;
-        return 0;
-    }
-    struct attribute_lookup lookup = {0};
-    bt_gatt_foreach_attr((uint16_t)handle, (uint16_t)handle, lookup_attribute, &lookup);
-    if (!lookup.found) {
-        *reliable = false;
-    }
-    return lookup.uuid;
 }
 
 // Envoie une hypothèse explicable, sans changer la keymap ni l’appareil sélectionné.
@@ -247,7 +90,7 @@ static bool dump_classifications(const struct device *uart, size_t count, bool r
             if (!found) return false;
             if (event.session != first.session) continue;
             if (event.kind == BLE_TRACE_DISCONNECTED) profile = (int)event.data[1] - 1;
-            uint16_t uuid = attribute_uuid(&event, &session_reliable);
+            uint16_t uuid = splitergoll_ble_attribute_uuid(&event, &session_reliable);
             ble_os_observe(&classifier, &event, uuid);
         }
         for (unsigned i = 0; i < BLE_TRACE_CONNECTION_LIMIT; i++) {

@@ -5,11 +5,12 @@
 `make build bluetooth <keymap> ble-trace` ajoute uniquement sur la gauche le
 snippet `splitergoll-ble-trace` et le module de ce dossier. Le clavier reste en
 sortie Bluetooth, USB HID désactivé, sans changement de keymap, délais, protections
-ou appairages. La droite est identique au normal. `auto` reste réservé à wire.
+ou appairages. La droite est identique au normal. `auto` fonctionne aussi en Bluetooth,
+depuis la mémoire de l’appareil sélectionné, indépendamment du port de diagnostic.
 Le sélecteur USB et son classifieur ne sont pas compilés dans ce diagnostic.
 Le protocole humain est [../../docs/detection-os-bluetooth.md](../../docs/detection-os-bluetooth.md).
 
-`ble_trace.c` filtre le rôle local `BT_CONN_ROLE_PERIPHERAL` pour ne pas observer
+`keyboard/src/os_detection/ble_observer.c` filtre le rôle local `BT_CONN_ROLE_PERIPHERAL` pour ne pas observer
 la droite. Les callbacks Zephyr suivent connexion, sécurité, paramètres proposés
 et négociés, MTU et fonctionnalités distantes. `BT_REMOTE_INFO` expose les données
 échangées par la pile, `BT_REMOTE_VERSION` reste désactivé. Aucun GATT client
@@ -404,7 +405,8 @@ persistant ou nouveau diagnostic SMP n’est ajouté.
 
 ### Classifieur BLE et intégration au diagnostic
 
-`firmware/ble_os_classifier.c/.h` est pur, sans Zephyr, allocation, lecture de valeurs
+`keyboard/src/os_detection/ble_os_classifier.c` et son interface dans
+`keyboard/include/splitergoll/` sont purs, sans Zephyr, allocation, lecture de valeurs
 GATT, sélection de couche, profil ou écriture NVS. Initialement testé hors ligne,
 il est maintenant ajouté à CMake uniquement sous SPLITERGOLL_BLE_TRACE. Le dump
 rejoue son instantané dans un second passage après les ATTR, dans le thread USB.
@@ -448,7 +450,7 @@ Cette fonction ne définit pas quand un futur sélecteur pourrait figer une déc
 Linux peut partager ces opérations avec Windows : aucune exclusivité entre OS ni
 fiabilité générale n’est démontrée. Les règles décrivent nos observations Mac/Windows.
 
-Validation : `tests/ble_os_classifier_test.c`, compilé avec le C du classifieur et
+Validation : `keyboard/tests/ble_os_classifier_test.c`, compilé avec le C du classifieur et
 `-Ifirmware -std=c11 -Wall -Wextra -Werror -fsanitize=address,undefined`, assertions
 actives. Les extraits anonymes correspondent aux requêtes utiles, sans captures
 brutes ni identifiants de machine versionnés. Sont couverts motifs complets,
@@ -623,9 +625,10 @@ un sujet distinct de la reconnaissance d’OS. Ne pas la changer implicitement.
 
 ### Acquisition initiale et mémoire, prototype actuel
 
-Le build gauche `ble-trace` ajoute `ble_trace_memory.c` et le backend clavier
-`ble_os_settings.c`. `BLETRACE` v2 et `BLEPROFILE` v2 restent compatibles.
-La keymap reste fixe. La lecture D rejoue le tampon historique comme avant.
+Le moteur commun est désormais `keyboard/src/os_detection/ble_acquisition.c`,
+avec le backend `ble_os_settings.c`. Le diagnostic `ble_trace_memory.c` présente
+seulement son instantané. `BLETRACE` v2 et `BLEPROFILE` v2 restent compatibles.
+Une keymap fixe reste fixe, `bluetooth auto` applique l’OS mémorisé. D rejoue le tampon historique.
 La commande M expose `BLEMEM` v1, via `make ble-memory <port>` : measured, stored,
 origin, state, learning, evidence et error, sans identité ni empreinte privée.
 `stored` est inconnu tant que l’identité n’est pas vérifiée ou l’écriture réussie.
@@ -1271,3 +1274,21 @@ hors schéma, selon Microsoft. Ce mode de conversion reste à essayer sur le PC,
 sans promettre la disparition de l’avertissement ni une récupération exhaustive.
 Le brut ETL et XML restent privés, seules les 22 demandes anonymes sont reprises
 dans le test du classifieur. Aucun besoin de nouvelle collecte pour ce correctif.
+
+## Diagnostic partagé avec Bluetooth auto
+
+La collecte active et la mémoire appartiennent maintenant au clavier, voir son
+AGENTS. ble_trace.c garde seulement le tampon historique et son dump, ble_trace_memory.c
+seulement le format BLEMEM. Le classifieur et son test sont déplacés avec git mv.
+Le stockage historique garde son propre test, lié au décodeur ATT partagé.
+Le hook de diagnostic peut recevoir un en-tête valide dont l’UUID local est impossible
+à résoudre : conserver cet en-tête, et rendre la classification irrecevable au rejeu.
+Une résolution impossible ne doit pas être confondue avec un paquet ATT malformé.
+Le moteur d’acquisition reçoit séparément la fiabilité de résolution.
+
+Avec bluetooth auto ble-trace, il n’y a qu’un wrapper d’événements, celui du clavier.
+Le contrôle USB verrouille le même mutex, utilise ses gardes d’activité et refuse
+la sélection/effacement pendant une saisie. Avec une keymap fixe, les gardes
+historiques du diagnostic restent actives. Les formats D/S/M et l’effacement ciblé
+ne changent pas. Les lecteurs ne doivent pas annoncer que toute keymap reste fixe :
+la lecture est passive, mais le sélecteur auto agit indépendamment depuis la mémoire.

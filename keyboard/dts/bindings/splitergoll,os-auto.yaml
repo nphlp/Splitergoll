@@ -1,2 +1,2 @@
-description: Automatic USB selection between the fixed Windows and macOS keymaps
+description: Automatic host selection between the fixed Windows and macOS keymaps
 compatible: "splitergoll,os-auto"

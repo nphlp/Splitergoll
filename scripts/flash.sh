@@ -103,7 +103,7 @@ show_firmware_summary() {
     local keymap_label side_label logging_label
 
     case "$KEYMAP_PROFILE" in
-        auto) keymap_label='auto USB (macOS / Windows + gaming)' ;;
+        auto) keymap_label='auto (macOS / Windows + gaming)' ;;
         multi) keymap_label='multi (Windows, macOS, Linux)' ;;
         windows) keymap_label='Windows + gaming' ;;
         macos) keymap_label='macOS' ;;

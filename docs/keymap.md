@@ -13,15 +13,15 @@ verrouillage implicite de `&to` et `&tog` est désactivé pour garder les transi
 
 | Argument | Contenu | Démarrage |
 | --- | --- | --- |
-| `auto` | macOS ou Windows avec gaming, détection USB expérimentale | Attente puis OS reconnu |
+| `auto` | macOS ou Windows avec gaming, signature USB ou mémoire BLE expérimentale | Attente puis OS de l’hôte |
 | `multi` | Keymap actuelle, trois OS et gaming, changement d’OS au clavier | Windows |
 | `windows` | Windows et les deux couches gaming | Windows |
 | `macos` | macOS, sans gaming ni bascule OS | macOS |
 | `linux` | Linux, sans gaming ni bascule OS | Linux |
 
 Par exemple : `make build wire macos` ou `make build bluetooth windows debug`.
-Le matériel et la keymap sont deux choix obligatoires. `auto` est réservé à `wire`,
-voir [son fonctionnement et les essais](keymap-auto.md).
+Le matériel et la keymap sont deux choix obligatoires. Les guides détaillent
+[la sélection USB](keymap-auto.md) et [la sélection Bluetooth](keymap-auto-bluetooth.md).
 Même `multi` doit être précisé, aucune keymap n’est choisie par défaut.
 
 Les profils fixes gardent leur OS après redémarrage et veille profonde. Le clic

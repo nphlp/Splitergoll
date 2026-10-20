@@ -14,9 +14,13 @@
 #include <zmk/events/sensor_event.h>
 #include <zmk/hid.h>
 #include <zmk/matrix.h>
+#if defined(CONFIG_SPLITERGOLL_BLE_AUTO)
+#include <splitergoll/ble_auto.h>
+#endif
 
 BUILD_ASSERT(ZMK_BLE_PROFILE_COUNT <= BLE_PROFILE_LIMIT);
 BUILD_ASSERT(ZMK_KEYMAP_LEN <= 64);
+#if !defined(CONFIG_SPLITERGOLL_BLE_AUTO)
 static struct ble_profile_activity activity;
 K_MUTEX_DEFINE(selection_mutex);
 
@@ -38,6 +42,36 @@ int __wrap_zmk_event_manager_raise(zmk_event_t *event) {
     int result = __real_zmk_event_manager_raise(event);
     k_mutex_unlock(&selection_mutex);
     return result;
+}
+
+#endif
+
+// Les commandes et les événements partagent le verrou du sélecteur lorsque auto est actif.
+static void lock_selection(void) {
+#if defined(CONFIG_SPLITERGOLL_BLE_AUTO)
+    splitergoll_ble_auto_lock();
+#else
+    k_mutex_lock(&selection_mutex, K_FOREVER);
+#endif
+}
+
+// Libère le même verrou, y compris après un refus de mutation.
+static void unlock_selection(void) {
+#if defined(CONFIG_SPLITERGOLL_BLE_AUTO)
+    splitergoll_ble_auto_unlock();
+#else
+    k_mutex_unlock(&selection_mutex);
+#endif
+}
+
+// Le garde actif est celui qui observe réellement les touches dans ce firmware.
+static bool input_busy(bool hid_busy) {
+#if defined(CONFIG_SPLITERGOLL_BLE_AUTO)
+    ARG_UNUSED(hid_busy);
+    return splitergoll_ble_auto_busy();
+#else
+    return ble_profile_input_busy(&activity, hid_busy, k_uptime_get_32());
+#endif
 }
 
 // Ne lit que les états HID en RAM, jamais les frappes dans les traces.
@@ -62,14 +96,13 @@ static void find_bond(const struct bt_bond_info *info, void *context) {
 void splitergoll_ble_forget_command(const struct device *uart, const char *frame) {
     int profile = -1, error = 0;
     const char *status = "invalid";
-    k_mutex_lock(&selection_mutex, K_FOREVER);
+    lock_selection();
     if (strlen(frame) == 8 && strncmp(frame, "!CLEAR ", 7) == 0 && frame[7] >= '0' && frame[7] <= '9') {
         profile = frame[7] - '0';
-        bool busy = ble_profile_input_busy(&activity,
+        bool busy = input_busy(
             zmk_hid_get_explicit_mods() != 0 ||
             report_nonempty(&zmk_hid_get_keyboard_report()->body, sizeof(zmk_hid_get_keyboard_report()->body)) ||
-            report_nonempty(&zmk_hid_get_consumer_report()->body, sizeof(zmk_hid_get_consumer_report()->body)),
-            k_uptime_get_32());
+            report_nonempty(&zmk_hid_get_consumer_report()->body, sizeof(zmk_hid_get_consumer_report()->body)));
         if (profile >= ZMK_BLE_PROFILE_COUNT || profile != zmk_ble_active_profile_index()) {
             status = "mismatch";
         } else if (busy) {
@@ -84,7 +117,7 @@ void splitergoll_ble_forget_command(const struct device *uart, const char *frame
             status = !error ? "ok" : "failed";
         }
     }
-    k_mutex_unlock(&selection_mutex);
+    unlock_selection();
     char line[150];
     if (!trace_send_line(uart, "BLEFORGET BEGIN version=1\n")) return;
     snprintf(line, sizeof(line), "BLEFORGET RESULT index=%d status=%s error=%d\n", profile, status, error);
@@ -93,7 +126,7 @@ void splitergoll_ble_forget_command(const struct device *uart, const char *frame
 
 // Le seul appel de mutation est le sélecteur natif ZMK, aucune clé n’est supprimée ou copiée.
 void splitergoll_ble_profile_command(const struct device *uart, char command) {
-    k_mutex_lock(&selection_mutex, K_FOREVER);
+    lock_selection();
     uint16_t open_mask = 0;
     for (unsigned i = 0; i < ZMK_BLE_PROFILE_COUNT; i++) {
         if (zmk_ble_profile_is_open(i)) {
@@ -105,10 +138,10 @@ void splitergoll_ble_profile_command(const struct device *uart, char command) {
                                     sizeof(zmk_hid_get_keyboard_report()->body)) ||
                     report_nonempty(&zmk_hid_get_consumer_report()->body,
                                     sizeof(zmk_hid_get_consumer_report()->body));
-    bool input_busy = ble_profile_input_busy(&activity, hid_busy, k_uptime_get_32());
+    bool busy = input_busy(hid_busy);
     unsigned active = zmk_ble_active_profile_index();
     struct ble_profile_choice choice = ble_profile_choose(command, ZMK_BLE_PROFILE_COUNT,
-                                                          active, open_mask, input_busy);
+                                                          active, open_mask, busy);
     const char *status;
     switch (choice.result) {
         case BLE_PROFILE_OK: status = "ok"; break;
@@ -126,7 +159,7 @@ void splitergoll_ble_profile_command(const struct device *uart, char command) {
             changed = true;
         }
     }
-    k_mutex_unlock(&selection_mutex);
+    unlock_selection();
     char line[170];
     snprintf(line, sizeof(line), "BLEPROFILE BEGIN version=2 count=%u active=%d save_delay_ms=%u\n",
              ZMK_BLE_PROFILE_COUNT, zmk_ble_active_profile_index(), CONFIG_ZMK_SETTINGS_SAVE_DEBOUNCE);

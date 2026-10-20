@@ -36,7 +36,8 @@ L’initialisation par l’ordinateur reste nécessaire, aucun délai total n’
 Le choix est fait sur les indices déjà reçus : un indice contradictoire arrivé
 après sélection ne change pas la keymap avant le prochain cycle USB.
 
-Cette version ne reconnaît ni Linux ni l’OS Bluetooth. Les signatures sont des
+Le profil USB ne reconnaît pas Linux. La [variante Bluetooth](keymap-auto-bluetooth.md)
+reprend l’OS mémorisé de son propre hôte. Les signatures sont des
 heuristiques, pas une preuve d’identité : d’autres machines ou un hub peuvent les
 modifier ou produire une mauvaise reconnaissance. Le BIOS et les KVM ne sont pas validés.
 

@@ -2,35 +2,16 @@
 #ifndef SPLITERGOLL_BLE_TRACE_STORE_H
 #define SPLITERGOLL_BLE_TRACE_STORE_H
 
+#include <splitergoll/ble_events.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 
 #define BLE_TRACE_CAPACITY 256
-#define BLE_TRACE_CONNECTION_LIMIT 6
 
 struct ble_trace_connection {
     uint32_t session;
     int profile;
-};
-
-enum ble_trace_kind {
-    BLE_TRACE_CONNECTED,
-    BLE_TRACE_DISCONNECTED,
-    BLE_TRACE_SECURITY,
-    BLE_TRACE_PARAM_REQUEST,
-    BLE_TRACE_PARAM_UPDATED,
-    BLE_TRACE_MTU,
-    BLE_TRACE_FEATURES,
-    BLE_TRACE_ATT,
-    BLE_TRACE_KIND_COUNT,
-};
-
-struct ble_trace_record {
-    uint32_t timestamp_ms;
-    uint32_t session;
-    enum ble_trace_kind kind;
-    uint32_t data[5];
 };
 
 struct ble_trace_store {
@@ -58,9 +39,6 @@ void ble_trace_disconnect(struct ble_trace_store *store, unsigned connection,
 // Ajoute des métadonnées à la session active, sans allocation ni écrasement.
 bool ble_trace_append(struct ble_trace_store *store, unsigned connection, uint32_t timestamp_ms,
                       enum ble_trace_kind kind, const uint32_t data[5]);
-
-// Décode les métadonnées ATT : 1 événement, 0 ignoré, -1 paquet invalide.
-int ble_trace_decode(const uint8_t *packet, size_t length, bool complete, uint32_t data[5]);
 
 // Extrait seulement les champs publics des requêtes ATT entrantes sur le canal fixe 0x0004.
 void ble_trace_l2cap(struct ble_trace_store *store, unsigned connection, uint32_t timestamp_ms,

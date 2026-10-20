@@ -1,10 +1,11 @@
 # Mémoriser et corriger l’OS
 
-La mémoire est préparée dans le diagnostic `bluetooth … ble-trace` de gauche.
+La mémoire est partagée par `bluetooth auto` et le diagnostic `bluetooth … ble-trace` de gauche.
 **Détection, sauvegarde et restauration après reset sont validées sur V1/Mac et Windows.**
-La keymap du build reste fixe. Les reconnexions reprennent l’OS sauvegardé sans
+Ces essais utilisaient une keymap macOS fixe. Les reconnexions reprennent l’OS sauvegardé sans
 nouvel apprentissage. La veille profonde sur V2 reste à tester.
-La sélection automatique des touches viendra après ces essais.
+La [keymap automatique Bluetooth](keymap-auto-bluetooth.md) utilise maintenant
+cette mémoire, avec validation matérielle à faire.
 
 ## Premier appairage
 
