@@ -1,48 +1,66 @@
 # Capturer le Bluetooth depuis le Mac
 
-La gauche expose ses traces sur USB avec le firmware `ble-trace`. Les USB peuvent
-rester branchés au Mac pendant que le clavier communique en Bluetooth avec Mac
-ou Windows. Aucun script PowerShell ni transfert de fichiers n’est nécessaire.
-La keymap du diagnostic reste fixe, même si l’ordinateur Bluetooth change.
+La gauche reste branchée en USB au Mac. La droite peut être alimentée par le PC.
+Le clavier peut communiquer en Bluetooth avec les deux ordinateurs : leurs traces
+sont séparées, indépendamment de celui qui reçoit les frappes.
+Aucun script Windows ni transfert de fichiers n’est nécessaire.
 
-## Observer Windows
+## Préparer
 
-Les deux appareils sont déjà appairés : Mac en emplacement 0, Windows en 1.
-Ces index correspondent à nos essais, ils ne sont pas imposés par le firmware.
+Compiler puis flasher uniquement la gauche avec le nouveau diagnostic :
 
-1. Garder les USB branchés au Mac, sans reset ni mode bootloader.
-2. Couper temporairement le Bluetooth du Mac et de Windows pour libérer la liaison.
-3. Depuis le terminal du Mac, sélectionner l’emplacement Windows :
+```sh
+make build bluetooth macos ble-trace
+make flash bluetooth macos left ble-trace
+```
 
-   ```sh
-   make ble-profile /dev/cu.usbmodem1101 1
-   ```
+La droite est inchangée. Aucun `settings_reset`, oubli d’appareil ou arrêt du
+Bluetooth. La keymap reste macOS, même lorsque Windows reçoit les touches.
 
-4. Réactiver le Bluetooth de Windows et reconnecter son entrée `Splitergoll`.
-5. Attendre dix secondes, puis lire depuis le Mac :
+## Lire et basculer
 
-   ```sh
-   make ble-capture /dev/cu.usbmodem1101
-   ```
+Les essais actuels utilisent Mac en emplacement 0 et Windows en 1. Ces index
+viennent de nos appairages, ils ne sont pas imposés par le firmware.
+Adapter le port si `ls /dev/cu.usbmodem*` donne un autre nom.
 
-Adapter le port à la gauche présente. Les dix secondes sont une marge de capture,
-pas un délai imposé au clavier. Les fichiers restent dans `.local/ble-traces/`.
-Le préfixe `macos` et le champ `host=macos` désignent le **collecteur USB**,
-même lorsque l’ordinateur Bluetooth observé est Windows. Noter cet hôte séparément.
+```sh
+make ble-profile /dev/cu.usbmodem1101 status
+make ble-capture /dev/cu.usbmodem1101
+```
 
-## Revenir au Mac
+`paired=1` indique un appairage enregistré, `connected=1` une liaison active.
+`active` désigne la destination des frappes. La capture indique une hypothèse d’OS,
+un emplacement et l’état connecté/déconnecté pour chaque session.
+**Lire ne change pas la destination.**
 
-1. Couper le Bluetooth de Windows, garder celui du Mac coupé.
-2. Exécuter `make ble-profile /dev/cu.usbmodem1101 0`.
-3. Réactiver le Bluetooth du Mac. La saisie doit reprendre sans nouvel appairage.
+Pour envoyer les prochaines frappes à Windows, puis revenir au Mac :
 
-Pour observer ce retour, attendre dix secondes puis relancer `make ble-capture`.
-Avant une capture réalisée par l’agent, annoncer que le clavier est prêt.
+```sh
+make ble-profile /dev/cu.usbmodem1101 1
+make ble-profile /dev/cu.usbmodem1101 0
+```
 
-## Connexion ou nouvel appairage ?
+Exécuter une seule sélection à la fois et vérifier son résultat avant de taper.
+Une sélection conserve les liaisons existantes. Si la cible appairée est déconnectée,
+ZMK relance ses annonces pour permettre sa reconnexion. Si nécessaire, reconnecter
+son entrée dans les réglages de l’ordinateur, sans l’oublier.
+`busy` demande de relâcher les touches et d’attendre une seconde avant de réessayer.
+Cette garde concerne la saisie, pas la présence d’un autre ordinateur connecté.
 
-Ces étapes testent une **reconnexion**. Un simple reset ou un flash ordinaire
-conserve les appairages. Reproduire un premier appairage demande un protocole
-d’effacement ciblé du lien testé, avec accord préalable. Ne pas utiliser de reset
-global pour cette mesure. L’[alternative PowerShell](capture-bluetooth-windows.md)
-reste disponible si les USB sont branchés au PC Windows.
+Après une nouvelle connexion, attendre dix secondes puis relancer `ble-capture`.
+C’est une marge d’observation, pas un délai du classifieur. Avant une capture
+réalisée par l’agent, annoncer que le clavier est prêt. Les fichiers restent dans
+`.local/ble-traces/`. Leur préfixe `macos` désigne le collecteur USB, pas l’hôte BLE.
+
+## Ce que la capture conserve
+
+Le tampon RAM contient au maximum 256 événements, environ 8 Kio, toutes sessions
+confondues depuis le démarrage. Une fois plein, il compte les pertes et le lecteur
+refuse la capture incomplète. Un redémarrage vide cet historique, pas les appairages.
+Les frappes et les clés Bluetooth ne sont pas enregistrées.
+Le classifieur tourne dans la gauche lors de la lecture USB. Ces traces sont
+propres à `ble-trace`, absentes du firmware normal. Les anciens dumps restent lisibles.
+
+Une bascule ne déclenche pas une nouvelle découverte de services. Windows peut
+rester « inconnu » lors d’une reconnexion utilisant son cache. Tester un nouvel
+appairage demande un effacement ciblé autorisé, jamais un reset global des réglages.

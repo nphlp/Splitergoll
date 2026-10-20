@@ -650,8 +650,8 @@ est ensuite capturée : 27 événements, dont 20 requêtes ATT contre 42 au dép
 sans relecture de la description HID. Zéro perte/rejet. La lecture est faite
 20,5 secondes après reconnexion, les dix secondes du protocole sont respectées.
 L’utilisateur précise que la reconnexion était automatique, avec 1 054 ms entre
-déconnexion et connexion dans la trace. Pour Windows, isoler l’hôte afin que le Mac
-ne reprenne pas automatiquement la liaison, sans supprimer son appairage.
+déconnexion et connexion dans la trace. Ces premières captures utilisaient un
+diagnostic limité à un hôte, isolé en coupant temporairement le Bluetooth des autres.
 Le lecteur est fermé. La première capture Windows est ensuite fournie : 76 événements,
 67 requêtes ATT, zéro perte/rejet, même table GATT de 52 attributs. Le MTU est identique
 au Mac, Windows lit en plus Appearance et des attributs de cache GATT.
@@ -661,9 +661,27 @@ Les lectures distinctives du premier appairage disparaissent. Les paramètres/ra
 diffèrent sur nos deux hôtes mais ne prouvent pas un OS universel. Ne pas ajouter
 Windows par absence d’indices. Le prochain choix est d’enrichir l’observation ou
 d’étudier une mémoire automatique d’OS appris par appairage authentifié, avec gestion
-des remplacements et changements d’OS. Un classifieur C diagnostique hors ligne est
-désormais testé dans `diagnostics/os-signature/firmware/ble_os_classifier.c/.h`, avec
-sa suite native. Il reste absent des sources CMake, des lecteurs et des firmwares.
+des remplacements et changements d’OS. Le classifieur C pur dans
+`diagnostics/os-signature/firmware/ble_os_classifier.c/.h` est désormais compilé dans
+le seul diagnostic BLE gauche. Le dump calcule une hypothèse par session après les
+ATTR, dans le thread USB, sans ajouter de calcul dans les callbacks radio.
+Les lecteurs acceptent les anciennes captures et les nouvelles lignes `BLETRACE OS`.
+Après flash de gauche par l’utilisateur, la lecture réelle sur V1/Mac confirme
+macos `0003` : 27 événements, sécurité niveau 2 sans erreur, zéro perte/rejet.
+Le port USB est refermé. L’essai suivant utilise le nouveau diagnostic v2.
+La gauche est alimentée et lue par le Mac, la droite est alimentée par le PC Windows.
+Le nouveau diagnostic v2 sépare maintenant les sessions simultanées et leur état
+par emplacement, avec un tampon partagé toujours borné à 256 événements. La commande
+USB permet la sélection explicite d’un autre hôte connecté sans couper les Bluetooth.
+Elle refuse une bascule pendant un maintien, un rapport HID actif ou les 750 ms
+suivant un événement de saisie. Après flash gauche, S et D observent réellement
+les deux hôtes connectés : Mac actif en 0, Windows connecté en 1, 32 événements
+sans perte/rejet. La session Windows ne fournit qu’une requête de MTU et reste
+inconnue, la session Mac donne macos `0003`. L’aller-retour 0 → 1 → 0 est ensuite
+confirmé par les statuts, les deux hôtes restant connectés, sans frappe générée.
+Le retour final au Mac est confirmé. La réception effective des frappes sur chaque
+hôte et la garde de maintien restent à tester sur matériel. Ni keymap, ni préférence
+de sortie, ni appairage, ni firmware normal ne changent dans ce lot.
 Le rejeu des cinq fichiers existants reconnaît les sessions Mac et la découverte
 initiale Windows, mais laisse sa reconnexion limitée au MTU/batterie inconnue.
 Aucune sélection BLE automatique ni mémoire d’OS n’est implémentée.

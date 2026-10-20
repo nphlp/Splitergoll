@@ -33,8 +33,15 @@ des écritures, adresses et clés ne sont jamais copiées. Seul le type d’adre
 noté. La table ATTR donne les UUID publics locaux par handle, sans leurs valeurs.
 Read Multiple conserve le premier handle et le nombre, pas toute sa liste.
 
-Le diagnostic accepte un seul hôte à la fois. Une deuxième connexion hôte simultanée
-incrémente rejected, et ses échanges ne sont pas mélangés à la première.
+Le diagnostic suit jusqu’à CONFIG_BT_MAX_CONN connexions, borné à six par un
+BUILD_ASSERT. Le rôle local exclut le split. bt_conn_index indexe des canaux RAM,
+chacun reçoit un nouveau numéro de session à chaque connexion. Déconnexion et
+réutilisation d’un index ne transfèrent jamais les preuves. Les événements de
+plusieurs hôtes peuvent s’entrelacer dans le même tampon de 256 enregistrements.
+L’emplacement est résolu par zmk_ble_profile_index sans exporter l’adresse. Les
+erreurs natives, dont -ENODEV avant appairage, sont normalisées en -1 inconnu. Un
+emplacement inconnu peut être complété après appairage, un remplacement inattendu
+sur la même session invalide la capture. Aucun OS n’est déduit de l’emplacement.
 Les compteurs dropped/rejected saturent et font refuser la capture par le lecteur.
 Un dump copie les métadonnées de son instantané sous spinlock, puis lit les index
 immuables sans tenir le verrou pendant l’envoi série. Les ajouts ultérieurs ne font
@@ -42,11 +49,16 @@ pas partie de cet instantané. Le reset physique remet la RAM à zéro, jamais N
 
 Le transport extrait dans `trace_console.c/.h` est partagé avec USBTRACE : attente
 DTR, interruption TX et échéance par ligne inchangées, thread séparé du Bluetooth.
-La commande D restitue BEGIN, EVENT, ATTR puis END avec le nombre d’attributs.
+La commande D restitue BEGIN version=2, EVENT, ATTR, puis une paire HOST/OS par
+session et END avec le nombre d’attributs. connected dans BEGIN compte les hôtes
+actifs, de zéro à six. Les sessions sont numérotées par leur ouverture, pas par
+ordre de fermeture. Les lecteurs gardent aussi la compatibilité version 1.
 Chaque EVENT porte index, uptime, session, type et cinq champs hexadécimaux :
 
-- CONNECTED : intervalle, latence, timeout, type d’adresse, zéro.
-- DISCONNECTED : raison puis zéros. SECURITY : niveau, erreur puis zéros.
+- CONNECTED : intervalle, latence, timeout, type d’adresse, emplacement + 1.
+- DISCONNECTED : raison, dernier emplacement + 1, puis zéros.
+  Le code zéro désigne un emplacement inconnu. En version 1 ces champs étaient zéro.
+- SECURITY : niveau, erreur puis zéros.
 - PARAM_REQUEST : minimum, maximum, latence, timeout, zéro.
 - PARAM_UPDATED : intervalle, latence, timeout puis zéros.
 - MTU : TX, RX puis zéros. FEATURES : deux mots little-endian de 32 bits puis zéros.
@@ -66,7 +78,9 @@ classifieur. Linux reste inconnu. Ne pas effacer de bonds pour obtenir plus d’
 Le même `capture.ps1` autonome accepte `-Port COMx -Ble`, sans administrateur,
 sortie `windows-ble-….txt` dans le dossier courant. Les validateurs AWK et PowerShell
 contrôlent indices, sessions, nombre d’attributs et absence de pertes. Ils ne font
-aucune classification. Les API série Windows restent à tester par l’utilisateur.
+aucune classification côté lecteur. Les lignes OS du firmware sont présentées après
+validation. Les lectures série Windows antérieures sont confirmées, le nouveau
+résumé reste à essayer sur matériel.
 Le premier essai vise V1/Mac puis Windows, sans lecture de console anticipée :
 attendre le signal de disponibilité et distinguer flash, appairage et capture.
 
@@ -109,22 +123,31 @@ actif, paired, connected et délai de sauvegarde, sans adresse ni clé.
 NVS directe ou modification de préférence USB n’est ajoutée. Une sélection explicite
 change le profil actif, sauvegardé par ZMK après `CONFIG_ZMK_SETTINGS_SAVE_DEBOUNCE`,
 actuellement 60 000 ms. Couper le courant avant ce délai peut restaurer l’ancien index,
-pas effacer un bond. Choisir la case Windows après avoir déplacé les USB au PC.
+pas effacer un bond. L’USB peut rester sur le Mac pendant toute la bascule BLE.
 
-La politique refuse une case hors limites, un libre absent et une bascule lorsqu’un
-hôte est encore connecté. L’adaptateur recherche tout périphérique hôte dans les
-connexions LE, même avant son appairage, et ne déconnecte personne automatiquement.
-La vérification représente l’instant de la commande, pas un verrou des nouvelles
-connexions : isoler le Mac en coupant temporairement son Bluetooth pour l’essai.
+La politique refuse une case hors limites, un libre absent ou une bascule pendant
+la saisie. La présence d’un hôte connecté n’est plus un motif de refus. Le wrapper
+zmk_event_manager_raise de ce diagnostic suit les 44 positions physiques et
+l’activité des keycodes/encodeurs, sans filtrer ni modifier les événements.
+Un mutex récursif sérialise cette activité et la sélection native. La garde vérifie
+les positions maintenues, les rapports HID clavier/consumer, les modificateurs
+explicites et 750 ms depuis le dernier événement d’entrée. Ce drainage concerne
+uniquement une commande de bascule, jamais les frappes ordinaires ni le classifieur.
+Il couvre les comportements différés actuels. Une macro future dépassant cette
+fenêtre sans événement devra faire réexaminer ce contrat. Aucune sélection différée
+ou nouvelle tentative automatique : busy rend la main à l’utilisateur.
+Les appels de sélection utilisent toujours zmk_ble_prof_select, sans déconnexion
+forcée, suppression de clé, changement de préférence de sortie ni nouvelle keymap.
 S et une sélection de l’index déjà actif n’écrivent rien. F ne choisit jamais une
 case occupée. Ne pas réessayer F automatiquement après timeout, lire S pour connaître
 l’état puis réutiliser un index précis après un premier appairage Windows.
 
-Le protocole BLEPROFILE garde BEGIN, SLOT dans l’ordre, RESULT avec commande/statut,
+Le protocole BLEPROFILE émet BEGIN version=2, SLOT dans l’ordre, RESULT avec commande/statut,
 puis END. L’état peut évoluer pendant l’envoi des SLOT si l’hôte se reconnecte.
 Les lecteurs vérifient les bornes, les comptes, la commande attendue et la cohérence
 active/selected. Un refus busy/full/invalid/failed rend une erreur et conserve la
-réponse. Le lecteur n’effectue jamais de nouvelle tentative de sélection.
+réponse. Les lecteurs acceptent aussi version=1, dont busy signifiait hôte connecté.
+Le lecteur n’effectue jamais de nouvelle tentative de sélection.
 
 `make ble-profile <port> <status|free|index>` délègue directement à `capture.sh
 --profile`. Sur Windows le même fichier autonome `capture.ps1 -Port COMx -Profile
@@ -136,7 +159,7 @@ lecture de la case Mac, coupure Bluetooth Mac, alimentation PC, sélection libre
 appairage Windows, capture -Ble et retour à l’index Mac sans oublier aucun appareil.
 
 La politique est couverte par `ble_profile_control_test.c` : 81 920 combinaisons de
-commande, masque, index et état de connexion pour les cinq emplacements, plus bornes
+commande, masque, index et état de saisie pour les cinq emplacements, plus bornes
 0/10/11 et bits hors capacité. Les cinq suites C passent avec ASan/UBSan. Build BLE
 réussi, droite identique au précédent, keymaps et comportements inchangés, deux UF2
 contrôlés intégralement. Les validateurs acceptent LF/CRLF et refusent cinq réponses
@@ -379,13 +402,15 @@ Linux et à d’autres hôtes reste nécessaire avant toute promesse de généra
 Ces observations ont ensuite servi au prototype hors ligne ci-dessous. Aucun cache
 persistant ou nouveau diagnostic SMP n’est ajouté.
 
-### Classifieur BLE diagnostique hors ligne
+### Classifieur BLE et intégration au diagnostic
 
 `firmware/ble_os_classifier.c/.h` est pur, sans Zephyr, allocation, lecture de valeurs
-GATT, sélection de couche, profil ou écriture NVS. Il n’est volontairement pas ajouté
-à CMake : cette étape prépare et teste la logique sur les captures existantes,
-sans changer les UF2 ni le protocole BLETRACE. Les lecteurs Bash/PowerShell sont
-inchangés. L’intégration dans ble-trace et ses builds feront l’objet de l’étape suivante.
+GATT, sélection de couche, profil ou écriture NVS. Initialement testé hors ligne,
+il est maintenant ajouté à CMake uniquement sous SPLITERGOLL_BLE_TRACE. Le dump
+rejoue son instantané dans un second passage après les ATTR, dans le thread USB.
+Les callbacks ne calculent aucun OS. Les handles des lectures
+et écritures directes sont résolus avec l’API publique `bt_gatt_foreach_attr` sur
+le handle exact, sans lire les valeurs. Un handle absent rend la session non fiable.
 
 `ble_os_observe()` consomme les métadonnées de `ble_trace_record`, avec l’UUID 16 bits
 résolu dans la table ATTR pour une lecture/écriture par handle. Zéro signifie non
@@ -447,6 +472,130 @@ donne inconnu. Un fichier tronqué est refusé par le validateur. Les sources pr
 conservent leurs octets et empreintes. Aucun port série, conteneur, flash ou nouveau
 build n’est lancé pendant cette validation hors ligne.
 
+L’intégration ajoute, après les ATTR et avant END, deux lignes par session :
+`BLETRACE HOST session=1 profile=0 connected=1`, puis
+`BLETRACE OS session=1 result=macos evidence=0003`. HOST donne le dernier emplacement
+connu (-1 si inconnu) et l’état de la session à l’instantané, indépendamment de sa
+sélection pour les frappes. Les sessions closes et les sessions encore actives sont
+toutes représentées, sans changer le nombre de champs EVENT/ATTR ni leurs comptes.
+Les lecteurs acceptent zéro ligne OS pour les anciens UF2 v1. En v1, dès qu’une
+ligne existe, les résultats sont exigés pour toutes les sessions. En v2, les paires
+HOST/OS sont obligatoires pour les sessions 1 à N dans l’ordre, sans doublon,
+attribut tardif ou résultat mal formé. Les états HOST doivent correspondre aux
+ouvertures/fermetures observées, et l’emplacement aux métadonnées connues. La keymap
+reste fixe, même si une hypothèse est disponible. Ces résultats ne sont pas la future mémoire de production.
+
+Le second passage reprend le même count et les indicateurs de perte/rejet du début
+du dump. Les index sont immuables. Les ajouts pendant l’envoi ne changent donc pas
+son instantané. Les six canaux de connexion sont copiés sous le même verrou pour
+stabiliser les associations HOST. Le dump rejoue chaque session dans un classifieur
+neuf, en filtrant son numéro : au plus 256 x 256 examens, uniquement à la demande
+USB. Aucun calcul GATT, UART ou OS n’est fait sous spinlock. Chaque session garde
+sa sécurité et la fiabilité locale de résolution. Aucun tableau de 256 résultats
+n’est ajouté à la pile du thread de 2 Kio.
+Un échec UART ou de lecture d’un record interrompt sans END pour rendre la capture
+irrecevable. Les gardes du build imposent ble_os_observe/ble_os_result dans la map
+gauche de trace uniquement.
+
+Validation d’intégration : six suites natives ASan/UBSan vertes, syntaxe shell et
+PowerShell contrôlée. Un harnais temporaire sous `.local/validation/ble-integration/`
+compile le vrai `ble_trace.c` avec des doubles des API Zephyr/UART/GATT. Les cinq
+captures rejouées conservent tous leurs EVENT/ATTR et produisent les mêmes huit
+résultats de sessions que le prototype. Le harnais vérifie aussi absence d’UART
+sous spinlock, ajouts pendant le dump, handle introuvable et échec de transmission.
+Les validateurs AWK et PowerShell acceptent/refusent les mêmes 27 cas LF/CRLF,
+anciens et nouveaux formats, lignes manquantes, doubles ou désordonnées, session
+hors limites, résumés mal formés et captures tronquées/perdues. Le parseur
+PowerShell local ne valide pas les API série Windows ou Windows PowerShell 5.1.
+Les paires bluetooth macos ble-trace, bluetooth macos normal et wire auto usb-trace
+compilent en 16, 14 et 10 secondes. Les six UF2 passent les gardes de rôles/logs,
+SHA-256 et partitionnement. Les quatre UF2 normaux/USB et la droite BLE trace sont
+identiques à leurs références. Les Devicetrees des deux moitiés Bluetooth conservent
+keymap, behaviors, macros et conditional_layers. Aucun avertissement nouveau :
+Docker insecure et KSCAN restent visibles dans ces compilations incrémentales.
+Le nouveau diagnostic est dans `dist/firmware/bluetooth-macos-ble-trace-2026-10-20-12-24-14/`.
+Tous les conteneurs de validation ont disparu, les trois services préexistants
+sont conservés. Ces validations n’ont effectué ni flash, ni lecture série,
+ni changement d’emplacement ou effacement de bond.
+
+Après flash de gauche par l’utilisateur et son signal de disponibilité, la capture
+réelle `.local/ble-traces/macos-2026-10-20-11-08-37-oTzqIp` confirme macos `0003`
+dans le dump du firmware. Elle contient 27 événements, dont 20 ATT, 52 attributs,
+une session connectée, sécurité niveau 2 sans erreur, zéro perte/rejet.
+Le motif DIS est présent, sans effacement ni nouvel appairage demandé.
+USB gauche sur Mac, USB droit sur PC Windows pour alimentation : cette topologie
+ne change pas l’hôte BLE observé. Le port est refermé et libre selon lsof.
+La reconnexion Windows avec ce nouveau firmware reste à capturer. Ne pas présenter
+cet essai Mac comme une répétition de premier appairage ou une validation multi-machines.
+
+### Validation du diagnostic à plusieurs hôtes
+
+Les six suites natives USB/BLE passent avec ASan/UBSan et -Wall -Wextra -Werror.
+Les tests existants couvrent maintenant les hôtes entrelacés, déconnexion et
+réutilisation d’un canal, emplacement inconnu puis résolu, attribution incohérente,
+bornes des canaux, capacité et compteurs saturés. Le classifieur garde des preuves
+et des erreurs de sécurité indépendantes. La politique couvre aussi les positions
+de couche, HID actif, drainage à 749/750 ms, horloge rebouclée et position invalide.
+
+Sous `.local/validation/ble-multihost/`, les vrais adaptateurs C sont compilés avec
+des doubles Zephyr/UART/GATT. Les callbacks excluent le split et gardent les deux
+hôtes. Le retour natif -ENODEV avant appairage devient bien un emplacement inconnu,
+résolu ensuite sans perte. Six captures privées et trois scénarios synthétiques
+passent le vrai dump, dont deux signatures simultanées, réutilisation d’une connexion
+et preuves complémentaires réparties entre hôtes qui doivent rester inconnus.
+Les sources conservent leurs octets. L’instantané reste stable pendant de nouveaux
+callbacks, un handle manquant donne inconnu et une erreur UART supprime END.
+L’adaptateur de sélection réel passe les cas de deux hôtes connectés, maintien,
+relâchement, drainage, modificateur explicite, consumer actif, événements imbriqués
+et erreur native. Les événements sont transmis et aucun UART n’est utilisé sous mutex.
+
+AWK et PowerShell acceptent/refusent les mêmes 59 cas BLETRACE et 27 cas BLEPROFILE,
+avec compatibilité v1/v2, LF/CRLF, sessions/états/emplacements incohérents, pertes,
+troncatures et résultats manquants. Le BOM et le parseur PowerShell sont contrôlés,
+sans prétendre à une nouvelle exécution série Windows ou PowerShell 5.1.
+
+La paire finale est dans `dist/firmware/bluetooth-macos-ble-trace-2026-10-20-14-39-01/`,
+compilée et exportée en 15 secondes. Les gardes UF2, rôles, logs et symboles passent.
+Le stockage utilise 0x2044 octets de RAM, dont 8192 pour les 256 événements.
+La gauche utilise 75 148 octets de RAM sur 256 Kio. Les deux builds Bluetooth normaux
+et les deux UF2 wire auto usb-trace sont identiques aux références précédentes,
+ainsi que la droite BLE trace. Aucun fichier clavier, keymap, configuration,
+manifeste ou préférence de sortie n’est modifié. Aucun nouvel avertissement C,
+les avertissements connus Docker insecure et KSCAN restent visibles.
+Un premier export a échoué parce que le script de contrôle avait été édité pendant
+sa lecture par le shell. Les exports suivants, fichiers stabilisés, ont réussi.
+Ces validations de préparation n’ont effectué ni accès série, ni sélection
+d’emplacement, ni effacement de bond. Le flash et les essais réels sont décrits ci-dessous.
+Les conteneurs de compilation ont terminé, seuls les trois services préexistants
+restent actifs après vérification.
+
+Après confirmation du flash gauche, S donne le statut v2 dans
+`.local/ble-profiles/macos-2026-10-20-12-53-54-h499vM` : active=0, les emplacements
+0 et 1 appairés et connectés, changed=0. D donne
+`.local/ble-traces/macos-2026-10-20-12-54-03-tHNELK` : 32 événements, deux sessions
+simultanées, zéro perte/rejet et 52 attributs. Windows se connecte le premier en
+session 1, emplacement 1 : cinq événements, une seule requête ATT de MTU,
+sécurité niveau 2 sans erreur, unknown `0000`. Le Mac est en session 2, emplacement
+0 : 27 événements, dont 20 ATT, sécurité niveau 2 sans erreur, macos `0003`.
+Cela confirme les deux connexions et la séparation de leurs échanges sur matériel,
+pas une détection initiale Windows. Les deux ports de lecture sont refermés et libres.
+Aucune sélection n’a été envoyée pendant ces premières lectures, la destination reste Mac.
+
+Après accord sur un aller-retour sans frappe, l’agent lit S (jywaEY), sélectionne 1
+(r8Vn20), confirme par S (BaNhnn), lit D (Y99bVL), sélectionne 0 (XRMDus), puis
+confirme par S (I1kvj2). Les cinq réponses BLEPROFILE sont dans `.local/ble-profiles/`,
+avec le préfixe `macos-2026-10-20-12-58-`. Les deux sélections donnent status=ok,
+changed=1, error=0. Tous les statuts gardent les emplacements 0 et 1 connectés.
+La trace `.local/ble-traces/macos-2026-10-20-12-58-56-Y99bVL` conserve les mêmes
+32 événements et résultats, sans déconnexion, perte ou rejet. La bascule seule
+n’a donc apporté aucun nouvel indice d’OS dans cette capture. Une clause finally
+prévoit le retour à 0 même si une vérification intermédiaire échoue, sans réessai
+automatique. Le statut final confirme active=0, changed=0. Le port est refermé
+et libre selon lsof. Aucune touche n’a été synthétisée par l’agent et aucune clé
+supprimée. Le sélecteur natif peut envoyer ses rapports vides de relâchement.
+Ce test valide les commandes de sélection et leurs statuts, pas
+la réception effective des lettres ni la garde pendant une touche maintenue.
+
 ### Connexion Mac sans saisie avec Windows encore sélectionné
 
 Après le signalement utilisateur, lecture explicitement autorisée de S puis D,
@@ -503,8 +652,20 @@ gauche autorise BT_MAX_CONN=6 et BT_MAX_PAIRED=6, dont un périphérique split,
 mais la capacité configurée n’est pas un essai de deux hôtes simultanés.
 Prévoir la stratégie d’annonces et l’exception de sélection/appairage volontaire :
 sinon un retour automatique vers l’ancien hôte connecté peut empêcher l’arrivée
-du second. Le diagnostic actuel rejette un deuxième hôte dans ses traces, il
-devra aussi isoler les observations par connexion avant un test simultané.
+du second. Le diagnostic sépare désormais les observations de plusieurs hôtes, sans changer
+la stratégie native d’annonces. Une sélection explicite d’un profil déconnecté
+relance les annonces ZMK, tout en gardant l’hôte précédent connecté. Cela doit
+encore être vérifié sur nos deux ordinateurs, sans promettre leur reconnexion
+s’ils ne tentent pas eux-mêmes de reprendre la liaison.
+
+L’utilisateur souhaite lire les traces Mac et Windows depuis le Mac et sélectionner
+l’un ou l’autre sans couper leur Bluetooth. Ce support est préparé dans le seul
+diagnostic et nécessite un nouveau flash gauche. La lecture reste passive. Une
+sélection est une action distincte et explicite qui change la destination des frappes,
+sous garde de relâchement et drainage. Elle ne déclenche aucune nouvelle découverte
+GATT et ne mémorise aucun OS. Tester sur matériel le statut, la connexion du second
+hôte, les deux sens de bascule, l’absence de frappes sur l’autre ordinateur et le
+refus pendant un maintien avant de conclure. Le firmware normal n’est pas modifié.
 
 La sélection automatique attend un hôte connu et une liaison sécurisée, exclut la
 moitié droite et respecte les relâchements avant changement de destination/couches.
@@ -555,8 +716,8 @@ les transferts du script et des captures Windows. Le nouveau protocole humain es
 `../../docs/capture-bluetooth-mac.md`, l’alternative PowerShell reste disponible.
 Le champ host et le préfixe macos décrivent l’OS du collecteur, jamais l’hôte BLE.
 Consigner l’hôte testé séparément, sans modifier les captures brutes ni utiliser
-cette annotation comme entrée du classifieur. Un hôte BLE unique est toujours
-requis par le diagnostic actuel. Aucune nouvelle capture n’est ouverte pour ce cadrage.
+cette annotation comme entrée du classifieur. Le diagnostic v2 sépare les sessions
+des hôtes simultanés. Aucune nouvelle capture n’est ouverte pendant cette préparation.
 
 Rejouer les cinq fichiers privés et leurs préfixes valide le C sur ces données,
 pas de nouveaux échantillons indépendants ni une fiabilité générale de premier

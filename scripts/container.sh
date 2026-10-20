@@ -79,6 +79,9 @@ check_firmware() {
         grep -qx 'CONFIG_BT_REMOTE_INFO=y' "$configuration" || fail 'Informations BLE distantes absentes'
         grep -q 'splitergoll_ble_trace_uart' "$directory/zephyr/zephyr.dts" || fail 'Port dédié BLE absent du matériel'
         grep -Eq '0x[0-9a-f]+[[:space:]]+__wrap_bt_l2cap_recv$' "$directory/zephyr/zmk.map" || fail 'Observation ATT absente'
+        for symbol in ble_os_observe ble_os_result __wrap_zmk_event_manager_raise ble_profile_input_busy; do
+            grep -Eq "0x[0-9a-f]+[[:space:]]+$symbol\$" "$directory/zephyr/zmk.map" || fail "Composant BLE absent du diagnostic : $symbol"
+        done
         if grep -qx 'CONFIG_BT_REMOTE_VERSION=y' "$configuration"; then
             fail 'Le diagnostic BLE ne doit pas demander la version du contrôleur distant'
         fi

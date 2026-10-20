@@ -7,6 +7,12 @@
 #include <stdint.h>
 
 #define BLE_TRACE_CAPACITY 256
+#define BLE_TRACE_CONNECTION_LIMIT 6
+
+struct ble_trace_connection {
+    uint32_t session;
+    int profile;
+};
 
 enum ble_trace_kind {
     BLE_TRACE_CONNECTED,
@@ -33,22 +39,28 @@ struct ble_trace_store {
     uint32_t dropped;
     uint32_t rejected;
     uint32_t session;
-    bool connected;
+    unsigned connected;
+    struct ble_trace_connection connections[BLE_TRACE_CONNECTION_LIMIT];
 };
 
 // Ouvre une session hôte, sans effacer les connexions précédentes du même démarrage.
-void ble_trace_connect(struct ble_trace_store *store, uint32_t timestamp_ms,
-                       uint16_t interval, uint16_t latency, uint16_t timeout, uint8_t address_type);
+void ble_trace_connect(struct ble_trace_store *store, unsigned connection, int profile,
+                       uint32_t timestamp_ms, uint16_t interval, uint16_t latency,
+                       uint16_t timeout, uint8_t address_type);
+
+// Complète un emplacement inconnu après appairage, sans réécrire les événements passés.
+void ble_trace_profile(struct ble_trace_store *store, unsigned connection, int profile);
 
 // Ferme la session active et conserve sa raison de déconnexion.
-void ble_trace_disconnect(struct ble_trace_store *store, uint32_t timestamp_ms, uint8_t reason);
+void ble_trace_disconnect(struct ble_trace_store *store, unsigned connection,
+                          uint32_t timestamp_ms, uint8_t reason);
 
 // Ajoute des métadonnées à la session active, sans allocation ni écrasement.
-bool ble_trace_append(struct ble_trace_store *store, uint32_t timestamp_ms,
+bool ble_trace_append(struct ble_trace_store *store, unsigned connection, uint32_t timestamp_ms,
                       enum ble_trace_kind kind, const uint32_t data[5]);
 
 // Extrait seulement les champs publics des requêtes ATT entrantes sur le canal fixe 0x0004.
-void ble_trace_l2cap(struct ble_trace_store *store, uint32_t timestamp_ms,
+void ble_trace_l2cap(struct ble_trace_store *store, unsigned connection, uint32_t timestamp_ms,
                      const uint8_t *packet, size_t length, bool complete);
 
 // Rend une copie d’un enregistrement existant.

@@ -55,7 +55,8 @@ clavier le sont encore. Une règle devra donc fonctionner aussi sans découverte
 
 ## Puis Windows
 
-Suivre [le protocole Windows](capture-bluetooth-windows.md). Le diagnostic ajoute
+Garder l’USB gauche au Mac et suivre [le guide de bascule](capture-bluetooth-mac.md).
+L’[alternative Windows](capture-bluetooth-windows.md) reste disponible. Le diagnostic ajoute
 un contrôle explicite des emplacements d’appairage, sans changer les touches.
 Ce contrôle demande le firmware `ble-trace` récent sur la gauche. Une case garde
 le Mac, une case libre accueillera Windows. Aucun effacement ni reset nécessaire.
@@ -104,12 +105,17 @@ montrent des pistes, mais aussi une ambiguïté Windows/Linux et un résultat ma
 par défaut trop fragile pour notre usage. Le contrôleur radio et les paramètres
 ne prouvent pas un OS. Aucun classifieur ni mémoire d’OS ne pilote encore le firmware BLE.
 
-## Classifieur hors ligne
+## Hypothèses du diagnostic
 
-Un premier classifieur C diagnostique est testé sur les captures conservées.
+Le classifieur C est intégré au seul firmware `ble-trace`, après tests sur les captures.
 Il combine des recherches et lectures DIS pour macOS, et plusieurs opérations de
 découverte/cache GATT pour Windows. Il n’utilise ni le nom du fichier, ni l’OS du
 lecteur, ni l’emplacement Bluetooth pour décider.
+
+Après flash de la gauche mise à jour, `make ble-capture <port>` affiche une hypothèse
+pour chaque session conservée. Le diagnostic récent sépare les connexions simultanées
+et indique leur emplacement, sans le prendre pour une signature d’OS. Une lecture avec l’ancien firmware reste possible,
+avec le message « Classification absente ». Aucun reset des appairages nécessaire.
 
 | Capture | Hypothèse obtenue |
 | --- | --- |
@@ -119,9 +125,17 @@ lecteur, ni l’emplacement Bluetooth pour décider.
 
 Les preuves manquantes donnent « inconnu », les deux motifs complets donnent
 « ambigu ». Les pertes, incohérences et erreurs de sécurité empêchent une conclusion.
-Ces résultats portent sur nos deux ordinateurs, sans validation sur Linux ou d’autres
-machines. **Ce code n’est pas encore intégré au firmware ni aux commandes de capture.**
-La keymap, les appairages et les firmwares installés restent inchangés.
+Le rejeu de nos captures donne ces résultats sur nos deux ordinateurs, sans
+validation sur Linux ou d’autres machines. Après flash de gauche, une lecture
+réelle sur V1/Mac confirme l’hypothèse macOS : 27 événements, sans perte ni rejet.
+Le diagnostic récent observe aussi les deux hôtes simultanés : 32 événements sans
+perte ni rejet, macOS reconnu et Windows inconnu avec seulement une demande de MTU.
+La sélection Mac → Windows → Mac est confirmée par les statuts, sans couper les
+Bluetooth. Aucune frappe d’essai n’a été envoyée pendant cet aller-retour.
+Ces essais conservent les appairages existants, ils ne valident pas la répétabilité
+d’un premier appairage.
+Le calcul s’effectue pendant la lecture USB, sans modifier la keymap, la destination
+des touches ou les appairages. Il n’enregistre aucun OS en mémoire persistante.
 
 ## Pistes retenues
 

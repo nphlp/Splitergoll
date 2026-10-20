@@ -96,11 +96,28 @@ La priorité USB est différée après l’auto-détection d’OS, pour viser un
   toute sélection de keymap : recherches ciblées DIS côté Mac, séquence de découverte
   et de cache GATT côté Windows, résultats inconnu/ambigu si les preuves manquent
   ou se contredisent. Ne pas prendre les numéros d’emplacement pour des signatures d’OS.
-- [ ] Intégrer ensuite le classifieur au seul diagnostic `ble-trace`, sans bascule
-  de keymap, puis contrôler son résultat sur le clavier. Le prototype actuel est hors ligne.
-- [ ] Refaire des captures en gardant les USB sur le Mac, hôte BLE Mac puis Windows.
-  Distinguer répétitions de reconnexion et nouveaux appairages. Préparer les essais
-  de nouvel appairage avec effacement ciblé autorisé, sans reset de tous les bonds.
+- [x] Intégrer le classifieur au seul diagnostic `ble-trace`, sans bascule de keymap
+  ni mémoire d’OS : calcul à la lecture, une hypothèse par session et lecteurs compatibles.
+- [x] Flasher la gauche de diagnostic mise à jour et confirmer l’hypothèse macOS
+  sur V1 : 27 événements, sans perte ni rejet, lecture USB sur le Mac.
+- [x] Confirmer le résultat du diagnostic intégré lors d’une reconnexion Windows :
+  inconnu, avec seulement une requête de MTU, sans découverte ni mémoire d’OS.
+- [x] Préparer le diagnostic de plusieurs hôtes BLE connectés : traces et hypothèses
+  isolées par connexion, statut par emplacement et bascule USB sans couper le
+  Bluetooth des ordinateurs. Garder un stockage borné et séparer observation,
+  destination des frappes et hypothèse d’OS. Autoriser la bascule pendant
+  une connexion et refuser les changements pendant une frappe ou un comportement différé.
+  Une bascule seule ne déclenche pas une nouvelle découverte de services.
+- [x] Flasher la gauche et observer sur V1 les deux connexions simultanées :
+  32 événements sans perte ni rejet, macOS reconnu et Windows inconnu.
+- [x] Confirmer par les statuts la bascule 0 → 1 → 0 sur V1 sans couper les Bluetooth,
+  avec les deux connexions présentes et sans générer de frappes.
+- [ ] Vérifier la réception effective des frappes sur chaque destination, puis
+  le refus de bascule pendant un maintien et sa réussite après relâchement.
+- [x] Lire les traces Mac et Windows avec l’USB gauche conservé sur le Mac.
+  Les deux ordinateurs restent appairés, il s’agit de reconnexions.
+- [ ] Préparer les essais de nouvel appairage avec effacement ciblé autorisé,
+  sans reset de tous les bonds, puis répéter les captures sur chaque ordinateur.
   Le protocole est dans [capture-bluetooth-mac.md](capture-bluetooth-mac.md).
 - [ ] Compléter les indices d’appairage si nécessaire : métadonnées SMP publiques
   strictement sélectionnées, sans clés, avant de conclure sur la détection initiale.
@@ -115,7 +132,8 @@ La priorité USB est différée après l’auto-détection d’OS, pour viser un
   déconnexions, puis confirmer la durée sur matériel.
 - [ ] Gérer les annonces pour accueillir un second ordinateur pendant que le premier
   est connecté, ainsi que le mode d’appairage explicite sans retour automatique à
-  l’ancien hôte. Valider réellement deux connexions hôtes simultanées.
+  l’ancien hôte. Les deux connexions simultanées sont observées sur V1, l’arrivée
+  contrôlée d’un second hôte pendant que le premier est déjà connecté reste à tester.
 - [ ] Ajouter des raccourcis clavier de sélection d’appareil Bluetooth, sans ordinateur
   ni commande USB : appareil suivant/précédent ou sélection directe d’un emplacement.
   Choisir des gestes libres et un retour sur l’emplacement sélectionné. Cette commande

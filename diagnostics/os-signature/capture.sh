@@ -118,10 +118,26 @@ awk -v command="$serial_command" -f "$validator" "$capture" ||
 printf 'Capture complète : %s\n' "$capture"
 if [ "$protocol" = BLEPROFILE ]; then
     cat "$capture"
-    grep -q ' status=ok ' "$capture" || fail 'Sélection refusée : busy = hôte encore connecté, full = aucun emplacement libre'
+    grep -q ' status=ok ' "$capture" || fail 'Sélection refusée : busy = saisie en cours (ancien firmware : hôte connecté), full = aucun emplacement libre'
     exit 0
 fi
 if [ "$protocol" = BLETRACE ]; then
+    awk '
+        /^BLETRACE HOST / {
+            split($3, session, "="); split($4, profile, "="); split($5, connected, "=")
+            suffix[session[2]] = sprintf(", emplacement %s, %s", profile[2] == -1 ? "inconnu" : profile[2], connected[2] ? "connecté" : "déconnecté")
+        }
+        /^BLETRACE OS / {
+            split($3, session, "="); split($4, result, "=")
+            label = "indices insuffisants, OS inconnu"
+            if (result[2] == "macos") label = "hypothèse macOS"
+            else if (result[2] == "windows") label = "hypothèse Windows"
+            else if (result[2] == "ambiguous") label = "indices contradictoires, résultat ambigu"
+            printf "Signature Bluetooth, session %s%s : %s\n", session[2], suffix[session[2]], label
+            reports++
+        }
+        END { if (!reports) print "Classification absente : ancien firmware de capture" }
+    ' "$capture"
     printf '%s\n' 'Diagnostic Bluetooth uniquement. Aucune sélection automatique d’OS.'
     exit 0
 fi

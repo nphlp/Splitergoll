@@ -280,6 +280,29 @@ static void malformed(void) {
     assert(classifier.invalid && ble_os_result(&classifier, true) == BLE_OS_UNKNOWN);
 }
 
+// Des preuves complémentaires sur deux hôtes ne doivent jamais former une seule signature.
+static void concurrent_proofs(void) {
+    struct ble_os_classifier first = {0}, second = {0}, third = {0};
+    connect(&first, 4);
+    connect(&second, 9);
+    connect(&third, 12);
+    for (size_t i = 0; i < 6; i++) {
+        observe(i < 3 ? &first : &second, macos[i]);
+        if (i < 4) observe(&third, windows[i]);
+    }
+    assert(ble_os_result(&first, true) == BLE_OS_UNKNOWN);
+    assert(ble_os_result(&second, true) == BLE_OS_UNKNOWN);
+    assert(ble_os_result(&third, true) == BLE_OS_WINDOWS);
+    sequence(&first, macos + 3, 3);
+    sequence(&second, macos, 6);
+    assert(ble_os_result(&first, true) == BLE_OS_MACOS);
+    assert(ble_os_result(&second, true) == BLE_OS_MACOS);
+    event(&first, BLE_TRACE_SECURITY, 1, 4);
+    assert(ble_os_result(&first, true) == BLE_OS_UNKNOWN);
+    assert(ble_os_result(&second, true) == BLE_OS_MACOS);
+    assert(ble_os_result(&third, true) == BLE_OS_WINDOWS);
+}
+
 // Le protocole conserve des noms définis, y compris pour un enum hors limites.
 static void names(void) {
     assert(strcmp(ble_os_name(BLE_OS_UNKNOWN), "unknown") == 0);
@@ -298,6 +321,7 @@ int main(void) {
     contradictions();
     sessions_and_security();
     malformed();
+    concurrent_proofs();
     names();
     puts("BLE OS classifier: OK");
     return 0;

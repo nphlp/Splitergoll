@@ -24,33 +24,53 @@ param(
 function Test-BleCapture {
     param([System.Collections.Generic.List[string]]$Lines)
 
-    if ($Lines.Count -lt 5 -or $Lines[1] -notmatch '^BLETRACE BEGIN version=1 side=left count=([0-9]+) dropped=0 rejected=0 uptime_ms=[0-9]+ session=([0-9]+) connected=([01])$') {
-        throw 'Capture BLE refusée : format incorrect, aucune connexion ou pertes signalées.'
+    if ($Lines.Count -lt 4 -or $Lines[1] -notmatch '^BLETRACE BEGIN version=([12]) side=left count=([0-9]+) dropped=0 rejected=0 uptime_ms=[0-9]+ session=([0-9]+) connected=([0-9]+)$') {
+        throw 'Capture BLE refusée : format incorrect ou pertes signalées.'
     }
-    $Expected = [int]$Matches[1]
-    $ExpectedSession = [int]$Matches[2]
-    $ExpectedConnected = [int]$Matches[3]
-    if ($Expected -lt 1 -or $Expected -gt 256 -or $Lines.Count -lt $Expected + 4) {
-        throw 'Capture BLE refusée : nombre incorrect.'
+    $Version = [int]$Matches[1]
+    $Expected = [int]$Matches[2]
+    $ExpectedSession = [int]$Matches[3]
+    $ExpectedConnected = [int]$Matches[4]
+    if ($Expected -lt 1 -or $Expected -gt 256 -or $ExpectedConnected -gt 6 -or
+        ($Version -eq 1 -and $ExpectedConnected -gt 1) -or $Lines.Count -lt $Expected + 4) {
+        throw "Nombre d’événements BLE incorrect."
     }
     $Session = 0
-    $Connected = $false
+    $Connected = 0
+    $Live = @{}
+    $Profiles = @{}
     for ($Index = 0; $Index -lt $Expected; $Index++) {
         if ($Lines[$Index + 2] -notmatch '^BLETRACE EVENT ([0-9]+) [0-9]+ ([0-9]+) (CONNECTED|DISCONNECTED|SECURITY|PARAM_REQUEST|PARAM_UPDATED|MTU|FEATURES|ATT)( [0-9a-f]{8}){5}$' -or [int]$Matches[1] -ne $Index) {
             throw 'Capture BLE refusée : événements manquants ou désordonnés.'
         }
         $EventSession = [int]$Matches[2]
         $Kind = $Matches[3]
+        $Fields = $Lines[$Index + 2] -split ' '
         if ($Kind -eq 'CONNECTED') {
-            if ($Connected -or $EventSession -ne $Session + 1) { throw 'Sessions BLE incohérentes.' }
-            $Connected = $true
+            if (($Version -eq 1 -and $Connected -ne 0) -or $Connected -ge 6 -or $EventSession -ne $Session + 1) { throw 'Sessions BLE incohérentes.' }
+            $Live[$EventSession] = $true
+            $Connected++
             $Session++
-        } elseif (-not $Connected -or $EventSession -ne $Session) { throw 'Session BLE absente.' }
-        if ($Kind -eq 'DISCONNECTED') { $Connected = $false }
+            if ($Version -eq 2) {
+                $Code = [Convert]::ToUInt32($Fields[10], 16)
+                if ($Code -gt 10) { throw 'Emplacement BLE invalide.' }
+                $Profiles[$EventSession] = [int]$Code - 1
+            }
+        } elseif (-not $Live[$EventSession]) { throw 'Session BLE absente.' }
+        if ($Kind -eq 'DISCONNECTED') {
+            if ($Version -eq 2) {
+                $Code = [Convert]::ToUInt32($Fields[7], 16)
+                if ($Code -gt 10 -or ($Profiles[$EventSession] -ge 0 -and $Profiles[$EventSession] -ne [int]$Code - 1)) { throw 'Emplacement BLE incohérent.' }
+                $Profiles[$EventSession] = [int]$Code - 1
+            }
+            $Live[$EventSession] = $false
+            $Connected--
+        }
     }
     $Attributes = 0
     $Seen = @{}
     for ($Index = $Expected + 2; $Index -lt $Lines.Count - 1; $Index++) {
+        if ($Lines[$Index] -match '^BLETRACE (OS|HOST) ') { break }
         if ($Lines[$Index] -notmatch '^BLETRACE ATTR ([0-9a-f]{4}) ([0-9a-f]{4}|[0-9a-f]{8}|[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12})$') {
             throw 'Table GATT BLE invalide.'
         }
@@ -59,9 +79,28 @@ function Test-BleCapture {
         $Seen[$Handle] = $true
         $Attributes++
     }
+    $Reports = 0
+    for (; $Index -lt $Lines.Count - 1; $Index++) {
+        if ($Version -eq 2) {
+            if ($Lines[$Index] -notmatch '^BLETRACE HOST session=([0-9]+) profile=(-1|[0-9]) connected=([01])$' -or [int]$Matches[1] -ne $Reports + 1 -or [int]$Matches[1] -gt $Session) { throw 'Association de session BLE incorrecte.' }
+            $HostSession = [int]$Matches[1]
+            $HostProfile = [int]$Matches[2]
+            $HostConnected = [int]$Matches[3]
+            if ($HostConnected -ne [int]$Live[$HostSession] -or ($Profiles[$HostSession] -ge 0 -and $HostProfile -ne $Profiles[$HostSession])) { throw 'État de session BLE incohérent.' }
+            $Index++
+        }
+        if ($Index -ge $Lines.Count - 1 -or $Lines[$Index] -notmatch '^BLETRACE OS session=([0-9]+) result=(macos|windows|unknown|ambiguous) evidence=[0-9a-f]{4}$' -or
+            [int]$Matches[1] -ne $Reports + 1 -or [int]$Matches[1] -gt $Session) {
+            throw 'Hypothèses BLE incorrectes ou désordonnées.'
+        }
+        $Reports++
+    }
+    if (($Version -eq 2 -or $Reports -ne 0) -and $Reports -ne $Session) {
+        throw 'Hypothèses BLE manquantes pour certaines sessions.'
+    }
     if ($Lines[$Lines.Count - 1] -notmatch '^BLETRACE END attrs=([0-9]+)$' -or
         [int]$Matches[1] -ne $Attributes -or $Attributes -lt 1 -or $Attributes -gt 512 -or
-        $Session -ne $ExpectedSession -or [int]$Connected -ne $ExpectedConnected) {
+        $Session -ne $ExpectedSession -or $Connected -ne $ExpectedConnected) {
         throw 'Capture BLE tronquée ou sessions incohérentes.'
     }
 }
@@ -70,7 +109,7 @@ function Test-BleCapture {
 function Test-BleProfile {
     param([System.Collections.Generic.List[string]]$Lines, [string]$Command)
 
-    if ($Lines.Count -lt 5 -or $Lines[1] -notmatch '^BLEPROFILE BEGIN version=1 count=([0-9]+) active=([0-9]+) save_delay_ms=[0-9]+$') {
+    if ($Lines.Count -lt 5 -or $Lines[1] -notmatch '^BLEPROFILE BEGIN version=[12] count=([0-9]+) active=([0-9]+) save_delay_ms=[0-9]+$') {
         throw 'Réponse incorrecte : firmware ble-trace avec contrôle des emplacements requis.'
     }
     $Expected = [int]$Matches[1]
@@ -241,13 +280,36 @@ try {
         Write-Host "Réponse conservée : $Capture"
         $Lines | Select-Object -Skip 1 | ForEach-Object { Write-Host $_ }
         if ($Lines[$Lines.Count - 2] -notmatch ' status=ok ') {
-            throw 'Sélection refusée : busy = hôte connecté, full = aucun emplacement libre.'
+            throw 'Sélection refusée : busy = saisie en cours (ancien firmware : hôte connecté), full = aucun emplacement libre.'
         }
         exit 0
     }
     if ($Ble) {
         Test-BleCapture -Lines $Lines
         Write-Host "Capture complète : $Capture"
+        $SessionLabels = @{}
+        foreach ($Line in $Lines) {
+            if ($Line -match '^BLETRACE HOST session=([0-9]+) profile=(-1|[0-9]) connected=([01])$') {
+                $HostSession = $Matches[1]
+                $HostProfile = if ($Matches[2] -eq '-1') { 'inconnu' } else { $Matches[2] }
+                $HostConnected = if ($Matches[3] -eq '1') { 'connecté' } else { 'déconnecté' }
+                $SessionLabels[$HostSession] = ", emplacement $HostProfile, $HostConnected"
+            }
+        }
+        $Reports = @($Lines | Where-Object { $_ -match '^BLETRACE OS ' })
+        foreach ($Report in $Reports) {
+            if ($Report -match '^BLETRACE OS session=([0-9]+) result=(macos|windows|unknown|ambiguous) ') {
+                $Session = $Matches[1]
+                $Label = switch ($Matches[2]) {
+                    'macos' { 'hypothèse macOS' }
+                    'windows' { 'hypothèse Windows' }
+                    'ambiguous' { 'indices contradictoires, résultat ambigu' }
+                    default { 'indices insuffisants, OS inconnu' }
+                }
+                Write-Host "Signature Bluetooth, session ${Session}$($SessionLabels[$Session]) : $Label"
+            }
+        }
+        if ($Reports.Count -eq 0) { Write-Host 'Classification absente : ancien firmware de capture' }
         Write-Host 'Le diagnostic Bluetooth ne sélectionne aucun OS.'
         exit 0
     }

@@ -2,7 +2,7 @@
 BEGIN { started = 0; count = 0; result = 0; ended = 0; invalid = 0 }
 { sub(/\r$/, "") }
 /^#/ { next }
-/^BLEPROFILE BEGIN version=1 count=[0-9]+ active=[0-9]+ save_delay_ms=[0-9]+$/ {
+/^BLEPROFILE BEGIN version=[12] count=[0-9]+ active=[0-9]+ save_delay_ms=[0-9]+$/ {
     if (started || ended) invalid = 1
     started = 1
     split($4, value, "="); expected = value[2] + 0

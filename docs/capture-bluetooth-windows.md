@@ -10,8 +10,8 @@ macOS sur les deux ordinateurs afin de comparer le même firmware.
 
 ## Préparer sur le Mac
 
-Le diagnostic initial n’avait pas de sélecteur d’emplacement. Reflasher uniquement
-la gauche avec le nouveau `ble-trace`, sans `settings_reset` :
+Le diagnostic récent permet la bascule entre appareils connectés. Reflasher
+uniquement la gauche avec le nouveau `ble-trace`, sans `settings_reset` :
 
 ```sh
 make flash bluetooth macos left ble-trace
@@ -31,25 +31,28 @@ dans un dossier de travail du PC, par exemple Téléchargements. Il fonctionne s
 
 ## Connecter Windows
 
-1. Couper temporairement le Bluetooth du Mac, sans oublier le clavier.
+1. Garder le Bluetooth des deux ordinateurs activé, sans oublier le clavier.
 2. Brancher les deux USB de V1 au PC Windows pour son alimentation. La saisie
    reste en Bluetooth. Ne pas passer en bootloader.
 3. Dans le Gestionnaire de périphériques, trouver le port série de gauche sous
    « Ports (COM et LPT) ». Utiliser son numéro réel dans les commandes.
 4. Ouvrir PowerShell dans le dossier contenant `capture.ps1`, sans administrateur,
-   puis choisir un emplacement libre :
+   puis sélectionner l’index déjà appairé à Windows, 1 dans nos essais :
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\capture.ps1 -Port COM4 -Profile free
+powershell -NoProfile -ExecutionPolicy Bypass -File .\capture.ps1 -Port COM4 -Profile 1
 ```
 
 Vérifier `status=ok` et noter `selected` : c’est l’index destiné à Windows.
-`busy` signifie qu’un hôte reste connecté, `full` qu’aucune case n’est libre.
+`busy` demande de relâcher les touches et d’attendre une seconde. Avec les anciens
+firmwares, il signifiait qu’un hôte restait connecté. `full` indique une absence de case libre.
 Dans ces cas, ne rien effacer. La commande ne remplace aucun appairage.
 Ne pas relancer `free` pour revenir à une case déjà appairée : utiliser son index.
 
-Dans les paramètres Bluetooth Windows, ajouter un appareil Bluetooth et choisir
-`Splitergoll`. Attendre dix secondes après sa connexion, sans taper, puis lire :
+Si Windows est déjà appairé, attendre sa reconnexion ou reconnecter son entrée
+`Splitergoll`, sans l’oublier. Pour un tout premier appairage uniquement, sélectionner
+`-Profile free` et ajouter le clavier dans les réglages Bluetooth Windows.
+Attendre dix secondes après sa connexion, sans taper, puis lire :
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File .\capture.ps1 -Port COM4 -Ble
@@ -61,27 +64,26 @@ Ne pas supprimer une entrée Windows préexistante en échec sans l’examiner d
 
 Le premier essai sur V1 a conservé le Mac en case 0 et appairé Windows en case 1.
 Pour une nouvelle connexion Windows, utiliser `-Profile 1` à la place de
-`-Profile free`, puis réactiver le Bluetooth du PC et reconnecter le clavier.
+`-Profile free`, et reconnecter le clavier si nécessaire, sans couper le Bluetooth.
 Attendre dix secondes et refaire la capture `-Ble`, sans nouveau flash ni oubli
 d’appareil. Cette capture montrera les lectures lorsque Windows connaît déjà le clavier.
 
 ## Revenir au Mac
 
-Couper le Bluetooth du PC ou déconnecter le clavier de Windows. Rebrancher ses USB
-au Mac, Bluetooth du Mac encore coupé, puis sélectionner l’index Mac noté auparavant :
+Rebrancher l’USB de gauche au Mac, garder les deux Bluetooth actifs, puis sélectionner
+l’index Mac noté auparavant :
 
 ```sh
 make ble-profile /dev/cu.usbmodem1101 0
 ```
 
-Remplacer `0` par l’index réellement noté, puis réactiver le Bluetooth du Mac.
+Remplacer `0` par l’index réellement noté.
 La connexion existante doit reprendre sans nouvel appairage.
 
 Si le Mac affiche « Connecté » sans recevoir les touches, lire `make ble-profile
 <port> status` : son emplacement peut être connecté alors qu’un autre reste actif
-pour la saisie. Couper temporairement le Bluetooth du Mac, sélectionner son index,
-puis réactiver le Bluetooth. Une connexion affichée ne suffit pas à sélectionner
-la destination des touches. Aucun reset des appairages n’est nécessaire.
+pour la saisie. Sélectionner son index, sans couper le Bluetooth. Une connexion
+affichée ne suffit pas à sélectionner la destination des touches. Aucun reset des appairages n’est nécessaire.
 
 Le sélecteur utilise l’API native de ZMK, qui sauvegarde l’index actif après
 60 secondes sous tension. Une coupure plus tôt peut restaurer l’ancien index,
