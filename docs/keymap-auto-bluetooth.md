@@ -2,8 +2,8 @@
 
 `bluetooth auto` réunit macOS et Windows avec gaming. Il utilise l’OS mémorisé
 de l’appareil Bluetooth sélectionné. L’ordinateur qui alimente l’USB ne détermine
-pas la keymap. Le premier flash sur V1 est effectué et sa mémoire Mac est retrouvée.
-La saisie et la bascule des couches Mac/Windows restent à valider.
+pas la keymap. Sur V1, l’utilisateur confirme la bascule entre Mac et Windows avec
+la bonne keymap pour chaque appareil, avec le firmware `ble-trace`.
 
 ```sh
 make build bluetooth auto
@@ -27,11 +27,11 @@ Aucun délai fixe de détection n’est ajouté au démarrage.
 
 Depuis la base, **L1 + clic encodeur droit**, puis relâchement, sélectionne le prochain ordinateur
 actuellement connecté. Un appareil seulement appairé est ignoré. Ce raccourci est
-préparé, son essai matériel reste à faire. La [sélection automatique d’appareil](selection-appareil.md)
-sera l’étape suivante.
+validé sur V1 entre Mac et Windows. La [sélection automatique d’appareil](selection-appareil.md)
+reste à développer.
 Le profil garde la saisie Bluetooth pendant la charge USB et ses délais de veille normaux.
 
-## Premier essai
+## Essais complémentaires
 
 Commencer avec le port de contrôle, sans changer les appairages :
 

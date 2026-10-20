@@ -8,45 +8,36 @@ Il reste dans `docs/` pendant le chantier, le README actuel est conservé.
 
 ## Version en cours
 
-Sur `unified-firmware` : build local et profils `wire` / `bluetooth`, avec la
-keymap de `dongle`. La gauche envoie les touches par USB ou Bluetooth direct,
-la droite communique avec elle en BLE. Le profil Bluetooth garde la saisie en
-Bluetooth pendant la charge USB et active la veille sur batterie.
+La branche de travail est `unified-firmware`, avec un snapshot ZMK préparant la 0.4
+et Zephyr 4.1. Les moitiés communiquent en BLE, la gauche envoie la saisie à l’ordinateur.
 
-Le build est migré vers un snapshot ZMK préparant la 0.4, avec Zephyr 4.1.
-Les 32 UF2 sont contrôlés. Les premiers essais sur V1 en `wire macos` confirment
-saisie, Shift, encodeurs, copier/coller, reconnexion et accès aux couches.
-La [validation détaillée](tests-wire.md) continue. Les essais Bluetooth et veille
-ci-dessous concernent encore la version stable 0.3.0.
+| Fonction | État |
+| --- | --- |
+| Build local, flash guidé et diagnostics USB | Disponibles, parcours de flash validé sur V1 |
+| Keymaps `multi`, `windows` avec jeu, `macos`, `linux` | Disponibles, `multi` garde la bascule manuelle d’OS |
+| Détection USB et keymap `wire auto` | Mac/Windows validés sur V1 en firmware normal |
+| Détection BLE initiale, mémoire et restauration par appareil | Mac/Windows validés sur V1, sans nouvelle détection aux reconnexions |
+| `bluetooth auto` et L1 + clic encodeur droit | Bascule entre appareils connectés et bonnes keymaps confirmées sur V1 en `ble-trace` |
+| Fenêtres de 10 secondes, recherche et transitions Gaming | Moteur C développé et testé, intégration au firmware à faire |
+| Arrêt des annonces et déconnexion du Mac en Gaming USB | Spécifiés, non implémentés sur le clavier |
+| Destinations mixtes USB/BLE avec priorité USB par ordinateur | Spécifiées, association des identités USB/BLE à résoudre |
+| Retour à l’ancien appareil dans les cinq secondes au réveil | Spécifié, non implémenté |
+| Correction manuelle persistante d’un OS mal reconnu | Prévue, non implémentée |
 
-Les deux moitiés fonctionnent sur le Mac après réinitialisation et nouvel appairage,
-avec leurs USB branchés pour l’alimentation et sur batterie seule, sans dongle.
-Le profil d’essai confirme un réveil sans reset et la lecture des deux batteries.
-Le premier appui réveille sans écrire. La gauche doit être éveillée pour recevoir
-la droite, et le choix d’OS revient à Windows après veille profonde.
-Le Clavier V1 sans batterie fonctionne en `wire` sur le MacBook Pro M4 Max avec
-`macos`. Le flash et le fonctionnement du profil `windows` (gaming inclus) sont
-aussi confirmés sur V1. Le Clavier V2 au travail utilise ses batteries et le
-Bluetooth direct. Le parcours complet des keymaps reste à valider.
+Les heuristiques d’OS sont expérimentales, elles ne sont pas validées sur tous
+les ordinateurs. Linux automatique et le dongle restent au backlog.
+L’attente de bascule BLE ressentie d’environ deux secondes reste à mesurer et réduire.
 
-Le profil expérimental `wire auto` sélectionne macOS ou Windows avec gaming à la
-connexion USB. La sélection et le retour du gaming sont confirmés sur V1 avec
-le firmware instrumenté. Après correction de la signature Windows, la saisie et
-la détection Windows puis macOS sont aussi confirmées sans port série, avec le
-même firmware normal sur V1. L’utilisateur confirme les layouts et le gaming.
-La suppression de l’attente initiale et de son report par les frappes ignorées
-est ressentie plus rapide. La sélection est désormais déclenchée par les événements
-USB, sans attente fixe de détection. L’essai Mac → Windows → Mac confirme le bon
-OS à l’encodeur et un démarrage ressenti très rapide, sans mesure chronométrée.
-Les autres ordinateurs restent à tester.
+V1 est sans batterie, V2 possède une batterie par moitié. La lecture des deux batteries
+et les essais de veille de V2 sont validés sur l’ancienne 0.3.0 : première frappe de
+réveil perdue, réveil de la gauche nécessaire avant la droite. Ces essais restent
+à reprendre après migration. Les autres validations sont dans le [TODO](TODO.md).
 
-La keymap historique reste disponible dans `multi`, avec changement d’OS au clavier.
-Les profils fixes `windows` avec jeu, `macos` et `linux` se choisissent au build
-et restent sur leur OS après redémarrage. Le flash automatique et le fonctionnement
-de `wire macos` sont confirmés sur les deux moitiés. Les essais complets des profils restent à faire.
-La priorité USB est différée après la détection automatique d’OS, pour viser une
-adaptation automatique de la keymap et de la sortie. `dongle` reste au backlog. Les branches
-historiques restent intactes et les variantes minimales sont des archives.
+La priorité est d’intégrer les fenêtres Bluetooth, puis le firmware USB + BLE commun,
+avec Gaming USB et le choix de destination. Les noms des futurs profils ne sont pas
+encore fixés. Le [cadrage de l’appairage](gestion-appairage.md) distingue règles
+prévues et moteur déjà développé. Les branches historiques et les variantes minimales
+restent des archives.
 
 ## Démarrer
 
@@ -84,6 +75,8 @@ et `make bat avg` calcule une moyenne par moitié sur 30 secondes.
 - [Détection d’OS](detection-os.md) : préparer et comparer les captures de connexion USB, puis BLE.
 - [Diagnostic Bluetooth](detection-os-bluetooth.md) : comparer Mac et Windows sans sélection automatique.
 - [Sélection de l’ordinateur](selection-appareil.md) : comportement Bluetooth prévu, bascule et reprise après veille.
+- [Destinations de saisie](destinations-saisie.md) : futur choix USB/Bluetooth et priorité par ordinateur.
+- [Gestion de l’appairage](gestion-appairage.md) : définir l’ouverture aux nouveaux appareils et les reconnexions.
 - [Mémoire de l’OS](memoire-os.md) : acquisition initiale et sauvegarde expérimentale, correction manuelle prévue.
 - [Essais de mémoire](tests-memoire-os.md) : appairage, reconnexion et redémarrage sur Mac puis Windows.
 - [Capture Bluetooth depuis le Mac](capture-bluetooth-mac.md) : lire les échanges avec Mac ou Windows en gardant les USB sur le Mac.
@@ -94,6 +87,6 @@ et `make bat avg` calcule une moyenne par moitié sur 30 secondes.
 - [Appairage Bluetooth](appairage-bluetooth.md) : clés de connexion, reset et diagnostic.
 - [Batteries](batteries.md) : mesure actuelle et affichage des deux niveaux.
 - [Keymap automatique USB](keymap-auto.md) : macOS ou Windows avec gaming, sélection à la connexion.
-- [Keymap automatique Bluetooth](keymap-auto-bluetooth.md) : couches de l’OS mémorisé pour l’appareil sélectionné, validation de saisie et de bascule à faire.
+- [Keymap automatique Bluetooth](keymap-auto-bluetooth.md) : OS mémorisé et bascule Mac/Windows confirmés sur V1 en diagnostic.
 - [Keymap](keymap.md) : organisation, couches et sept schémas de touches.
 - [TODO et idées](TODO.md) : suivi des tâches restantes.

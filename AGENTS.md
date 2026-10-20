@@ -766,8 +766,9 @@ des trois variantes auto BLE sont identiques à wire auto. Le guide court est
 [keymap-auto-bluetooth.md](docs/keymap-auto-bluetooth.md). L’utilisateur confirme
 le flash gauche. Les lectures passives retrouvent Mac actif/connecté, stored macos,
 state saved, learning 0 et error 0, sans perte. Windows reste appairé/déconnecté,
-son cache chargé mais unverified. La saisie, l’affichage d’OS et les transitions
-de cette keymap BLE restent à confirmer. La droite est identique à celle installée.
+son cache chargé mais unverified. Ces premières lectures ne validaient pas encore
+la saisie ou les transitions. L’essai du raccourci décrit ci-dessous confirme ensuite
+la bascule et les keymaps sur V1. La droite est identique à celle installée.
 Aucun firmware normal ne doit être présenté comme testé sur matériel sur la base
 de ces contrôles logiciels.
 
@@ -784,6 +785,112 @@ Les annonces natives s’arrêtent quand l’hôte actif est connecté : reconne
 second hôte et automatiser le choix seront le prochain chantier. Le raccourci ne
 réveille pas les appareils déconnectés. Ne pas basculer vers le PC pendant qu’il
 est occupé, ni présenter les tests logiciels comme un essai physique de ce geste.
+
+L’utilisateur confirme ensuite sur V1 en bluetooth auto ble-trace que le raccourci
+change bien d’appareil et que macOS / Windows retrouvent chacun leur keymap.
+Il ressent environ deux secondes d’attente, sans mesure instrumentée. Le code
+impose 750 ms après la dernière activité admise et tous les relâchements, pas deux
+secondes fixes de détection d’OS. Mesurer le trajet du geste jusqu’à disponibilité
+avant d’optimiser ce garde. Ne pas attribuer tout le délai à la radio ou aux logs.
+Le firmware normal, V2, les touches maintenues et le secours OS inconnu restent
+des essais distincts. Le test n’implémente pas l’accueil automatique du second hôte.
+
+Après cet essai, l’utilisateur débranche/rebranche volontairement la gauche pour
+tester le démarrage. Le Mac revient, Windows non. Il demande que tous les hôtes
+appairés disponibles puissent se reconnecter sans sélection USB préalable. Prochain
+lot envisagé : reconnexion des hôtes connus sans prise de sélection par le second.
+La proposition de fenêtres bornées ci-dessous remplace les annonces maintenues
+indéfiniment tant qu’un hôte manque. Ce besoin est distinct du choix
+automatique de destination et du retour au précédent dans les cinq secondes.
+La politique native est modifiable, ne pas présenter ce comportement comme une
+limite matérielle ou un motif de reset des bonds. L’hôte reste initiateur BLE.
+
+## Direction suivante : destinations USB et Bluetooth
+
+L’utilisateur demande ensuite de définir les états d’appairage ouvert/fermé et
+l’éventuelle touche d’ouverture, puis de réunir USB et Bluetooth dans un firmware.
+Le modèle utilisateur doit séparer appareil, liaison et OS. L1 + clic encodeur droit
+choisira une destination utilisable, avec priorité USB au BLE pour le même appareil.
+Exemple de référence : gauche USB vers Windows, BLE Windows et BLE Mac présents.
+La liste attendue contient Windows USB et Mac BLE, pas Windows BLE en doublon.
+La présence de Windows USB ne doit pas empêcher de sélectionner le Mac BLE.
+Ne pas remplacer cela par une priorité USB globale qui écrase le choix explicite.
+
+La déduplication demande une association USB vers identité BLE : le classifieur USB
+ne reconnaît qu’un OS, jamais un ordinateur physique. Deux Windows ne prouvent pas
+un même PC. Le mécanisme de rapprochement reste à décider. Ne pas cacher un appareil
+sur cette simple hypothèse. Les slots BLE restent les bonds, pas le nouveau modèle
+de destinations. Une seule destination reçoit la saisie, route et keymap cohérentes.
+
+Les annonces et l’acceptation d’une nouvelle association sont deux états distincts.
+La proposition ci-dessous ouvre les deux pendant dix secondes. L1 + clic droit permet
+la réouverture tardive avec une intention de sélection dépendant du nombre de destinations.
+Le comportement si plein et à la fin d’un appairage en cours reste à préciser.
+Pas d’effacement ou remplacement automatique d’un bond.
+Ce cadrage de l’appairage précède la modification des annonces, les profils mixtes suivent.
+Voir les guides courts docs/gestion-appairage.md et docs/destinations-saisie.md.
+Ce cadrage ne change pas encore les builds, la keymap ou le firmware. Le branchement
+USB, son retrait, le repli au BLE et le nom du profil futur restent à définir.
+
+## Proposition d’appairage et Gaming USB
+
+L’utilisateur propose dix secondes d’annonces et d’appairage au démarrage/reset,
+puis confirme qu’un retour de Gaming USB à Windows relance aussi ces dix secondes.
+L1 + clic encodeur droit est ensuite ajouté comme troisième déclencheur.
+Pendant la fenêtre, les appareils connus se reconnectent et des nouveaux peuvent
+s’appairer sur un slot libre. Après fermeture, les connexions restent en place,
+une bascule vers un appareil déjà appairé ne recrée pas ses clés. Ne pas fermer
+prématurément la fenêtre parce que tous les appareils connus sont déjà connectés
+si l’ajout d’un nouvel appareil doit encore être possible.
+
+Gaming USB ferme l’appairage, suspend les annonces hôtes et déconnecte le Mac BLE,
+sans supprimer ses clés ou son OS. Le retour à Windows USB ouvre la fenêtre en
+gardant Windows sélectionné et immédiatement utilisable. Le Mac revenu ne vole
+pas la sélection. Le traitement de Windows BLE en Gaming reste à préciser.
+Le BLE interne droite/gauche reste obligatoire, et aucun gain de latence de ce
+changement n’est mesuré. Ne pas couper la seule sortie d’un profil Bluetooth.
+
+Le raccourci regarde le nombre de destinations distinctes disponibles au moment du
+geste : une destination maintient la saisie et arme une bascule vers le premier autre
+appareil prêt pendant la fenêtre, plusieurs passent à la suivante immédiatement sans
+prendre une arrivée tardive. Compter les appareils après déduplication USB/BLE, jamais
+les liaisons brutes. Précisions proposées : aucune destination ouvre la recherche,
+une seule bascule automatique par demande, et un nouveau geste réarme dix secondes
+en remplaçant l’intention précédente. Une recherche explicite annule le retour à
+l’ancien hôte dans les cinq secondes, comme une sélection manuelle.
+
+L’utilisateur choisit explicitement que L1 + clic droit depuis Gaming quitte Gaming,
+revienne à Windows et lance la recherche. Il ne doit donc pas ouvrir l’appairage
+tout en restant en Gaming. Distinguer ce geste du retour Gaming → Windows ordinaire,
+qui ouvre dix secondes mais n’arme pas de bascule sur le nouvel arrivant.
+
+L’appairage déjà commencé à l’échéance et la capacité pleine restent à préciser.
+Cette proposition n’est pas implémentée. La fenêtre d’annonces de dix
+secondes est indépendante du retour au précédent hôte dans les cinq secondes.
+
+## Lot suivant commencé : politique de fenêtre
+
+Le moteur C pur est dans keyboard/src/connections/host_window_policy.c, avec son
+contrat dans le même dossier et l’interface dans keyboard/include/splitergoll/.
+Il décide des fenêtres de dix secondes, de la recherche, des demandes de bascule
+et des transitions Gaming. Il n’est pas encore compilé par CMake ni raccordé aux
+callbacks radio. Le firmware installé et les builds existants gardent leur comportement.
+Ne pas présenter ce lot comme un firmware prêt à flasher pour obtenir les fenêtres.
+
+Les dix suites C natives passent en C11 strict avec ASan/UBSan. La nouvelle suite
+couvre aussi limites temporelles exactes, horloge 32 bits, gestes répétés, arrivées
+groupées, origine modifiée, identités remplacées et garde des appuis. Les preuves
+temporaires restent dans .local/validation/host-window/.
+Une cible prête acceptée avant l’échéance peut finir sa transition après celle-ci,
+sans accepter de nouveaux candidats tardifs. Une capacité de bond pleine n’ouvre
+pas d’appairage neuf, et aucun bond n’est supprimé par ce moteur.
+
+L’intégration ZMK est le prochain lot concret. ZMK app/src/ble.c lie normalement
+auth_pairing_accept et auth_pairing_complete au profil actif. Ne pas contourner
+cela en changeant provisoirement le slot de saisie pendant l’ajout d’un appareil.
+Il faut un raccordement cohérent pour annonces, admission et attribution du bond,
+en conservant les callbacks de mémoire et les contrôles de sécurité existants.
+Pas de patch implicite des dépendances ni de second gestionnaire d’annonces concurrent.
 
 ## Ideas / backlog
 

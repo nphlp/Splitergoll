@@ -7,6 +7,8 @@ Un emplacement ZMK conserve un appareil appairé. Trois états sont distincts :
 - **Sélectionné** : il reçoit les touches du clavier.
 
 La moitié droite du clavier ne compte pas comme un ordinateur.
+Ce guide décrit le Bluetooth actuel. Le futur choix USB + Bluetooth est cadré dans
+[destinations de saisie](destinations-saisie.md), avec priorité USB par ordinateur.
 
 ## Raccourci dans `bluetooth auto`
 
@@ -17,11 +19,27 @@ Le clic simple sur l’encodeur continue d’afficher l’OS.
 
 Les emplacements vides ou déconnectés sont ignorés. Si le seul ordinateur connecté
 est déjà sélectionné, rien ne change. Le geste reste disponible quand l’OS sélectionné
-est inconnu. Il ne modifie ni les appairages ni l’OS enregistré. Essai matériel à faire.
+est inconnu. Il ne modifie ni les appairages ni l’OS enregistré. La bascule et
+l’association des keymaps sont confirmées sur V1 entre Mac et Windows en `ble-trace`.
 
-**Limite actuelle :** ZMK arrête ses annonces quand l’ordinateur sélectionné est
+L’attente ressentie est d’environ deux secondes, sans mesure instrumentée. Le code
+prévoit une garde de 750 ms après la dernière activité admise pour laisser finir
+les comportements différés. Le délai complet reste à mesurer puis à optimiser.
+
+**Comportement actuel de ZMK :** il arrête ses annonces quand l’ordinateur sélectionné est
 connecté. Le raccourci ne provoque donc pas la reconnexion d’un appareil seulement
 appairé. L’accueil du second ordinateur sera traité avec l’automatisation ci-dessous.
+
+La proposition suivante ouvre les annonces pendant dix secondes au démarrage et
+au retour de Gaming USB vers Windows, ainsi qu’avec L1 + clic encodeur droit.
+Avec une seule destination, ce geste recherche et sélectionne le premier autre
+appareil prêt. Avec plusieurs destinations, il passe à la suivante et une arrivée
+ultérieure ne prend pas sa place. Les ouvertures sans ce geste ne font pas prendre
+la sélection au nouvel arrivant. Un nouvel appareil peut être ajouté sur un slot libre.
+Après fermeture, les connexions établies restent présentes. Les annonces sont
+arrêtées pendant Gaming USB, avec déconnexion du Mac et conservation de son appairage.
+Voir [la gestion de l’appairage](gestion-appairage.md) pour ce cadrage encore à implémenter.
+L’ordinateur décide quand se connecter, le clavier se rend disponible.
 
 ## Sélection automatique prévue
 
@@ -32,7 +50,6 @@ Ces règles ne sont pas encore implémentées :
 | Aucun ordinateur connecté | Attendre une connexion |
 | Un seul ordinateur connecté | Le sélectionner automatiquement |
 | Un second ordinateur se connecte | Garder la destination actuelle |
-| Bascule demandée au clavier | Sélectionner l’ordinateur connecté suivant |
 | La destination se déconnecte, un seul ordinateur reste | Sélectionner celui qui reste |
 
 Chaque destination utilise l’[OS mémorisé pour cet appareil](memoire-os.md).
@@ -53,6 +70,8 @@ Ces cinq secondes ne bloquent pas la saisie sur B. Taper sur B n’annule ni ne
 prolonge la fenêtre : les frappes déjà envoyées restent sur B, les suivantes
 partent vers A après la bascule. Une bascule manuelle d’appareil annule le retour
 automatique et mémorise le choix explicite. La durée sera à confirmer sur le matériel.
+La recherche explicite déclenchée par L1 + clic droit doit aussi annuler ce retour
+automatique, pour ne pas être contredite par la reconnexion de l’ancien appareil.
 
 Deux connexions simultanées ont déjà été observées sur V1. L’arrivée et la sélection
 automatiques du second ordinateur restent à tester après adaptation des annonces.

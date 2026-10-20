@@ -16,20 +16,21 @@
 
 ## Étapes suivantes
 
-Diagnostic rapide de latence clos. Suite retenue : migration ZMK/Zephyr,
-puis détection automatique d’OS et autres améliorations du backlog. Les essais
-complets des keymaps restent à terminer. Les essais de veille et d’autonomie
-nécessitent V2, le clavier sur batteries.
+Détection USB et BLE Mac/Windows, mémoire d’OS et bascule entre appareils sont
+validées sur V1 dans les conditions indiquées ci-dessous. Linux automatique reste à faire.
+Les fenêtres de dix secondes et les destinations mixtes ne sont pas encore actives.
 
-La priorité USB est différée après l’auto-détection d’OS, pour viser un clavier
-« full auto » qui adapte sa keymap et sa sortie USB/Bluetooth à l’ordinateur connecté.
+Ordre des prochains lots :
 
-Pour le prochain lot Bluetooth, préparer la mémoire d’OS avant de refaire les
-appairages. Tester la logique sans matériel, puis regrouper après un flash gauche
-les essais Mac et Windows : détection initiale, sauvegarde, reconnexion et
-redémarrage. Le diagnostic distinguera hypothèse courante, OS mémorisé et état
-de sauvegarde. Cela réduit les interventions sur le PC utilisé par une autre personne.
-Les premiers appairages restent à revalider, aucun effacement n’est autorisé maintenant.
+1. Intégrer à ZMK le moteur des fenêtres, la reconnexion et l’ajout d’appareil sans
+   détourner la saisie. Le moteur pur est développé et testé, les API radio restent à raccorder.
+2. Réunir USB et BLE autour des [destinations](destinations-saisie.md), en résolvant
+   l’association entre l’hôte USB et son éventuel bond BLE. Puis intégrer Gaming USB.
+3. Compléter le retour au précédent appareil au réveil, la correction manuelle d’OS,
+   l’optimisation du délai de bascule, puis Linux et le dongle.
+
+Les essais de veille et d’autonomie nécessitent V2. Aucun nouveau reset d’appairage,
+flash, bascule matérielle ou intervention sur le PC occupé n’est implicite dans ce travail.
 
 - [x] Préparer le diagnostic USB sans bascule de keymap et valider une première
   lecture sur V1 et le Mac : 24 requêtes sans perte, voir [le protocole](detection-os.md).
@@ -111,12 +112,17 @@ Les premiers appairages restent à revalider, aucun effacement n’est autorisé
   depuis l’OS mémorisé de l’appareil sélectionné, avec garde des touches et sans OS par défaut.
 - [x] Flasher la gauche `bluetooth auto ble-trace` et lire son état sur V1 : Mac sélectionné,
   `stored=macos`, `state=saved`, sans nouvel apprentissage ni erreur. Windows reste déconnecté.
-- [ ] Tester `bluetooth auto` sur Mac puis Windows : nom d’OS à l’encodeur,
-  raccourcis, pavé, gaming, reconnexion et transitions sûres. Voir [le guide](keymap-auto-bluetooth.md).
+- [x] Confirmer sur V1 en `bluetooth auto ble-trace` la bascule Mac/Windows par
+  raccourci et l’association correcte de leurs keymaps, selon le retour utilisateur.
+- [ ] Compléter les essais BLE : pavé, gaming, touches maintenues, redémarrage et
+  firmware normal. Voir [le guide](keymap-auto-bluetooth.md).
 - [x] Préparer L1 + clic encodeur droit dans `bluetooth auto` pour sélectionner uniquement
   l’appareil connecté suivant, après relâchement des touches. Aucun appel à un appareil déconnecté.
-- [ ] Tester ce raccourci sur V1 : Mac seul sans effet, aller-retour avec deux hôtes
-  connectés, maintien d’une touche et retour depuis un OS indisponible.
+- [ ] Compléter les cas limites du raccourci sur V1 : Mac seul sans effet,
+  maintien d’une touche et retour depuis un OS indisponible.
+- [ ] Mesurer puis réduire le délai de bascule d’appareil : environ deux secondes
+  ressenties sur V1. Distinguer le geste, la garde de 750 ms et la disponibilité de
+  la nouvelle destination, sans supprimer les protections des comportements différés.
 - [ ] Compléter les essais matériels de mémoire : remplacement d’appairage,
   correction manuelle et veille profonde sur V2. Les tests natifs ne remplacent
   pas ces essais. Ne pas déduire Windows d’une absence de lectures ni de l’index du slot.
@@ -167,13 +173,39 @@ Les premiers appairages restent à revalider, aucun effacement n’est autorisé
   annule la fenêtre. Taper sur le premier hôte ne l’annule ni ne la prolonge, et
   n’empêche pas le retour au précédent. Tester ces frappes, les limites et les
   déconnexions, puis confirmer la durée sur matériel.
+- [x] Développer et tester le moteur pur des fenêtres : ouverture dix secondes,
+  recherche avec zéro/une destination, bascule avec plusieurs, transitions Gaming,
+  tickets périmés, identités remplacées et attente des relâchements. Aucune API radio
+  ni intégration firmware dans ce premier lot.
+- [ ] Raccorder ce moteur aux annonces, à l’admission et à l’affectation des nouveaux
+  bonds dans ZMK, sans modifier silencieusement les dépendances ni changer la
+  destination de saisie pour choisir temporairement un slot libre.
 - [ ] Gérer les annonces pour accueillir un second ordinateur pendant que le premier
-  est connecté, ainsi que le mode d’appairage explicite sans retour automatique à
-  l’ancien hôte. Les deux connexions simultanées sont observées sur V1, l’arrivée
+  est connecté. Les deux connexions simultanées sont observées sur V1, l’arrivée
   contrôlée d’un second hôte pendant que le premier est déjà connecté reste à tester.
+  La proposition courante ouvre annonces et nouveaux appairages pendant dix secondes
+  au démarrage/reset, au retour Gaming USB → Windows et via L1 + clic encodeur droit.
+  Sans recherche explicite, l’arrivée d’un hôte ne change pas la sélection.
+  Tester les deux ordres de reconnexion sans sélection USB.
 - [x] Ajouter un raccourci de sélection d’appareil connecté, sans commande USB,
   distinct du changement manuel d’OS : L1 + clic encodeur droit dans `bluetooth auto`.
   Les appareils déconnectés sont ignorés, le clic simple indique l’OS après la bascule.
+- [ ] Définir la [gestion de l’appairage](gestion-appairage.md) : états ouvert/fermé,
+  fenêtres de dix secondes, appairage en cours à l’échéance,
+  slot libre et refus sans effacement si plein. Garder les bonds existants.
+- [ ] Étendre L1 + clic encodeur droit pour rouvrir dix secondes : une destination
+  disponible = bascule vers le premier autre appareil prêt, plusieurs = prochaine
+  destination déjà disponible sans bascule sur une arrivée tardive. Compter les
+  destinations distinctes au geste, pas les liaisons USB/BLE. Tester plusieurs arrivées,
+  absence d’arrivée, nouveau geste qui remplace l’attente et absence de destination.
+- [ ] Définir puis implémenter Gaming USB : arrêt des annonces, nouveaux appairages
+  refusés et Mac BLE déconnecté. Le retour à Windows réouvre dix secondes sans
+  bloquer sa saisie USB ni sélectionner le Mac à son arrivée. Décider du BLE Windows
+  pendant Gaming. Ne pas couper la liaison entre moitiés ni la seule sortie BLE.
+  Depuis Gaming, L1 + clic droit revient à Windows et déclenche explicitement la recherche,
+  avec bascule vers le premier autre appareil prêt si Windows était le seul disponible.
+- [ ] Mesurer l’effet de la suppression des liaisons BLE hôtes sur la latence Gaming USB,
+  sans confondre gain supposé et mesure réelle. La liaison de droite reste en BLE.
 - [ ] Dernier recours si le full auto échoue : mode manuel avec mémoire persistante,
   changement d’OS par raccourci (par exemple L1 + clic encodeur), restauré au démarrage
   et après veille profonde. Cette variante entièrement manuelle est distincte de
@@ -228,7 +260,15 @@ Les premiers appairages restent à revalider, aucun effacement n’est autorisé
 - [ ] Tester au clavier les profils fixes : touches, encodeurs, accents, retour du pavé numérique, gaming Windows et démarrage après veille.
 - [ ] Conserver le choix d’OS de `multi` après veille profonde. Le retour macOS vers Windows est confirmé.
 - [x] Ajouter le Bluetooth direct sans dongle, conservé pendant la charge USB.
-- [ ] Définir et ajouter le profil Bluetooth avec priorité USB : bascule à la connexion à l’ordinateur, retour Bluetooth au débranchement et comportement sur chargeur secteur.
+- [ ] Définir puis ajouter un firmware réunissant USB et BLE : L1 + clic encodeur droit
+  parcourt des destinations, avec priorité USB pour un même ordinateur. Cas attendu :
+  USB Windows + BLE Mac + BLE Windows donne deux choix, USB Windows et BLE Mac.
+  Garder la possibilité de choisir Mac BLE lorsque Windows USB est présent.
+- [ ] Définir l’association entre un hôte USB et un appareil BLE mémorisé pour éviter
+  les doublons. L’OS seul n’identifie pas la machine, tester notamment deux PC Windows.
+- [ ] Définir le comportement à l’arrivée/retrait de l’USB : prise éventuelle de sélection,
+  repli sur le BLE du même ordinateur et absence de destination pour une simple charge.
+  Le nom du futur profil de build n’est pas encore fixé, les profils actuels restent disponibles.
 - [ ] Réintégrer le dongle XIAO BLE au build paramétrable, comme centrale des deux moitiés.
 - [x] Documenter le [flash](flash-firmware.md) et l’[appairage](appairage-bluetooth.md) des profils actuels.
 - [x] Ajouter `make flash` sur macOS : dernier build du profil et de la moitié, date complète et relative, confirmation unique avant copie.

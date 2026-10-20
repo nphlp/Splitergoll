@@ -5,7 +5,8 @@ La mémoire est partagée par `bluetooth auto` et le diagnostic `bluetooth … b
 Ces essais utilisaient une keymap macOS fixe. Les reconnexions reprennent l’OS sauvegardé sans
 nouvel apprentissage. La veille profonde sur V2 reste à tester.
 La [keymap automatique Bluetooth](keymap-auto-bluetooth.md) utilise maintenant
-cette mémoire, avec validation matérielle à faire.
+cette mémoire. L’association des keymaps et la bascule d’appareil sont confirmées
+sur V1 en `ble-trace`, les essais complémentaires restent distincts.
 
 ## Premier appairage
 

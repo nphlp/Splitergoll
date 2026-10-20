@@ -483,7 +483,8 @@ double demande, secours et drainage au débordement d’horloge). Un harnais tem
 compile le vrai ble_auto.c avec callbacks ZMK simulés pour vérifier le câblage des
 événements, l’attente réelle du travail, les releases, la cible déconnectée/remplacée,
 le retour depuis un OS inconnu et la priorité d’une commande externe. Il ne simule
-ni le moteur tap-dance complet ni la radio. Essai matériel du geste encore à faire.
+ni le moteur tap-dance complet ni la radio. L’essai utilisateur décrit ci-dessous
+confirme ensuite le geste entre les deux hôtes.
 Les preuves de ce lot sont dans .local/validation/ble-shortcut/.
 
 Les trois paires bluetooth auto normal/debug/ble-trace et les deux paires témoins
@@ -499,3 +500,107 @@ restent les diagnostics du socle. Les conteneurs éphémères ont disparu, les t
 services préexistants sont conservés. Aucun flash, capture ou changement de destination
 matériel dans ce lot. Ni dépendance, partition, mémoire OS, Dockerfile, Compose ou
 variable d’environnement modifiés.
+
+Validation matérielle rapportée après flash : l’utilisateur confirme la bascule
+d’appareil par raccourci et la bonne association macOS / Windows sur V1 ble-trace.
+Les lectures avant cet essai retrouvaient les deux hôtes connectés, Mac en slot 0,
+Windows en slot 1, stored macos/windows, state saved, learning 0, error 0 et dropped 0.
+Windows a été reconnecté par sélection USB explicite de 1, sans effacement.
+Sa session diagnostique était inconnue mais son OS restauré était bien Windows,
+ce qui vérifie la séparation entre nouvelle classification et mémoire de reconnexion.
+Preuves privées : profil kPdudc, mémoire uv2SpA, trace Utbnd9.
+
+L’attente ressentie d’environ deux secondes n’est pas une mesure. La politique
+attend 750 ms depuis la dernière position/keycode/rotation admise, avec relâchements
+et rapport vide. Les événements différés peuvent repousser cette échéance.
+Le test ne fournit pas d’horodatages du geste ou de disponibilité, ne pas déduire
+une latence BLE ni promettre qu’une simple baisse du garde suffit. L’optimisation
+de ce délai est au TODO, les timings firmware restent inchangés.
+
+La lecture postérieure XPCc1v voit Mac 0 actif/connecté, Windows 1 appairé/déconnecté.
+La trace 6PVA43 annonce uptime 41 755 ms, une seule session Mac sécurisée L2 et
+aucune perte. L’utilisateur confirme avoir volontairement débranché/rebranché la
+gauche après l’essai : cet historique n’est donc plus celui des bascules précédentes,
+et ne démontre aucun crash. Ne pas perdre la validation rapportée du raccourci.
+
+La demande suivante porte sur la reconnexion des deux hôtes après ce redémarrage.
+Le ZMK figé utilise update_advertising() dans app/src/ble.c : désir NONE lorsque
+l’hôte actif est connecté, CONN lorsque le slot actif est libre ou déconnecté.
+Son callback connected remet advertising_status à NONE avant de réévaluer ce désir.
+CONFIG_BT_MAX_CONN vaut 6, MAX_PAIRED vaut 6, soit cinq profils hôtes et la droite.
+Le défaut n’est donc pas le nombre de connexions. La documentation officielle
+Bluetooth Behavior confirme cette politique et les connexions simultanées.
+
+La politique future est maintenant cadrée par les fenêtres de dix secondes décrites
+ci-dessous, plutôt que par des annonces infinies si un hôte reste absent. Préserver
+la sécurité native, le contrôle des nouvelles associations et les profils fixes,
+sans sélectionner celui qui arrive pendant l’usage, sauf recherche explicite armée
+par le raccourci dans le cas d’une seule destination.
+Le choix automatique d’hôte et sa fenêtre de retour restent séparés. Le point
+d’intégration doit respecter l’état d’annonces déjà piloté par ZMK : ne pas lancer
+un second gestionnaire concurrent ni patcher implicitement la dépendance figée.
+Tester la politique pure, les appels réels et les deux ordres de reconnexion avant
+de déclarer cette automatisation validée. La pile hôte initie la connexion, aucune
+annonce ne garantit une reconnexion instantanée d’un ordinateur qui ne cherche pas.
+
+## Direction future USB + BLE
+
+Le cadrage utilisateur passe du slot BLE à une destination regroupant appareil,
+liaisons disponibles et OS. Priorité USB au BLE pour un appareil associé, pas
+priorité USB globale. Le cycle doit garder Mac BLE accessible lorsque Windows USB
+est branché et masquer Windows BLE seulement si son identité commune est établie.
+Le classifieur USB expose un OS et ses indices, aucune identité physique d’hôte.
+La liaison USB vers le bond BLE reste un problème de conception ouvert, l’OS seul
+ne permet aucune déduplication fiable entre deux machines du même système.
+
+L’architecture actuelle choisit un seul adaptateur auto selon ZMK_USB, et BLE_AUTO
+exige !ZMK_USB. Un firmware mixte demandera donc une orchestration commune des deux
+observateurs et un seul filtre d’entrée, une destination et une keymap cohérentes.
+Ne pas simplement activer les deux sélecteurs indépendants ni faire du statut USB
+d’alimentation une destination HID. Les contrôles d’identité mémoire BLE restent requis.
+Les bonds, le format NVS d’OS et les profils de build existants sont inchangés dans
+ce cadrage. Définir d’abord ouverture/fermeture des nouvelles associations en séparant
+annonces de reconnexion et acceptation d’appairage. Spécifications humaines et TODO
+dans docs/gestion-appairage.md et docs/destinations-saisie.md.
+
+Le dernier cadrage utilisateur propose annonces et nouveaux appairages ouverts
+pendant dix secondes au démarrage/reset, au retour Gaming USB vers Windows et via
+L1 + clic encodeur droit.
+À l’échéance, conserver les connexions et arrêter les annonces. Dans la fenêtre,
+accepter les nouveaux appareils seulement si un slot est libre, ne pas déduire
+la fin de fenêtre du seul nombre d’hôtes connus déjà connectés.
+Gaming USB arrête les annonces et les nouveaux appairages, déconnecte le Mac BLE,
+préserve bonds/OS et le BLE split. Le sort de Windows BLE en Gaming reste ouvert.
+Le retour Windows garde la destination USB, sans attendre la reconnexion du Mac.
+L’appairage déjà engagé à l’échéance et la capacité pleine restent à préciser.
+La catégorie Gaming inclut ses deux couches, le passage interne Gaming → Gaming 2
+ne doit pas réouvrir les annonces. Ne pas appliquer une coupure de BLE hôte si
+l’USB n’offre pas de destination utilisable. Le bénéfice de latence reste à mesurer.
+Ne pas confondre la fenêtre d’annonces de dix secondes et la grâce de cinq secondes
+pour restaurer l’ancien hôte au réveil. Aucune modification du firmware dans ce cadrage.
+
+Le raccourci devra prendre un instantané du nombre de destinations utilisables et
+distinctes au geste, pas du nombre de connexions BLE. Une destination : garder la
+source jusqu’au premier autre appareil utilisable, puis consommer l’intention de
+bascule. Plusieurs : sélectionner la suivante avec les gardes existantes, rouvrir
+dix secondes mais ne pas armer de bascule sur les nouveaux arrivants. Proposition
+pour zéro : recherche et sélection du premier appareil prêt. Une seconde liaison
+USB/BLE du même appareil ne doit ni compter deux fois ni consommer cette recherche.
+Une nouvelle demande remplace l’ancienne, la recherche annule le rappel automatique
+de l’ancien hôte. Les frappes sur la source continuent pendant la fenêtre.
+Ne pas sélectionner un nouvel appareil avant sécurité et OS utilisable. La clôture
+du délai sans cible conserve la sélection précédente. Aucune arrivée ne doit prendre
+la destination plusieurs fois pour un seul geste.
+
+L’utilisateur valide que le geste depuis Gaming quitte d’abord ses couches pour
+revenir à Windows puis ouvre la recherche. Le retour par ce geste porte une intention
+de recherche distincte du simple retour de couche, et ne doit pas ouvrir deux fenêtres
+ni exécuter deux demandes. Gaming → Gaming 2 reste dans Gaming, sans ouverture.
+
+Le premier lot de développement des fenêtres est maintenant isolé dans
+keyboard/src/connections/, avec son AGENTS et host_window_policy.c. C’est une
+politique pure sur des destinations déjà identifiées/prêtes, sans activation dans
+le firmware. Son test natif rejoint les neuf suites existantes, les dix passent
+en C11 strict avec ASan/UBSan. Ne pas lier les deux adaptateurs auto simultanément
+pour contourner l’absence actuelle de firmware mixte. L’intégration radio et
+l’attribution d’un bond neuf sans changement de destination sont le lot suivant.

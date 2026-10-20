@@ -119,10 +119,12 @@ Voir [la configuration et les essais](batteries.md).
 | Sortie USB ou Bluetooth à chaud | ZMK propose `&out` si les deux sorties sont compilées. Ces touches restent à ajouter |
 | Gauche centrale ou dongle central | Firmwares adaptés et procédure d’appairage, pas un toggle de sortie |
 
-Le choix de sortie à chaud est sauvegardé et peut survivre aux flashs. Pour le futur
-profil avec priorité USB, on vise USB avec un câble de données vers le Mac, puis
-Bluetooth après débranchement. La charge secteur et le recours à une sélection BLE manuelle
-restent à tester. [Sorties ZMK](https://zmk.dev/docs/keymaps/behaviors/outputs).
+Le choix de sortie à chaud est sauvegardé et peut survivre aux flashs.
+[Sorties ZMK](https://zmk.dev/docs/keymaps/behaviors/outputs).
+L’évolution prévue choisira une [destination de saisie](destinations-saisie.md) :
+par exemple Windows en USB ou le Mac en Bluetooth, dans un même firmware.
+La priorité USB s’appliquera au même ordinateur, sans empêcher le choix d’un autre
+hôte Bluetooth. Le repli au débranchement et la charge secteur restent à définir.
 
 ## Les fichiers de configuration
 
