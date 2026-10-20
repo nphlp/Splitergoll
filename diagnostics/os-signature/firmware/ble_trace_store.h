@@ -59,6 +59,9 @@ void ble_trace_disconnect(struct ble_trace_store *store, unsigned connection,
 bool ble_trace_append(struct ble_trace_store *store, unsigned connection, uint32_t timestamp_ms,
                       enum ble_trace_kind kind, const uint32_t data[5]);
 
+// Décode les métadonnées ATT : 1 événement, 0 ignoré, -1 paquet invalide.
+int ble_trace_decode(const uint8_t *packet, size_t length, bool complete, uint32_t data[5]);
+
 // Extrait seulement les champs publics des requêtes ATT entrantes sur le canal fixe 0x0004.
 void ble_trace_l2cap(struct ble_trace_store *store, unsigned connection, uint32_t timestamp_ms,
                      const uint8_t *packet, size_t length, bool complete);

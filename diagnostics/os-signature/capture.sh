@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Lit l’historique de la centrale usb-trace ou ble-trace, sans flash ni reset.
-# Reçoit un port série explicite, --ble lit les traces et --profile contrôle les emplacements BLE.
+# --ble lit les traces, --profile contrôle les emplacements, --memory lit la mémoire d’OS.
 # macOS/Linux uniquement. Sous Windows, copier capture.ps1 dans le dossier de travail.
 set -euo pipefail
 
@@ -24,6 +24,19 @@ elif [ "${1-}" = --profile ]; then
     protocol=BLEPROFILE
     command_name=ble-profile
     validator="$DIAGNOSTIC_DIRECTORY/check-profile.awk"
+elif [ "${1-}" = --memory ]; then
+    shift
+    TRACE_ROOT="$REPOSITORY/.local/ble-memory"
+    protocol=BLEMEM
+    command_name=ble-memory
+    validator="$DIAGNOSTIC_DIRECTORY/check-memory.awk"
+    serial_command=M
+elif [ "${1-}" = --forget ]; then
+    shift
+    TRACE_ROOT="$REPOSITORY/.local/ble-profiles"
+    protocol=BLEFORGET
+    command_name=ble-forget
+    validator="$DIAGNOSTIC_DIRECTORY/check-forget.awk"
 fi
 
 # Affiche une erreur et interrompt la lecture sans modifier le clavier.
@@ -33,6 +46,10 @@ fail() {
 }
 
 if [ "$#" -eq 0 ]; then
+    if [ "$protocol" = BLEFORGET ]; then
+        printf '%s\n' 'Utilise make ble-forget <port-série-gauche> <index>. Effacement ciblé après confirmation.'
+        exit 0
+    fi
     if [ "$protocol" = BLEPROFILE ]; then
         printf '%s\n' 'Utilise make ble-profile <port-série-gauche> <status|free|index>'
         exit 0
@@ -41,7 +58,13 @@ if [ "$#" -eq 0 ]; then
     printf 'Exemple : make %s /dev/cu.usbmodem123\n' "$command_name"
     exit 0
 fi
-if [ "$protocol" = BLEPROFILE ]; then
+if [ "$protocol" = BLEFORGET ]; then
+    [ "$#" -eq 2 ] || fail 'Utilise make ble-forget <port-série-gauche> <index>'
+    case "$2" in
+        [0-9]) serial_command="!CLEAR $2" ;;
+        *) fail 'Index attendu : de 0 à 9, sans sélection implicite' ;;
+    esac
+elif [ "$protocol" = BLEPROFILE ]; then
     [ "$#" -eq 2 ] || fail 'Utilise make ble-profile <port-série-gauche> <status|free|index>'
     case "$2" in
         status) serial_command=S ;;
@@ -67,6 +90,19 @@ command -v lsof >/dev/null || fail 'Prérequis absent : lsof, nécessaire pour v
 if lsof -t "$port" >/dev/null 2>&1; then
     fail 'Ce port est déjà ouvert : ferme son lecteur avant de continuer'
 fi
+if [ "$protocol" = BLEFORGET ]; then
+    [ -t 0 ] || fail 'Effacement refusé sans terminal interactif'
+    printf 'Effacer uniquement l’appairage Bluetooth du slot %s et son OS mémorisé ?\n' "$2"
+    printf '%s\n' 'Le firmware refusera si ce slot n’est pas celui actuellement sélectionné.'
+    printf 'Continue? [y/N] '
+    answer=''
+    IFS= read -r -s -n 1 answer || true
+    printf '\n'
+    case "$answer" in
+        y|Y) ;;
+        *) printf '%s\n' 'Annulé.'; exit 0 ;;
+    esac
+fi
 
 # Restaure les réglages série et ferme uniquement le descripteur ouvert par ce script.
 close_port() {
@@ -88,13 +124,21 @@ stty raw -echo 115200 <&3
 printf 'Lecture de la centrale sur %s…\n' "$port"
 if [ "$protocol" = BLEPROFILE ]; then
     printf '%s\n' 'Contrôle explicite des emplacements Bluetooth, sans effacer les appairages.'
+elif [ "$protocol" = BLEFORGET ]; then
+    printf 'Effacement ciblé du slot %s, sans toucher aux autres appairages.\n' "$2"
 elif [ "$protocol" = BLETRACE ]; then
     printf '%s\n' 'Les connexions Bluetooth depuis le démarrage sont conservées. Aucune frappe à effectuer.'
+elif [ "$protocol" = BLEMEM ]; then
+    printf '%s\n' 'Lecture de la mémoire d’OS. Aucun changement de keymap, de sélection ou d’appairage.'
 else
     printf '%s\n' 'Les requêtes du démarrage sont conservées, aucune frappe à effectuer.'
 fi
 sleep 1
-printf '%s' "$serial_command" >&3
+if [ "$protocol" = BLEFORGET ]; then
+    printf '%s\n' "$serial_command" >&3
+else
+    printf '%s' "$serial_command" >&3
+fi
 deadline=$((SECONDS + 15))
 finished=false
 while [ "$SECONDS" -lt "$deadline" ]; do
@@ -103,6 +147,8 @@ while [ "$SECONDS" -lt "$deadline" ]; do
         printf '%s\n' "$line" >> "$capture"
         if { [ "$protocol" = USBTRACE ] && [ "$line" = 'USBTRACE END' ]; } ||
            { [ "$protocol" = BLETRACE ] && [[ "$line" == 'BLETRACE END attrs='* ]]; } ||
+           { [ "$protocol" = BLEMEM ] && [ "$line" = 'BLEMEM END' ]; } ||
+           { [ "$protocol" = BLEFORGET ] && [ "$line" = 'BLEFORGET END' ]; } ||
            { [ "$protocol" = BLEPROFILE ] && [ "$line" = 'BLEPROFILE END' ]; }; then
             finished=true
             break
@@ -116,6 +162,17 @@ done
 awk -v command="$serial_command" -f "$validator" "$capture" ||
     fail "Capture refusée (pertes ou format incorrect). Données conservées : $capture"
 printf 'Capture complète : %s\n' "$capture"
+if [ "$protocol" = BLEFORGET ]; then
+    cat "$capture"
+    grep -q ' status=ok ' "$capture" || fail 'Effacement refusé ou échoué. Aucun nouvel essai automatique.'
+    exit 0
+fi
+if [ "$protocol" = BLEMEM ]; then
+    cat "$capture"
+    printf '%s\n' 'stored = OS enregistré, state=saved = sauvegarde confirmée et identité vérifiée.'
+    printf '%s\n' 'measured = dernière hypothèse de l’acquisition initiale de ce démarrage.'
+    exit 0
+fi
 if [ "$protocol" = BLEPROFILE ]; then
     cat "$capture"
     grep -q ' status=ok ' "$capture" || fail 'Sélection refusée : busy = saisie en cours (ancien firmware : hôte connecté), full = aucun emplacement libre'

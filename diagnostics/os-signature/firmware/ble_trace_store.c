@@ -82,22 +82,21 @@ void ble_trace_disconnect(struct ble_trace_store *store, unsigned connection,
 }
 
 // Parse une liste blanche de requêtes, sans copier les valeurs lues ou écrites.
-void ble_trace_l2cap(struct ble_trace_store *store, unsigned connection, uint32_t timestamp_ms,
-                     const uint8_t *packet, size_t length, bool complete) {
+int ble_trace_decode(const uint8_t *packet, size_t length, bool complete, uint32_t data[5]) {
     if (packet == NULL || length < 4) {
-        increment_saturated(&store->rejected);
-        return;
+        return -1;
     }
     if (little16(packet + 2) != 0x0004) {
-        return;
+        return 0;
     }
     size_t payload_length = little16(packet);
     if (!complete || payload_length == 0 || payload_length != length - 4) {
-        increment_saturated(&store->rejected);
-        return;
+        return -1;
     }
     const uint8_t *att = packet + 4;
-    uint32_t data[5] = {att[0], (uint32_t)payload_length, 0, 0, 0};
+    data[0] = att[0];
+    data[1] = (uint32_t)payload_length;
+    data[2] = data[3] = data[4] = 0;
     size_t minimum;
     switch (att[0]) {
         case 0x02: case 0x0a: minimum = 3; break;
@@ -107,19 +106,17 @@ void ble_trace_l2cap(struct ble_trace_store *store, unsigned connection, uint32_
         case 0x12: case 0x52: minimum = 3; break;
         case 0x16: minimum = 5; break;
         case 0x18: minimum = 2; break;
-        default: return;
+        default: return 0;
     }
     if (payload_length < minimum) {
-        increment_saturated(&store->rejected);
-        return;
+        return -1;
     }
     bool fixed_length = att[0] == 0x02 || att[0] == 0x0a || att[0] == 0x04 ||
                         att[0] == 0x0c || att[0] == 0x18;
     bool typed_read = att[0] == 0x08 || att[0] == 0x10;
     if ((fixed_length && payload_length != minimum) ||
         (typed_read && payload_length != 7 && payload_length != 21)) {
-        increment_saturated(&store->rejected);
-        return;
+        return -1;
     }
     if (att[0] == 0x18) {
         // La valeur du drapeau Execute Write n’est pas nécessaire à cette étude.
@@ -137,13 +134,21 @@ void ble_trace_l2cap(struct ble_trace_store *store, unsigned connection, uint32_
         // Read Multiple garde seulement le premier handle et le nombre demandé.
         if (att[0] == 0x0e || att[0] == 0x20) {
             if ((payload_length - 1) % 2 != 0) {
-                increment_saturated(&store->rejected);
-                return;
+                return -1;
             }
             data[3] = (uint32_t)(payload_length - 1) / 2;
         }
     }
-    ble_trace_append(store, connection, timestamp_ms, BLE_TRACE_ATT, data);
+    return 1;
+}
+
+// Partage le parseur avec l’acquisition, sans faire dépendre sa mémoire de ce tampon fini.
+void ble_trace_l2cap(struct ble_trace_store *store, unsigned connection, uint32_t timestamp_ms,
+                     const uint8_t *packet, size_t length, bool complete) {
+    uint32_t data[5];
+    int result = ble_trace_decode(packet, length, complete, data);
+    if (result < 0) increment_saturated(&store->rejected);
+    else if (result > 0) ble_trace_append(store, connection, timestamp_ms, BLE_TRACE_ATT, data);
 }
 
 // Les copies ne dépendent pas des ajouts ultérieurs, le stockage ne réutilise aucun index.

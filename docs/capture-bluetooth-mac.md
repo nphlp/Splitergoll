@@ -26,6 +26,7 @@ Adapter le port si `ls /dev/cu.usbmodem*` donne un autre nom.
 ```sh
 make ble-profile /dev/cu.usbmodem1101 status
 make ble-capture /dev/cu.usbmodem1101
+make ble-memory /dev/cu.usbmodem1101
 ```
 
 `paired=1` indique un appairage enregistré, `connected=1` une liaison active.
@@ -58,8 +59,10 @@ Le tampon RAM contient au maximum 256 événements, environ 8 Kio, toutes sessio
 confondues depuis le démarrage. Une fois plein, il compte les pertes et le lecteur
 refuse la capture incomplète. Un redémarrage vide cet historique, pas les appairages.
 Les frappes et les clés Bluetooth ne sont pas enregistrées.
-Le classifieur tourne dans la gauche lors de la lecture USB. Ces traces sont
-propres à `ble-trace`, absentes du firmware normal. Les anciens dumps restent lisibles.
+La capture calcule son hypothèse dans la gauche lors de la lecture USB. L’acquisition
+initiale pour la mémoire fonctionne aussi sans lecteur ouvert, dans un worker distinct.
+Ces fonctions sont propres à `ble-trace`, absentes du firmware normal. Les anciens
+dumps restent lisibles. Voir [la mémoire](memoire-os.md) et [ses essais](tests-memoire-os.md).
 
 Une bascule ne déclenche pas une nouvelle découverte de services. Windows peut
 rester « inconnu » lors d’une reconnexion utilisant son cache. Tester un nouvel

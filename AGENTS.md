@@ -679,12 +679,32 @@ les deux hôtes connectés : Mac actif en 0, Windows connecté en 1, 32 événem
 sans perte/rejet. La session Windows ne fournit qu’une requête de MTU et reste
 inconnue, la session Mac donne macos `0003`. L’aller-retour 0 → 1 → 0 est ensuite
 confirmé par les statuts, les deux hôtes restant connectés, sans frappe générée.
-Le retour final au Mac est confirmé. La réception effective des frappes sur chaque
-hôte et la garde de maintien restent à tester sur matériel. Ni keymap, ni préférence
+Le retour final au Mac est confirmé. L’utilisateur confirme ensuite la réception
+de frappes sur Windows avec la keymap macOS fixe. La garde de maintien reste à
+tester sur matériel. Ni keymap, ni préférence
 de sortie, ni appairage, ni firmware normal ne changent dans ce lot.
 Le rejeu des cinq fichiers existants reconnaît les sessions Mac et la découverte
 initiale Windows, mais laisse sa reconnexion limitée au MTU/batterie inconnue.
-Aucune sélection BLE automatique ni mémoire d’OS n’est implémentée.
+Aucune sélection BLE automatique n’est implémentée. Le prototype mémoire suivant
+ajoute l’apprentissage initial et sa persistance au seul diagnostic gauche.
+Le fonctionnement et les essais sont décrits dans [memoire-os.md](docs/memoire-os.md)
+et dans les AGENTS des modules clavier et diagnostic.
+L’utilisateur a désormais flashé ce build : acquisition initiale et reconnexion
+Mac sont confirmées, avec macos sauvegardé sans réapprentissage à la reconnexion.
+Le nouvel appairage Windows avait fourni trois des quatre indices et enregistré
+unknown sans erreur. Le correctif accepte maintenant un motif positif de découverte
+partielle : sondage du hash GATT, lecture directe, nouveau sondage, en plus des
+trois indices communs. Les tests et le rejeu de sa capture donnent Windows.
+Après flash corrigé de gauche, le Mac retrouve stored=macos, state=saved et
+learning=0, sans nouvel appairage. Le nouvel appairage Windows confirme ensuite
+measured=windows, stored=windows, origin=initial, state=saved, evidence=005c et
+error=0, sans perte. Aucun ancien unknown n’est réinterprété aux reconnexions.
+Après reset puis reconnexion de Windows, les deux emplacements retrouvent leur
+OS en state=saved, learning=0, error=0 et dropped=0. Le diagnostic de session
+Windows reste inconnu, mais son cache restitue windows : la restauration sans
+réapprentissage est validée sur ces deux appareils. Le retour final au Mac est
+confirmé, les deux hôtes restant connectés et le lecteur fermé. La veille profonde
+sur V2 et les autres machines ne sont pas validées par cet essai.
 
 La direction BLE demandée est désormais : sélectionner l’unique ordinateur connu
 connecté, conserver le destinataire et permettre une bascule explicite si plusieurs
@@ -703,7 +723,8 @@ Les guides courts sont [selection-appareil.md](docs/selection-appareil.md) et
 L’utilisateur accepte une détection initiale suivie d’une mémoire automatique si la
 première reconnaissance est fiable. Le full auto reste prioritaire. La correction
 manuelle d’OS en fait partie, le profil entièrement manuel reste un dernier recours.
-Aucun de ces mécanismes n’est ajouté maintenant. Les noms des profils restent à définir. La recherche
+La mémoire est préparée dans le diagnostic, la sélection de couches et la correction
+par raccourci restent à faire. Les noms des profils restent à définir. La recherche
 de code public est synthétisée dans le guide Bluetooth, avec commits et limites dans
 la spec du diagnostic. Les règles BLE de Cormoran ne conviennent pas directement :
 elles classeraient notre première capture Mac comme Android. Les métadonnées publiques

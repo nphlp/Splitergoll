@@ -75,11 +75,12 @@ check_firmware() {
 
     if [ "$BUILD_MODE" = ble-trace ] && [ "$side" = left ]; then
         grep -qx 'CONFIG_SPLITERGOLL_BLE_TRACE=y' "$configuration" || fail 'Trace BLE absente de la centrale'
+        grep -qx 'CONFIG_SPLITERGOLL_BLE_MEMORY=y' "$configuration" || fail 'Mémoire OS BLE absente du diagnostic'
         grep -qx 'CONFIG_USB_CDC_ACM=y' "$configuration" || fail 'Port de lecture BLE absent'
         grep -qx 'CONFIG_BT_REMOTE_INFO=y' "$configuration" || fail 'Informations BLE distantes absentes'
         grep -q 'splitergoll_ble_trace_uart' "$directory/zephyr/zephyr.dts" || fail 'Port dédié BLE absent du matériel'
         grep -Eq '0x[0-9a-f]+[[:space:]]+__wrap_bt_l2cap_recv$' "$directory/zephyr/zmk.map" || fail 'Observation ATT absente'
-        for symbol in ble_os_observe ble_os_result __wrap_zmk_event_manager_raise ble_profile_input_busy; do
+        for symbol in ble_os_observe ble_os_result __wrap_zmk_event_manager_raise ble_profile_input_busy ble_os_settings_bind ble_memory_assign; do
             grep -Eq "0x[0-9a-f]+[[:space:]]+$symbol\$" "$directory/zephyr/zmk.map" || fail "Composant BLE absent du diagnostic : $symbol"
         done
         if grep -qx 'CONFIG_BT_REMOTE_VERSION=y' "$configuration"; then
@@ -87,6 +88,10 @@ check_firmware() {
         fi
     elif grep -qx 'CONFIG_SPLITERGOLL_BLE_TRACE=y' "$configuration"; then
         fail 'Diagnostic BLE présent hors de la centrale ble-trace'
+    fi
+    if { [ "$BUILD_MODE" != ble-trace ] || [ "$side" != left ]; } &&
+       grep -qx 'CONFIG_SPLITERGOLL_BLE_MEMORY=y' "$configuration"; then
+        fail 'Prototype de mémoire BLE actif hors du diagnostic gauche'
     fi
 
     if [ "$KEYMAP_PROFILE" = auto ] && [ "$side" = left ]; then

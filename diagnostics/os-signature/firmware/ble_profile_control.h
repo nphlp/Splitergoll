@@ -3,6 +3,7 @@
 #define SPLITERGOLL_BLE_PROFILE_CONTROL_H
 #include <stdbool.h>
 #include <stdint.h>
+#include <stddef.h>
 
 #define BLE_PROFILE_LIMIT 10
 #define BLE_PROFILE_DRAIN_MS 750
@@ -40,5 +41,16 @@ struct ble_profile_choice {
 // S lit, F choisit un emplacement libre, un chiffre sélectionne explicitement cet index.
 struct ble_profile_choice ble_profile_choose(char command, unsigned count, unsigned active,
                                              uint16_t open_mask, bool input_busy);
+
+enum ble_frame_result { BLE_FRAME_PASS, BLE_FRAME_CONSUMED, BLE_FRAME_READY };
+struct ble_profile_frame {
+    char bytes[16];
+    size_t length;
+    bool active;
+    bool invalid;
+};
+
+// Retient toute trame commençant par !, sans laisser ses chiffres sélectionner un slot.
+enum ble_frame_result ble_profile_frame_feed(struct ble_profile_frame *frame, uint8_t byte);
 
 #endif

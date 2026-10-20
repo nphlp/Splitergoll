@@ -27,6 +27,16 @@ static const struct request windows[] = {
     {{0x0a, 3, 0x0d, 0, 0}, 0x2a01},
 };
 
+// Extrait du nouvel appairage Windows : sondage du hash avant puis après sa lecture directe.
+// La découverte partielle ne contient aucune recherche de services inclus.
+static const struct request windows_partial[] = {
+    {{0x08, 7, 0x0001, 0xffff, 0x2b2a}, 0},
+    {{0x12, 4, 0x06, 0, 0}, 0x2b29},
+    {{0x0a, 3, 0x0d, 0, 0}, 0x2a01},
+    {{0x0a, 3, 0x08, 0, 0}, 0x2b2a},
+    {{0x08, 7, 0x0001, 0xffff, 0x2b2a}, 0},
+};
+
 // Produit un événement sans contenu privé sur la session courante.
 static void event(struct ble_os_classifier *classifier, enum ble_trace_kind kind,
                    uint32_t a, uint32_t b) {
@@ -59,10 +69,10 @@ static void sequence(struct ble_os_classifier *classifier, const struct request 
 
 // Les motifs complets sont nécessaires, et aucune perte ne peut confirmer une hypothèse.
 static void complete_and_partial(void) {
-    const struct request *fixtures[] = {macos, windows};
-    const size_t counts[] = {6, 4};
-    const enum ble_os_guess guesses[] = {BLE_OS_MACOS, BLE_OS_WINDOWS};
-    for (size_t fixture = 0; fixture < 2; fixture++) {
+    const struct request *fixtures[] = {macos, windows, windows_partial};
+    const size_t counts[] = {6, 4, 5};
+    const enum ble_os_guess guesses[] = {BLE_OS_MACOS, BLE_OS_WINDOWS, BLE_OS_WINDOWS};
+    for (size_t fixture = 0; fixture < 3; fixture++) {
         struct ble_os_classifier classifier = {0};
         assert(ble_os_result(&classifier, true) == BLE_OS_UNKNOWN);
         connect(&classifier, 1);
@@ -200,6 +210,139 @@ static void contradictions(void) {
     }
 }
 
+// Parmi les 120 ordres possibles, seul un sondage de chaque côté de la lecture complète le motif.
+static void hash_cycle_order(void) {
+    unsigned permutations = 0, recognized = 0;
+    for (unsigned encoded = 0; encoded < 3125; encoded++) {
+        unsigned remainder = encoded, used = 0, order[5], positions[5] = {0};
+        for (unsigned i = 0; i < 5; i++) {
+            order[i] = remainder % 5;
+            remainder /= 5;
+            used |= 1u << order[i];
+            positions[order[i]] = i;
+        }
+        if (used != 31) continue;
+        permutations++;
+        struct ble_os_classifier classifier = {0};
+        connect(&classifier, 1);
+        for (unsigned i = 0; i < 5; i++) observe(&classifier, windows_partial[order[i]]);
+        bool brackets_read = (positions[0] < positions[3] && positions[3] < positions[4]) ||
+                             (positions[4] < positions[3] && positions[3] < positions[0]);
+        assert(ble_os_result(&classifier, true) == (brackets_read ? BLE_OS_WINDOWS : BLE_OS_UNKNOWN));
+        assert(ble_os_result(&classifier, false) == BLE_OS_UNKNOWN);
+        if (brackets_read) recognized++;
+    }
+    assert(permutations == 120 && recognized == 40);
+}
+
+// Un UUID voisin, un sondage borné ou une autre opération ne remplace pas les échanges observés.
+static void hash_cycle_negative_requests(void) {
+    const struct request wrong_probes[] = {
+        {{0x08, 7, 1, 0xffff, 0x2b29}, 0},
+        {{0x10, 7, 1, 0xffff, 0x2b2a}, 0},
+        {{0x08, 21, 1, 0xffff, 0}, 0},
+        {{0x08, 7, 2, 0xffff, 0x2b2a}, 0},
+        {{0x08, 7, 1, 0xfffe, 0x2b2a}, 0},
+        {{0x08, 7, 1, 0, 0x2b2a}, 0},
+        {{0x08, 6, 1, 0xffff, 0x2b2a}, 0},
+        {{0x08, 7, 0, 0xffff, 0x2b2a}, 0},
+    };
+    for (size_t replacement = 0; replacement < sizeof(wrong_probes) / sizeof(wrong_probes[0]); replacement++) {
+        for (unsigned changed = 0; changed <= 4; changed += 4) {
+            struct ble_os_classifier classifier = {0};
+            connect(&classifier, 1);
+            for (unsigned i = 0; i < 5; i++) {
+                observe(&classifier, i == changed ? wrong_probes[replacement] : windows_partial[i]);
+            }
+            assert(ble_os_result(&classifier, true) == BLE_OS_UNKNOWN);
+            assert((classifier.evidence & BLE_OS_DATABASE_HASH_CYCLE) == 0);
+        }
+    }
+    const struct request wrong_reads[] = {
+        {{0x0a, 3, 8, 0, 0}, 0},
+        {{0x0a, 3, 8, 0, 0}, 0x2a19},
+        {{0x0c, 5, 8, 0, 0}, 0x2b2a},
+        {{0x0a, 4, 8, 0, 0}, 0x2b2a},
+    };
+    for (size_t replacement = 0; replacement < sizeof(wrong_reads) / sizeof(wrong_reads[0]); replacement++) {
+        struct ble_os_classifier classifier = {0};
+        connect(&classifier, 1);
+        for (unsigned i = 0; i < 5; i++) {
+            observe(&classifier, i == 3 ? wrong_reads[replacement] : windows_partial[i]);
+        }
+        assert(ble_os_result(&classifier, true) == BLE_OS_UNKNOWN);
+        assert((classifier.evidence & BLE_OS_DATABASE_HASH_CYCLE) == 0);
+    }
+}
+
+// Les répétitions ne créent pas la phase manquante, et les handles locaux restent variables.
+static void hash_cycle_repetitions_and_handles(void) {
+    for (unsigned offset = 0; offset <= 0xfff0; offset += 0x111) {
+        struct ble_os_classifier classifier = {0};
+        connect(&classifier, 3);
+        for (unsigned i = 0; i < 5; i++) {
+            struct request request = windows_partial[i];
+            if (request.data[0] != 0x08) request.data[2] += offset;
+            for (unsigned repeat = 0; repeat < 7; repeat++) observe(&classifier, request);
+        }
+        assert(classifier.evidence == 0x5c);
+        assert(ble_os_result(&classifier, true) == BLE_OS_WINDOWS);
+    }
+    struct ble_os_classifier classifier = {0};
+    connect(&classifier, 1);
+    observe(&classifier, windows_partial[1]);
+    observe(&classifier, windows_partial[2]);
+    observe(&classifier, windows_partial[3]);
+    for (unsigned i = 0; i < 200; i++) observe(&classifier, windows_partial[0]);
+    assert(ble_os_result(&classifier, true) == BLE_OS_UNKNOWN);
+    observe(&classifier, windows_partial[3]);
+    assert(ble_os_result(&classifier, true) == BLE_OS_UNKNOWN);
+    observe(&classifier, windows_partial[4]);
+    assert(ble_os_result(&classifier, true) == BLE_OS_WINDOWS);
+}
+
+// La nouvelle famille conserve sécurité, contradictions et isolation entre hôtes ou connexions.
+static void hash_cycle_isolation(void) {
+    struct ble_os_classifier first = {0}, second = {0};
+    connect(&first, 1);
+    connect(&second, 9);
+    sequence(&first, windows_partial, 3);
+    sequence(&second, windows_partial + 3, 2);
+    assert(ble_os_result(&first, true) == BLE_OS_UNKNOWN);
+    assert(ble_os_result(&second, true) == BLE_OS_UNKNOWN);
+    sequence(&first, windows_partial + 3, 2);
+    assert(ble_os_result(&first, true) == BLE_OS_WINDOWS);
+    sequence(&first, macos, 6);
+    assert(ble_os_result(&first, true) == BLE_OS_AMBIGUOUS);
+    assert(first.evidence == 0x5f);
+    assert(ble_os_result(&second, true) == BLE_OS_UNKNOWN);
+
+    event(&first, BLE_TRACE_DISCONNECTED, 0x13, 0);
+    connect(&first, 2);
+    assert(first.hash_step == 0 && first.evidence == 0);
+    sequence(&first, windows_partial + 1, 4);
+    assert(ble_os_result(&first, true) == BLE_OS_UNKNOWN);
+
+    first = (struct ble_os_classifier){0};
+    struct ble_trace_record connected = {.session = 1, .kind = BLE_TRACE_CONNECTED};
+    ble_os_observe(&first, &connected, 0);
+    sequence(&first, windows_partial, 5);
+    assert(ble_os_result(&first, true) == BLE_OS_UNKNOWN);
+    event(&first, BLE_TRACE_SECURITY, 2, 0);
+    assert(ble_os_result(&first, true) == BLE_OS_WINDOWS);
+    event(&first, BLE_TRACE_SECURITY, 2, 4);
+    event(&first, BLE_TRACE_SECURITY, 2, 0);
+    assert(ble_os_result(&first, true) == BLE_OS_UNKNOWN);
+    for (unsigned reverse = 0; reverse < 2; reverse++) {
+        first = (struct ble_os_classifier){0};
+        connect(&first, 1);
+        if (reverse) sequence(&first, macos, 6);
+        sequence(&first, windows_partial, 5);
+        if (!reverse) sequence(&first, macos, 6);
+        assert(ble_os_result(&first, true) == BLE_OS_AMBIGUOUS);
+    }
+}
+
 // Les preuves et le chiffrement ne survivent jamais au changement de connexion.
 static void sessions_and_security(void) {
     struct ble_os_classifier classifier = {0};
@@ -319,6 +462,10 @@ int main(void) {
     repetitions_and_handles();
     ranges_and_order();
     contradictions();
+    hash_cycle_order();
+    hash_cycle_negative_requests();
+    hash_cycle_repetitions_and_handles();
+    hash_cycle_isolation();
     sessions_and_security();
     malformed();
     concurrent_proofs();

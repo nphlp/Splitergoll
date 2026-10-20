@@ -1,5 +1,9 @@
 // Transport série partagé des diagnostics, indépendant des consoles et des logs ZMK.
 #include "trace_console.h"
+#if defined(CONFIG_SPLITERGOLL_BLE_TRACE)
+#include "ble_trace_memory.h"
+#include "ble_profile_control.h"
+#endif
 #include <string.h>
 #include <zephyr/drivers/uart.h>
 #include <zephyr/kernel.h>
@@ -68,6 +72,7 @@ static void trace_console(void *unused1, void *unused2, void *unused3) {
     ARG_UNUSED(unused3);
 #if defined(CONFIG_SPLITERGOLL_BLE_TRACE)
     const struct device *uart = DEVICE_DT_GET(DT_NODELABEL(splitergoll_ble_trace_uart));
+    struct ble_profile_frame frame = {0};
 #else
     const struct device *uart = DEVICE_DT_GET(DT_NODELABEL(splitergoll_usb_trace_uart));
 #endif
@@ -81,10 +86,21 @@ static void trace_console(void *unused1, void *unused2, void *unused3) {
     while (true) {
         unsigned char command;
         if (uart_poll_in(uart, &command) == 0) {
+#if defined(CONFIG_SPLITERGOLL_BLE_TRACE)
+            enum ble_frame_result parsed = ble_profile_frame_feed(&frame, command);
+            if (parsed == BLE_FRAME_READY) {
+                splitergoll_ble_forget_command(uart, frame.bytes);
+                continue;
+            }
+            if (parsed == BLE_FRAME_CONSUMED) continue;
+#endif
             if (command == 'D') {
                 splitergoll_trace_dump(uart);
             }
 #if defined(CONFIG_SPLITERGOLL_BLE_TRACE)
+            else if (command == 'M') {
+                ble_trace_memory_dump(uart);
+            }
             else if (command == 'S' || command == 'F' || (command >= '0' && command <= '9')) {
                 splitergoll_ble_profile_command(uart, command);
             }

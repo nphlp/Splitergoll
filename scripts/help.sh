@@ -88,6 +88,8 @@ show_command 'make bat avg' 'Calculer une moyenne par moitié sur 30 secondes'
 printf '\n%sDiagnostic de connexion USB%s\n' "$LOG_HEADING" "$LOG_RESET"
 show_command 'make usb-capture <port-série-gauche>' 'Lire les requêtes du firmware wire avec option usb-trace'
 show_command 'make ble-capture <port-série-gauche>' 'Lire les connexions du firmware bluetooth avec option ble-trace'
+show_command 'make ble-memory <port-série-gauche>' 'Voir l’OS appris, mémorisé et l’état de sauvegarde (ble-trace)'
+show_command 'make ble-forget <port> <index>' 'Effacer un seul appairage après confirmation (ble-trace)'
 show_command 'make ble-profile <port> status' 'Voir les emplacements appairés, sans adresse ni clé'
 show_command 'make ble-profile <port> free' 'Choisir un emplacement libre après déconnexion de l’hôte'
 show_command 'make ble-profile <port> <index>' 'Revenir à un emplacement connu, sans effacer son appairage'

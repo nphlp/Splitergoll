@@ -278,3 +278,75 @@ normaux restent identiques aux références. Les droites auto sont inchangées.
 Le harnais privé de rejeu est `.local/validation/usb-events/replay.c`. Ses résultats
 sur des captures anciennes ne mesurent pas la vitesse du nouveau firmware.
 Les conteneurs de validation ont disparu, les trois services partagés sont conservés.
+
+## Mémoire BLE du diagnostic
+
+`ble_os_memory.c` est la politique pure, `ble_os_settings.c` le backend NVS.
+Les interfaces et tests suivent les dossiers clavier existants. La fonction
+`SPLITERGOLL_BLE_MEMORY` est activée seulement par le diagnostic gauche `ble-trace`.
+La keymap fixe, les deux sorties et les firmwares normaux restent indépendants.
+
+L’enregistrement `splitergoll/ble-os/<index>` fait 40 octets : schéma 1, règles 1,
+OS, origine, preuves, réserves et empreinte SHA-256 opaque. L’empreinte porte sur
+l’identité stable et le blob natif `bt/keys` lu par `settings_load_subtree_direct`.
+Le blob n’est jamais copié dans notre NVS ou les captures. Les temporaires de clés
+sont effacés après hachage. Aucun en-tête privé Zephyr ni patch amont n’est utilisé.
+Ce chemin de stockage appartient au socle figé : réexaminer à la prochaine migration.
+Les gardes exigent SC-only, sans signing ni vieillissement automatique des clés,
+pour que le blob persistant reste stable aux reconnexions. SHA-256 vient de mbedTLS
+déjà présent, sans nouvelle dépendance ni option cryptographique dépréciée.
+
+Une notification de nouvel appairage invalide même une empreinte identique.
+Un bond remplacé pendant un autre firmware change son empreinte et perd l’ancien
+OS. Un ancien bond sans cache reste inconnu. Un format/règles inconnus ou une
+identité non vérifiable ne fournit aucun OS. La correction manuelle est prévue et
+prioritaire dans la politique pure, mais aucun geste ni commande de correction
+n’est encore raccordé au firmware. Ne pas présenter ce mécanisme comme livré.
+
+Le worker attend un sémaphore ouvert après la restauration des réglages. Les
+lectures de diagnostic avant cette ouverture ne lisent pas les tableaux en cours
+de chargement. Les accès NVS sont exécutés par le worker dédié du diagnostic, jamais dans les
+callbacks radio ou la lecture USB. Aucune écriture périodique ni réessai infini.
+Une erreur conserve l’état sale et le diagnostic n’annonce pas cet OS comme stocké.
+Une coupure avant sauvegarde réussie ne garantit pas la conservation du résultat.
+L’identité est revérifiée aux connexions. La mémoire ne pilote encore aucune couche.
+
+Validation : suite `keyboard/tests/ble_os_memory_test.c` avec ASan/UBSan, plus
+harnais local exécutant le vrai backend et le vrai worker avec doubles settings/BLE.
+Couvrir apprentissage initial, héritage absent, reconnexion sans apprentissage,
+reboot, remplacement du bond à adresse identique, ambiguïté tardive, erreurs NVS,
+suppression ciblée, surcharge et lecture USB passive. Le SHA du harnais est un
+double, la primitive cryptographique réelle est celle du build embarqué. Cela ne
+simule pas les files/interruptions du SoC ni une vraie coupure pendant NVS.
+Les essais physiques suivent docs/tests-memoire-os.md, après flash et accord ciblé.
+
+Les builds de contrôle `bluetooth macos` et `wire auto usb-trace` passent : leurs
+quatre UF2 sont identiques aux références précédentes. Le build mémoire final est
+`bluetooth-macos-ble-trace-2026-10-20-15-52-38`, avec droite identique au diagnostic
+déjà flashé, six empreintes finales/de contrôle vérifiées et gardes UF2 des scripts
+passées. La gauche utilise 83 036 octets de RAM sur 256 Kio et 266 568 octets de
+flash sur la partition de 792 Kio. Les logs finaux ne signalent que KSCAN côté
+compilation et le drapeau Docker existant. Aucun avertissement de notre code.
+Les conteneurs de validation ont disparu et les trois services partagés sont conservés.
+Aucun flash, lecture série ou effacement matériel réalisé par l’agent pendant ce lot.
+
+L’utilisateur a ensuite flashé la gauche et refait l’appairage Mac du slot 0.
+La lecture matérielle confirme origin initial, stored macos, state saved et error 0,
+sans perte de file. Windows reste connecté en 1, sans OS acquis. La reconnexion Mac
+sans oubli confirme ensuite stored macos, state saved, learning 0 et error 0.
+Le nouvel appairage Windows confirme origin initial et sauvegarde réussie du
+résultat unknown. La découverte partielle est désormais couverte par un motif
+supplémentaire du classifieur diagnostique : sonde du hash GATT, lecture directe,
+nouvelle sonde, avec les trois indices Windows communs. Le rejeu donne Windows.
+Le harnais du worker/backend vérifie sa sauvegarde 005c et la restauration simulée,
+sans écraser le Mac ni réinterpréter les anciens unknown lors d’une reconnexion.
+Le format mémoire/règles 1 reste compatible avec les anciennes décisions connues.
+Après flash corrigé de gauche, le Mac retrouve stored macos, state saved et
+learning 0 sans nouvel appairage. L’acquisition Windows refaite par l’utilisateur
+confirme stored windows, origin initial, state saved, evidence 005c et error 0,
+sans perte de file. Après reset puis reconnexion Windows, les deux caches sont
+restaurés en state saved, learning 0, error 0 et dropped 0. Windows n’offre pas de
+signature suffisante sur cette reconnexion, mais stored windows est retrouvé sans
+apprentissage : le chemin NVS et son contrôle d’identité sont validés sur V1 et
+ces deux appareils. La veille profonde V2 reste à tester. Les captures et étapes
+sont suivies dans l’AGENTS du diagnostic et docs/TODO.md.

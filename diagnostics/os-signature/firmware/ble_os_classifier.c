@@ -4,10 +4,10 @@
 #include <string.h>
 
 #define MACOS_EVIDENCE (BLE_OS_DIS_QUERIES | BLE_OS_DIS_VALUES)
-#define WINDOWS_EVIDENCE (BLE_OS_CLIENT_FEATURES_WRITE | BLE_OS_DATABASE_HASH_READ | \
-                          BLE_OS_APPEARANCE_READ | BLE_OS_INCLUDED_SERVICES)
+#define WINDOWS_COMMON (BLE_OS_CLIENT_FEATURES_WRITE | BLE_OS_DATABASE_HASH_READ | BLE_OS_APPEARANCE_READ)
+#define WINDOWS_DISCOVERY (BLE_OS_INCLUDED_SERVICES | BLE_OS_DATABASE_HASH_CYCLE)
 
-// Suit les recherches fabricant, modèle puis PnP sur une même plage de service.
+// Suit les recherches DIS et les sondages du hash sur toute la base GATT.
 static void observe_type(struct ble_os_classifier *classifier, const uint32_t data[5]) {
     uint32_t length = data[1];
     uint32_t start = data[2];
@@ -24,6 +24,14 @@ static void observe_type(struct ble_os_classifier *classifier, const uint32_t da
     if (uuid == 0x2802) {
         classifier->evidence |= BLE_OS_INCLUDED_SERVICES;
     }
+    if (uuid == 0x2b2a && start == 1 && end == UINT16_MAX) {
+        // Étapes : sondage (1), lecture directe (2), nouveau sondage qui complète le motif.
+        if (classifier->hash_step == 2) {
+            classifier->evidence |= BLE_OS_DATABASE_HASH_CYCLE;
+        } else {
+            classifier->hash_step = 1;
+        }
+    }
     if (uuid == 0x2a29) {
         classifier->dis_start = (uint16_t)start;
         classifier->dis_end = (uint16_t)end;
@@ -39,10 +47,11 @@ static void observe_type(struct ble_os_classifier *classifier, const uint32_t da
     }
 }
 
-// Demande les trois valeurs DIS après leurs recherches, sans lire leur contenu.
+// Suit les lectures DIS et du hash, sans lire leur contenu ni supposer leurs handles.
 static void observe_read(struct ble_os_classifier *classifier, uint16_t handle, uint16_t uuid) {
     if (uuid == 0x2b2a) {
         classifier->evidence |= BLE_OS_DATABASE_HASH_READ;
+        if (classifier->hash_step == 1) classifier->hash_step = 2;
     } else if (uuid == 0x2a01) {
         classifier->evidence |= BLE_OS_APPEARANCE_READ;
     }
@@ -124,7 +133,8 @@ enum ble_os_guess ble_os_result(const struct ble_os_classifier *classifier, bool
         return BLE_OS_UNKNOWN;
     }
     bool macos = (classifier->evidence & MACOS_EVIDENCE) == MACOS_EVIDENCE;
-    bool windows = (classifier->evidence & WINDOWS_EVIDENCE) == WINDOWS_EVIDENCE;
+    bool windows = (classifier->evidence & WINDOWS_COMMON) == WINDOWS_COMMON &&
+                   (classifier->evidence & WINDOWS_DISCOVERY) != 0;
     if (macos && windows) {
         return BLE_OS_AMBIGUOUS;
     }

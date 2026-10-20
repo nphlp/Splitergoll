@@ -24,6 +24,13 @@ nécessitent V2, le clavier sur batteries.
 La priorité USB est différée après l’auto-détection d’OS, pour viser un clavier
 « full auto » qui adapte sa keymap et sa sortie USB/Bluetooth à l’ordinateur connecté.
 
+Pour le prochain lot Bluetooth, préparer la mémoire d’OS avant de refaire les
+appairages. Tester la logique sans matériel, puis regrouper après un flash gauche
+les essais Mac et Windows : détection initiale, sauvegarde, reconnexion et
+redémarrage. Le diagnostic distinguera hypothèse courante, OS mémorisé et état
+de sauvegarde. Cela réduit les interventions sur le PC utilisé par une autre personne.
+Les premiers appairages restent à revalider, aucun effacement n’est autorisé maintenant.
+
 - [x] Préparer le diagnostic USB sans bascule de keymap et valider une première
   lecture sur V1 et le Mac : 24 requêtes sans perte, voir [le protocole](detection-os.md).
 - [x] Comparer trois démarrages sur le Mac : les 24 requêtes ont les mêmes
@@ -81,11 +88,28 @@ La priorité USB est différée après l’auto-détection d’OS, pour viser un
   L’OS reconnu initialement est mémorisé pour l’appairage, sous réserve de valider
   la fiabilité de sa reconnaissance. Voir [la sélection d’appareil](selection-appareil.md)
   et [la mémoire d’OS](memoire-os.md).
-- [ ] Ajouter une mémoire persistante d’OS par appareil appairé, restaurée après
-  redémarrage. Détection automatique uniquement lors de l’acquisition initiale de
-  l’OS, aucune nouvelle détection aux reconnexions : charger exclusivement l’OS
-  enregistré. Gérer effacement/remplacement du bond et appairages existants sans OS.
-  Ne pas assimiler une absence de lectures à Windows ni figer Mac=0/Windows=1.
+- [x] Préparer et tester sans matériel la mémoire persistante dans le diagnostic gauche,
+  avec état de sauvegarde, identité du bond et gestion des erreurs.
+- [x] Flasher la gauche et lire le diagnostic mémoire sur V1 : deux hôtes connectés,
+  Mac sélectionné, mémoire encore vide pour les anciens appairages, sans erreur ni perte.
+- [x] Refaire l’appairage Mac et confirmer son acquisition initiale :
+  `stored=macos`, `origin=initial`, `state=saved`, sans erreur ni perte.
+- [x] Reconnecter le Mac sans nouvel appairage et retrouver `stored=macos`,
+  `state=saved`, `learning=0`, sans erreur ni perte.
+- [x] Refaire l’appairage Windows et capturer sa découverte partielle : trois des
+  quatre indices présents, résultat inconnu sauvegardé sans erreur. La détection n’est pas validée.
+- [x] Prendre en charge cette variante Windows avec des tests positifs et négatifs,
+  sans déduire l’OS d’une absence de requêtes, du lecteur USB ou du numéro de slot.
+- [x] Flasher le correctif de découverte partielle, conserver le Mac appairé et
+  refaire uniquement l’appairage Windows pour confirmer `stored=windows` sur matériel.
+  Le résultat est sauvegardé avec `origin=initial`, `evidence=005c`, sans erreur ni perte.
+  Le Mac retrouve aussi `stored=macos` après ce flash, sans nouvel apprentissage.
+- [x] Valider sur V1 la restauration des deux OS après reset et reconnexion :
+  `stored=macos` et `stored=windows`, `state=saved`, `learning=0`, sans erreur ni perte.
+  Windows retrouve son OS malgré une reconnexion sans signature suffisante.
+- [ ] Compléter les essais matériels de mémoire : remplacement d’appairage,
+  correction manuelle et veille profonde sur V2. Les tests natifs ne remplacent
+  pas ces essais. Ne pas déduire Windows d’une absence de lectures ni de l’index du slot.
 - [ ] Ajouter une correction manuelle persistante de l’OS de l’appareil sélectionné,
   prioritaire et conservée aux reconnexions. Le raccourci doit rester utilisable
   avec un OS initial inconnu. Aucun choix de geste ni changement de keymap maintenant.
@@ -112,11 +136,14 @@ La priorité USB est différée après l’auto-détection d’OS, pour viser un
   32 événements sans perte ni rejet, macOS reconnu et Windows inconnu.
 - [x] Confirmer par les statuts la bascule 0 → 1 → 0 sur V1 sans couper les Bluetooth,
   avec les deux connexions présentes et sans générer de frappes.
-- [ ] Vérifier la réception effective des frappes sur chaque destination, puis
-  le refus de bascule pendant un maintien et sa réussite après relâchement.
+- [x] Confirmer la réception de frappes sur Windows avec la keymap macOS fixe,
+  selon le retour utilisateur pendant le test d’appairage.
+- [ ] Vérifier le refus de bascule pendant un maintien et sa réussite après relâchement.
 - [x] Lire les traces Mac et Windows avec l’USB gauche conservé sur le Mac.
   Les deux ordinateurs restent appairés, il s’agit de reconnexions.
-- [ ] Préparer les essais de nouvel appairage avec effacement ciblé autorisé,
+- [x] Préparer l’effacement ciblé `ble-forget` et le [protocole mémoire](tests-memoire-os.md),
+  sans exécuter d’effacement sur les appairages actuels.
+- [ ] Réaliser les essais de nouvel appairage avec effacement ciblé autorisé,
   sans reset de tous les bonds, puis répéter les captures sur chaque ordinateur.
   Le protocole est dans [capture-bluetooth-mac.md](capture-bluetooth-mac.md).
 - [ ] Compléter les indices d’appairage si nécessaire : métadonnées SMP publiques

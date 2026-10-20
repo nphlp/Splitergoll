@@ -18,6 +18,7 @@ enum ble_os_evidence {
     BLE_OS_DATABASE_HASH_READ = 0x08,
     BLE_OS_APPEARANCE_READ = 0x10,
     BLE_OS_INCLUDED_SERVICES = 0x20,
+    BLE_OS_DATABASE_HASH_CYCLE = 0x40,
 };
 
 struct ble_os_classifier {
@@ -27,6 +28,7 @@ struct ble_os_classifier {
     uint16_t dis_end;
     uint8_t dis_step;
     uint8_t dis_reads;
+    uint8_t hash_step;
     bool connected;
     bool encrypted;
     bool security_failed;
@@ -41,7 +43,7 @@ void ble_os_observe(struct ble_os_classifier *classifier,
                     const struct ble_trace_record *record, uint16_t attribute_uuid);
 
 // Refuse les pertes/rejets, les sessions incohérentes et toute connexion non chiffrée.
-// Une hypothèse peut changer si de nouvelles preuves arrivent. Elle n’est jamais mémorisée.
+// Une hypothèse peut changer si de nouvelles preuves arrivent. Ce moteur ne la sauvegarde pas.
 enum ble_os_guess ble_os_result(const struct ble_os_classifier *classifier, bool reliable);
 
 // Donne un nom stable pour les résultats de diagnostic, sans OS par défaut.

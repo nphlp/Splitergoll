@@ -1,6 +1,27 @@
 // Ne remplace jamais un appairage pour choisir un emplacement libre.
 #include "ble_profile_control.h"
 
+// Les trames tronquées, binaires ou trop longues ne deviennent jamais des commandes simples.
+enum ble_frame_result ble_profile_frame_feed(struct ble_profile_frame *frame, uint8_t byte) {
+    if (!frame->active) {
+        if (byte != '!') return BLE_FRAME_PASS;
+        *frame = (struct ble_profile_frame){.length = 1, .active = true, .bytes = "!"};
+        return BLE_FRAME_CONSUMED;
+    }
+    if (byte == '\n') {
+        frame->bytes[frame->length] = '\0';
+        if (frame->invalid) frame->bytes[0] = '\0';
+        frame->active = false;
+        return BLE_FRAME_READY;
+    }
+    if (byte < 0x20 || byte > 0x7e || frame->length == sizeof(frame->bytes) - 1) {
+        frame->invalid = true;
+    } else {
+        frame->bytes[frame->length++] = (char)byte;
+    }
+    return BLE_FRAME_CONSUMED;
+}
+
 // Tous les événements de saisie repoussent le drainage, sans temporisation du Bluetooth.
 void ble_profile_touch(struct ble_profile_activity *activity, uint32_t now_ms) {
     activity->seen = true;

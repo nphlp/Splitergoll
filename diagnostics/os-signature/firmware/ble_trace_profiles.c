@@ -2,6 +2,9 @@
 #include "ble_profile_control.h"
 #include "trace_console.h"
 #include <stdio.h>
+#include <string.h>
+#include <errno.h>
+#include <zephyr/bluetooth/bluetooth.h>
 #include <zephyr/bluetooth/conn.h>
 #include <zephyr/kernel.h>
 #include <zmk/ble.h>
@@ -42,6 +45,50 @@ static bool report_nonempty(const void *body, size_t length) {
     const uint8_t *bytes = body;
     for (size_t i = 0; i < length; i++) if (bytes[i] != 0) return true;
     return false;
+}
+
+struct bond_check {
+    bt_addr_le_t peer;
+    bool remains;
+};
+
+// Vérifie localement la suppression native sans exporter l’identité de l’ordinateur.
+static void find_bond(const struct bt_bond_info *info, void *context) {
+    struct bond_check *check = context;
+    if (bt_addr_le_eq(&info->addr, &check->peer)) check->remains = true;
+}
+
+// Exige un index exact et déjà sélectionné, sans bascule implicite ni effacement global.
+void splitergoll_ble_forget_command(const struct device *uart, const char *frame) {
+    int profile = -1, error = 0;
+    const char *status = "invalid";
+    k_mutex_lock(&selection_mutex, K_FOREVER);
+    if (strlen(frame) == 8 && strncmp(frame, "!CLEAR ", 7) == 0 && frame[7] >= '0' && frame[7] <= '9') {
+        profile = frame[7] - '0';
+        bool busy = ble_profile_input_busy(&activity,
+            zmk_hid_get_explicit_mods() != 0 ||
+            report_nonempty(&zmk_hid_get_keyboard_report()->body, sizeof(zmk_hid_get_keyboard_report()->body)) ||
+            report_nonempty(&zmk_hid_get_consumer_report()->body, sizeof(zmk_hid_get_consumer_report()->body)),
+            k_uptime_get_32());
+        if (profile >= ZMK_BLE_PROFILE_COUNT || profile != zmk_ble_active_profile_index()) {
+            status = "mismatch";
+        } else if (busy) {
+            status = "busy";
+        } else if (zmk_ble_profile_is_open(profile)) {
+            status = "empty";
+        } else {
+            struct bond_check check = {.peer = *zmk_ble_profile_address(profile)};
+            zmk_ble_clear_bonds();
+            bt_foreach_bond(BT_ID_DEFAULT, find_bond, &check);
+            error = zmk_ble_profile_is_open(profile) && !check.remains ? 0 : -EIO;
+            status = !error ? "ok" : "failed";
+        }
+    }
+    k_mutex_unlock(&selection_mutex);
+    char line[150];
+    if (!trace_send_line(uart, "BLEFORGET BEGIN version=1\n")) return;
+    snprintf(line, sizeof(line), "BLEFORGET RESULT index=%d status=%s error=%d\n", profile, status, error);
+    if (trace_send_line(uart, line)) trace_send_line(uart, "BLEFORGET END\n");
 }
 
 // Le seul appel de mutation est le sélecteur natif ZMK, aucune clé n’est supprimée ou copiée.

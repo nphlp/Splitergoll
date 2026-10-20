@@ -23,9 +23,41 @@ static void input_activity(void) {
     assert(activity.invalid && ble_profile_input_busy(&activity, false, 100000));
 }
 
+// Les chiffres d’une trame ne doivent jamais être interprétés comme sélection autonome.
+static void framed_commands(void) {
+    const char *valid = "!CLEAR 0\n";
+    struct ble_profile_frame frame = {0};
+    for (size_t i = 0; valid[i] != '\0'; i++) {
+        enum ble_frame_result expected = valid[i] == '\n' ? BLE_FRAME_READY : BLE_FRAME_CONSUMED;
+        assert(ble_profile_frame_feed(&frame, (uint8_t)valid[i]) == expected);
+    }
+    assert(!frame.active && !frame.invalid && frame.length == 8);
+    assert(frame.bytes[0] == '!' && frame.bytes[7] == '0' && frame.bytes[8] == '\0');
+    assert(ble_profile_frame_feed(&frame, '1') == BLE_FRAME_PASS);
+    for (unsigned bad = 0; bad < 256; bad++) {
+        if ((bad >= 0x20 && bad <= 0x7e) || bad == '\n') continue;
+        frame = (struct ble_profile_frame){0};
+        assert(ble_profile_frame_feed(&frame, '!') == BLE_FRAME_CONSUMED);
+        assert(ble_profile_frame_feed(&frame, (uint8_t)bad) == BLE_FRAME_CONSUMED);
+        assert(ble_profile_frame_feed(&frame, '1') == BLE_FRAME_CONSUMED);
+        assert(ble_profile_frame_feed(&frame, '\n') == BLE_FRAME_READY);
+        assert(frame.bytes[0] == '\0');
+    }
+    frame = (struct ble_profile_frame){0};
+    assert(ble_profile_frame_feed(&frame, '!') == BLE_FRAME_CONSUMED);
+    for (unsigned i = 0; i < 1000; i++) {
+        assert(ble_profile_frame_feed(&frame, '1') == BLE_FRAME_CONSUMED);
+    }
+    assert(frame.invalid && frame.active);
+    assert(ble_profile_frame_feed(&frame, '\n') == BLE_FRAME_READY && frame.bytes[0] == '\0');
+    for (size_t i = 0; valid[i] != '\0'; i++) ble_profile_frame_feed(&frame, valid[i]);
+    assert(!frame.invalid && !frame.active && frame.bytes[7] == '0');
+}
+
 // Couvre aussi tous les octets de commande, les masques et les index des cinq emplacements actuels.
 int main(void) {
     input_activity();
+    framed_commands();
     for (unsigned active = 0; active < 5; active++) {
         for (unsigned mask = 0; mask < 32; mask++) {
             for (unsigned busy = 0; busy < 2; busy++) {

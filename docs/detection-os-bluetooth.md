@@ -2,7 +2,8 @@
 
 Objectif : reconnaître l’ordinateur connecté en Bluetooth, puis choisir sa keymap
 automatiquement. On commence par comparer les échanges sur le Mac puis Windows.
-**Le diagnostic actuel ne choisit aucun OS.** La keymap reste celle du build.
+**La keymap reste celle du build.** Le diagnostic récent ajoute une mémoire d’OS,
+à valider séparément avec [ses essais](tests-memoire-os.md).
 
 V1 fonctionne sans batterie : ses deux USB fournissent l’alimentation. La gauche
 transmet les touches en Bluetooth et expose un port série USB pour la capture.
@@ -98,12 +99,13 @@ sur le clavier et l’ordinateur. Aucun reset global des réglages n’est néce
 L’ordre des requêtes de découverte, les UUID consultés, le MTU, les paramètres
 proposés puis négociés, les fonctionnalités BLE et les changements de sécurité.
 Aucune adresse, clé ou frappe n’est enregistrée. Aucune requête de version du
-contrôleur n’est ajoutée, aucune décision d’OS n’est écrite en mémoire persistante.
+contrôleur n’est ajoutée. Le diagnostic récent sauvegarde uniquement la décision
+de l’acquisition initiale, voir [la mémoire d’OS](memoire-os.md).
 
 Les [captures publiques de Cormoran](https://github.com/cormoran/zmk-feature-os-detection/blob/main/docs/fingerprints.md#ble)
 montrent des pistes, mais aussi une ambiguïté Windows/Linux et un résultat macOS
 par défaut trop fragile pour notre usage. Le contrôleur radio et les paramètres
-ne prouvent pas un OS. Aucun classifieur ni mémoire d’OS ne pilote encore le firmware BLE.
+ne prouvent pas un OS. La mémoire expérimentale ne pilote pas encore les couches BLE.
 
 ## Hypothèses du diagnostic
 
@@ -120,8 +122,15 @@ avec le message « Classification absente ». Aucun reset des appairages nécess
 | Capture | Hypothèse obtenue |
 | --- | --- |
 | Mac, première connexion et reconnexions | macOS |
-| Windows, découverte initiale | Windows |
+| Windows, premier essai avec découverte complète | Windows |
+| Windows, nouvel appairage avec découverte partielle | Windows avec le correctif, validé en rejeu et sur V1 |
 | Windows, reconnexion avec seulement MTU et batterie | Inconnu |
+
+Le correctif conserve les trois indices communs et accepte deux motifs de découverte :
+recherche de services inclus, ou sondage du hash GATT avant puis après sa lecture
+directe. Ce second motif reconnaît notre découverte partielle sans conclure à
+Windows par absence de requêtes. Après flash, un nouvel appairage Windows confirme
+ce motif et la sauvegarde de son OS, sans erreur ni perte. Le Mac reste appairé.
 
 Les preuves manquantes donnent « inconnu », les deux motifs complets donnent
 « ambigu ». Les pertes, incohérences et erreurs de sécurité empêchent une conclusion.
@@ -135,7 +144,8 @@ Bluetooth. Aucune frappe d’essai n’a été envoyée pendant cet aller-retour
 Ces essais conservent les appairages existants, ils ne valident pas la répétabilité
 d’un premier appairage.
 Le calcul s’effectue pendant la lecture USB, sans modifier la keymap, la destination
-des touches ou les appairages. Il n’enregistre aucun OS en mémoire persistante.
+des touches ou les appairages. La mémoire travaille indépendamment de cette lecture,
+uniquement pendant l’acquisition d’un nouvel appairage.
 
 ## Pistes retenues
 

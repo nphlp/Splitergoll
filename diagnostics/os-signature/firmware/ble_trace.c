@@ -2,6 +2,7 @@
 // La droite, les adresses Bluetooth, SMP et les valeurs HID ne sont jamais enregistrés.
 #include "ble_trace_store.h"
 #include "ble_os_classifier.h"
+#include "ble_trace_memory.h"
 #include "trace_console.h"
 
 #include <stdio.h>
@@ -47,6 +48,7 @@ static void record(struct bt_conn *conn, enum ble_trace_kind kind,
         ble_trace_append(&store, connection, k_uptime_get_32(), kind, data);
     }
     k_spin_unlock(&store_lock, key);
+    ble_trace_memory_event(conn, kind, data, 0, true);
 }
 
 // Ouvre une session numérotée, en ne conservant que le type d’adresse publique ou aléatoire.
@@ -60,6 +62,8 @@ static void connected(struct bt_conn *conn, uint8_t error) {
     ble_trace_connect(&store, bt_conn_index(conn), profile, k_uptime_get_32(), info.le.interval, info.le.latency,
                       info.le.timeout, info.le.dst->type);
     k_spin_unlock(&store_lock, key);
+    const uint32_t data[5] = {0, 0, 0, 0, (uint32_t)(profile + 1)};
+    ble_trace_memory_event(conn, BLE_TRACE_CONNECTED, data, 0, true);
 }
 
 // Garde la déconnexion pour distinguer premier appairage et reconnexions dans un même dump.
@@ -75,6 +79,8 @@ static void disconnected(struct bt_conn *conn, uint8_t reason) {
         ble_trace_disconnect(&store, connection, k_uptime_get_32(), reason);
     }
     k_spin_unlock(&store_lock, key);
+    const uint32_t data[5] = {reason, 0, 0, 0, 0};
+    ble_trace_memory_event(conn, BLE_TRACE_DISCONNECTED, data, 0, true);
 }
 
 // Observe les paramètres proposés, puis laisse les callbacks ZMK décider normalement.
@@ -129,6 +135,9 @@ SYS_INIT(trace_init, APPLICATION, 0);
 // Signature interne figée de Zephyr 4.1, appelée entre conn.c et l2cap.c sans LTO.
 void __real_bt_l2cap_recv(struct bt_conn *conn, struct net_buf *buffer, bool complete);
 
+// Résout plus bas les handles nécessaires au classifieur en ligne, sans lire leur valeur.
+static uint16_t attribute_uuid(const struct ble_trace_record *event, bool *reliable);
+
 // Lit sans consommer le tampon, puis délègue exactement une fois au traitement natif.
 void __wrap_bt_l2cap_recv(struct bt_conn *conn, struct net_buf *buffer, bool complete) {
     if (is_host(conn)) {
@@ -138,6 +147,13 @@ void __wrap_bt_l2cap_recv(struct bt_conn *conn, struct net_buf *buffer, bool com
             ble_trace_l2cap(&store, connection, k_uptime_get_32(), buffer->data, buffer->len, complete);
         }
         k_spin_unlock(&store_lock, key);
+        struct ble_trace_record event = {.kind = BLE_TRACE_ATT};
+        int decoded = ble_trace_decode(buffer->data, buffer->len, complete, event.data);
+        if (decoded != 0) {
+            bool reliable = decoded > 0;
+            uint16_t uuid = reliable ? attribute_uuid(&event, &reliable) : 0;
+            ble_trace_memory_event(conn, BLE_TRACE_ATT, event.data, uuid, reliable);
+        }
     }
     __real_bt_l2cap_recv(conn, buffer, complete);
 }

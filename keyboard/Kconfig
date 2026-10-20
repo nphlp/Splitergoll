@@ -1,4 +1,10 @@
 # Options locales du clavier, déduites de la keymap sélectionnée.
+config SPLITERGOLL_BLE_MEMORY
+    bool
+    depends on BT && SETTINGS && BT_SETTINGS && ZMK_SPLIT_ROLE_CENTRAL
+    depends on MBEDTLS_SHA256 && BT_SMP_SC_PAIR_ONLY
+    depends on !BT_SIGNING && !BT_KEYS_OVERWRITE_OLDEST
+
 config SPLITERGOLL_OS_AUTO
     bool
     default y if DT_HAS_SPLITERGOLL_OS_AUTO_ENABLED

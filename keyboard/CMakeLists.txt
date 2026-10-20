@@ -1,12 +1,18 @@
-# Compile l’observateur partagé seulement pour auto ou le diagnostic USB explicite.
+# Compile seulement les fonctions demandées par la keymap ou un diagnostic explicite.
+if(CONFIG_SPLITERGOLL_USB_OBSERVER OR CONFIG_SPLITERGOLL_BLE_MEMORY)
+  zephyr_library()
+  zephyr_library_include_directories(include config/keymaps ${APPLICATION_SOURCE_DIR}/include)
+  zephyr_include_directories(include)
+endif()
+if(CONFIG_SPLITERGOLL_BLE_MEMORY)
+  zephyr_library_sources(src/os_detection/ble_os_memory.c src/os_detection/ble_os_settings.c)
+  zephyr_library_link_libraries(mbedTLS)
+endif()
 if(CONFIG_SPLITERGOLL_USB_OBSERVER)
   if(CONFIG_USB_DEVICE_STACK_NEXT OR CONFIG_LTO OR NOT CONFIG_SOC_NRF52840)
     message(FATAL_ERROR "USB observation requires the legacy nRF52840 USB stack without LTO")
   endif()
-  zephyr_library()
-  zephyr_library_include_directories(include config/keymaps ${APPLICATION_SOURCE_DIR}/include)
   zephyr_library_sources(src/os_detection/usb_observer.c src/os_detection/usb_os_classifier.c)
-  zephyr_include_directories(include)
   zephyr_link_libraries(
     -Wl,--wrap=usb_dc_ep_set_callback
     -Wl,--wrap=usb_dc_ep_read

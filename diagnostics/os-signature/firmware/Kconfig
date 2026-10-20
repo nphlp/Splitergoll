@@ -11,4 +11,5 @@ config SPLITERGOLL_BLE_TRACE
     depends on ZMK_SPLIT_ROLE_CENTRAL && !ZMK_USB
     depends on !SPLITERGOLL_USB_TRACE
     select BT_REMOTE_INFO
+    select SPLITERGOLL_BLE_MEMORY
     default n

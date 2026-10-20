@@ -430,9 +430,13 @@ Preuves expérimentales et bits de diagnostic :
 - `0008` : Read Request sur Database Hash `2b2a`.
 - `0010` : Read Request sur Appearance `2a01`.
 - `0020` : recherche Read By Type des services inclus `2802`.
-  Les quatre preuves Windows sont nécessaires, sans imposer leur ordre : `003c`.
+- `0040` : Read By Type de Database Hash `2b2a` sur toute la base GATT `1..ffff`,
+  puis lecture directe de cet UUID, puis un nouveau Read By Type identique.
+  Les trois indices communs `001c` sont nécessaires, avec `0020` ou `0040` :
+  `003c` reconnaît la découverte complète et `005c` la découverte partielle.
 
-Un motif partiel donne inconnu, les deux motifs complets donnent ambigu (`003f`).
+Un motif partiel donne inconnu. Les motifs complets des deux OS donnent ambigu
+(`003f` pour l’ancienne famille Windows, `005f` pour la nouvelle, `007f` si les deux).
 Une capture non fiable (perte/rejet ou table non résolue), une session incohérente,
 des champs utilisés invalides, une connexion sans chiffrement ou une erreur de
 sécurité interdisent la conclusion. La table non résolue doit être traitée comme
@@ -617,7 +621,223 @@ clavier fonctionne à nouveau. Aucun nouveau flash ni effacement d’appairage.
 La politique de destination automatique si un autre hôte connu se reconnecte reste
 un sujet distinct de la reconnaissance d’OS. Ne pas la changer implicitement.
 
+### Acquisition initiale et mémoire, prototype actuel
+
+Le build gauche `ble-trace` ajoute `ble_trace_memory.c` et le backend clavier
+`ble_os_settings.c`. `BLETRACE` v2 et `BLEPROFILE` v2 restent compatibles.
+La keymap reste fixe. La lecture D rejoue le tampon historique comme avant.
+La commande M expose `BLEMEM` v1, via `make ble-memory <port>` : measured, stored,
+origin, state, learning, evidence et error, sans identité ni empreinte privée.
+`stored` est inconnu tant que l’identité n’est pas vérifiée ou l’écriture réussie.
+`measured` concerne seulement l’acquisition initiale du démarrage courant.
+Après reboot il peut être inconnu alors que stored retrouve l’OS sauvegardé.
+D, S et M sont passifs. Leur ouverture n’efface rien et ne déclenche aucun apprentissage.
+
+Un worker distinct consomme 64 messages transitoires bornés. Les callbacks gardent
+une référence à la connexion et copient uniquement les métadonnées admises, jamais
+les payloads. Chaque référence est libérée, même si la file refuse un message.
+Un classifieur par index de connexion isole les hôtes. Le parseur ATT est partagé
+avec le stockage historique, mais son tampon de 256 événements ne borne pas
+l’apprentissage. Une saturation de la file de travail invalide l’apprentissage de
+ce démarrage et retire les choix initiaux concernés. Les caches des reconnexions
+ne sont pas redétectés. Ce défaut doit être visible, pas interprété comme Windows.
+
+Seul pairing_complete avec bond active fresh. Avant ce signal, les preuves restent
+provisoires. Une association renouvelée sur une connexion existante retire les
+anciennes preuves. L’identité est vérifiée puis l’acquisition inconnue sauvegardée,
+ensuite le premier motif suffisant est écrit. Pas de timer de stabilisation.
+Une contradiction ou erreur de sécurité tardive pendant cette connexion retire
+le choix, sans reprendre un autre OS arbitraire. Les reconnexions chargent le cache
+sans le réécrire, même si leurs traces de recherche suggèrent autre chose.
+Le backend et les invariants de persistance sont décrits dans l’AGENTS du module clavier.
+
+L’effacement de test est distinct et explicite : trame `!CLEAR <index>\n`,
+`BLEFORGET` v1, client `make ble-forget <port> <index>` avec confirmation y/N.
+Le parseur retient toute la trame, y compris invalide ou saturée : ses chiffres ne
+peuvent pas devenir des commandes de sélection. Refuser index hors plage, index
+non actif, saisie tenue/HID actif/drainage et slot vide. Après appel, vérifier le
+slot ouvert et l’absence du bond ciblé avec bt_foreach_bond. Appeler uniquement
+`zmk_ble_clear_bonds()` pour le slot actif demandé, jamais clear_all/settings_reset.
+La notification bond_deleted supprime seulement son association dans notre namespace.
+L’utilisateur a exécuté l’effacement ciblé pour les essais Mac puis Windows.
+Le résultat Windows conservé dans jZlMfX confirme le seul index 1, status ok et error 0.
+Tout effacement réel par l’agent reste soumis à un accord explicite sur le slot.
+Le script PowerShell reste un collecteur de traces/profils, sans commande d’effacement.
+
+La suite pure mémoire et les six suites existantes passent avec ASan/UBSan.
+Le harnais local du vrai worker/backend vérifie reconnexions, reboot, remplacement,
+ambiguïté, erreurs NVS et saturation. Le harnais de sélection vérifie aussi la cible
+exacte de l’effacement et les refus. Les captures existantes gardent les mêmes
+hypothèses et les 59 cas du protocole BLE passent. L’acquisition initiale Mac et
+sa reconnexion sont confirmées ci-dessous. Le premier nouvel appairage Windows
+avait donné inconnu avec une découverte partielle. Le correctif et sa validation
+matérielle sont détaillés ci-dessous. La restauration après reset est maintenant
+confirmée sur les deux appareils. Veille profonde V2 et autres machines restent à tester.
+
+Sur V1, après l’effacement ciblé proposé du slot 0 et le nouvel appairage Mac
+réalisés par l’utilisateur, la mémoire annonce measured=macos, stored=macos,
+origin=initial, state=saved, learning=1, evidence=0003, error=0, dropped=0.
+Le statut garde le Mac actif en 0 et Windows connecté en 1. D conserve 90 événements,
+sans perte/rejet : la nouvelle session Mac 5 est sécurisée niveau 2 sans erreur
+et donne macos 0003. Deux sessions transitoires non appairées sont closes, sans
+motif suffisant. Cette lecture valide l’apprentissage et le retour positif du
+backend NVS, pas encore sa restauration après coupure ou sa réutilisation sans
+nouvelle détection. Fichiers privés : profil wmdqyC, mémoire TAGUdz, trace WaFfDw.
+Les trois lectures sont passives et le port est refermé, absence vérifiée avec lsof.
+
+Après déconnexion/reconnexion Mac sans oubli par l’utilisateur, le slot 0 conserve
+stored=macos, origin=initial, state=saved, evidence=0003 et error=0, avec learning=0
+et dropped=0. Le statut garde le Mac actif et les deux hôtes connectés. D ajoute
+la session Mac 6, chiffrée niveau 2 sans erreur, pour 118 événements sans perte/rejet.
+measured=macos reste la dernière acquisition initiale de ce démarrage, pas une
+nouvelle décision de reconnexion. Ce test valide la réutilisation sans apprentissage,
+pas encore la restauration NVS après redémarrage. Captures privées : profil 0XdU6d,
+mémoire KsYdlW, trace RNuCY6. Le lecteur est fermé et lsof ne trouve aucun accès au port.
+
+Le nouvel appairage Windows est confirmé par origin=initial et learning=1 en slot 1,
+mais measured et stored restent unknown. state=saved et error=0 confirment la
+sauvegarde du résultat inconnu, pas l’identification de Windows. Le cache Mac en 0
+reste macos/saved/learning=0. Les deux hôtes sont connectés et Windows est actif
+lors de la lecture. Fichiers privés : profil 9Gpjdn, mémoire vQXjve, trace P67lbi.
+L’utilisateur confirme ensuite la réception de ses frappes sur Windows avec la
+keymap macOS fixe et annonce son retour volontaire au Mac. L’agent ne change
+aucune sélection et referme tous les lecteurs.
+
+La capture P67lbi contient 174 événements, neuf sessions, sans perte/rejet. La
+session Windows 9 contient 49 événements dont 40 ATT, avec sécurité 2 sans erreur.
+La lecture arrive 76 539 ms après la connexion, le dernier événement après 5 871 ms.
+Le résultat n’est pas dû à une lecture avant les dix secondes du protocole.
+Face au premier essai Windows à 67 ATT, cette variante conserve l’écriture
+Client Supported Features, la lecture Database Hash et la lecture Appearance,
+mais aucune recherche Included Services 2802. Elle recherche trois fois 2b2a par
+Read By Type et lit des handles connus sans refaire la découverte complète.
+La réutilisation d’un cache est compatible avec ces échanges, pas prouvée par
+une inspection de l’état interne Windows. Ne pas attribuer cet échec à une mauvaise
+manipulation de l’utilisateur ni déclarer l’acquisition initiale universellement fiable.
+
+Le rejeu du vrai dump C reproduit unknown/evidence 001c : il manque le bit 0020
+au masque Windows 003c. Un ajout synthétique, uniquement hors matériel, de la
+requête Included Services fait passer ce rejeu à windows/003c. Cela isole la règle
+bloquante, sans démontrer qu’il faut l’assouplir sans autre critère. Les sorties sont
+dans .local/validation/ble-memory/windows-repair*. Le evidence=0000 de BLEMEM est
+celui du marqueur inconnu sauvegardé au début, car l’OS n’a pas changé ensuite.
+BLETRACE donne les indices réellement collectés. Évaluer une variante de signature
+avec tests positifs/négatifs avant tout nouveau flash ou appairage. Aucun changement
+des règles, firmware ou appairages par l’agent pendant ce diagnostic.
+
+### Correctif de la découverte partielle Windows
+
+Le masque Windows conserve les trois preuves communes `001c` et exige l’une des
+deux découvertes positives : Included Services `0020` ou cycle Database Hash `0040`.
+Ce cycle exige un Read By Type de `2b2a` sur `1..ffff`, sa lecture directe résolue
+par UUID, puis un nouveau Read By Type identique, dans cet ordre. Les opérations
+sans rapport peuvent s’intercaler. Les trois autres preuves restent indépendantes
+de cet ordre. Répéter une seule phase ne complète pas le cycle. Ni délai, ni nombre
+de requêtes arbitraire, ni handle local, ni radio ou slot n’est une preuve d’OS.
+Le champ RAM hash_step est remis à zéro avec la session. Les gardes de sécurité,
+fiabilité et contradiction restent inchangées. Le protocole de capture garde son
+format v2 et ses quatre chiffres hexadécimaux, sans changement des lecteurs.
+
+Le test extrait de P67lbi échoue avant le correctif et passe après. La suite couvre
+les cinq opérations nécessaires, leurs 120 permutations (40 reconnues avec une
+sonde de chaque côté de la lecture), répétitions, handles décalés, UUID voisins,
+plages partielles, opérations ou tailles incorrectes, chiffrement et erreurs,
+sessions successives, hôtes simultanés et contradictions dans les deux ordres.
+Les sept suites C passent avec ASan/UBSan. Le vrai dump C rejoue 12 captures et
+35 sessions : seule P67lbi/session 9 change, de unknown/001c à windows/005c.
+Les 49 préfixes de cette session restent inconnus jusqu’au cycle complet,
+puis Windows à partir de l’événement 41. Les sources privées sont inchangées.
+Les neuf fixtures et 59 contrôles de protocole existants passent aussi.
+
+Le harnais du vrai worker et du backend rejoue les 49 événements de Windows avec
+pairing_complete après SECURITY. Il confirme acquisition, sauvegarde 005c, puis
+restauration après reboot simulé sans nouveau GATT ni écriture. L’enregistrement
+Mac est préservé. Un ancien unknown reçoit aussi ce motif complet en reconnexion
+dans le harnais et reste unknown, sans écriture : aucun réapprentissage implicite.
+Les preuves et rapports de validation sont privés dans .local/validation/ble-windows-partial/.
+Ces rejeux ne prouvent pas la reconnaissance de Linux ou d’autres machines.
+
+L’extension est additive : les anciennes décisions connues restent acceptées et
+le format mémoire/règles 1 est conservé. Le cache Mac n’est pas invalidé par le
+correctif. L’ancien unknown Windows n’est pas transformé : un nouvel appairage
+ciblé sera nécessaire à sa validation matérielle. Aucun effacement, capture USB,
+changement de destination ou flash n’est réalisé par l’agent dans ce correctif.
+
+Le build corrigé est bluetooth-macos-ble-trace-2026-10-20-16-40-47. Les deux UF2
+passent SHA-256 et le validateur existant des blocs, famille et adresses. La droite
+est identique à la version déjà flashée, seule la gauche change. Les gardes des rôles,
+keymap, logging et absence de settings_reset passent. RAM gauche 83 060 octets sur
+256 Kio, flash 266 664 octets sur 792 Kio. Aucun avertissement de notre C, KSCAN et
+le drapeau Docker restent ceux du socle. Le conteneur éphémère a disparu et les
+trois services partagés sont conservés. Ni environnement, Dockerfile, Compose,
+dépendance, keymap ou configuration radio n’est modifié par ce correctif.
+Après le flash corrigé de gauche par l’utilisateur, M retrouve le Mac du slot 0 :
+measured unknown, stored macos, origin initial, state saved, learning 0, evidence
+0003 et error 0. L’ancien unknown Windows est conservé, sans nouvel apprentissage.
+Les deux hôtes sont connectés, Mac actif. Captures privées : profil bRhqqh,
+mémoire BPQCrq. Cela confirme la restauration du cache Mac après flash/redémarrage.
+
+L’utilisateur refait uniquement l’appairage Windows du slot 1 puis attend dix
+secondes. D conserve 109 événements et huit sessions, sans perte ni rejet. La
+session Windows 8 donne windows/005c, Mac 2 reste macos/0003. M confirme Windows
+measured windows, stored windows, origin initial, state saved, learning 1, evidence
+005c et error 0, dropped 0. Le cache Mac reste saved, learning 0, error 0. Les deux
+hôtes sont connectés, Windows actif. Captures privées : trace QCs5Zg, mémoire
+rZcbHF, profil 8irl51. Les lecteurs sont refermés, lsof ne trouve aucun accès au
+port. Ce résultat valide le correctif et sa sauvegarde sur V1, pas sa généralisation
+à d’autres machines. La restauration est contrôlée ensuite après reset.
+L’utilisateur annonce ensuite sa sélection explicite du Mac et libère le PC.
+Ne pas demander de nouvelles manipulations Windows pour contrôler la restauration
+du cache : les lectures peuvent rester sur l’USB gauche au Mac.
+
+Après reset bref de gauche par l’utilisateur, M retrouve Mac stored macos, origin
+initial, state saved, learning 0, evidence 0003, error 0, dropped 0. Windows reste
+origin initial, evidence 005c, state unverified, measured/stored unknown, learning 0
+et error 0. S confirme Mac 0 actif et connecté, Windows 1 appairé mais déconnecté.
+L’enregistrement Windows a été chargé, mais son identité n’a pas encore été liée
+à une connexion de ce démarrage. Ne pas conclure à une perte ni à une restauration
+utilisable tant qu’il ne s’est pas reconnecté. Captures privées : mémoire H7oFqn,
+profil 7hoMez. Lecteurs fermés, absence de lecteur vérifiée avec lsof. Aucune
+sélection modifiée par l’agent. Cette première lecture valide la restauration Mac,
+la reconnexion Windows est contrôlée ensuite, sans nouvel effacement ou appairage.
+
+Après sélection de Windows par l’utilisateur, S confirme actif 1 et deux hôtes
+connectés. M retrouve stored macos/0003 en 0 et stored windows/005c en 1, tous deux
+origin initial, state saved, measured unknown, learning 0, error 0 et dropped 0.
+D conserve 31 événements et deux sessions, sans perte ni rejet, chiffrées niveau 2
+sans erreur. La session Windows 2 reste unknown/0000, la session Mac 1 macos/0003.
+Le cache Windows a donc été restauré et son identité vérifiée sans réapprentissage,
+malgré une découverte insuffisante. Les lettres tapées par l’utilisateur ne changent
+pas ce résultat : aucune frappe n’est collectée et le test ne mesure pas la latence.
+Captures privées : profil uwFmIB, mémoire ve2fv7, trace fIvlsk. Le retour explicite
+au Mac est exécuté par l’agent comme annoncé : profil 6VOvNR, actif 0, deux hôtes
+toujours connectés. Lecteurs fermés, lsof sans accès au port.
+
+Ne pas imposer dix secondes avant chaque lecture de mémoire. C’était une marge
+pour comparer les captures initiales, pas un timeout du classifieur. Lire après
+connexion, distinguer résultat provisoire de découverte et OS restauré. Cela ne
+mesure pas le délai entre la reconnexion et la disponibilité réelle du cache.
+
 ### Architecture BLE souhaitée après le prototype
+
+Après flash gauche du prototype mémoire par l’utilisateur, les lectures S, M et D
+sur V1 confirment deux hôtes appairés/connectés : actif 0 (Mac) et emplacement 1
+(Windows). Les 32 événements sont complets, sans perte/rejet, les deux sessions
+chiffrées au niveau 2 sans erreur. Mac donne macos `0003`, Windows unknown `0000`.
+La mémoire indique cinq emplacements empty, origin none, learning 0, error 0,
+sans perte de file. Cet état est attendu pour les anciens appairages et ne valide
+pas encore une sauvegarde initiale. Fichiers privés : profil `guJ3NL`, mémoire
+`1zT3tf`, trace `LjRfwR` sous leurs dossiers `.local/`. Le port est refermé,
+absence de lecteur vérifiée avec lsof. Aucun profil changé ni appairage effacé.
+
+L’utilisateur demande de développer et tester la mémoire avant de solliciter de
+nouveaux appairages, afin de regrouper les manipulations sur le PC Windows utilisé
+par une autre personne. Préparer d’abord les tests sans matériel et le diagnostic
+de l’OS mesuré/mémorisé avec état de sauvegarde. Après le prochain flash gauche,
+regrouper les essais des deux OS : premier appairage, persistance, reconnexion et
+redémarrage. Ce changement d’ordre ne valide pas les signatures initiales et
+n’autorise aucun effacement des appairages actuels. La keymap reste fixe pendant
+la validation de mémoire, sa sélection automatique constitue une étape suivante.
 
 L’utilisateur souhaite maintenant associer l’OS reconnu initialement à l’appairage,
 et sélectionner automatiquement l’unique ordinateur connecté. Si plusieurs hôtes

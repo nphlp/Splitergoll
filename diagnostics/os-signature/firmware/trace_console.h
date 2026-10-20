@@ -12,4 +12,7 @@ void splitergoll_trace_dump(const struct device *uart);
 
 // Traite uniquement les commandes explicites d’emplacement du diagnostic Bluetooth.
 void splitergoll_ble_profile_command(const struct device *uart, char command);
+
+// Efface uniquement un emplacement explicitement nommé, avec vérification de sélection et saisie.
+void splitergoll_ble_forget_command(const struct device *uart, const char *frame);
 #endif
