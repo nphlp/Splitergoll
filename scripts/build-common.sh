@@ -72,7 +72,11 @@ select_build_mode() {
             [ "$PROFILE" = wire ] || fail 'usb-trace observe la connexion USB : utilise le matériel wire'
             BUILD_VARIANT="$PROFILE-$KEYMAP_PROFILE-usb-trace"
             ;;
-        *) fail 'Mode de compilation inconnu : utilise debug, usb-trace ou aucun argument' ;;
+        ble-trace)
+            [ "$PROFILE" = bluetooth ] || fail 'ble-trace observe l’hôte Bluetooth : utilise le matériel bluetooth'
+            BUILD_VARIANT="$PROFILE-$KEYMAP_PROFILE-ble-trace"
+            ;;
+        *) fail 'Mode de compilation inconnu : utilise debug, usb-trace, ble-trace ou aucun argument' ;;
     esac
 }
 

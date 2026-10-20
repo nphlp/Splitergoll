@@ -1,13 +1,30 @@
 #!/bin/bash
 
-# Lit les requêtes mémorisées par la centrale usb-trace, sans flash ni reset.
-# Reçoit un port série explicite et conserve la capture dans .local/usb-traces/.
+# Lit l’historique de la centrale usb-trace ou ble-trace, sans flash ni reset.
+# Reçoit un port série explicite, --ble lit les traces et --profile contrôle les emplacements BLE.
 # macOS/Linux uniquement. Sous Windows, copier capture.ps1 dans le dossier de travail.
 set -euo pipefail
 
 DIAGNOSTIC_DIRECTORY=$(CDPATH= cd "$(dirname "$0")" && pwd)
 REPOSITORY=$(CDPATH= cd "$DIAGNOSTIC_DIRECTORY/../.." && pwd)
 TRACE_ROOT="$REPOSITORY/.local/usb-traces"
+protocol=USBTRACE
+command_name=usb-capture
+validator="$DIAGNOSTIC_DIRECTORY/check.awk"
+serial_command=D
+if [ "${1-}" = --ble ]; then
+    shift
+    TRACE_ROOT="$REPOSITORY/.local/ble-traces"
+    protocol=BLETRACE
+    command_name=ble-capture
+    validator="$DIAGNOSTIC_DIRECTORY/check-ble.awk"
+elif [ "${1-}" = --profile ]; then
+    shift
+    TRACE_ROOT="$REPOSITORY/.local/ble-profiles"
+    protocol=BLEPROFILE
+    command_name=ble-profile
+    validator="$DIAGNOSTIC_DIRECTORY/check-profile.awk"
+fi
 
 # Affiche une erreur et interrompt la lecture sans modifier le clavier.
 fail() {
@@ -16,11 +33,25 @@ fail() {
 }
 
 if [ "$#" -eq 0 ]; then
-    printf '%s\n' 'Utilise make usb-capture <port-série-gauche>'
-    printf '%s\n' 'Exemple : make usb-capture /dev/cu.usbmodem123'
+    if [ "$protocol" = BLEPROFILE ]; then
+        printf '%s\n' 'Utilise make ble-profile <port-série-gauche> <status|free|index>'
+        exit 0
+    fi
+    printf 'Utilise make %s <port-série-gauche>\n' "$command_name"
+    printf 'Exemple : make %s /dev/cu.usbmodem123\n' "$command_name"
     exit 0
 fi
-[ "$#" -eq 1 ] || fail 'Un seul port série explicite est attendu'
+if [ "$protocol" = BLEPROFILE ]; then
+    [ "$#" -eq 2 ] || fail 'Utilise make ble-profile <port-série-gauche> <status|free|index>'
+    case "$2" in
+        status) serial_command=S ;;
+        free) serial_command=F ;;
+        [0-9]) serial_command=$2 ;;
+        *) fail 'Action attendue : status, free ou un index de 0 à 9' ;;
+    esac
+else
+    [ "$#" -eq 1 ] || fail 'Un seul port série explicite est attendu'
+fi
 port=$1
 case "$(uname -s)" in
     Darwin) host=macos ;;
@@ -55,16 +86,24 @@ trap 'exit 130' INT
 trap 'exit 143' TERM
 stty raw -echo 115200 <&3
 printf 'Lecture de la centrale sur %s…\n' "$port"
-printf '%s\n' 'Les requêtes du démarrage sont conservées, aucune frappe à effectuer.'
+if [ "$protocol" = BLEPROFILE ]; then
+    printf '%s\n' 'Contrôle explicite des emplacements Bluetooth, sans effacer les appairages.'
+elif [ "$protocol" = BLETRACE ]; then
+    printf '%s\n' 'Les connexions Bluetooth depuis le démarrage sont conservées. Aucune frappe à effectuer.'
+else
+    printf '%s\n' 'Les requêtes du démarrage sont conservées, aucune frappe à effectuer.'
+fi
 sleep 1
-printf D >&3
+printf '%s' "$serial_command" >&3
 deadline=$((SECONDS + 15))
 finished=false
 while [ "$SECONDS" -lt "$deadline" ]; do
     if IFS= read -r -t 1 line <&3; then
         line=${line%$'\r'}
         printf '%s\n' "$line" >> "$capture"
-        if [ "$line" = 'USBTRACE END' ]; then
+        if { [ "$protocol" = USBTRACE ] && [ "$line" = 'USBTRACE END' ]; } ||
+           { [ "$protocol" = BLETRACE ] && [[ "$line" == 'BLETRACE END attrs='* ]]; } ||
+           { [ "$protocol" = BLEPROFILE ] && [ "$line" = 'BLEPROFILE END' ]; }; then
             finished=true
             break
         fi
@@ -74,9 +113,18 @@ while [ "$SECONDS" -lt "$deadline" ]; do
 done
 
 [ "$finished" = true ] || fail "Capture incomplète ou mauvais firmware/port. Données conservées : $capture"
-awk -f "$DIAGNOSTIC_DIRECTORY/check.awk" "$capture" ||
+awk -v command="$serial_command" -f "$validator" "$capture" ||
     fail "Capture refusée (pertes ou format incorrect). Données conservées : $capture"
 printf 'Capture complète : %s\n' "$capture"
+if [ "$protocol" = BLEPROFILE ]; then
+    cat "$capture"
+    grep -q ' status=ok ' "$capture" || fail 'Sélection refusée : busy = hôte encore connecté, full = aucun emplacement libre'
+    exit 0
+fi
+if [ "$protocol" = BLETRACE ]; then
+    printf '%s\n' 'Diagnostic Bluetooth uniquement. Aucune sélection automatique d’OS.'
+    exit 0
+fi
 
 result=$(awk '/^USBTRACE OS / { sub(/^result=/, "", $3); print $3 }' "$capture")
 case "$result" in

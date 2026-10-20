@@ -1,0 +1,6 @@
+// Le port USB sert à lire les échanges BLE de la centrale, pas à transmettre les touches.
+&zephyr_udc0 {
+    splitergoll_ble_trace_uart: splitergoll_ble_trace_uart {
+        compatible = "zephyr,cdc-acm-uart";
+    };
+};

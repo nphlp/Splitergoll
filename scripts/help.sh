@@ -22,7 +22,7 @@ show_command() {
 # Explique les deux choix obligatoires, l’option debug et des commandes complètes.
 show_build_help() {
     printf '\n%sCompiler un firmware%s\n\n' "$LOG_HEADING" "$LOG_RESET"
-    printf '  %smake build <matériel> <keymap> [debug|usb-trace]%s\n' "$LOG_SUCCESS" "$LOG_RESET"
+    printf '  %smake build <matériel> <keymap> [debug|usb-trace|ble-trace]%s\n' "$LOG_SUCCESS" "$LOG_RESET"
     printf '%s\n' '  Matériel puis keymap obligatoires, aucun choix par défaut.'
 
     printf '\n%s1. Matériel (obligatoire)%s\n' "$LOG_HEADING" "$LOG_RESET"
@@ -39,22 +39,24 @@ show_build_help() {
     printf '\n%sOption finale%s\n' "$LOG_HEADING" "$LOG_RESET"
     show_command 'debug' 'Ajouter les logs USB sur les deux moitiés'
     show_command 'usb-trace' 'Observer les requêtes USB sur la gauche (wire uniquement)'
+    show_command 'ble-trace' 'Observer la connexion BLE sur la gauche (bluetooth uniquement)'
 
     printf '\n%sExemples%s\n' "$LOG_HEADING" "$LOG_RESET"
     show_command 'make build wire auto' 'USB avec sélection automatique macOS / Windows'
     show_command 'make build wire macos' 'USB avec keymap macOS fixe'
     show_command 'make build bluetooth multi' 'Bluetooth avec changement d’OS au clavier'
     show_command 'make build bluetooth windows debug' 'Bluetooth, Windows avec gaming et logs USB'
+    show_command 'make build bluetooth macos ble-trace' 'Étudier la signature Bluetooth, sans sélection automatique'
     printf '\n'
 }
 
 # Présente la sélection du build et la confirmation requise avant un flash USB.
 show_flash_help() {
     printf '\n%sFlasher un firmware (macOS)%s\n\n' "$LOG_HEADING" "$LOG_RESET"
-    printf '  %smake flash <matériel> <keymap> <left|right> [debug|usb-trace]%s\n' "$LOG_SUCCESS" "$LOG_RESET"
+    printf '  %smake flash <matériel> <keymap> <left|right> [debug|usb-trace|ble-trace]%s\n' "$LOG_SUCCESS" "$LOG_RESET"
     printf '  %smake flash <chemin.uf2>%s\n\n' "$LOG_SUCCESS" "$LOG_RESET"
     printf '%s\n' '  Matériel : wire ou bluetooth. Keymap : auto (wire), multi, windows, macos ou linux.'
-    printf '%s\n' '  Sans chemin, choisit le dernier build exact. debug et usb-trace doivent être explicites.'
+    printf '%s\n' '  Sans chemin, choisit le dernier build exact. Le diagnostic doit être explicite.'
     printf '%s\n' '  Affiche la date complète et l’ancienneté, puis demande confirmation avant copie.'
     printf '%s\n' '  Mettre uniquement la moitié choisie en bootloader par un double appui sur reset.'
     printf '\n%sExemples%s\n' "$LOG_HEADING" "$LOG_RESET"
@@ -85,6 +87,10 @@ show_command 'make bat avg' 'Calculer une moyenne par moitié sur 30 secondes'
 
 printf '\n%sDiagnostic de connexion USB%s\n' "$LOG_HEADING" "$LOG_RESET"
 show_command 'make usb-capture <port-série-gauche>' 'Lire les requêtes du firmware wire avec option usb-trace'
+show_command 'make ble-capture <port-série-gauche>' 'Lire les connexions du firmware bluetooth avec option ble-trace'
+show_command 'make ble-profile <port> status' 'Voir les emplacements appairés, sans adresse ni clé'
+show_command 'make ble-profile <port> free' 'Choisir un emplacement libre après déconnexion de l’hôte'
+show_command 'make ble-profile <port> <index>' 'Revenir à un emplacement connu, sans effacer son appairage'
 
 printf '\n%sEntretien%s\n' "$LOG_HEADING" "$LOG_RESET"
 show_command 'make stop' 'Arrêter les conteneurs de build de ce checkout'

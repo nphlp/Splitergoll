@@ -1,5 +1,16 @@
-# Le stockage et le lecteur restent dans le diagnostic, l’observateur est partagé.
-if(CONFIG_SPLITERGOLL_USB_TRACE)
+# Les transports série sont partagés, chaque diagnostic garde son observateur.
+if(CONFIG_SPLITERGOLL_USB_TRACE OR CONFIG_SPLITERGOLL_BLE_TRACE)
   zephyr_library()
+  zephyr_library_sources(trace_console.c)
+endif()
+if(CONFIG_SPLITERGOLL_USB_TRACE)
   zephyr_library_sources(usb_trace.c usb_trace_store.c)
+endif()
+if(CONFIG_SPLITERGOLL_BLE_TRACE)
+  if(CONFIG_LTO OR CONFIG_BT_EATT OR NOT CONFIG_SOC_NRF52840)
+    message(FATAL_ERROR "BLE tracing requires the pinned nRF52840 stack without LTO or EATT")
+  endif()
+  zephyr_library_sources(ble_trace.c ble_trace_store.c ble_trace_profiles.c ble_profile_control.c)
+  zephyr_library_include_directories(${APPLICATION_SOURCE_DIR}/include)
+  zephyr_link_libraries(-Wl,--wrap=bt_l2cap_recv)
 endif()

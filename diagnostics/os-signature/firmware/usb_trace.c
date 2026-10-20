@@ -1,6 +1,7 @@
 // Observe les SETUP de la centrale et restitue leur historique sur son port série USB.
 // Les wrappers délèguent aux pilotes existants, sans modifier les réponses ni la keymap.
 #include "usb_trace_store.h"
+#include "trace_console.h"
 #include <splitergoll/usb_os_classifier.h>
 #include <splitergoll/usb_observer.h>
 #include <splitergoll/usb_auto_state.h>
@@ -16,11 +17,6 @@
 
 static struct usb_trace_store store;
 static struct k_spinlock store_lock;
-static struct k_spinlock transmit_lock;
-static const uint8_t *transmit_data;
-static size_t transmit_length;
-static size_t transmit_offset;
-K_SEM_DEFINE(transmit_done, 0, 1);
 
 // Efface les compteurs du diagnostic au changement de cycle observé par le clavier.
 void splitergoll_usb_trace_reset(void) {
@@ -36,59 +32,8 @@ void splitergoll_usb_trace_record(uint32_t timestamp_ms, const uint8_t *data, si
     k_spin_unlock(&store_lock, key);
 }
 
-// Alimente le FIFO dans le callback UART et signale la copie complète de la ligne.
-static void transmit_ready(const struct device *uart, void *unused) {
-    ARG_UNUSED(unused);
-    if (!uart_irq_update(uart) || !uart_irq_tx_ready(uart)) {
-        return;
-    }
-
-    k_spinlock_key_t key = k_spin_lock(&transmit_lock);
-    if (transmit_offset < transmit_length) {
-        int sent = uart_fifo_fill(uart, transmit_data + transmit_offset,
-                                 transmit_length - transmit_offset);
-        if (sent > 0) {
-            transmit_offset += sent;
-        }
-    }
-    bool complete = transmit_offset == transmit_length;
-    if (complete) {
-        uart_irq_tx_disable(uart);
-        transmit_data = NULL;
-    }
-    k_spin_unlock(&transmit_lock, key);
-    if (complete) {
-        k_sem_give(&transmit_done);
-    }
-}
-
-// Attend au plus une seconde la mise en file de la ligne, puis retire son pointeur.
-static bool send_line(const struct device *uart, const char *line) {
-    uint32_t dtr = 0;
-    if (uart_line_ctrl_get(uart, UART_LINE_CTRL_DTR, &dtr) != 0 || !dtr) {
-        return false;
-    }
-
-    k_sem_reset(&transmit_done);
-    k_spinlock_key_t key = k_spin_lock(&transmit_lock);
-    transmit_data = (const uint8_t *)line;
-    transmit_length = strlen(line);
-    transmit_offset = 0;
-    k_spin_unlock(&transmit_lock, key);
-    uart_irq_tx_enable(uart);
-
-    bool complete = k_sem_take(&transmit_done, K_MSEC(1000)) == 0;
-    key = k_spin_lock(&transmit_lock);
-    uart_irq_tx_disable(uart);
-    transmit_data = NULL;
-    transmit_length = 0;
-    transmit_offset = 0;
-    k_spin_unlock(&transmit_lock, key);
-    return complete;
-}
-
 // Restitue un instantané des premiers en-têtes, sans effacer le stockage après lecture.
-static void dump_trace(const struct device *uart) {
+void splitergoll_trace_dump(const struct device *uart) {
     char line[160];
     struct usb_os_classifier classifier = {0};
     k_spinlock_key_t key = k_spin_lock(&store_lock);
@@ -102,7 +47,7 @@ static void dump_trace(const struct device *uart) {
     snprintf(line, sizeof(line),
              "USBTRACE BEGIN version=1 side=left count=%u dropped=%u rejected=%u uptime_ms=%u\n",
              (unsigned)count, dropped, rejected, snapshot_ms);
-    if (!send_line(uart, line)) {
+    if (!trace_send_line(uart, line)) {
         return;
     }
 
@@ -121,7 +66,7 @@ static void dump_trace(const struct device *uart) {
                  (unsigned)i, record.timestamp_ms, record.setup[0], record.setup[1],
                  sys_get_le16(&record.setup[2]), sys_get_le16(&record.setup[4]),
                  sys_get_le16(&record.setup[6]));
-        if (!send_line(uart, line)) {
+        if (!trace_send_line(uart, line)) {
             return;
         }
     }
@@ -135,13 +80,13 @@ static void dump_trace(const struct device *uart) {
     enum usb_os_guess guess = usb_os_result(&classifier, dropped == 0 && rejected == 0);
     snprintf(line, sizeof(line), "USBTRACE OS result=%s evidence=%04x\n",
              usb_os_name(guess), (unsigned)classifier.evidence);
-    if (!send_line(uart, line)) {
+    if (!trace_send_line(uart, line)) {
         return;
     }
     if (IS_ENABLED(CONFIG_SPLITERGOLL_OS_AUTO)) {
         snprintf(line, sizeof(line), "USBTRACE ACTIVE result=%s\n",
                  usb_os_name(splitergoll_usb_auto_selected()));
-        if (!send_line(uart, line)) {
+        if (!trace_send_line(uart, line)) {
             return;
         }
     }
@@ -149,30 +94,6 @@ static void dump_trace(const struct device *uart) {
     same_generation = store.generation == generation;
     k_spin_unlock(&store_lock, key);
     if (same_generation) {
-        send_line(uart, "USBTRACE END\n");
+        trace_send_line(uart, "USBTRACE END\n");
     }
 }
-
-// Attend la commande D du lecteur, dans un thread dédié sans bloquer le démarrage USB.
-static void trace_console(void *unused1, void *unused2, void *unused3) {
-    ARG_UNUSED(unused1);
-    ARG_UNUSED(unused2);
-    ARG_UNUSED(unused3);
-    const struct device *uart = DEVICE_DT_GET(DT_NODELABEL(splitergoll_usb_trace_uart));
-    if (!device_is_ready(uart)) {
-        return;
-    }
-    if (uart_irq_callback_user_data_set(uart, transmit_ready, NULL) != 0) {
-        return;
-    }
-
-    while (true) {
-        unsigned char command;
-        if (uart_poll_in(uart, &command) == 0 && command == 'D') {
-            dump_trace(uart);
-        }
-        k_msleep(20);
-    }
-}
-
-K_THREAD_DEFINE(usb_trace_console, 2048, trace_console, NULL, NULL, NULL, 10, 0, 0);

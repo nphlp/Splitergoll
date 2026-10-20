@@ -226,8 +226,8 @@ désactivé même pendant la charge, veille après 15 minutes et reporting batte
 Le profil aux délais courts a été supprimé après validation matérielle. Les deux
 profils disponibles sont `wire` et `bluetooth`. L’option transversale `debug` ajoute
 le snippet natif `zmk-usb-logging` à chaque moitié, sans toucher aux timings, rôles
-ou keymaps. `BUILD_MODE` vaut `normal`, `debug` ou `usb-trace`, `BUILD_VARIANT` nomme
-matériel et keymap avec suffixe `-debug` ou `-usb-trace` pour ces diagnostics. Caches et artefacts sont séparés,
+ou keymaps. `BUILD_MODE` vaut `normal`, `debug`, `usb-trace` ou `ble-trace`. `BUILD_VARIANT` nomme
+matériel et keymap avec suffixe `-debug`, `-usb-trace` ou `-ble-trace` pour ces diagnostics. Caches et artefacts sont séparés,
 et les métadonnées indiquent le mode. Valider les quatre paires de builds et conserver
 les contrôles d’absence de reset dans tous les modes. Le logging doit être présent
 en debug et absent en normal. Le guide court est [logs-usb.md](docs/logs-usb.md).
@@ -328,11 +328,11 @@ Le retour par reset est confirmé. Tester encore `&sys_reset` et le double appui
 physique avant de considérer le parcours matériel complet validé.
 Le snapshot 0.3 dans l’historique Git garde son ancien mécanisme.
 
-Le Makefile expose `help`, `setup`, `build <matériel> <keymap> [debug|usb-trace]`,
-`flash`, `bat`, `bat avg`, `usb-capture <port>`, `stop` et `clear`, délégués aux scripts dédiés. Le matériel (`wire` ou `bluetooth`)
+Le Makefile expose `help`, `setup`, `build <matériel> <keymap> [debug|usb-trace|ble-trace]`,
+`flash`, `bat`, `bat avg`, `usb-capture <port>`, `ble-capture <port>`, `ble-profile <port> <status|free|index>`, `stop` et `clear`, délégués aux scripts dédiés. Le matériel (`wire` ou `bluetooth`)
 puis la keymap (`auto`, `multi`, `windows`, `macos` ou `linux`) sont obligatoires, sans défaut.
 Windows inclut toujours le gaming. L’argument final facultatif choisit `debug`
-pour les logs USB ou `usb-trace` pour le diagnostic de connexion wire.
+pour les logs USB, `usb-trace` pour la connexion wire ou `ble-trace` pour l’hôte Bluetooth.
 `make build wire` et `make build wire debug` échouent avant Docker.
 Les arguments sont validés avant les journaux et les actions Docker.
 Ni le passage au conteneur ni son point d’entrée ne remplacent une keymap absente
@@ -355,7 +355,7 @@ choix demandé sont compilées.
 Les constantes partagées sont en tête de `scripts/build-common.sh`. `container.sh`
 exécute `west` et vérifie les firmwares. Aucun `.env` n’est nécessaire.
 
-`make flash <matériel> <keymap> <left|right> [debug|usb-trace]` choisit le dernier dossier
+`make flash <matériel> <keymap> <left|right> [debug|usb-trace|ble-trace]` choisit le dernier dossier
 horodaté du profil exact, sans rabattement normal/debug ni retour à un build plus
 ancien si le dernier est incomplet. `make flash <chemin.uf2>` accepte un UF2 du
 dépôt resté dans son dossier horodaté, avec métadonnées et empreintes.
@@ -628,6 +628,63 @@ mais expose aussi la sélection réellement appliquée avec `auto`.
 Lorsque `auto` couvrira les usages et sera validé, l’utilisateur souhaite retirer
 `multi` des profils actifs tout en le conservant comme archive autonome. Ce retrait
 n’est pas effectué maintenant, il reste suivi dans `docs/TODO.md`.
+
+## Diagnostic Bluetooth
+
+Le diagnostic actif est maintenant Bluetooth sur V1, d’abord Mac puis Windows.
+`ble-trace` ajoute un port série USB dédié sur la gauche Bluetooth, sans sortie
+clavier USB ni sélection automatique. Les échanges précoces restent en RAM jusqu’au
+reset physique, indépendamment de l’ouverture du lecteur. La droite reste normale.
+La spec est dans [diagnostics/os-signature/AGENTS.md](diagnostics/os-signature/AGENTS.md)
+et le guide court dans [docs/detection-os-bluetooth.md](docs/detection-os-bluetooth.md).
+Ne pas confondre hôte Bluetooth et ordinateur d’alimentation USB, ni déduire un OS
+de sa radio seule. Les captures réelles et reconnexions doivent précéder toute règle.
+Le premier flash des deux moitiés et la connexion BLE V1/Mac sont confirmés par
+l’utilisateur. La capture gauche donne 49 événements, zéro perte/rejet, découverte
+HID et sécurité niveau 2 sans erreur. La reconnexion Mac sans reset ni coupure USB
+est ensuite capturée : 27 événements, dont 20 requêtes ATT contre 42 au départ,
+sans relecture de la description HID. Zéro perte/rejet. La lecture est faite
+20,5 secondes après reconnexion, les dix secondes du protocole sont respectées.
+L’utilisateur précise que la reconnexion était automatique, avec 1 054 ms entre
+déconnexion et connexion dans la trace. Pour Windows, isoler l’hôte afin que le Mac
+ne reprenne pas automatiquement la liaison, sans supprimer son appairage.
+Le lecteur est fermé. La première capture Windows est ensuite fournie : 76 événements,
+67 requêtes ATT, zéro perte/rejet, même table GATT de 52 attributs. Le MTU est identique
+au Mac, Windows lit en plus Appearance et des attributs de cache GATT.
+La reconnexion Windows déjà appairé est ensuite capturée sans nouveau flash :
+six événements, deux requêtes ATT génériques (MTU et batterie), aucune perte/rejet.
+Les lectures distinctives du premier appairage disparaissent. Les paramètres/radios
+diffèrent sur nos deux hôtes mais ne prouvent pas un OS universel. Ne pas ajouter
+Windows par absence d’indices. Le prochain choix est d’enrichir l’observation ou
+d’étudier une mémoire automatique d’OS appris par appairage authentifié, avec gestion
+des remplacements et changements d’OS. Un classifieur C diagnostique hors ligne est
+désormais testé dans `diagnostics/os-signature/firmware/ble_os_classifier.c/.h`, avec
+sa suite native. Il reste absent des sources CMake, des lecteurs et des firmwares.
+Le rejeu des cinq fichiers existants reconnaît les sessions Mac et la découverte
+initiale Windows, mais laisse sa reconnexion limitée au MTU/batterie inconnue.
+Aucune sélection BLE automatique ni mémoire d’OS n’est implémentée.
+
+L’utilisateur accepte une détection initiale suivie d’une mémoire automatique si la
+première reconnaissance est fiable. Le full auto reste prioritaire. Le mode manuel
+avec choix par raccourci et mémoire persistante est enregistré comme dernier recours,
+pas ajouté maintenant. Les noms des éventuels profils restent à définir. La recherche
+de code public est synthétisée dans le guide Bluetooth, avec commits et limites dans
+la spec du diagnostic. Les règles BLE de Cormoran ne conviennent pas directement :
+elles classeraient notre première capture Mac comme Android. Les métadonnées publiques
+SMP sont une piste supplémentaire à évaluer, sans collecte de clés ni nouvelle sonde.
+
+
+Le passage Windows nécessite un second emplacement d’appairage. La keymap initiale
+n’a pas de sélecteur Bluetooth. Le diagnostic gauche ajoute donc `ble-profile`
+(status, free ou index), sans BT_CLR ni modification de touches. Seul l’index actif
+change via l’API native, sauvegardé après 60 secondes, les bonds restent intacts.
+La sélection Windows se fait sur le PC après déplacement des USB et coupure du
+Bluetooth Mac. Le guide [capture-bluetooth-windows.md](docs/capture-bluetooth-windows.md)
+donne le retour à la case Mac sans nouvel appairage. Le contrôle est testé en natif,
+compilé puis flashé par l’utilisateur. Ses sorties confirment Mac en case 0, choix
+libre 1 sur Windows, puis retour à 0 avec les deux cases toujours appairées.
+La sélection et le lecteur PowerShell sont donc validés sur les deux ordinateurs.
+Pour reconnecter Windows, réutiliser 1 explicitement, jamais `free` après l’appairage.
 
 ## Ideas / backlog
 

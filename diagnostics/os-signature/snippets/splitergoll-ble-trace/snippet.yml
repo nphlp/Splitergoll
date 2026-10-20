@@ -1,0 +1,4 @@
+name: splitergoll-ble-trace
+append:
+  EXTRA_CONF_FILE: ble-trace.conf
+  EXTRA_DTC_OVERLAY_FILE: ble-trace.overlay

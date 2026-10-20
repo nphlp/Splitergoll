@@ -11,7 +11,7 @@ de cette branche. Son ancienne matrice `build.yaml` a également été retirée.
 Prérequis : Make, Bash, Docker démarré, `shasum` et un terminal macOS/Linux.
 Sur Windows, utiliser WSL avec Docker. La validation Windows reste à faire.
 
-Commande : `make build <matériel> <keymap> [debug|usb-trace]`.
+Commande : `make build <matériel> <keymap> [debug|usb-trace|ble-trace]`.
 Le matériel et la keymap sont obligatoires, dans cet ordre. Aucun choix par défaut.
 
 ```sh
@@ -28,6 +28,8 @@ make build bluetooth windows debug
 - Ajouter `debug` après la keymap active les logs USB, voir [logs-usb.md](logs-usb.md).
 - `usb-trace`, réservé à `wire`, enregistre les requêtes de connexion de la gauche
   et affiche aussi la sélection appliquée avec `auto` : voir [le diagnostic d’OS](detection-os.md).
+- `ble-trace`, réservé à `bluetooth`, garde les échanges de découverte de l’hôte
+  sur la gauche, sans sélection automatique : voir [le diagnostic Bluetooth](detection-os-bluetooth.md).
 - `build` seul affiche l’aide, sans compilation ni Docker. Un choix incomplet ou invalide échoue avant Docker.
 - `stop` arrête les conteneurs de build de ce checkout, en conservant les fichiers.
 - `clear` les arrête puis supprime `.local/` et `dist/` pour toutes les versions.
@@ -82,7 +84,7 @@ Le [snapshot stable 0.3](firmwares-stables.md) reste récupérable dans l’hist
 `keyboard/` regroupe les keymaps et profils dans `config/`, les shields dans
 `boards/`, leur déclaration de module dans `zephyr/` et le manifeste `west.yml`.
 L’étude des signatures
-est séparée dans `diagnostics/os-signature/`, son firmware n’est ajouté qu’au build `usb-trace`.
+est séparée dans `diagnostics/os-signature/`, son firmware n’est ajouté qu’aux builds `usb-trace` et `ble-trace`.
 
 Chaque commande a sa propre cible dans le Makefile et appelle directement son script.
 Les mots après la commande sont ses arguments, vérifiés dans le script :

@@ -141,6 +141,9 @@ Le lecteur mis à jour et l’affichage des accents sont confirmés sur le PC.
 
 ## Suite Bluetooth
 
+Le [protocole Bluetooth](detection-os-bluetooth.md) décrit le firmware `ble-trace`
+et la lecture des premiers appairages et reconnexions sur Mac puis Windows.
+
 V1 peut aussi tester le Bluetooth direct avec ses deux USB pour l’alimentation,
 sans batterie. Ce sera une capture BLE distincte, pas une détection de l’OS
 Bluetooth à partir du chargeur ou de l’ordinateur qui fournit son USB.

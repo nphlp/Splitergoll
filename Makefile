@@ -1,6 +1,6 @@
 .DEFAULT_GOAL := help
 
-.PHONY: help setup build flash bat usb-capture stop clear
+.PHONY: help setup build flash bat usb-capture ble-capture ble-profile stop clear
 
 # Récupère les mots après la commande et protège chaque argument pour le shell.
 ARGS = $(foreach arg,$(filter-out $@,$(MAKECMDGOALS)),'$(subst ','"'"',$(arg))')
@@ -22,6 +22,12 @@ bat:
 
 usb-capture:
 	@bash diagnostics/os-signature/capture.sh $(ARGS)
+
+ble-capture:
+	@bash diagnostics/os-signature/capture.sh --ble $(ARGS)
+
+ble-profile:
+	@bash diagnostics/os-signature/capture.sh --profile $(ARGS)
 
 stop:
 	@sh scripts/stop.sh $(ARGS)

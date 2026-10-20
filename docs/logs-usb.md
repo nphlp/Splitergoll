@@ -46,3 +46,6 @@ la consommation. La veille profonde reste
 bloquée tant que l’USB alimente le clavier, voir [veille et réveil](veille.md).
 
 [Snippet du snapshot ZMK utilisé](https://github.com/zmkfirmware/zmk/blob/4dd95d7840eb3d5a3f59bb29fbf1ab054715ef85/app/snippets/zmk-usb-logging/snippet.yml).
+
+Pour étudier la connexion de l’ordinateur sans les logs de frappes, utiliser
+[usb-trace](detection-os.md) ou [ble-trace](detection-os-bluetooth.md).

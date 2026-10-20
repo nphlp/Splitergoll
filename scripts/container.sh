@@ -73,6 +73,19 @@ check_firmware() {
         fail 'Diagnostic USB présent hors de la centrale usb-trace'
     fi
 
+    if [ "$BUILD_MODE" = ble-trace ] && [ "$side" = left ]; then
+        grep -qx 'CONFIG_SPLITERGOLL_BLE_TRACE=y' "$configuration" || fail 'Trace BLE absente de la centrale'
+        grep -qx 'CONFIG_USB_CDC_ACM=y' "$configuration" || fail 'Port de lecture BLE absent'
+        grep -qx 'CONFIG_BT_REMOTE_INFO=y' "$configuration" || fail 'Informations BLE distantes absentes'
+        grep -q 'splitergoll_ble_trace_uart' "$directory/zephyr/zephyr.dts" || fail 'Port dédié BLE absent du matériel'
+        grep -Eq '0x[0-9a-f]+[[:space:]]+__wrap_bt_l2cap_recv$' "$directory/zephyr/zmk.map" || fail 'Observation ATT absente'
+        if grep -qx 'CONFIG_BT_REMOTE_VERSION=y' "$configuration"; then
+            fail 'Le diagnostic BLE ne doit pas demander la version du contrôleur distant'
+        fi
+    elif grep -qx 'CONFIG_SPLITERGOLL_BLE_TRACE=y' "$configuration"; then
+        fail 'Diagnostic BLE présent hors de la centrale ble-trace'
+    fi
+
     if [ "$KEYMAP_PROFILE" = auto ] && [ "$side" = left ]; then
         grep -qx 'CONFIG_SPLITERGOLL_OS_AUTO=y' "$configuration" || fail 'Sélection automatique absente'
         for symbol in __wrap_zmk_event_manager_raise __wrap_zmk_keymap_layer_to; do
@@ -155,6 +168,9 @@ case "${1-}" in
                 set -- -S zmk-usb-logging
             elif [ "$BUILD_MODE" = usb-trace ] && [ "$side" = left ]; then
                 set -- -S splitergoll-usb-trace
+                modules="$modules;$OS_DIAGNOSTIC_ROOT/firmware"
+            elif [ "$BUILD_MODE" = ble-trace ] && [ "$side" = left ]; then
+                set -- -S splitergoll-ble-trace
                 modules="$modules;$OS_DIAGNOSTIC_ROOT/firmware"
             fi
             west build -p auto -s zmk/app -d "$directory" -b "$BOARD" "$@" -- \

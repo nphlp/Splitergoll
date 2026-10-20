@@ -60,10 +60,52 @@ La priorité USB est différée après l’auto-détection d’OS, pour viser un
 - [ ] Confirmer le décodage Tracerpt avec `-lr` sur le PC lors d’une prochaine capture utile.
 - [x] Confirmer l’usage des layouts `auto` normal sur Mac et Windows et du gaming : l’utilisateur rapporte un fonctionnement correct, sans problème de bascule ou de disposition.
 - [x] Rendre `capture.ps1` autonome sous Windows : un seul fichier dans le dossier de travail, capture `.txt` directement dans le dossier courant.
-- [ ] Confirmer sur Windows la destination du lecteur autonome mis à jour.
+- [x] Confirmer sur Windows la destination du lecteur autonome mis à jour.
 - [ ] Confirmer la séparation des cycles lors d’un reset du bus sans coupure d’alimentation.
   L’aller-retour Mac/Windows avec débranchement USB est validé.
-- [ ] Étudier ensuite les signatures Bluetooth sur V1 alimenté en USB, sans batterie.
+- [x] Préparer `ble-trace` et lire la première connexion V1/Mac : 49 événements,
+  sans perte ni rejet, avec découverte HID et connexion chiffrée.
+- [x] Comparer une reconnexion Mac sans reset ni coupure USB : 27 événements,
+  dont 20 requêtes ATT, sans relecture de la description HID ni perte/rejet.
+- [x] Valider sur matériel la sélection de la case libre 1 pour Windows,
+  puis le retour à la case Mac 0, avec les deux appairages conservés.
+- [x] Capturer la première connexion Windows en BLE : 76 événements, dont
+  67 requêtes ATT, sans perte/rejet et avec chiffrement établi sans erreur.
+- [x] Capturer une reconnexion Windows déjà appairée, en réutilisant la case 1 :
+  six événements, dont deux requêtes ATT (MTU et batterie), sans perte/rejet.
+- [x] Comparer les premières connexions et reconnexions Mac/Windows sur V1 alimenté
+  par USB. Les lectures distinctives Windows disparaissent après appairage,
+  voir [le résultat](detection-os-bluetooth.md).
+- [ ] Choisir la stratégie du futur firmware BLE : approfondir les indices passifs,
+  ou reconnaître l’OS initialement et le mémoriser automatiquement pour cet appairage
+  authentifié. Cette piste convient si la première détection est suffisamment fiable.
+  Ne pas assimiler une absence de lectures à Windows.
+  Une mémoire d’OS appris doit gérer le remplacement d’appairage et un changement
+  d’OS sur le même ordinateur, sans affectation manuelle OS/emplacement.
+- [x] Examiner les sources publiques BLE : règles et cache de Cormoran,
+  métadonnées SMP/LL de Blue2thprinting, annonces Apple Continuity et sélection
+  manuelle d’oskey. Aucun module ajouté. Voir [les pistes](detection-os-bluetooth.md#pistes-retenues).
+- [x] Préparer et évaluer un classifieur BLE diagnostique sur les captures existantes avant
+  toute sélection de keymap : recherches ciblées DIS côté Mac, séquence de découverte
+  et de cache GATT côté Windows, résultats inconnu/ambigu si les preuves manquent
+  ou se contredisent. Ne pas prendre les numéros d’emplacement pour des signatures d’OS.
+- [ ] Intégrer ensuite le classifieur au seul diagnostic `ble-trace`, sans bascule
+  de keymap, puis contrôler son résultat sur le clavier. Le prototype actuel est hors ligne.
+- [ ] Compléter les indices d’appairage si nécessaire : métadonnées SMP publiques
+  strictement sélectionnées, sans clés, avant de conclure sur la détection initiale.
+- [ ] Distinguer reconnexion et destination de saisie dans le futur full auto :
+  un hôte connu peut être connecté sur un emplacement non actif. Définir la sélection
+  de destination et le cas de plusieurs hôtes connectés, indépendamment de l’OS.
+- [ ] Ajouter des raccourcis clavier de sélection d’appareil Bluetooth, sans ordinateur
+  ni commande USB : appareil suivant/précédent ou sélection directe d’un emplacement.
+  Choisir des gestes libres et un retour sur l’emplacement sélectionné. Cette commande
+  reste distincte du changement d’OS et utile avec la détection automatique lorsque
+  plusieurs ordinateurs sont disponibles. Aucun BT_SEL/BT_NXT/BT_PRV dans les keymaps actuelles.
+- [ ] Dernier recours si le full auto échoue : mode manuel avec mémoire persistante,
+  changement d’OS par raccourci (par exemple L1 + clic encodeur), restauré au démarrage
+  et après veille profonde. Décider si la mémoire suit chaque hôte. Ce mode ne serait
+  pas automatique. Envisager un profil de build `manual` distinct de `auto`, `multi`
+  et des profils fixes, sans figer maintenant les noms ni modifier les profils existants.
 
 - [x] Ajouter dans `keymap.md` les sept schémas du README avec les légendes de `dongle`.
 - [x] Préparer le futur README dans `docs/README.md`, index des autres documents.

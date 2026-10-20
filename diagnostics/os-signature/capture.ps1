@@ -1,16 +1,93 @@
-﻿# Capture les en-têtes mémorisés du clavier (-Port COMx) ou les événements USB Windows (-UsbEvents).
+﻿# Lit les diagnostics USB/BLE (-Port COMx [-Ble]), contrôle les emplacements (-Profile) ou capture ETW (-UsbEvents).
 # Fonctionne seul, sans dépôt ni arborescence imposée, avec les fichiers dans le dossier courant.
 # Le mode UsbEvents observe le firmware normal sans port série et nécessite un terminal administrateur.
-# Aucun flash, reset, logiciel compagnon ou pilote supplémentaire.
+# Aucun flash, reset, effacement de bonds ou pilote supplémentaire. -Profile est une action explicite.
 [CmdletBinding(DefaultParameterSetName = 'Serial')]
 param(
     [Parameter(Mandatory = $true, ParameterSetName = 'Serial')]
+    [Parameter(Mandatory = $true, ParameterSetName = 'Profile')]
     [ValidatePattern('^COM[1-9][0-9]*$')]
     [string]$Port,
+
+    [Parameter(ParameterSetName = 'Serial')]
+    [switch]$Ble,
+
+    [Parameter(Mandatory = $true, ParameterSetName = 'Profile')]
+    [ValidatePattern('^(status|free|[0-9])$')]
+    [string]$Profile,
 
     [Parameter(Mandatory = $true, ParameterSetName = 'UsbEvents')]
     [switch]$UsbEvents
 )
+
+# Contrôle les sessions et la table GATT du diagnostic BLE, sans dépendance à un autre fichier.
+function Test-BleCapture {
+    param([System.Collections.Generic.List[string]]$Lines)
+
+    if ($Lines.Count -lt 5 -or $Lines[1] -notmatch '^BLETRACE BEGIN version=1 side=left count=([0-9]+) dropped=0 rejected=0 uptime_ms=[0-9]+ session=([0-9]+) connected=([01])$') {
+        throw 'Capture BLE refusée : format incorrect, aucune connexion ou pertes signalées.'
+    }
+    $Expected = [int]$Matches[1]
+    $ExpectedSession = [int]$Matches[2]
+    $ExpectedConnected = [int]$Matches[3]
+    if ($Expected -lt 1 -or $Expected -gt 256 -or $Lines.Count -lt $Expected + 4) {
+        throw 'Capture BLE refusée : nombre incorrect.'
+    }
+    $Session = 0
+    $Connected = $false
+    for ($Index = 0; $Index -lt $Expected; $Index++) {
+        if ($Lines[$Index + 2] -notmatch '^BLETRACE EVENT ([0-9]+) [0-9]+ ([0-9]+) (CONNECTED|DISCONNECTED|SECURITY|PARAM_REQUEST|PARAM_UPDATED|MTU|FEATURES|ATT)( [0-9a-f]{8}){5}$' -or [int]$Matches[1] -ne $Index) {
+            throw 'Capture BLE refusée : événements manquants ou désordonnés.'
+        }
+        $EventSession = [int]$Matches[2]
+        $Kind = $Matches[3]
+        if ($Kind -eq 'CONNECTED') {
+            if ($Connected -or $EventSession -ne $Session + 1) { throw 'Sessions BLE incohérentes.' }
+            $Connected = $true
+            $Session++
+        } elseif (-not $Connected -or $EventSession -ne $Session) { throw 'Session BLE absente.' }
+        if ($Kind -eq 'DISCONNECTED') { $Connected = $false }
+    }
+    $Attributes = 0
+    $Seen = @{}
+    for ($Index = $Expected + 2; $Index -lt $Lines.Count - 1; $Index++) {
+        if ($Lines[$Index] -notmatch '^BLETRACE ATTR ([0-9a-f]{4}) ([0-9a-f]{4}|[0-9a-f]{8}|[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12})$') {
+            throw 'Table GATT BLE invalide.'
+        }
+        $Handle = $Matches[1]
+        if ($Seen.ContainsKey($Handle)) { throw 'Handle GATT dupliqué.' }
+        $Seen[$Handle] = $true
+        $Attributes++
+    }
+    if ($Lines[$Lines.Count - 1] -notmatch '^BLETRACE END attrs=([0-9]+)$' -or
+        [int]$Matches[1] -ne $Attributes -or $Attributes -lt 1 -or $Attributes -gt 512 -or
+        $Session -ne $ExpectedSession -or [int]$Connected -ne $ExpectedConnected) {
+        throw 'Capture BLE tronquée ou sessions incohérentes.'
+    }
+}
+
+# Vérifie la réponse du contrôle avant de présenter le choix ou son refus.
+function Test-BleProfile {
+    param([System.Collections.Generic.List[string]]$Lines, [string]$Command)
+
+    if ($Lines.Count -lt 5 -or $Lines[1] -notmatch '^BLEPROFILE BEGIN version=1 count=([0-9]+) active=([0-9]+) save_delay_ms=[0-9]+$') {
+        throw 'Réponse incorrecte : firmware ble-trace avec contrôle des emplacements requis.'
+    }
+    $Expected = [int]$Matches[1]
+    $Active = [int]$Matches[2]
+    if ($Expected -lt 1 -or $Expected -gt 10 -or $Active -ge $Expected -or $Lines.Count -ne $Expected + 4) {
+        throw 'Réponse des emplacements tronquée ou incohérente.'
+    }
+    for ($Index = 0; $Index -lt $Expected; $Index++) {
+        if ($Lines[$Index + 2] -notmatch '^BLEPROFILE SLOT index=([0-9]+) paired=[01] connected=[01]$' -or [int]$Matches[1] -ne $Index) {
+            throw 'Liste des emplacements incorrecte.'
+        }
+    }
+    if ($Lines[$Expected + 2] -notmatch '^BLEPROFILE RESULT command=([SF0-9]) status=(ok|busy|full|invalid|failed) selected=([0-9]+) changed=[01] error=-?[0-9]+$' -or
+        $Matches[1] -ne $Command -or [int]$Matches[3] -ne $Active -or $Lines[$Expected + 3] -ne 'BLEPROFILE END') {
+        throw 'Résultat du contrôle incorrect.'
+    }
+}
 
 # Exécute un outil Windows natif et rend explicite tout échec avant de poursuivre.
 function Invoke-TraceCommand {
@@ -137,22 +214,43 @@ try {
     $Serial.Open()
     $Stamp = [DateTime]::UtcNow.ToString('yyyy-MM-dd-HH-mm-ss')
     $Suffix = [Guid]::NewGuid().ToString('N').Substring(0, 8)
-    $Capture = Join-Path $TraceRoot "windows-$Stamp-$Suffix.txt"
+    $CapturePrefix = if ($Profile) { 'windows-ble-profile' } elseif ($Ble) { 'windows-ble' } else { 'windows' }
+    $Capture = Join-Path $TraceRoot "$CapturePrefix-$Stamp-$Suffix.txt"
     $Lines = New-Object 'System.Collections.Generic.List[string]'
     $Lines.Add("# host=windows collected_at_utc=$([DateTime]::UtcNow.ToString('o'))")
     Start-Sleep -Seconds 1
-    $Serial.Write('D')
+    $SerialCommand = 'D'
+    if ($Profile) {
+        $SerialCommand = switch ($Profile) { 'status' { 'S' } 'free' { 'F' } default { $Profile } }
+        Write-Host "Action Bluetooth explicite : $Profile. Aucun appairage effacé."
+    }
+    $Serial.Write($SerialCommand)
     $Deadline = [DateTime]::UtcNow.AddSeconds(15)
     $Finished = $false
     while ([DateTime]::UtcNow -lt $Deadline) {
         try { $Line = $Serial.ReadLine().TrimEnd("`r") }
         catch [TimeoutException] { continue }
         $Lines.Add($Line)
-        if ($Line -eq 'USBTRACE END') { $Finished = $true; break }
+        if (($Profile -and $Line -eq 'BLEPROFILE END') -or (-not $Profile -and -not $Ble -and $Line -eq 'USBTRACE END') -or ($Ble -and $Line -match '^BLETRACE END attrs=[0-9]+$')) { $Finished = $true; break }
     }
     $Utf8 = New-Object Text.UTF8Encoding $false
     [IO.File]::WriteAllLines($Capture, $Lines, $Utf8)
     if (-not $Finished -or $Lines.Count -lt 4) { throw 'Capture incomplète ou mauvais firmware/port.' }
+    if ($Profile) {
+        Test-BleProfile -Lines $Lines -Command $SerialCommand
+        Write-Host "Réponse conservée : $Capture"
+        $Lines | Select-Object -Skip 1 | ForEach-Object { Write-Host $_ }
+        if ($Lines[$Lines.Count - 2] -notmatch ' status=ok ') {
+            throw 'Sélection refusée : busy = hôte connecté, full = aucun emplacement libre.'
+        }
+        exit 0
+    }
+    if ($Ble) {
+        Test-BleCapture -Lines $Lines
+        Write-Host "Capture complète : $Capture"
+        Write-Host 'Le diagnostic Bluetooth ne sélectionne aucun OS.'
+        exit 0
+    }
     if ($Lines[1] -notmatch '^USBTRACE BEGIN version=1 side=left count=([0-9]+) dropped=0 rejected=0 uptime_ms=[0-9]+$') {
         throw 'Capture refusée : format incorrect ou pertes signalées.'
     }

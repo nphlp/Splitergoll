@@ -4,3 +4,11 @@ config SPLITERGOLL_USB_TRACE
     depends on USB_DEVICE_STACK && USB_CDC_ACM
     depends on ZMK_SPLIT_ROLE_CENTRAL
     default n
+
+config SPLITERGOLL_BLE_TRACE
+    bool "Record host BLE discovery on the diagnostic serial port"
+    depends on BT && USB_DEVICE_STACK && USB_CDC_ACM
+    depends on ZMK_SPLIT_ROLE_CENTRAL && !ZMK_USB
+    depends on !SPLITERGOLL_USB_TRACE
+    select BT_REMOTE_INFO
+    default n
