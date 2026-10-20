@@ -9,4 +9,7 @@ void splitergoll_ble_auto_unlock(void);
 
 // Refuse une mutation pendant un maintien, un rapport HID actif ou un comportement différé.
 bool splitergoll_ble_auto_busy(void);
+
+// Demande le prochain hôte connecté, sans mutation tant qu’un appui reste actif.
+int splitergoll_ble_auto_next_device(void);
 #endif

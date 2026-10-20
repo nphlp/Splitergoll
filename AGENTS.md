@@ -771,10 +771,19 @@ de cette keymap BLE restent à confirmer. La droite est identique à celle insta
 Aucun firmware normal ne doit être présenté comme testé sur matériel sur la base
 de ces contrôles logiciels.
 
-L’utilisateur reporte le choix du raccourci après ce premier essai. Ne pas affecter
-L1 + clic encodeur droit pour le moment. La sélection automatique d’appareil suit
-cet essai et le raccourci. Le choix manuel forcé d’OS sera discuté plus tard.
-Aucun des trois n’est livré par cette première intégration de keymap BLE automatique.
+L’utilisateur demande ensuite de préparer le raccourci pendant que le PC est occupé.
+L1 + clic encodeur droit dans bluetooth auto sélectionne uniquement l’hôte connecté
+suivant. Les emplacements déconnectés ou vides sont ignorés, contrairement au BT_NXT
+natif qui parcourt tous les profils. La demande attend les relâchements, un rapport
+HID vide et le garde des comportements différés. Un chemin physique de secours garde
+ce geste accessible avec OS inconnu ou hôte indisponible, sans laisser passer les
+autres frappes. Le clic simple continue d’indiquer l’OS. Aucun changement dans wire,
+multi ou les profils fixes. Le choix manuel forcé d’OS reste différé.
+La politique et le pilote sont dans keyboard, pas dans le diagnostic.
+Les annonces natives s’arrêtent quand l’hôte actif est connecté : reconnecter un
+second hôte et automatiser le choix seront le prochain chantier. Le raccourci ne
+réveille pas les appareils déconnectés. Ne pas basculer vers le PC pendant qu’il
+est occupé, ni présenter les tests logiciels comme un essai physique de ce geste.
 
 ## Ideas / backlog
 

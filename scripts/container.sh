@@ -114,9 +114,11 @@ check_firmware() {
 
     if [ "$PROFILE" = bluetooth ] && [ "$KEYMAP_PROFILE" = auto ] && [ "$side" = left ]; then
         grep -qx 'CONFIG_SPLITERGOLL_BLE_AUTO=y' "$configuration" || fail 'Sélecteur de keymap BLE absent'
-        for symbol in splitergoll_ble_acquisition_snapshot ble_auto_can_select __wrap_bt_l2cap_recv; do
+        for symbol in splitergoll_ble_acquisition_snapshot ble_auto_can_select __wrap_bt_l2cap_recv splitergoll_ble_auto_next_device; do
             grep -Eq "0x[0-9a-f]+[[:space:]]+$symbol$" "$directory/zephyr/zmk.map" || fail "Composant auto BLE absent : $symbol"
         done
+        grep -q 'device-modifier-position = < 0x28 >' "$directory/zephyr/zephyr.dts" || fail 'Position L1 du raccourci absente'
+        grep -q 'device-next-position = < 0x2b >' "$directory/zephyr/zephyr.dts" || fail 'Position encodeur du raccourci absente'
     elif grep -qx 'CONFIG_SPLITERGOLL_BLE_AUTO=y' "$configuration"; then
         fail 'Sélecteur BLE présent hors du profil auto bluetooth central'
     fi
@@ -182,6 +184,11 @@ case "${1-}" in
             # Un cache neuf évite l’ancien ZMK_CONFIG mémorisé par CMake, sans le supprimer.
             directory="$BUILD_CACHE_ROOT/splitergoll-$BUILD_VARIANT-$side"
             modules="$KEYBOARD_ROOT"
+            # Le raccourci ne change que la centrale bluetooth auto, pas les profils fixes ou wire.
+            dts_cppflags=''
+            if [ "$PROFILE" = bluetooth ] && [ "$KEYMAP_PROFILE" = auto ] && [ "$side" = left ]; then
+                dts_cppflags='-DSPLITERGOLL_BLE_SHORTCUTS'
+            fi
             set --
             if [ "$BUILD_MODE" = debug ]; then
                 set -- -S zmk-usb-logging
@@ -198,6 +205,7 @@ case "${1-}" in
                 -DZMK_EXTRA_MODULES="$modules" \
                 -DSNIPPET_ROOT="$OS_DIAGNOSTIC_ROOT" \
                 -DKEYMAP_FILE:STRING="$KEYMAP_FILE" \
+                -DDTS_EXTRA_CPPFLAGS:STRING="$dts_cppflags" \
                 -DEXTRA_CONF_FILE="$FIRMWARE_CONFIGURATION"
             check_firmware "$side" "$directory"
         done

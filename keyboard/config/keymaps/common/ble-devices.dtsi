@@ -1,0 +1,9 @@
+// Raccourci de destination réservé à bluetooth auto, sans changement manuel d’OS.
+/ {
+    behaviors {
+        ble_device_next: ble_device_next {
+            compatible = "splitergoll,behavior-device-next";
+            #binding-cells = <0>;
+        };
+    };
+};

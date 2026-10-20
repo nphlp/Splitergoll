@@ -22,6 +22,9 @@ verrouillage implicite de `&to` et `&tog` est désactivé pour garder les transi
 Par exemple : `make build wire macos` ou `make build bluetooth windows debug`.
 Le matériel et la keymap sont deux choix obligatoires. Les guides détaillent
 [la sélection USB](keymap-auto.md) et [la sélection Bluetooth](keymap-auto-bluetooth.md).
+
+Dans `bluetooth auto` uniquement, L1 + clic encodeur droit sélectionne l’ordinateur
+connecté suivant après relâchement. Voir [la sélection d’appareil](selection-appareil.md).
 Même `multi` doit être précisé, aucune keymap n’est choisie par défaut.
 
 Les profils fixes gardent leur OS après redémarrage et veille profonde. Le clic

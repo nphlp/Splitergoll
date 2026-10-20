@@ -113,8 +113,10 @@ Les premiers appairages restent à revalider, aucun effacement n’est autorisé
   `stored=macos`, `state=saved`, sans nouvel apprentissage ni erreur. Windows reste déconnecté.
 - [ ] Tester `bluetooth auto` sur Mac puis Windows : nom d’OS à l’encodeur,
   raccourcis, pavé, gaming, reconnexion et transitions sûres. Voir [le guide](keymap-auto-bluetooth.md).
-- [ ] Choisir le raccourci de changement d’appareil après le premier essai `bluetooth auto`,
-  conformément au choix utilisateur. L1 + clic encodeur droit reste une proposition, pas une affectation.
+- [x] Préparer L1 + clic encodeur droit dans `bluetooth auto` pour sélectionner uniquement
+  l’appareil connecté suivant, après relâchement des touches. Aucun appel à un appareil déconnecté.
+- [ ] Tester ce raccourci sur V1 : Mac seul sans effet, aller-retour avec deux hôtes
+  connectés, maintien d’une touche et retour depuis un OS indisponible.
 - [ ] Compléter les essais matériels de mémoire : remplacement d’appairage,
   correction manuelle et veille profonde sur V2. Les tests natifs ne remplacent
   pas ces essais. Ne pas déduire Windows d’une absence de lectures ni de l’index du slot.
@@ -169,11 +171,9 @@ Les premiers appairages restent à revalider, aucun effacement n’est autorisé
   est connecté, ainsi que le mode d’appairage explicite sans retour automatique à
   l’ancien hôte. Les deux connexions simultanées sont observées sur V1, l’arrivée
   contrôlée d’un second hôte pendant que le premier est déjà connecté reste à tester.
-- [ ] Ajouter des raccourcis clavier de sélection d’appareil Bluetooth, sans ordinateur
-  ni commande USB : appareil suivant/précédent ou sélection directe d’un emplacement.
-  Choisir des gestes libres et un retour sur l’emplacement sélectionné. Cette commande
-  reste distincte du changement d’OS et utile avec la détection automatique lorsque
-  plusieurs ordinateurs sont disponibles. Aucun BT_SEL/BT_NXT/BT_PRV dans les keymaps actuelles.
+- [x] Ajouter un raccourci de sélection d’appareil connecté, sans commande USB,
+  distinct du changement manuel d’OS : L1 + clic encodeur droit dans `bluetooth auto`.
+  Les appareils déconnectés sont ignorés, le clic simple indique l’OS après la bascule.
 - [ ] Dernier recours si le full auto échoue : mode manuel avec mémoire persistante,
   changement d’OS par raccourci (par exemple L1 + clic encodeur), restauré au démarrage
   et après veille profonde. Cette variante entièrement manuelle est distincte de

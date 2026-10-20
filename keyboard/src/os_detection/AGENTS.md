@@ -5,8 +5,9 @@
 Implémentation propre à Splitergoll, sans module tiers ni modification de ZMK/Zephyr.
 `auto` est expérimental : Windows avec gaming et macOS, sans profil Linux.
 Le wire utilise la signature USB. Le Bluetooth utilise l’OS mémorisé de l’appareil
-sélectionné, avec premier essai matériel à faire. Le choix automatique de l’appareil
-et le raccourci viendront après cet essai, à la demande explicite de l’utilisateur.
+sélectionné, avec premier essai matériel à faire. L’utilisateur demande ensuite de
+préparer le raccourci avant cet essai pendant que le PC est occupé. La sélection
+automatique d’appareil et le choix manuel forcé d’OS restent différés.
 Les signatures de nos deux hôtes et la sélection de couches sont confirmées avec
 CDC sur V1. L’utilisateur voit macOS sur le Mac et Windows sur le PC via l’encodeur
 droit, confirme gaming puis retour Windows et le fonctionnement habituel sur Mac.
@@ -51,7 +52,9 @@ Les numéros sont partagés avec C dans `config/keymaps/common/auto-layers.h`.
 inclus aussi par les profils fixes. Les noms de nœuds sont préfixés dans auto.
 Les tap-dances L1/L2 macOS ciblent leur propre groupe, les autres comportements sont
 communs. Chaque groupe conserve sa combinaison primaire + secondaire → tertiaire.
-La couche neutre ne fournit aucun raccourci de secours : le bootloader physique reste accessible.
+En USB la couche neutre ne fournit aucun raccourci de secours. En BLE, le filtre
+reconnaît L1 + clic encodeur droit pour revenir à un hôte connecté même sans OS
+disponible. Le bootloader physique reste accessible dans les deux cas.
 
 Contrairement à la base zéro d’un profil fixe, une base de groupe serait retirée
 par `&to NUMPAD` ou `&to GAMING`. Le wrapper local `zmk_keymap_layer_to` réactive donc
@@ -360,8 +363,8 @@ sont suivies dans l’AGENTS du diagnostic et docs/TODO.md.
 `SPLITERGOLL_OS_AUTO` choisit un seul adaptateur selon ZMK_USB : usb_auto.c ou
 ble_auto.c. Aucun observateur USB dans le firmware Bluetooth normal. Les deux
 adaptateurs utilisent les mêmes treize couches et les mêmes fichiers Windows/macOS.
-Les affectations de `auto.keymap` ne changent pas. Le raccourci de changement d’appareil
-sera choisi après le premier essai, le choix manuel forcé d’OS est reporté séparément.
+La première intégration conserve les affectations de `auto.keymap`. Le lot suivant
+ajoute le raccourci de changement d’appareil, le choix manuel forcé d’OS reste reporté.
 
 Le moteur auparavant diagnostique est regroupé dans keyboard : ble_events.h et
 ble_att.c pour les métadonnées ATT admises, ble_os_classifier.c pour les règles,
@@ -439,3 +442,60 @@ sans connexion de ce démarrage pour revérifier son identité. Lectures passive
 seulement, port fermé et lsof sans lecteur. Captures privées : profil 3MR9Gs,
 mémoire l9dFX6. Cela confirme la restauration du cache Mac après ce flash, pas
 encore la saisie, le nom d’OS à l’encodeur ou les transitions de bluetooth auto.
+
+## Raccourci de destination connectée
+
+`ble_device_state.c` porte la politique pure, `ble_device_behavior.c` le comportement
+ZMK sans paramètre. `common/ble-devices.dtsi` l’instancie seulement pour la centrale
+bluetooth auto, grâce à `DTS_EXTRA_CPPFLAGS=-DSPLITERGOLL_BLE_SHORTCUTS` injecté par
+container.sh. La valeur vide est explicitement passée aux autres builds pour éviter
+une fuite du cache. Les fragments Windows/macOS définissent HOST_NEXT à none hors
+de ce contexte et retirent leurs paramètres locaux après inclusion.
+Seules les positions 43 des deux couches primaires changent. La base et son affichage
+d’OS restent identiques. Depuis la base, maintenir L1 puis cliquer à droite demande
+l’hôte connecté suivant, dans l’ordre circulaire des profils ZMK.
+
+Le masque parcourt les profils hôtes, jamais les connexions de la moitié droite.
+Les cases vides et déconnectées sont ignorées. Une seule connexion déjà sélectionnée
+ne produit aucune action. Une demande répétée avance la cible en attente, deux
+demandes sur deux hôtes annulent donc la bascule. La demande conserve l’adresse
+native en RAM pour refuser une case remplacée avant application, sans l’exporter.
+Une sélection externe sur une autre case annule aussi la demande, même si elle
+revient à la case initiale avant l’exécution du travail.
+
+Le mutex récursif est commun au filtre, au comportement et au travail. L’application
+exige aucune position tenue ou admise en attente de relâchement, un rapport HID vide
+et un drainage terminé.
+Le dernier relâchement admis arme les 750 ms déjà utilisées par le moteur automatique.
+Les keycodes différés les réarment. L’état est ensuite mis au repos avant l’appel
+natif zmk_ble_prof_select, pour ne pas drainer une deuxième fois. La sélection NVS
+reste celle de ZMK avec son délai natif de 60 secondes. Aucune écriture d’OS ou de bond.
+
+Quand l’OS est indisponible, le filtre reconnaît le pouce L1 physique et le clic
+encodeur avant les comportements. Les positions 40/43 sont déclarées dans os_auto,
+vérifiées à la compilation et correspondent aux schémas de base. Les doublons et
+relâchements ne demandent aucune bascule, les autres frappes restent filtrées.
+Ce secours permet de revenir à un hôte connecté sans supposer Windows par défaut.
+
+Validation logicielle : neuf suites natives strictes avec ASan/UBSan, dont la nouvelle
+politique (masques exhaustifs jusqu’à huit hôtes, limite seize, attente/annulation,
+double demande, secours et drainage au débordement d’horloge). Un harnais temporaire
+compile le vrai ble_auto.c avec callbacks ZMK simulés pour vérifier le câblage des
+événements, l’attente réelle du travail, les releases, la cible déconnectée/remplacée,
+le retour depuis un OS inconnu et la priorité d’une commande externe. Il ne simule
+ni le moteur tap-dance complet ni la radio. Essai matériel du geste encore à faire.
+Les preuves de ce lot sont dans .local/validation/ble-shortcut/.
+
+Les trois paires bluetooth auto normal/debug/ble-trace et les deux paires témoins
+wire auto / bluetooth macos compilent et passent les gardes. Les dix UF2 passent
+SHA-256, famille, blocs et bornes de l’application. Dans les trois arbres auto BLE
+gauches, seuls les bindings 43 des couches primaires Windows/macOS changent, avec
+le nouveau comportement et les positions de secours. Toutes les autres touches,
+rotations, macros, conditions et comportements sont identiques au wire auto.
+Les trois droites et les quatre UF2 témoins restent identiques octet pour octet
+aux exports d’avant ce lot. Seule la gauche est à reflasher pour tester le geste.
+Aucun avertissement dans notre C. KSCAN, tap-dance const et le drapeau moteur Docker
+restent les diagnostics du socle. Les conteneurs éphémères ont disparu, les trois
+services préexistants sont conservés. Aucun flash, capture ou changement de destination
+matériel dans ce lot. Ni dépendance, partition, mémoire OS, Dockerfile, Compose ou
+variable d’environnement modifiés.

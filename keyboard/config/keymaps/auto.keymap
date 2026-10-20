@@ -3,6 +3,12 @@
 #include "common/function.h"
 #include "common/auto-layers.h"
 
+// En Bluetooth seulement, L1 + clic droit sélectionne l’hôte connecté suivant.
+#if defined(SPLITERGOLL_BLE_SHORTCUTS)
+#include "common/ble-devices.dtsi"
+#define HOST_NEXT &ble_device_next
+#endif
+
 // Les comportements partagés ciblent ici le groupe Windows.
 #define BASE AUTO_WINDOWS_BASE
 #define PRIMARY AUTO_WINDOWS_PRIMARY
@@ -87,5 +93,13 @@ COND_LAYER(AUTO_MACOS_PRIMARY, AUTO_MACOS_SECONDARY, AUTO_MACOS_TERTIARY)
 / {
     os_auto: os_auto {
         compatible = "splitergoll,os-auto";
+#if defined(SPLITERGOLL_BLE_SHORTCUTS)
+        // Pouce droit L1 et clic d’encodeur droit, utilisables aussi sans OS disponible.
+        device-modifier-position = <40>;
+        device-next-position = <43>;
+#endif
     };
 };
+#if defined(SPLITERGOLL_BLE_SHORTCUTS)
+#undef HOST_NEXT
+#endif

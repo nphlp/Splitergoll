@@ -1,6 +1,7 @@
 // Sélectionne les couches de l’appareil BLE actif à partir de son OS sauvegardé.
 #include <splitergoll/ble_auto.h>
 #include <splitergoll/ble_auto_state.h>
+#include <splitergoll/ble_device_state.h>
 #include <splitergoll/ble_acquisition.h>
 #include <splitergoll/ble_observer.h>
 #include "common/auto-layers.h"
@@ -21,7 +22,14 @@
 LOG_MODULE_REGISTER(splitergoll_ble_auto, CONFIG_ZMK_LOG_LEVEL);
 BUILD_ASSERT(ZMK_KEYMAP_LEN == USB_AUTO_POSITION_COUNT);
 BUILD_ASSERT(ZMK_KEYMAP_LAYERS_LEN == 13);
+BUILD_ASSERT(ZMK_BLE_PROFILE_COUNT <= 16);
+#define DEVICE_MODIFIER DT_PROP(DT_NODELABEL(os_auto), device_modifier_position)
+#define DEVICE_BUTTON DT_PROP(DT_NODELABEL(os_auto), device_next_position)
+BUILD_ASSERT(DEVICE_MODIFIER < USB_AUTO_POSITION_COUNT && DEVICE_BUTTON < USB_AUTO_POSITION_COUNT);
+BUILD_ASSERT(DEVICE_MODIFIER != DEVICE_BUTTON);
 static struct ble_auto_state state;
+static struct ble_device_request device_request;
+static bt_addr_le_t requested_peer;
 static atomic_t auto_ready;
 K_MUTEX_DEFINE(state_mutex);
 
@@ -53,10 +61,50 @@ static bool hid_busy(void) {
 // Protège aussi les commandes USB lorsque la couche courante est encore inconnue.
 bool splitergoll_ble_auto_busy(void) {
     splitergoll_ble_auto_lock();
-    bool busy = state.input.held != 0 || hid_busy() ||
+    bool busy = state.input.held != 0 || state.input.admitted != 0 || hid_busy() ||
                 usb_auto_drain_remaining(&state.input, k_uptime_get_32()) != 0;
     splitergoll_ble_auto_unlock();
     return busy;
+}
+
+// Les profils sont uniquement les hôtes, jamais le périphérique de la moitié droite.
+static uint16_t connected_hosts(void) {
+    uint16_t connected = 0;
+    for (unsigned i = 0; i < ZMK_BLE_PROFILE_COUNT; i++) {
+        if (!zmk_ble_profile_is_open(i) && zmk_ble_profile_is_connected(i)) {
+            connected |= UINT16_C(1) << i;
+        }
+    }
+    return connected;
+}
+
+// Mémorise une demande sans interrompre les touches ou les macros en cours.
+int splitergoll_ble_auto_next_device(void) {
+    splitergoll_ble_auto_lock();
+    bool pending = ble_device_next(&device_request, ZMK_BLE_PROFILE_COUNT,
+                                   zmk_ble_active_profile_index(), connected_hosts());
+    if (pending) bt_addr_le_copy(&requested_peer, zmk_ble_profile_address(device_request.target));
+    splitergoll_ble_auto_unlock();
+    if (pending) splitergoll_ble_auto_notify();
+    return 0;
+}
+
+// La destination est revérifiée après drainage, sans réveiller un appareil déconnecté.
+static void select_requested_device(uint32_t now_ms) {
+    if (!device_request.pending) return;
+    if (bt_addr_le_cmp(&requested_peer, zmk_ble_profile_address(device_request.target)) != 0) {
+        device_request.pending = false;
+        return;
+    }
+    bool reports_busy = hid_busy();
+    bool busy = state.input.held || state.input.admitted || reports_busy ||
+                usb_auto_drain_remaining(&state.input, now_ms);
+    int target = ble_device_take(&device_request, ZMK_BLE_PROFILE_COUNT,
+                                 zmk_ble_active_profile_index(), connected_hosts(), busy);
+    if (target < 0 || !ble_device_quiesce(&state.input, reports_busy, now_ms)) return;
+    int result = zmk_ble_prof_select(target);
+    if (result) LOG_WRN("BLE device selection failed: profile=%d error=%d", target, result);
+    else LOG_INF("BLE device selected: profile=%d", target);
 }
 
 // L’USB d’alimentation n’intervient jamais dans l’OS ou la disponibilité de l’hôte BLE.
@@ -94,14 +142,17 @@ int __wrap_zmk_event_manager_raise(zmk_event_t *event) {
     ble_auto_sync(&state, current_target(), now_ms);
     bool forward;
     if (position != NULL) {
+        bool fallback = ble_device_fallback(&state.input, DEVICE_MODIFIER, DEVICE_BUTTON,
+                                             position->position, position->state);
         forward = usb_auto_position(&state.input, position->position, position->state, now_ms);
+        if (fallback) splitergoll_ble_auto_next_device();
     } else if (sensor != NULL) {
         forward = usb_auto_sensor(&state.input, now_ms);
     } else {
         forward = usb_auto_keycode(&state.input, keycode->state, now_ms);
     }
     int result = forward ? __real_zmk_event_manager_raise(event) : 0;
-    bool waiting = state.input.selected == USB_OS_UNKNOWN;
+    bool waiting = state.input.selected == USB_OS_UNKNOWN || device_request.pending;
     splitergoll_ble_auto_unlock();
     if (waiting) splitergoll_ble_auto_notify();
     return result;
@@ -120,6 +171,7 @@ int __wrap_zmk_keymap_layer_to(zmk_keymap_layer_id_t layer, bool locking) {
 static void select_os(struct k_work *work) {
     splitergoll_ble_auto_lock();
     uint32_t now_ms = k_uptime_get_32();
+    select_requested_device(now_ms);
     struct ble_auto_target before = current_target();
     ble_auto_sync(&state, before, now_ms);
     if (ble_auto_can_select(&state, hid_busy(), now_ms)) {
@@ -134,7 +186,8 @@ static void select_os(struct k_work *work) {
         }
     }
     uint32_t remaining = usb_auto_drain_remaining(&state.input, now_ms);
-    if (state.input.selected == USB_OS_UNKNOWN && ble_auto_guess(state.target) != USB_OS_UNKNOWN &&
+    bool waiting = state.input.selected == USB_OS_UNKNOWN && ble_auto_guess(state.target) != USB_OS_UNKNOWN;
+    if ((waiting || device_request.pending) &&
         state.input.held == 0 && remaining != 0) {
         k_work_schedule(k_work_delayable_from_work(work), K_MSEC(remaining));
     }
@@ -149,7 +202,10 @@ void splitergoll_ble_auto_notify(void) {
 
 // Une sélection USB ou native change seulement la cible, le travail applique ensuite son OS.
 static int profile_changed(const zmk_event_t *event) {
-    ARG_UNUSED(event);
+    const struct zmk_ble_active_profile_changed *profile = as_zmk_ble_active_profile_changed(event);
+    splitergoll_ble_auto_lock();
+    if (device_request.pending && profile->index != device_request.origin) device_request.pending = false;
+    splitergoll_ble_auto_unlock();
     splitergoll_ble_auto_notify();
     return ZMK_EV_EVENT_BUBBLE;
 }

@@ -1,3 +1,9 @@
+// HOST_NEXT vaut ∅ hors bluetooth auto, sinon il sélectionne l’hôte connecté suivant.
+#ifndef HOST_NEXT
+#define HOST_NEXT no___
+#define HOST_NEXT_LOCAL
+#endif
+
 // Keymap macOS fixe : la couche zéro reste le même OS après redémarrage.
 
 // · : action héritée d’une couche inférieure. ∅ : aucune action.
@@ -38,7 +44,7 @@ LAYER(PRIMARY,
 //             ┃     ∅     ┃   Mot ←   ┃     ↓     ┃   Mot →   ┃     =>    ┃   ┃     `     ┃     #     ┃     &     ┃     |     ┃     @     ┃
 // ╭───────╮   ┗━━━━━━━━━━━┻━━━━━━━━━━━┻━━━━━━━━━━━┻━━━━━━━━━━━┻━━━━━━━━━━━┛   ┗━━━━━━━━━━━┻━━━━━━━━━━━┻━━━━━━━━━━━┻━━━━━━━━━━━┻━━━━━━━━━━━┛   ╭───────╮
 // │  LEFT │ ┏━━━━━━━━━━━┓ ┏━━━━━━━━━━━┳━━━━━━━━━━━┳━━━━━━━━━━━┳━━━━━━━━━━━┓   ┏━━━━━━━━━━━┳━━━━━━━━━━━┳━━━━━━━━━━━┳━━━━━━━━━━━┓ ┏━━━━━━━━━━━┓ │   UP  │
-// │ RIGHT │ ┃     ∅     ┃ ┃  COMMAND  ┃   OPTION  ┃     ·     ┃   SHIFT   ┃   ┃   SHIFT   ┃     ·     ┃     ·     ┃    CTRL   ┃ ┃     ∅     ┃ │  DOWN │
+// │ RIGHT │ ┃     ∅     ┃ ┃  COMMAND  ┃   OPTION  ┃     ·     ┃   SHIFT   ┃   ┃   SHIFT   ┃     ·     ┃     ·     ┃    CTRL   ┃ ┃ HOST_NEXT ┃ │  DOWN │
 // ╰───────╯ ┗━━━━━━━━━━━┛ ┗━━━━━━━━━━━┻━━━━━━━━━━━┻━━━━━━━━━━━┻━━━━━━━━━━━┛   ┗━━━━━━━━━━━┻━━━━━━━━━━━┻━━━━━━━━━━━┻━━━━━━━━━━━┛ ┗━━━━━━━━━━━┛ ╰───────╯
     no___       no___       &kp M_HOME  no___       &kp M_END   no___
     no___       no___       &kp LEFT    &kp UP      &kp RIGHT   &m_arw_s
@@ -47,7 +53,7 @@ LAYER(PRIMARY,
                                                                                 &quot       &lpar       &rpar       &kp M_LCRO  &kp M_RCRO  trs__
                                                                                 &squo       &kp M_LACC  &kp M_RACC  &kp M_LCHE  &kp M_RCHE  trs__
                                                                                 &m_grv      &kp M_HASH  &and        &kp M_PIPE  &kp M_AT
-                                                                                &kp LSHIFT  trs__       trs__       &kp M_CTL   no___
+                                                                                &kp LSHIFT  trs__       trs__       &kp M_CTL   HOST_NEXT
 , &inc_dec_kp LEFT RIGHT                                                        &inc_dec_kp UP DOWN)
 
 // Accents et nombres.
@@ -115,3 +121,8 @@ LAYER(NUMPAD,
                                                                                 &kp _DOT    &n_1        &n_2        &n_3        &perc
                                                                                 &kp SPACE   &to BASE    &kp ENTER   &kp M_CTL   &numpad
 , &inc_dec_kp LEFT RIGHT                                                        &inc_dec_kp UP DOWN)
+
+#ifdef HOST_NEXT_LOCAL
+#undef HOST_NEXT
+#undef HOST_NEXT_LOCAL
+#endif

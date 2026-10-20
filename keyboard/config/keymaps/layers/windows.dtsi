@@ -1,3 +1,9 @@
+// HOST_NEXT vaut ∅ hors bluetooth auto, sinon il sélectionne l’hôte connecté suivant.
+#ifndef HOST_NEXT
+#define HOST_NEXT no___
+#define HOST_NEXT_LOCAL
+#endif
+
 // Keymap Windows fixe : la couche zéro reste le même OS après redémarrage.
 
 // · : action héritée d’une couche inférieure. ∅ : aucune action.
@@ -37,7 +43,7 @@ LAYER(PRIMARY,
 //             ┃     ∅     ┃   CTRL ←  ┃     ↓     ┃   CTRL →  ┃     =>    ┃   ┃     `     ┃     #     ┃     &     ┃     |     ┃     @     ┃
 // ╭───────╮   ┗━━━━━━━━━━━┻━━━━━━━━━━━┻━━━━━━━━━━━┻━━━━━━━━━━━┻━━━━━━━━━━━┛   ┗━━━━━━━━━━━┻━━━━━━━━━━━┻━━━━━━━━━━━┻━━━━━━━━━━━┻━━━━━━━━━━━┛   ╭───────╮
 // │  LEFT │ ┏━━━━━━━━━━━┓ ┏━━━━━━━━━━━┳━━━━━━━━━━━┳━━━━━━━━━━━┳━━━━━━━━━━━┓   ┏━━━━━━━━━━━┳━━━━━━━━━━━┳━━━━━━━━━━━┳━━━━━━━━━━━┓ ┏━━━━━━━━━━━┓ │   UP  │
-// │ RIGHT │ ┃     ∅     ┃ ┃     ·     ┃     ·     ┃     ·     ┃   SHIFT   ┃   ┃   SHIFT   ┃     ·     ┃     ·     ┃     ·     ┃ ┃     ∅     ┃ │  DOWN │
+// │ RIGHT │ ┃     ∅     ┃ ┃     ·     ┃     ·     ┃     ·     ┃   SHIFT   ┃   ┃   SHIFT   ┃     ·     ┃     ·     ┃     ·     ┃ ┃ HOST_NEXT ┃ │  DOWN │
 // ╰───────╯ ┗━━━━━━━━━━━┛ ┗━━━━━━━━━━━┻━━━━━━━━━━━┻━━━━━━━━━━━┻━━━━━━━━━━━┛   ┗━━━━━━━━━━━┻━━━━━━━━━━━┻━━━━━━━━━━━┻━━━━━━━━━━━┛ ┗━━━━━━━━━━━┛ ╰───────╯
     no___       no___       &kp HOME    no___       &kp END     no___
     no___       no___       &kp LEFT    &kp UP      &kp RIGHT   &fr_arw_s
@@ -46,7 +52,7 @@ LAYER(PRIMARY,
                                                                                 &quot       &lpar       &rpar       &lcro       &rcro       trs__
                                                                                 &squo       &lacc       &racc       &lche       &rche       trs__
                                                                                 &fr_grv     &hash       &and        &pipe       &at
-                                                                                &kp LSHIFT  trs__       trs__       trs__       no___
+                                                                                &kp LSHIFT  trs__       trs__       trs__       HOST_NEXT
 , &inc_dec_kp LEFT RIGHT                                                        &inc_dec_kp UP DOWN)
 
 // Accents et nombres.
@@ -158,3 +164,8 @@ LAYER(GAMING_2,
                                                                                 &fr_grv     &kp LC(F9)  &kp LC(F10) &kp LC(F11) &kp LC(F12)
                                                                                 trs__       trs__       trs__       trs__       &to BASE
 , &inc_dec_kp C_VOL_DN C_VOL_UP                                                 &inc_dec_kp C_VOL_DN C_VOL_UP)
+
+#ifdef HOST_NEXT_LOCAL
+#undef HOST_NEXT
+#undef HOST_NEXT_LOCAL
+#endif

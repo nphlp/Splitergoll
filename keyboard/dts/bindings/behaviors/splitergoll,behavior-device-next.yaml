@@ -1,0 +1,3 @@
+description: Select the next connected host after keys and delayed behaviors finish
+compatible: "splitergoll,behavior-device-next"
+include: zero_param.yaml

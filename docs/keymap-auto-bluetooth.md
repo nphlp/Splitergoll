@@ -25,8 +25,10 @@ en attente, sans choisir Windows par défaut. La correction manuelle viendra plu
 La fin des touches maintenues et des comportements différés précède toute bascule.
 Aucun délai fixe de détection n’est ajouté au démarrage.
 
-Le choix de l’ordinateur reste explicite pour ce premier essai. Le raccourci et
-la [sélection automatique d’appareil](selection-appareil.md) seront les étapes suivantes.
+Depuis la base, **L1 + clic encodeur droit**, puis relâchement, sélectionne le prochain ordinateur
+actuellement connecté. Un appareil seulement appairé est ignoré. Ce raccourci est
+préparé, son essai matériel reste à faire. La [sélection automatique d’appareil](selection-appareil.md)
+sera l’étape suivante.
 Le profil garde la saisie Bluetooth pendant la charge USB et ses délais de veille normaux.
 
 ## Premier essai
@@ -57,3 +59,9 @@ Le diagnostic de session Windows peut rester inconnu en reconnexion : la décisi
 vient de `stored=windows`, pas d’une nouvelle reconnaissance. Les essais avec
 touches maintenues, redémarrage et firmware normal complètent cette validation.
 V2 sur batterie, Linux et d’autres ordinateurs restent à tester.
+
+Lorsque le PC est disponible, vérifier le raccourci avec les deux hôtes connectés :
+maintenir L1, cliquer à droite, tout relâcher, puis contrôler l’OS au clic simple.
+Refaire le geste pour revenir au Mac. Avec le Mac seul connecté, le geste ne doit
+rien changer. Si Windows reste déconnecté, sa reconnexion doit être établie avant
+ce test, le raccourci ne la déclenche pas.

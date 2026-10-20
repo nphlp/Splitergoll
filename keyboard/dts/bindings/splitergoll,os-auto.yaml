@@ -1,2 +1,9 @@
 description: Automatic host selection between the fixed Windows and macOS keymaps
 compatible: "splitergoll,os-auto"
+properties:
+  device-modifier-position:
+    type: int
+    description: Physical modifier position for host switching while the OS is unavailable
+  device-next-position:
+    type: int
+    description: Physical encoder button position for host switching while the OS is unavailable
