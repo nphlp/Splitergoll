@@ -14,6 +14,10 @@ et [la keymap](docs/keymap.md). Les tâches et idées sont centralisées dans
 Tous les guides restent à plat dans `docs/`, avec un fichier par sujet et sans
 date dans les noms ou les titres. Ils restent courts et utiles à l’usage.
 L’AGENTS.md garde les invariants, preuves techniques et décisions utiles au prochain chantier.
+Les fonctionnalités Bluetooth sont décrites par petits sujets : sélection de
+l’ordinateur, mémoire/correction de l’OS, diagnostic et méthodes de capture.
+Mettre ces guides à jour avec chaque implémentation, sans y recopier les preuves
+techniques. Distinguer clairement comportement prévu, implémenté et testé.
 
 ## Invariants
 
@@ -664,10 +668,24 @@ Le rejeu des cinq fichiers existants reconnaît les sessions Mac et la découver
 initiale Windows, mais laisse sa reconnexion limitée au MTU/batterie inconnue.
 Aucune sélection BLE automatique ni mémoire d’OS n’est implémentée.
 
+La direction BLE demandée est désormais : sélectionner l’unique ordinateur connu
+connecté, conserver le destinataire et permettre une bascule explicite si plusieurs
+sont connectés, puis charger l’OS reconnu et mémorisé pour cet appairage. Une
+reconnexion ne relance aucune détection et charge exclusivement l’OS enregistré.
+Un raccourci permettra de corriger durablement l’OS de l’appareil sélectionné.
+Après redémarrage/veille profonde, le premier hôte peut recevoir immédiatement la
+saisie, mais une fenêtre proposée de 5 secondes permet de restaurer le précédent
+destinataire s’il revient, même si l’utilisateur a déjà tapé sur le premier hôte.
+Taper ne ferme ni ne prolonge cette fenêtre. Sinon le nouveau devient la préférence mémorisée.
+La bascule manuelle annule cette fenêtre. Les annonces nécessaires au second hôte,
+l’invalidation d’appairage et la politique de reprise restent à implémenter/tester.
+Les guides courts sont [selection-appareil.md](docs/selection-appareil.md) et
+[memoire-os.md](docs/memoire-os.md), avec les cas limites dans la spec du diagnostic.
+
 L’utilisateur accepte une détection initiale suivie d’une mémoire automatique si la
-première reconnaissance est fiable. Le full auto reste prioritaire. Le mode manuel
-avec choix par raccourci et mémoire persistante est enregistré comme dernier recours,
-pas ajouté maintenant. Les noms des éventuels profils restent à définir. La recherche
+première reconnaissance est fiable. Le full auto reste prioritaire. La correction
+manuelle d’OS en fait partie, le profil entièrement manuel reste un dernier recours.
+Aucun de ces mécanismes n’est ajouté maintenant. Les noms des profils restent à définir. La recherche
 de code public est synthétisée dans le guide Bluetooth, avec commits et limites dans
 la spec du diagnostic. Les règles BLE de Cormoran ne conviennent pas directement :
 elles classeraient notre première capture Mac comme Android. Les métadonnées publiques
@@ -685,6 +703,9 @@ compilé puis flashé par l’utilisateur. Ses sorties confirment Mac en case 0,
 libre 1 sur Windows, puis retour à 0 avec les deux cases toujours appairées.
 La sélection et le lecteur PowerShell sont donc validés sur les deux ordinateurs.
 Pour reconnecter Windows, réutiliser 1 explicitement, jamais `free` après l’appairage.
+Les prochains essais peuvent garder les USB sur le Mac pendant la liaison BLE
+Windows. Le [guide de capture Mac](docs/capture-bluetooth-mac.md) évite PowerShell
+et les transferts de fichiers. Le champ host de la capture désigne seulement le collecteur.
 
 ## Ideas / backlog
 

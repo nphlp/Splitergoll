@@ -1,5 +1,9 @@
 # Capturer le Bluetooth sur Windows
 
+Ce guide est l’alternative avec USB branchés au PC Windows. Pour garder les USB
+sur le Mac et y lire directement les échanges avec Windows, utiliser
+[la capture depuis le Mac](capture-bluetooth-mac.md), sans transfert de script.
+
 Le Mac et Windows doivent utiliser deux emplacements d’appairage distincts.
 Ce sont des connexions mémorisées, pas des keymaps. La keymap du diagnostic reste
 macOS sur les deux ordinateurs afin de comparer le même firmware.
@@ -19,7 +23,8 @@ Après redémarrage, repérer son port série et lire les emplacements :
 make ble-profile /dev/cu.usbmodem1101 status
 ```
 
-Adapter le port si nécessaire. Noter l’index `active` : c’est la case du Mac connecté.
+Adapter le port si nécessaire. Noter la case `connected=1` du Mac, pas seulement
+`active` : un appareil peut être connecté sans être sélectionné pour la saisie.
 `paired=1` signifie appairé. Aucune adresse ni clé n’est affichée.
 Copier le fichier [capture.ps1](../diagnostics/os-signature/capture.ps1) mis à jour
 dans un dossier de travail du PC, par exemple Téléchargements. Il fonctionne seul.

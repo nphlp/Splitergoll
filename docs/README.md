@@ -83,6 +83,9 @@ et `make bat avg` calcule une moyenne par moitié sur 30 secondes.
 - [Capture USB Windows](capture-usb-windows.md) : observer le firmware normal sans port série.
 - [Détection d’OS](detection-os.md) : préparer et comparer les captures de connexion USB, puis BLE.
 - [Diagnostic Bluetooth](detection-os-bluetooth.md) : comparer Mac et Windows sans sélection automatique.
+- [Sélection de l’ordinateur](selection-appareil.md) : comportement Bluetooth prévu, bascule et reprise après veille.
+- [Mémoire de l’OS](memoire-os.md) : détection initiale, reconnexion et correction manuelle prévues.
+- [Capture Bluetooth depuis le Mac](capture-bluetooth-mac.md) : lire les échanges avec Mac ou Windows en gardant les USB sur le Mac.
 - [Capture Bluetooth Windows](capture-bluetooth-windows.md) : conserver l’appairage Mac et lire les échanges du PC.
 - [Firmwares stables](firmwares-stables.md) : récupération du snapshot 0.3 depuis l’historique Git.
 - [Veille et réveil](veille.md) : états d’inactivité et reprise à la frappe.

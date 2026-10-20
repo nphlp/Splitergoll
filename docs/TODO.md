@@ -76,12 +76,19 @@ La priorité USB est différée après l’auto-détection d’OS, pour viser un
 - [x] Comparer les premières connexions et reconnexions Mac/Windows sur V1 alimenté
   par USB. Les lectures distinctives Windows disparaissent après appairage,
   voir [le résultat](detection-os-bluetooth.md).
-- [ ] Choisir la stratégie du futur firmware BLE : approfondir les indices passifs,
-  ou reconnaître l’OS initialement et le mémoriser automatiquement pour cet appairage
-  authentifié. Cette piste convient si la première détection est suffisamment fiable.
-  Ne pas assimiler une absence de lectures à Windows.
-  Une mémoire d’OS appris doit gérer le remplacement d’appairage et un changement
-  d’OS sur le même ordinateur, sans affectation manuelle OS/emplacement.
+- [x] Définir la direction du firmware BLE : un seul ordinateur connecté est
+  automatiquement sélectionné, plusieurs nécessitent une bascule explicite.
+  L’OS reconnu initialement est mémorisé pour l’appairage, sous réserve de valider
+  la fiabilité de sa reconnaissance. Voir [la sélection d’appareil](selection-appareil.md)
+  et [la mémoire d’OS](memoire-os.md).
+- [ ] Ajouter une mémoire persistante d’OS par appareil appairé, restaurée après
+  redémarrage. Détection automatique uniquement lors de l’acquisition initiale de
+  l’OS, aucune nouvelle détection aux reconnexions : charger exclusivement l’OS
+  enregistré. Gérer effacement/remplacement du bond et appairages existants sans OS.
+  Ne pas assimiler une absence de lectures à Windows ni figer Mac=0/Windows=1.
+- [ ] Ajouter une correction manuelle persistante de l’OS de l’appareil sélectionné,
+  prioritaire et conservée aux reconnexions. Le raccourci doit rester utilisable
+  avec un OS initial inconnu. Aucun choix de geste ni changement de keymap maintenant.
 - [x] Examiner les sources publiques BLE : règles et cache de Cormoran,
   métadonnées SMP/LL de Blue2thprinting, annonces Apple Continuity et sélection
   manuelle d’oskey. Aucun module ajouté. Voir [les pistes](detection-os-bluetooth.md#pistes-retenues).
@@ -91,11 +98,24 @@ La priorité USB est différée après l’auto-détection d’OS, pour viser un
   ou se contredisent. Ne pas prendre les numéros d’emplacement pour des signatures d’OS.
 - [ ] Intégrer ensuite le classifieur au seul diagnostic `ble-trace`, sans bascule
   de keymap, puis contrôler son résultat sur le clavier. Le prototype actuel est hors ligne.
+- [ ] Refaire des captures en gardant les USB sur le Mac, hôte BLE Mac puis Windows.
+  Distinguer répétitions de reconnexion et nouveaux appairages. Préparer les essais
+  de nouvel appairage avec effacement ciblé autorisé, sans reset de tous les bonds.
+  Le protocole est dans [capture-bluetooth-mac.md](capture-bluetooth-mac.md).
 - [ ] Compléter les indices d’appairage si nécessaire : métadonnées SMP publiques
   strictement sélectionnées, sans clés, avant de conclure sur la détection initiale.
-- [ ] Distinguer reconnexion et destination de saisie dans le futur full auto :
-  un hôte connu peut être connecté sur un emplacement non actif. Définir la sélection
-  de destination et le cas de plusieurs hôtes connectés, indépendamment de l’OS.
+- [ ] Implémenter la sélection de destination BLE : aucun hôte = attente, un hôte
+  connu connecté = sélection automatique, plusieurs = maintien du choix courant et
+  bascule explicite. Séparer les connexions hôtes de celle de la moitié droite.
+- [ ] Après redémarrage/veille profonde, sélectionner le premier hôte disponible
+  immédiatement et laisser 5 secondes au précédent pour revenir. S’il revient dans
+  la fenêtre, le restaurer, sinon mémoriser le nouvel hôte. Une bascule manuelle
+  annule la fenêtre. Taper sur le premier hôte ne l’annule ni ne la prolonge, et
+  n’empêche pas le retour au précédent. Tester ces frappes, les limites et les
+  déconnexions, puis confirmer la durée sur matériel.
+- [ ] Gérer les annonces pour accueillir un second ordinateur pendant que le premier
+  est connecté, ainsi que le mode d’appairage explicite sans retour automatique à
+  l’ancien hôte. Valider réellement deux connexions hôtes simultanées.
 - [ ] Ajouter des raccourcis clavier de sélection d’appareil Bluetooth, sans ordinateur
   ni commande USB : appareil suivant/précédent ou sélection directe d’un emplacement.
   Choisir des gestes libres et un retour sur l’emplacement sélectionné. Cette commande
@@ -103,8 +123,8 @@ La priorité USB est différée après l’auto-détection d’OS, pour viser un
   plusieurs ordinateurs sont disponibles. Aucun BT_SEL/BT_NXT/BT_PRV dans les keymaps actuelles.
 - [ ] Dernier recours si le full auto échoue : mode manuel avec mémoire persistante,
   changement d’OS par raccourci (par exemple L1 + clic encodeur), restauré au démarrage
-  et après veille profonde. Décider si la mémoire suit chaque hôte. Ce mode ne serait
-  pas automatique. Envisager un profil de build `manual` distinct de `auto`, `multi`
+  et après veille profonde. Cette variante entièrement manuelle est distincte de
+  la correction manuelle intégrée au mode automatique. Envisager un profil de build `manual` distinct de `auto`, `multi`
   et des profils fixes, sans figer maintenant les noms ni modifier les profils existants.
 
 - [x] Ajouter dans `keymap.md` les sept schémas du README avec les légendes de `dongle`.

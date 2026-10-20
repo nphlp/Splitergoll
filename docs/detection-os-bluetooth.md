@@ -74,14 +74,23 @@ sans perte ni rejet. Les lectures distinctives du premier appairage ont disparu.
 | Mac | 42 | 20 |
 | Windows | 67 | 2 |
 
-Les échanges actuels ne suffisent pas à une identification robuste à chaque
-reconnexion. L’absence de découverte ne prouve pas Windows. Deux pistes restent
-à décider : approfondir les observations passives, ou reconnaître l’OS quand les
-indices suffisent puis le mémoriser automatiquement pour l’appairage authentifié.
-Cette mémoire ne serait pas une affectation manuelle entre OS et emplacement.
-Il s’agirait d’heuristiques avec cache, pas de machine learning. La persistance
-ne rend pas une première détection plus exacte : elle peut aussi conserver une
-erreur. Cette piste reste expérimentale et n’est pas validée comme architecture.
+Les échanges actuels ne suffisent pas à identifier l’OS à chaque reconnexion.
+Le fonctionnement prévu est décrit séparément : [sélection de l’ordinateur](selection-appareil.md)
+et [mémoire et correction de l’OS](memoire-os.md). Le présent guide reste consacré
+aux observations et à la validation des signatures.
+
+## Refaire les essais
+
+Les captures actuelles donnent les bonnes hypothèses sur nos deux ordinateurs.
+Leur rejeu teste le code sur ces mêmes données, pas la répétabilité de l’appairage
+ni la reconnaissance d’autres machines. Le premier essai Windows était bien un
+nouvel appairage, l’absence d’ancien appairage au premier essai Mac n’est pas prouvée.
+
+On peut garder les deux USB sur le Mac pendant que le clavier se connecte en
+Bluetooth à Windows : [capture de Windows depuis le Mac](capture-bluetooth-mac.md).
+Répéter des connexions existantes vérifie la reconnexion. Pour tester de nouveaux
+appairages, il faudra préparer et autoriser l’effacement ciblé du seul lien testé
+sur le clavier et l’ordinateur. Aucun reset global des réglages n’est nécessaire.
 
 ## Ce que l’on compare
 
@@ -127,9 +136,6 @@ sans collecter de clés ni modifier la sécurité. Leur combinaison reste à val
 Un OS reconnu initialement pourrait être mémorisé pour les reconnexions pauvres
 en échanges. Un résultat insuffisant doit rester inconnu, sans supposer macOS.
 
-En dernier recours seulement, un mode manuel pourrait mémoriser l’OS choisi par
-raccourci et le restaurer après redémarrage ou veille. Le module
-[oskey](https://github.com/mentaldesk/oskey) illustre la sélection manuelle,
-mais son état actuel ne persiste pas après extinction. Le raccourci, la mémoire
-par hôte et les éventuels profils de build restent à définir dans le
-[TODO](TODO.md). Aucun changement de firmware n’est effectué pour cette recherche.
+Le module [oskey](https://github.com/mentaldesk/oskey) illustre une sélection manuelle,
+mais son état actuel ne persiste pas après extinction. Notre correction mémorisée
+reste à développer, voir [la mémoire d’OS](memoire-os.md).

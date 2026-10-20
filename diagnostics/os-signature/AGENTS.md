@@ -468,6 +468,105 @@ clavier fonctionne à nouveau. Aucun nouveau flash ni effacement d’appairage.
 La politique de destination automatique si un autre hôte connu se reconnecte reste
 un sujet distinct de la reconnaissance d’OS. Ne pas la changer implicitement.
 
+### Architecture BLE souhaitée après le prototype
+
+L’utilisateur souhaite maintenant associer l’OS reconnu initialement à l’appairage,
+et sélectionner automatiquement l’unique ordinateur connecté. Si plusieurs hôtes
+sont connectés, conserver le destinataire actuel et proposer une bascule explicite.
+Les raccourcis restent un chantier différé. Ce cadrage ne vaut pas implémentation
+dans les firmwares ni validation de la qualité de reconnaissance sur d’autres hôtes.
+
+Le ZMK figé fournit `zmk_ble_profile_is_connected`, `zmk_ble_profile_index`, les
+identités de profils et `zmk_ble_prof_select`. Le cache doit suivre l’identité
+d’appairage et son remplacement, pas seulement l’index. Une réassociation du même
+appareil peut conserver son adresse : la comparaison d’adresses seule ne suffit
+pas à invalider l’ancien OS. Ne pas exporter les adresses ou clés dans les logs.
+Prévoir le schéma/version des règles, les preuves et l’origine actuelle/cache de
+la décision. L’utilisateur précise désormais que la production ne relance aucune
+détection aux reconnexions : elle charge exclusivement l’OS enregistré. Les traces
+de recherche peuvent toujours observer les échanges sans modifier cet OS.
+Une correction manuelle de l’OS du destinataire devient un mécanisme normal du
+mode automatique, distinct du profil entièrement manuel de dernier recours.
+Elle est persistante et prioritaire, y compris après flash conservant NVS. Un OS
+connu n’est jamais remplacé automatiquement lors d’une reconnexion. Un OS initial
+inconnu doit pouvoir être corrigé sans effacer le bond. Les raccourcis restent à
+choisir et doivent être accessibles même si aucune keymap d’OS n’est encore active.
+Détection initiale inconnue, dual boot et changement d’OS relèvent alors de la
+correction explicite, ou d’une suppression volontaire du lien suivie d’un appairage.
+Les appairages actuels n’ont aucun cache OS, il faudra acquérir des indices avant
+de les renseigner. Une reconnexion Windows sans découverte n’en fournit pas.
+
+Dans `ble.c`, `update_advertising()` choisit NONE lorsque le profil actif est
+connecté. Le sélecteur seul ne garantit donc pas que deux ordinateurs voisins
+établiront simultanément une liaison. La configuration du dernier build trace
+gauche autorise BT_MAX_CONN=6 et BT_MAX_PAIRED=6, dont un périphérique split,
+mais la capacité configurée n’est pas un essai de deux hôtes simultanés.
+Prévoir la stratégie d’annonces et l’exception de sélection/appairage volontaire :
+sinon un retour automatique vers l’ancien hôte connecté peut empêcher l’arrivée
+du second. Le diagnostic actuel rejette un deuxième hôte dans ses traces, il
+devra aussi isoler les observations par connexion avant un test simultané.
+
+La sélection automatique attend un hôte connu et une liaison sécurisée, exclut la
+moitié droite et respecte les relâchements avant changement de destination/couches.
+Une deuxième connexion ne vole pas la saisie à l’hôte actif. Le raccourci de destination
+devra rester utilisable même si l’OS n’a pas encore été identifié.
+Les tâches sont centralisées dans docs/TODO.md. Aucun code, réglage de connexion,
+préférence de sortie ou appairage n’est modifié pour ce cadrage.
+
+### Fenêtre de reprise après réveil
+
+L’utilisateur propose 5 secondes pour retrouver le destinataire précédant le sommeil.
+Conserver deux notions distinctes : destination active en RAM et dernier choix durable.
+Au redémarrage/réveil avec reconnexion, si le précédent A n’est pas disponible et que
+B est le premier hôte connu utilisable, sélectionner B immédiatement, mais garder A
+comme préférence pendant la fenêtre. L’instant zéro est la première connexion hôte
+utilisable et sécurisée, pas la mise sous tension, l’ouverture du lecteur USB ou
+une connexion de la moitié droite. Les connexions suivantes ne repoussent pas l’échéance.
+
+Si A devient utilisable avant l’échéance, restaurer A. Sinon, B devient le dernier
+choix durable à l’échéance, à condition d’être toujours disponible. Un A arrivant
+après l’échéance ne reprend pas la saisie. Une sélection manuelle annule la fenêtre
+et gagne immédiatement comme intention de destination, avec application soumise
+aux gardes de relâchement. Ne pas assimiler tout réveil d’inactivité à un reboot :
+si les connexions sont conservées, ne pas recommencer la politique de reconnexion.
+
+L’utilisateur précise que taper sur B ne constitue pas un choix de destination :
+B fonctionne immédiatement, mais A reprend la sélection s’il revient dans les
+5 secondes, même si B a déjà reçu des frappes. La saisie ne ferme ni ne prolonge
+la fenêtre, et ne mémorise pas B comme préférence à elle seule. Les frappes déjà
+envoyées restent chez B, sans rejeu chez A. Seul un choix manuel d’appareil annule
+cette priorité temporaire. La sûreté des relâchements reste requise.
+Si la transition est différée pour relâcher
+des touches, la candidature de A dépend de son instant de disponibilité, pas de la
+date d’exécution tardive du travail. Tester avant/à/après l’échéance, bascule manuelle,
+déconnexion de B avant échéance, A absent, redémarrage avec un seul hôte et absence
+de boucle entre destinations. L’égalité exacte avec l’échéance reste à préciser
+dans la politique testée. Pas de sauvegarde NVS à chaque événement ou frappe.
+La durée de 5 secondes est une proposition utilisateur à confirmer sur le matériel.
+La veille profonde réelle nécessite V2 sur batterie, l’alimentation USB de V1 bloque
+actuellement ce parcours. Les redémarrages et les traces ne remplacent pas cet essai.
+
+### Collecteur USB Mac et hôte Bluetooth Windows
+
+Le code observe `bt_conn` de rôle périphérique hôte, indépendamment de la console
+UART USB. L’USB peut rester sur le Mac pendant la connexion/appairage BLE Windows.
+Le Bluetooth du Mac peut être coupé sans perdre la lecture série USB. Cela évite
+les transferts du script et des captures Windows. Le nouveau protocole humain est
+`../../docs/capture-bluetooth-mac.md`, l’alternative PowerShell reste disponible.
+Le champ host et le préfixe macos décrivent l’OS du collecteur, jamais l’hôte BLE.
+Consigner l’hôte testé séparément, sans modifier les captures brutes ni utiliser
+cette annotation comme entrée du classifieur. Un hôte BLE unique est toujours
+requis par le diagnostic actuel. Aucune nouvelle capture n’est ouverte pour ce cadrage.
+
+Rejouer les cinq fichiers privés et leurs préfixes valide le C sur ces données,
+pas de nouveaux échantillons indépendants ni une fiabilité générale de premier
+appairage. Le premier Windows a été observé dans une case libre. La première trace
+Mac ne prouve pas un appairage neuf. Pour reproduire des premiers appairages, prévoir
+un effacement ciblé des deux côtés du seul lien testé avec accord explicite, jamais
+settings_reset ou BT_CLR_ALL. S/F/index ne permettent actuellement pas de supprimer
+un seul bond depuis le lecteur. Un reset physique ou un nouveau flash ne remplace
+pas cet effacement. Préparer le mécanisme sûr avant de donner des commandes de reset.
+
 ## Diagnostic USB existant
 
 Ce dossier contient toute l’instrumentation d’étude, séparée du clavier dans
