@@ -154,8 +154,8 @@ check_firmware() {
                 fail 'Sortie clavier USB activée dans le profil bluetooth'
             fi
             grep -qx 'CONFIG_ZMK_SLEEP=y' "$configuration" || fail 'Veille Bluetooth désactivée'
-            grep -qx 'CONFIG_ZMK_IDLE_TIMEOUT=30000' "$configuration" || fail 'Délai d’inactivité normal incorrect'
-            grep -qx 'CONFIG_ZMK_IDLE_SLEEP_TIMEOUT=900000' "$configuration" || fail 'Délai de veille normal incorrect'
+            grep -qx 'CONFIG_ZMK_IDLE_TIMEOUT=120000' "$configuration" || fail 'Délai d’inactivité normal incorrect'
+            grep -qx 'CONFIG_ZMK_IDLE_SLEEP_TIMEOUT=600000' "$configuration" || fail 'Délai de veille normal incorrect'
             grep -qx 'CONFIG_ZMK_BATTERY_REPORT_INTERVAL=60' "$configuration" || fail 'Intervalle batterie normal incorrect'
             grep -qx 'CONFIG_ZMK_BATTERY_REPORTING=y' "$configuration" || fail 'Reporting batterie désactivé'
             grep -qx 'CONFIG_PM_DEVICE=y' "$configuration" || fail 'Gestion d’alimentation désactivée'

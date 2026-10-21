@@ -31,6 +31,8 @@ La migration n’active pas d’indicateur LED supplémentaire.
 Sur V2, distinguer l’interrupteur de batterie et l’alimentation USB.
 Une moitié branchée en USB est alimentée même avec l’interrupteur sur arrêt.
 Pour la mettre réellement hors tension, débrancher l’USB et couper la batterie.
+Le PCB place l’interrupteur sur le « + » de la batterie : garder ON pour la recharge.
+Voir [la recharge et les mesures](batteries.md#recharger-v2).
 Un câble USB ne signifie pas que les touches passent par USB : cela dépend du profil.
 
 ## Centrale et périphériques
@@ -91,7 +93,7 @@ et communique avec l’ordinateur. Son autonomie sera à mesurer avec ce nouveau
 La sortie clavier USB est désactivée : brancher un câble pour charger conserve
 la saisie en Bluetooth, même si le câble va à l’ordinateur.
 
-La veille profonde est activée après 15 minutes sur batterie, avec la matrice comme
+La veille profonde est activée après dix minutes sur batterie, avec la matrice comme
 source de réveil. Les mesures de batterie sont activées.
 
 **État :** deux UF2 normaux flashés, saisie des deux moitiés sur le Mac confirmée

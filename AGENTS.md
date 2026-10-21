@@ -19,6 +19,10 @@ l’ordinateur, mémoire/correction de l’OS, diagnostic et méthodes de captur
 Mettre ces guides à jour avec chaque implémentation, sans y recopier les preuves
 techniques. Distinguer clairement comportement prévu, implémenté et testé.
 
+Autorisation explicite de l’utilisateur : lancer les builds locaux Docker et leurs
+contrôles sans redemander, avec les conteneurs éphémères du dépôt et leurs caches
+isolés. Cette autorisation ne déclenche aucun flash ni effacement d’appairage.
+
 ## Invariants
 
 - `PC Windows` : fixe assemblé par l’utilisateur, à domicile, pour le jeu et les vidéos/séries.
@@ -104,18 +108,147 @@ le profil retenu pour le flash guidé est bluetooth macos normal, sans contrôle
 expérimental de reconnexion ni mémoire d’OS à initialiser. La paire existante
 bluetooth-macos-2026-10-20-18-11-31 passe SHA-256 et les gardes UF2. Elle conserve
 les deux mesures de batterie, inactivité 30 secondes et veille profonde 15 minutes.
-L’utilisateur indique avoir installé ce firmware sur V2. La veille, le réveil et
-les deux remontées de batterie après migration restent à vérifier séparément.
+L’utilisateur indique avoir installé ce firmware sur V2. Les deux remontées
+de batterie sont ensuite revalidées avec le diagnostic court sur batterie seule.
+Les essais de reprise après inactivité et de réveil par la gauche après migration
+sont ensuite rapportés sur batterie, avec les limites précisées ci-dessous.
 Le profil fixe ne détecte ni ne mémorise l’OS. Ne pas passer V2 directement au
 nouveau auto en supposant qu’il a reçu la mémoire créée sur V1 : celle-ci est propre
 aux bonds du contrôleur. Un essai auto sur V2 demande d’abord de préparer son OS
 mémorisé avec le diagnostic fixe lors de l’appairage, puis de vérifier sa sauvegarde.
 Le Mac seul permettrait une validation partielle des fenêtres, jamais la reconnexion
 simultanée Mac/Windows. Les essais V1 restent explicitement en attente.
+Le guide docs/planification.md distingue validations indépendantes et transitions
+à tester avec les deux hôtes. Un seul clavier, V1 ou V2, suffit pour ces transitions.
+V2 est requis pour les essais sur batterie et de veille profonde sans USB.
+Priorité au bureau : batteries et veille de V2 après migration. Garder les essais
+Mac/Windows de connexion groupés sur le même firmware, sans assimiler un essai Mac
+seul à une validation de l’ensemble. Les tâches détaillées restent dans docs/TODO.md.
 Le raccourci tertiaire de la keymap macOS est BT_CLR_ALL, pas BT_CLR : L1 + L2
 puis clic encodeur droit efface tous les slots hôtes et sélectionne zéro, sans
 effacer le bond de la moitié droite. Le bouton reset seul conserve les bonds.
 Le guide docs/appairage-bluetooth.md distingue cet effacement du settings_reset complet.
+
+Recharge V2 : l’utilisateur rapporte un pourcentage inchangé après une heure
+branchée en USB, interrupteurs OFF. Lecture du schéma et du PCB KiCad : SW1/SW2
+relient respectivement Net-(BAT1-+)/Net-(BAT2-+) à BAT+ 1/BAT+ 2, eux-mêmes reliés
+à la broche 24 B+ de MCU1/MCU2. Leur troisième contact est non connecté.
+OFF ouvre donc le chemin batterie/chargeur dans le montage prévu. USB continue
+d’alimenter le contrôleur. Garder ON pour la recharge, ne pas interpréter un niveau
+OFF comme celui de la cellule déconnectée. Le montage réel et le courant de charge
+ne sont pas mesurés, la progression des pourcentages est décrite ci-dessous.
+L’utilisateur passe ensuite les deux moitiés en USB + ON et fournit le point
+de départ gauche 53 %, droite 57 %, reçu vers 11 h 23, heure de Paris, le
+21 octobre 2026. Le moment exact de la mesure et son actualisation après passage
+sur ON ne sont pas contrôlés. L’utilisateur relève ensuite sur batterie seule
+gauche 63 %, droite 67 %, puis rebranche les deux USB. Les deux progressent donc
+de dix points annoncés, sans mesure du courant, de capacité ou de durée de charge contrôlée.
+Un relevé ultérieur rapporté par l’utilisateur donne gauche 76 %, droite 79 %.
+La progression des deux niveaux se poursuit, sans nouvelle lecture faite par l’agent.
+Observations utilisateur sur la LED du contrôleur : sans USB éteinte en OFF comme
+en ON, USB + OFF clignotante, USB + ON fixe, USB + bootloader + OFF avec intensité
+alternante. L’utilisateur précise ensuite, de mémoire, que la bleue est liée
+à la batterie et la rouge clignote une fois au démarrage/reset, pulse au bootloader
+et clignote rapidement pendant le flash. Retenir cette attribution comme un
+signalement utilisateur, pas comme une identification matérielle vérifiée.
+La bleue est probablement un témoin de charge, pas une mesure de tension.
+La nice!nano officielle possède une LED de charge et une LED programmable.
+Les états des répliques ne sont pas prouvés par cette documentation officielle.
+Ne pas prendre une LED éteinte en ON sur batterie pour un arrêt du firmware,
+ni le clignotement USB + OFF pour une preuve de charge de la cellule déconnectée.
+
+La lecture détaillée du PCB confirme que BAT+ 1/2 ne va qu’à SW1/SW2 et à la
+broche B+ des contrôleurs, sans entrée analogique dédiée ni pont diviseur sur le
+clavier. Le PCB ne décrit pas le circuit interne des répliques. Le profil officiel
+nice!nano v2 utilise battery-nrf-vddh, contrairement au pont diviseur de la v1.
+Ne pas appliquer la documentation ADC P0.04 de la v1 à V2 sans vérifier le matériel.
+Un multimètre peut mesurer la tension de cellule pendant la charge USB + ON,
+mais ce n’est pas une mesure exacte de capacité restante. Une lecture automatique
+indépendante demanderait un circuit déjà présent à identifier ou une modification
+matérielle séparée : pont diviseur vers ADC ou jauge. Aucun ajout matériel autorisé
+ici. L’utilisateur souhaite ensuite les deux niveaux dans la barre des menus Mac.
+
+Diagnostic ponctuel batterie/veille demandé pour V2 : paire compilée dans
+.local/flash/bluetooth-macos-power-debug-2026-10-21-12-04-07, sans nouveau profil
+public ni modification des configurations normales. Les fichiers privés
+.local/diagnostic/power-test/short-timings.conf, prepare.sh et container.sh
+réutilisent les constantes du build pour compiler macos avec le snippet natif
+zmk-usb-logging, inactivité 10000 ms, veille 60000 ms et batterie 5 s.
+Les sources épinglées et les 45 dépendances actives sont contrôlées sans patch.
+Les deux configurations compilées vérifient bootloader, partition application,
+BLE sans sortie HID USB, rôles, proxy de droite, wakeup-source et absence de reset.
+SHA-256 et gardes UF2 passent. Keymap, macros, conditional_layers et behaviors
+sont identiques aux arbres du build bluetooth macos normal de chaque moitié.
+Le conteneur éphémère a disparu, les trois services préexistants sont préservés.
+Les avertissements existants KSCAN et const tap-dance restent visibles, ainsi
+que le drapeau Docker insecure au préflight. Aucun flash ou lecteur USB lancé
+par l’agent. L’utilisateur confirme ensuite avoir flashé le diagnostic sur V2.
+La capture USB et les essais sur batterie sont décrits ci-dessous.
+
+Le code actuel de battery.c arrête son timer sur IDLE et SLEEP et le relance
+immédiatement sur ACTIVE. Les pourcentages peuvent donc rester anciens pendant
+l’inactivité, même sous USB. Une lecture GATT seule ne provoque pas d’activité.
+Pour comparer la charge, appuyer sur une touche de chaque moitié avant le relevé.
+Le pilote compilé est battery_nrf_vddh, ses logs natifs donnent ADC raw, mV et %.
+Ce diagnostic ne mesure ni courant de charge ni autonomie et ne conserve pas
+un historique de logs après sys_poweroff. La présence d’USB empêche toujours
+la veille profonde. Essais réels et protocole : docs/tests-batteries-veille.md.
+
+Capture V2 après disponibilité explicite de l’utilisateur : deux consoles ouvertes
+180 secondes par .local/diagnostic/power-test/capture.py, sans commande applicative.
+Les fichiers bruts privés sont .local/logs/v2-power-2026-10-21-12-13-24-*.log.
+usbmodem1101 a les événements centraux, usbmodem2101 les événements périphériques.
+Sous USB, les premières lectures donnent gauche 4985 à 4995 mV et droite environ
+4935 à 4950 mV, avec 100 %. À la déconnexion, la droite émet encore une lecture
+ADC raw 2696, 3945 mV, 67 %, cohérente avec le relevé BLE de l’utilisateur.
+Le pilote nrf_vddh observe donc la source d’alimentation, pas la cellule isolément
+lorsque l’USB est branché. Ne pas interpréter 5 V comme tension réelle de cellule,
+ni 100 % USB comme preuve de charge complète. Une comparaison de charge demande
+des lectures sur batterie seule après activité sur chaque moitié. Aucun échec ADC,
+conversion, fatal, overflow ou dropped n’est repéré dans la capture.
+Le débranchement/rebranchement USB pendant la capture a été fait par l’utilisateur.
+La capture s’est terminée normalement et lsof confirme les deux ports libérés.
+L’utilisateur confirme ensuite une reprise instantanée après 15 secondes sans
+frappe, avec USB branchés, sans latence perçue. Le diagnostic installé avait
+10 secondes d’inactivité, pas 15. Les lecteurs USB étaient fermés : ce résultat
+est un retour utilisateur, pas une mesure instrumentée ni une trace de transition.
+Le réglage final demandé est deux minutes d’inactivité normale.
+bluetooth.conf fixe désormais ZMK_IDLE_TIMEOUT à 120000 et le garde de build
+exige cette valeur. L’utilisateur retient dix minutes avant veille profonde :
+ZMK_IDLE_SLEEP_TIMEOUT et son garde passent à 600000 ms. Les deux délais courent
+depuis la dernière activité et ne s’additionnent pas. La mesure batterie reste
+à 60 secondes. Le dernier flash explicitement confirmé reste le diagnostic à
+10 secondes d’inactivité et 60 secondes de veille profonde. Les commandes de
+retour au profil normal ont été données, sans confirmation de ce reflash.
+L’utilisateur demande de refaire les deux protocoles de reprise exclusivement
+sur batterie : deux USB débranchés et deux interrupteurs ON, consoles fermées.
+Le résultat instantané déjà rapporté reste limité à l’essai sous USB et n’est pas
+requalifié en résultat sur batterie. Le code permet IDLE avec USB mais bloque
+SLEEP tant que zmk_usb_is_powered est vrai. Distinguer ces états dans les explications.
+Sur batterie, il attend ensuite environ une minute et appuie plusieurs fois à
+droite sans saisie. Des appuis répétés à gauche rétablissent les deux moitiés
+en 2 à 5 secondes selon son estimation. La reprise après inactivité paraît
+immédiate à droite. Ce retour utilisateur concorde avec la limite de réveil de
+la centrale par la périphérique, sans chronométrage interne ni capture USB.
+Le nombre et l’instant des appuis ne permettent pas de conclure sur la première
+frappe perdue, chaque source de réveil ou le nom d’OS après reprise.
+Consommation : les abonnés à activity_state_changed de ce snapshot concernent
+batterie, affichage et éclairages. V2 n’a ni écran ni éclairage externe activé.
+IDLE garde les paramètres et liaisons BLE et arrête le timer batterie. Ne pas
+promettre une forte économie par rapport à ACTIVE sans frappes. SLEEP coupe
+les connexions par sys_poweroff, mais le courant de la carte complète est inconnu.
+Les données officielles docs/src/data/power.js du commit ZMK figé donnent, sur de
+vraies nice!nano v2, un socle 15 + 3 = 18 microampères. Le modèle d’une centrale
+avec un hôte et un périphérique ajoute 490 + 23, soit 531 microampères sans frappe,
+contre 38 pour la périphérique. Une touche maintenue ajoute 380 et 365 respectivement.
+Le socle seul hors autodécharge est un repère du modèle en sommeil, pas une
+mesure sur les répliques V2 ni un test d’autonomie. Documenter ce distinguo.
+Les délais finaux 120/600 secondes sont compilés dans les paires
+bluetooth-macos-2026-10-21-13-41-52 et bluetooth-macos-debug-2026-10-21-13-48-47.
+Les quatre UF2 passent SHA-256, gardes de blocs/partitions et contrôles de rôles,
+batterie et logs. Les arbres de keymap, macros, comportements et couches
+conditionnelles restent identiques au diagnostic. Conteneurs éphémères libérés,
+trois services préexistants préservés. Aucun flash effectué par l’agent.
 
 Build local et profil `wire` : gauche centrale USB, droite périphérique BLE,
 alimentation USB, sans veille profonde ni reporting batterie.
@@ -246,7 +379,8 @@ horodatage de l’appui : le logging debug est différé et peut perturber les t
 Les logs d’une même centrale permettent d’observer une portion du traitement,
 pas le trajet complet depuis le contact physique jusqu’à la réception par macOS.
 Profil `bluetooth` : mêmes rôles, sortie Bluetooth directe de la gauche, USB clavier
-désactivé même pendant la charge, veille après 15 minutes et reporting batterie activés.
+désactivé même pendant la charge, inactivité après deux minutes, veille profonde
+après dix minutes et reporting batterie activés.
 Le profil aux délais courts a été supprimé après validation matérielle. Les deux
 profils disponibles sont `wire` et `bluetooth`. L’option transversale `debug` ajoute
 le snippet natif `zmk-usb-logging` à chaque moitié, sans toucher aux timings, rôles

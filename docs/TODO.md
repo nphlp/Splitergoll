@@ -16,6 +16,11 @@
 
 ## Étapes suivantes
 
+Le [tableau de planification](planification.md) distingue les sujets terminables avec
+Mac + V2 et ceux à valider lors d’une séance commune Mac/Windows. En attendant cette
+séance, compléter les essais d’alimentation de V2 après migration, sans ajouter
+de nouvelles règles de connexion avant les essais du lot déjà compilé.
+
 Détection USB et BLE Mac/Windows, mémoire d’OS et bascule entre appareils sont
 validées sur V1 dans les conditions indiquées ci-dessous. Linux automatique reste à faire.
 La reconnexion connue sur dix secondes est intégrée au nouveau firmware, à valider
@@ -31,8 +36,9 @@ Ordre des prochains lots :
    l’optimisation du délai de bascule, puis Linux et le dongle.
 
 V2 est au bureau avec le Mac, le firmware Bluetooth macOS fixe a été installé.
-Les essais de reconnexion Mac/Windows sur V1 sont reportés. La validation de veille
-et d’autonomie de V2 après migration reste à faire. Aucun nouveau reset d’appairage,
+Les essais de reconnexion Mac/Windows sur V1 sont reportés. Les essais courts sur
+batterie de V2 confirment la reprise après inactivité et le réveil par la gauche.
+La première frappe, toutes les touches et l’autonomie restent à vérifier. Aucun nouveau reset d’appairage,
 flash, bascule matérielle ou intervention sur le PC occupé n’est implicite dans ce travail.
 Un essai des fenêtres avec le Mac seul resterait partiel. Il demanderait d’abord
 de préparer la mémoire d’OS propre à V2, absente du profil macOS normal.
@@ -257,6 +263,12 @@ de préparer la mémoire d’OS propre à V2, absente du profil macOS normal.
 - [x] Réaliser les essais avec inactivité 10 secondes, veille 60 secondes et mesure batterie 5 secondes, puis retirer le profil temporaire.
 - [x] Confirmer la reprise immédiate après inactivité et la reconnexion après veille en environ 3 secondes, sans reset.
 - [x] Tester séparément le réveil gauche et droite : premier appui sans saisie, second appui fonctionnel après reconnexion. La droite seule ne réveille pas la gauche.
+- [x] Reprendre les essais courts sur V2 après migration, sur batterie : reprise
+  après inactivité imperceptible à droite, droite seule sans saisie après environ
+  une minute, puis reprise des deux côtés en 2 à 5 secondes après appuis à gauche.
+  Appuis répétés, première frappe et délais exacts non contrôlés.
+- [x] Retenir deux minutes d’inactivité pour le profil Bluetooth normal, avec contrôle
+  au build. Retenir dix minutes avant veille profonde, sans reflash implicite de V2.
 - [x] Reflasher les deux moitiés avec les délais Bluetooth normaux après les essais, sans reset des appairages.
 - [x] Valider les builds `wire debug` et `bluetooth debug`, avec consoles USB et artefacts séparés.
 - [x] Lire les deux consoles USB de V1 en `wire macos debug` et observer les événements de droite reçus par la gauche.
@@ -298,7 +310,9 @@ de préparer la mémoire d’OS propre à V2, absente du profil macOS normal.
 - [x] Lire les deux mesures sur le Mac : gauche 63 %, droite 62 %. Le menu natif n’affiche que la gauche, voir [batteries](batteries.md).
 - [x] Ajouter `make bat` pour une lecture rapide et `make bat avg` pour une moyenne par moitié sur 30 secondes.
 - [x] Garder un Makefile direct : chaque commande appelle son script, qui valide ses arguments. L’aide colorée est dans un script Bash.
-- [ ] Étudier un affichage permanent des deux batteries sur le Mac, valider les notifications, l’autonomie et le sommeil de l’hôte.
+- [ ] Ajouter un affichage permanent des deux batteries dans la barre des menus du Mac,
+  demandé par l’utilisateur. Valider les notifications, l’autonomie, le sommeil de
+  l’hôte et la présentation honnête des mesures sous USB.
 - [ ] Comparer la veille profonde de la centrale et son maintien en inactivité : reprise depuis la droite, première frappe, délai de reconnexion et impact sur l’autonomie, puis choisir le comportement.
 - [ ] Tester branchement USB, débranchement, charge secteur et préférences sauvegardées.
 - [ ] Vérifier l’outillage de build sur Windows/WSL.
@@ -317,5 +331,17 @@ de préparer la mémoire d’OS propre à V2, absente du profil macOS normal.
 - [ ] Réexaminer les macros de retour de mode qui écrivent puis effacent du texte.
 - [ ] Ajouter le scroll aux encodeurs et des informations de batterie/connexion.
 - [ ] Mesurer l’autonomie et améliorer la veille et la puissance BLE.
+- [x] Observer une progression après charge de V2 en USB + ON : relevés sans USB
+  gauche 53 → 63 %, droite 57 → 67 %, selon l’utilisateur. Les logs montrent
+  environ 5 V et 100 % sous USB, puis 3945 mV et 67 % à droite au débranchement.
+  Cela ne mesure ni le courant ni la capacité. Le PCB coupe la recharge sur OFF.
+- [ ] Définir un affichage batterie adapté à l’USB : la mesure VDDH de V2 reflète
+  alors l’alimentation et donne un faux 100 %. Distinguer cet état d’une mesure
+  de cellule, sans inventer de pourcentage ni supposer une autre entrée ADC câblée.
+  Réveiller chaque moitié avant les relevés sur batterie, les mesures s’arrêtant
+  en inactivité. Voir [le protocole batteries et veille](tests-batteries-veille.md).
+- [ ] Si une mesure pendant la charge est souhaitée, identifier le circuit des
+  répliques et une entrée de mesure indépendante. Le PCB actuel n’en prévoit pas.
+  Évaluer pont diviseur ou jauge, sans modification matérielle implicite.
 - [ ] Étudier l’arrêt du Bluetooth vers le Mac pendant l’usage USB.
 - [ ] Étudier séparément un fonctionnement sans aucune radio et ses besoins matériels.

@@ -112,7 +112,7 @@ préparé. Les anciens caches sont conservés, un nouveau `make setup` n’est p
 | Profil | Sortie de la gauche | Veille profonde | Batterie |
 | --- | --- | --- | --- |
 | `wire` | USB vers l’ordinateur | Désactivée | Reporting désactivé |
-| `bluetooth` | Bluetooth direct, même pendant la charge USB | Après 15 minutes sur batterie | Reporting activé |
+| `bluetooth` | Bluetooth direct, même pendant la charge USB | Après 10 minutes sur batterie | Reporting activé |
 
 Dans les deux cas, la droite communique avec la gauche en BLE. Le choix de keymap
 est indépendant : `multi` conserve la référence de `dongle`, les autres profils
@@ -161,8 +161,10 @@ pour conserver leur comportement précédent.
 
 V1 en `wire macos` est flashé et les essais rapportés sont positifs : voir
 [les essais wire](tests-wire.md). Les autres profils restent à tester.
-Les résultats de [veille](veille.md) et [batteries](batteries.md) concernent
-encore ZMK 0.3.0. Leur revalidation après migration reste nécessaire.
+Sur V2 après migration, les deux niveaux de [batterie](batteries.md), la reprise
+après inactivité et le réveil par la gauche sont aussi rapportés sur batterie.
+La droite ne réveille pas la centrale en [veille profonde](veille.md).
+La première frappe et toutes les sources de réveil restent à vérifier séparément.
 L’arrêt avec `stop` pendant un build reste aussi à valider.
 Voir [le matériel](configuration-materielle.md), [la keymap](keymap.md) et
 [les tâches restantes](TODO.md).

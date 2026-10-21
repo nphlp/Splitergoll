@@ -29,10 +29,13 @@ Les heuristiques d’OS sont expérimentales, elles ne sont pas validées sur to
 les ordinateurs. Linux automatique et le dongle restent au backlog.
 L’attente de bascule BLE ressentie d’environ deux secondes reste à mesurer et réduire.
 
-V1 est sans batterie, V2 possède une batterie par moitié. La lecture des deux batteries
-et les essais de veille de V2 sont validés sur l’ancienne 0.3.0 : première frappe de
-réveil perdue, réveil de la gauche nécessaire avant la droite. Ces essais restent
-à reprendre après migration. Les autres validations sont dans le [TODO](TODO.md).
+V1 est sans batterie, V2 possède une batterie par moitié. La lecture des deux niveaux
+sur batterie est revalidée après migration. Sous USB, le 100 % affiché sur V2 reflète
+l’alimentation du contrôleur et ne prouve pas une batterie pleine.
+Les essais courts après migration retrouvent une reprise immédiate après inactivité
+et une reprise en 2 à 5 secondes après sollicitation de la gauche en veille profonde.
+La droite seule ne réveille pas la centrale. L’autonomie, la première frappe et les
+réveils par chaque touche restent à vérifier dans le [TODO](TODO.md).
 
 La priorité est de valider les reconnexions connues puis de traiter l’accueil des
 nouveaux appareils. Vient ensuite le firmware USB + BLE commun,
@@ -67,6 +70,7 @@ et `make bat avg` calcule une moyenne par moitié sur 30 secondes.
 
 ## Documentation
 
+- [Planification selon le matériel](planification.md) : choisir les chantiers réalisables avec Mac, Windows, V1 ou V2.
 - [Build local](build-local.md) : commandes, environnement et résultats.
 - [Logs USB](logs-usb.md) : firmwares de diagnostic et console de chaque moitié.
 - [Matériel et connexions](configuration-materielle.md) : cartes, rôles et limites.
@@ -86,6 +90,7 @@ et `make bat avg` calcule une moyenne par moitié sur 30 secondes.
 - [Capture Bluetooth Windows](capture-bluetooth-windows.md) : conserver l’appairage Mac et lire les échanges du PC.
 - [Firmwares stables](firmwares-stables.md) : récupération du snapshot 0.3 depuis l’historique Git.
 - [Veille et réveil](veille.md) : états d’inactivité et reprise à la frappe.
+- [Essais batteries et veille](tests-batteries-veille.md) : diagnostic ponctuel de V2, délais courts et logs USB.
 - [Flash du firmware](flash-firmware.md) : copie des UF2, bootloader et messages du Finder.
 - [Appairage Bluetooth](appairage-bluetooth.md) : clés de connexion, reset et diagnostic.
 - [Batteries](batteries.md) : mesure actuelle et affichage des deux niveaux.
