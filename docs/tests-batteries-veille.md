@@ -28,7 +28,7 @@ après les essais, les logs et les mesures plus fréquentes modifiant la consomm
    Sur V2, l’USB donne environ 5 V et 100 %, sans représenter l’état des cellules.
 5. Après fermeture des consoles, débrancher les deux USB en gardant ON. Appuyer sur
    une touche de chaque côté, attendre cinq secondes avec le diagnostic, puis lancer
-   `make bat`. Garder les USB débranchés pour les deux essais suivants.
+   `make bat read`. Garder les USB débranchés pour les deux essais suivants.
 
 Le pilote journalise déjà la lecture ADC, la tension calculée et le pourcentage.
 Il ne mesure pas le courant de charge. Les mesures s’arrêtent en inactivité : un

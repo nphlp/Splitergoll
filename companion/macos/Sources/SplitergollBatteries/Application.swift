@@ -31,7 +31,7 @@ final class ApplicationDelegate: NSObject, NSApplicationDelegate, NSWindowDelega
             let alert = NSAlert()
             alert.messageText = "Configuration de l’application absente"
             alert.informativeText =
-                "Reconstruisez l’application avec make app-build, puis ouvrez son fichier .app."
+                "Reconstruisez l’application avec make app build, puis ouvrez son fichier .app."
             alert.runModal()
             NSApp.terminate(nil)
             return

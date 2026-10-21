@@ -50,9 +50,9 @@ Flasher chaque moitié séparément. Garder l’USB gauche au Mac, même pour Wi
 Utiliser le clavier intégré du Mac pour piloter les essais :
 
 ```sh
-make ble-profile /dev/cu.usbmodem1101 status
-make ble-memory /dev/cu.usbmodem1101
-make ble-profile /dev/cu.usbmodem1101 1
+make ble profiles /dev/cu.usbmodem1101
+make ble memory /dev/cu.usbmodem1101
+make ble select /dev/cu.usbmodem1101 1
 ```
 
 Adapter le port et l’index au statut réel, ici Mac 0 et Windows 1. Une fois connecté,

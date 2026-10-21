@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Compile l’app native et prépare son bundle local, ou exécute ses tests Swift.
-# make app ouvre le bundle. make app-build compile, make app-test teste sans Bluetooth.
+# make app start ouvre le bundle. build compile, test teste sans Bluetooth. Sans action, affiche l’aide.
 # Tous les caches restent dans .local/. L’app s’inscrit à l’ouverture de session lors de son lancement.
 
 set -euo pipefail
@@ -20,14 +20,19 @@ fail() {
     exit 1
 }
 
-[ "$#" -le 1 ] || fail 'Utilise make app, make app-build ou make app-test'
-action=open
-if [ "$#" -eq 1 ]; then
-    case "$1" in
-        build|test) action=$1 ;;
-        *) fail 'Utilise make app, make app-build ou make app-test' ;;
-    esac
-fi
+# L’aide et les arguments erronés ne nécessitent ni Swift, ni cache, ni accès Bluetooth.
+usage() {
+    bash "$REPOSITORY/scripts/help.sh" app
+    exit "${1:-0}"
+}
+
+[ "$#" -gt 0 ] || usage
+[ "$#" -eq 1 ] || usage 1
+case "$1" in
+    start|build|test) action=$1 ;;
+    help) usage ;;
+    *) usage 1 ;;
+esac
 [ "$(uname -s)" = Darwin ] || fail 'L’application nécessite macOS 13 ou plus récent'
 command -v swift >/dev/null || fail 'Installe les outils de ligne de commande Xcode pour Swift'
 mkdir -p "$APP_CACHE"
@@ -81,6 +86,6 @@ codesign --force --sign - "$APP_BUNDLE"
 codesign --verify --strict "$APP_BUNDLE"
 printf 'Application prête : %s\n' "$APP_BUNDLE"
 
-if [ "$action" = open ]; then
+if [ "$action" = start ]; then
     open "$APP_BUNDLE"
 fi

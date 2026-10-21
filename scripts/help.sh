@@ -1,15 +1,9 @@
 #!/bin/bash
 
-# Affiche les commandes du dépôt, regroupées par usage, avec des couleurs facultatives.
-# Appelé par make help, ou avec build/flash pour afficher l’aide correspondante.
+# Affiche les aides par famille. Aucun accès Docker, Bluetooth ou USB.
+# make help présente les groupes, les autres scripts demandent leur aide dédiée.
 
 set -eu
-
-[ "$#" -le 1 ] || { printf '%s\n' 'Utilise make help sans argument' >&2; exit 1; }
-case "${1-}" in
-    ''|build|flash) ;;
-    *) printf '%s\n' 'Utilise make help sans argument' >&2; exit 1 ;;
-esac
 
 . "$(dirname "$0")/terminal-colors.sh"
 configure_output
@@ -66,40 +60,92 @@ show_flash_help() {
     printf '\n'
 }
 
-if [ "${1-}" = build ]; then
-    show_build_help
-    exit 0
-fi
-if [ "${1-}" = flash ]; then
-    show_flash_help
-    exit 0
-fi
+# Présente les actions du lecteur ponctuel des deux batteries.
+show_bat_help() {
+    printf '\n%sBatteries sur macOS%s\n\n' "$LOG_HEADING" "$LOG_RESET"
+    show_command 'make bat' 'Afficher cette aide'
+    show_command 'make bat read' 'Lire immédiatement les deux niveaux annoncés'
+    show_command 'make bat avg' 'Calculer une moyenne par moitié sur 30 secondes'
+    printf '\n'
+}
 
-printf '\n%sSplitergoll%s\n\n' "$LOG_HEADING" "$LOG_RESET"
-show_command 'make setup' 'Préparer les sources et le build local'
-show_command 'make build' 'Afficher les choix de compilation'
-show_build_help
-show_command 'make flash' 'Afficher les choix de flash et leur confirmation'
-show_command 'make flash wire macos right' 'Flasher le dernier build correspondant sur la moitié droite'
+# Présente le démarrage, la compilation et les tests de l’app native.
+show_app_help() {
+    printf '\n%sApplication macOS%s\n\n' "$LOG_HEADING" "$LOG_RESET"
+    show_command 'make app' 'Afficher cette aide'
+    show_command 'make app start' 'Compiler et démarrer l’app dans la barre des menus'
+    show_command 'make app build' 'Compiler et signer le bundle sans le lancer'
+    show_command 'make app test' 'Tester la logique sans accès Bluetooth'
+    printf '\n'
+}
 
-printf '\n%sBatteries sur macOS%s\n' "$LOG_HEADING" "$LOG_RESET"
-show_command 'make bat' 'Lire les deux derniers niveaux annoncés'
-show_command 'make bat avg' 'Calculer une moyenne par moitié sur 30 secondes'
-show_command 'make app' 'Compiler et ouvrir l’app des deux batteries'
-show_command 'make app-build' 'Compiler seulement l’app macOS, sans la lancer'
-show_command 'make app-test' 'Tester la logique de l’app sans accès Bluetooth'
+# Explique comment identifier le port série de la gauche, sans ouvrir de connexion.
+show_port_help() {
+    printf '\n%sTrouver le port de la gauche%s\n' "$LOG_HEADING" "$LOG_RESET"
+    printf '%s\n' '  Brancher la gauche en USB avec un firmware de diagnostic, hors bootloader.'
+    printf '%s\n' '  Utiliser usb-trace pour make usb, ble-trace pour make ble.'
+    printf '\n'
+    show_command 'ls /dev/cu.usbmodem*' 'Lister les ports sur macOS'
+    show_command 'ls /dev/ttyACM*' 'Lister les ports sur Linux'
+    printf '\n'
+    printf '%s\n' '  Reporter le nom trouvé à la place de <port> dans les commandes USB ou BLE.'
+    printf '%s\n' '  Si plusieurs ports apparaissent, comparer la liste avant et après branchement de la gauche.'
+    printf '\n'
+}
 
-printf '\n%sDiagnostic de connexion USB%s\n' "$LOG_HEADING" "$LOG_RESET"
-show_command 'make usb-capture <port-série-gauche>' 'Lire les requêtes du firmware wire avec option usb-trace'
-show_command 'make ble-capture <port-série-gauche>' 'Lire les connexions du firmware bluetooth avec option ble-trace'
-show_command 'make ble-memory <port-série-gauche>' 'Voir l’OS appris, mémorisé et l’état de sauvegarde (ble-trace)'
-show_command 'make ble-forget <port> <index>' 'Effacer un seul appairage après confirmation (ble-trace)'
-show_command 'make ble-profile <port> status' 'Voir les emplacements appairés, sans adresse ni clé'
-show_command 'make ble-profile <port> free' 'Choisir un emplacement libre après déconnexion de l’hôte'
-show_command 'make ble-profile <port> <index>' 'Revenir à un emplacement connu, sans effacer son appairage'
+# Présente la lecture USB, avec un port explicite et sans effet sur le firmware.
+show_usb_help() {
+    printf '\n%sDiagnostic USB%s\n\n' "$LOG_HEADING" "$LOG_RESET"
+    show_command 'make usb' 'Afficher cette aide'
+    show_command 'make usb capture <port>' 'Lire les requêtes de la centrale wire usb-trace'
+    printf '\n'
+    printf '%s\n' '  Pour trouver le port de la gauche : make port.'
+    printf '\n'
+}
 
-printf '\n%sEntretien%s\n' "$LOG_HEADING" "$LOG_RESET"
-show_command 'make stop' 'Arrêter les conteneurs de build de ce checkout'
-show_command 'make clear' 'Arrêter le build et effacer les fichiers locaux générés'
-show_command 'make help' 'Afficher cette aide'
-printf '\n'
+# Présente les lectures et les changements explicites de profil Bluetooth.
+show_ble_help() {
+    printf '\n%sDiagnostic Bluetooth%s\n\n' "$LOG_HEADING" "$LOG_RESET"
+    show_command 'make ble' 'Afficher cette aide'
+    show_command 'make ble capture <port>' 'Lire les échanges Bluetooth de la centrale ble-trace'
+    show_command 'make ble memory <port>' 'Lire l’OS mémorisé et l’état de sauvegarde'
+    show_command 'make ble profiles <port>' 'Afficher les emplacements appairés'
+    show_command 'make ble select <port> <index>' 'Sélectionner un emplacement'
+    show_command 'make ble forget <port> <index>' 'Effacer un appairage après confirmation'
+    printf '\n'
+    printf '%s\n' '  Pour trouver le port de la gauche : make port.'
+    printf '\n'
+}
+
+# Garde l’aide générale compacte, avec les mêmes familles que le Makefile.
+show_help() {
+    printf '\n%sSplitergoll%s\n' "$LOG_HEADING" "$LOG_RESET"
+    show_command 'make help' 'Afficher cette aide'
+    printf '\n%sFirmware%s\n' "$LOG_HEADING" "$LOG_RESET"
+    show_command 'make setup' 'Préparer les sources et le build local'
+    show_command 'make build' 'Afficher les matériels et keymaps disponibles'
+    show_command 'make flash' 'Afficher les choix de flash'
+    show_command 'make stop' 'Arrêter les conteneurs de build de ce checkout'
+    show_command 'make clear' 'Arrêter le build et effacer .local/ et dist/'
+    printf '\n%sBatteries sur macOS%s\n' "$LOG_HEADING" "$LOG_RESET"
+    show_command 'make bat' 'Afficher les commandes de lecture des batteries'
+    show_command 'make app' 'Afficher les commandes de l’app macOS'
+    printf '\n%sDebug%s\n' "$LOG_HEADING" "$LOG_RESET"
+    show_command 'make port' 'Afficher la méthode pour trouver le port du clavier'
+    show_command 'make usb' 'Afficher les commandes de diagnostic USB'
+    show_command 'make ble' 'Afficher les commandes de diagnostic Bluetooth'
+    printf '\n'
+}
+
+[ "$#" -le 1 ] || { show_help; exit 1; }
+case "${1-}" in
+    '') show_help ;;
+    build) show_build_help ;;
+    flash) show_flash_help ;;
+    bat) show_bat_help ;;
+    app) show_app_help ;;
+    port) show_port_help ;;
+    usb) show_usb_help ;;
+    ble) show_ble_help ;;
+    *) show_help; exit 1 ;;
+esac

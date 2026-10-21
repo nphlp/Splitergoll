@@ -1,5 +1,15 @@
 # Étude des signatures d’OS
 
+## Commandes publiques
+
+make usb et make ble affichent leurs aides. usb.sh accepte capture avec un port.
+ble.sh accepte capture/memory/profiles avec un port et select/forget avec port puis
+index. profiles envoie S, select envoie l’index explicite, aucune action free dans
+la CLI Make. Les arguments sont contrôlés avant de déléguer à capture.sh, sans nouveau
+protocole ni changement des gardes série ou de la confirmation d’effacement.
+Action absente : aide et succès. Action erronée ou incomplète : aide et échec.
+Les anciens alias à tirets sont retirés. Le script PowerShell autonome ne change pas.
+
 ## Diagnostic Bluetooth
 
 `make build bluetooth <keymap> ble-trace` ajoute uniquement sur la gauche le
@@ -75,7 +85,7 @@ Ne pas inventer de règle par défaut macOS, ni réutiliser l’OS de l’alimen
 Attendre les captures Mac/Windows, puis comparer aussi les reconnexions avant tout
 classifieur. Linux reste inconnu. Ne pas effacer de bonds pour obtenir plus d’indices.
 
-`make ble-capture <port>` utilise `capture.sh --ble`, sorties `.local/ble-traces/`.
+`make ble capture <port>` utilise `capture.sh --ble`, sorties `.local/ble-traces/`.
 Le même `capture.ps1` autonome accepte `-Port COMx -Ble`, sans administrateur,
 sortie `windows-ble-….txt` dans le dossier courant. Les validateurs AWK et PowerShell
 contrôlent indices, sessions, nombre d’attributs et absence de pertes. Ils ne font
@@ -150,8 +160,10 @@ active/selected. Un refus busy/full/invalid/failed rend une erreur et conserve l
 réponse. Les lecteurs acceptent aussi version=1, dont busy signifiait hôte connecté.
 Le lecteur n’effectue jamais de nouvelle tentative de sélection.
 
-`make ble-profile <port> <status|free|index>` délègue directement à `capture.sh
---profile`. Sur Windows le même fichier autonome `capture.ps1 -Port COMx -Profile
+`make ble profiles <port>` lit le statut et `make ble select <port> <index>`
+sélectionne un emplacement, via `capture.sh --profile` avec status ou un index.
+Le lecteur Bash n’envoie plus F. Le protocole firmware reste compatible avec les
+captures historiques. Sur Windows le même fichier autonome `capture.ps1 -Port COMx -Profile
 <status|free|index>` suffit, sans -Ble ni administrateur. Les sorties Mac restent
 dans `.local/ble-profiles/`, Windows `windows-ble-profile-….txt` dans le dossier
 courant. Les jeux PowerShell Profile, Serial et UsbEvents sont exclusifs.
@@ -629,7 +641,7 @@ Le moteur commun est désormais `keyboard/src/os_detection/ble_acquisition.c`,
 avec le backend `ble_os_settings.c`. Le diagnostic `ble_trace_memory.c` présente
 seulement son instantané. `BLETRACE` v2 et `BLEPROFILE` v2 restent compatibles.
 Une keymap fixe reste fixe, `bluetooth auto` applique l’OS mémorisé. D rejoue le tampon historique.
-La commande M expose `BLEMEM` v1, via `make ble-memory <port>` : measured, stored,
+La commande M expose `BLEMEM` v1, via `make ble memory <port>` : measured, stored,
 origin, state, learning, evidence et error, sans identité ni empreinte privée.
 `stored` est inconnu tant que l’identité n’est pas vérifiée ou l’écriture réussie.
 `measured` concerne seulement l’acquisition initiale du démarrage courant.
@@ -655,7 +667,7 @@ sans le réécrire, même si leurs traces de recherche suggèrent autre chose.
 Le backend et les invariants de persistance sont décrits dans l’AGENTS du module clavier.
 
 L’effacement de test est distinct et explicite : trame `!CLEAR <index>\n`,
-`BLEFORGET` v1, client `make ble-forget <port> <index>` avec confirmation y/N.
+`BLEFORGET` v1, client `make ble forget <port> <index>` avec confirmation y/N.
 Le parseur retient toute la trame, y compris invalide ou saturée : ses chiffres ne
 peuvent pas devenir des commandes de sélection. Refuser index hors plage, index
 non actif, saisie tenue/HID actif/drainage et slot vide. Après appel, vérifier le
@@ -956,7 +968,7 @@ pas cet effacement. Préparer le mécanisme sûr avant de donner des commandes d
 Ce dossier contient toute l’instrumentation d’étude, séparée du clavier dans
 `../../keyboard/`. Les lecteurs sont `capture.sh` et `capture.ps1`, le validateur
 est `check.awk`. Le firmware, son snippet et ses tests restent dans leurs sous-dossiers.
-La commande publique `make usb-capture` reste à la racine du dépôt.
+La commande publique `make usb capture` reste à la racine du dépôt.
 
 Le chantier actif est le diagnostic passif USB, puis BLE. V1 sans batterie peut
 tester les deux transports, avec alimentation USB. Ne pas confondre la source
@@ -986,7 +998,7 @@ Le verrou protège uniquement les copies, jamais l’envoi série. La commande D
 restitue un instantané avec cadrage BEGIN/SETUP/END et compteurs, sans effacement.
 L’envoi vérifie DTR et borne l’attente par ligne. Un reset du bus ou une déconnexion efface les index et compteurs du cycle précédent.
 
-`make usb-capture <port>` lit sur macOS/Linux, `capture.ps1 -Port COMx`
+`make usb capture <port>` lit sur macOS/Linux, `capture.ps1 -Port COMx`
 sur Windows. Les ports sont explicites. Bash conserve les captures dans
 `.local/usb-traces/`. PowerShell est un fichier autonome à copier dans un dossier
 quelconque : aucun `$PSScriptRoot`, dépôt ou fichier voisin n’est nécessaire. Il écrit

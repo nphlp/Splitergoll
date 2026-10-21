@@ -33,7 +33,7 @@ Sur le Mac, identifier le port série de gauche avec `ls /dev/cu.usbmodem*`,
 puis utiliser son nom exact, par exemple :
 
 ```sh
-make usb-capture /dev/cu.usbmodem123
+make usb capture /dev/cu.usbmodem123
 ```
 
 Sous Windows, copier uniquement [capture.ps1](../diagnostics/os-signature/capture.ps1)
@@ -57,7 +57,7 @@ le lecteur PowerShell, le pilote série natif doit être disponible.
 La capture Windows apparaît directement dans le dossier courant, sous le nom
 `windows-AAAA-MM-JJ-HH-MM-SS-xxxxxxxx.txt`, avec date UTC. C’est ce fichier qu’il faut
 transmettre. Le chemin du script ne détermine pas celui de la capture.
-Sur macOS/Linux, `make usb-capture` conserve ses fichiers dans `.local/usb-traces/`.
+Sur macOS/Linux, `make usb capture` conserve ses fichiers dans `.local/usb-traces/`.
 Le lecteur attend au plus 15 secondes la réponse après sa demande et refuse une
 capture tronquée, désordonnée ou signalant des pertes. Seules les requêtes mémorisées
 sont restituées, pas les frappes.

@@ -5,10 +5,12 @@ Elle reste facultative pour taper et pour sélectionner la keymap.
 
 ## Lancer l’app
 
+`make app` affiche les actions disponibles, sans lancer l’app.
+
 Sur macOS 13 ou plus récent, avec Swift 6 fourni par les outils Xcode :
 
 ```sh
-make app
+make app start
 ```
 
 L’app démarre dans la barre des menus, sans icône dans le Dock ni fenêtre ouverte.
@@ -72,9 +74,9 @@ voir [batteries](batteries.md).
 
 ## Vérifier et faire évoluer
 
-`make app-build` compile sans ouvrir l’app ni modifier les réglages système.
-`make app-test` teste le modèle et l’inscription de session avec des services simulés.
-`make bat` et `make bat avg` restent disponibles séparément.
+`make app build` compile sans ouvrir l’app ni modifier les réglages système.
+`make app test` teste le modèle et l’inscription de session avec des services simulés.
+`make bat read` et `make bat avg` restent disponibles séparément.
 
 Essayer la fenêtre, sa fermeture, la réouverture et Quitter depuis la barre.
 Vérifier que le Dock apparaît à l’ouverture et disparaît à la fermeture.

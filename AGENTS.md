@@ -421,7 +421,7 @@ effectue uniquement des lectures et s’arrête après 30 secondes. Il réutilis
 déjà connecté et ferme sa connexion cliente, sans modifier les appairages.
 Le diagnostic initial reste dans `.local/diagnostic/`. La lecture durable est
 versionnée dans `scripts/batteries.sh`, `batteries.swift` et `batteries-info.plist`.
-`make bat` retourne dès que deux valeurs identifiées sont reçues. `make bat avg`
+`make bat read` retourne dès que deux valeurs identifiées sont reçues. `make bat avg`
 démarre une fenêtre de 30 secondes après réception de la première paire, relit
 toutes les 5 secondes et calcule une moyenne arithmétique par moitié, sans combiner
 les deux batteries. Ce sont les valeurs annoncées, pas des mesures ADC forcées :
@@ -495,8 +495,11 @@ Le retour par reset est confirmé. Tester encore `&sys_reset` et le double appui
 physique avant de considérer le parcours matériel complet validé.
 Le snapshot 0.3 dans l’historique Git garde son ancien mécanisme.
 
-Le Makefile expose `help`, `setup`, `build <matériel> <keymap> [debug|usb-trace|ble-trace]`,
-`flash`, `bat`, `bat avg`, `usb-capture <port>`, `ble-capture <port>`, `ble-profile <port> <status|free|index>`, `stop` et `clear`, délégués aux scripts dédiés. Le matériel (`wire` ou `bluetooth`)
+Le Makefile regroupe help à part, setup/build/flash/stop/clear dans Firmware,
+bat et app dans Batteries, puis port, usb et ble dans Debug, avec les séparateurs
+de commentaires du Makefile NextjsDeploy.
+L’aide générale reprend ces groupes. Chaque cible reste
+un appel direct à son script. Le matériel (`wire` ou `bluetooth`)
 puis la keymap (`auto`, `multi`, `windows`, `macos` ou `linux`) sont obligatoires, sans défaut.
 Windows inclut toujours le gaming. L’argument final facultatif choisit `debug`
 pour les logs USB, `usb-trace` pour la connexion wire ou `ble-trace` pour l’hôte Bluetooth.
@@ -507,13 +510,23 @@ par `multi`. `setup` ne dépend pas de la keymap.
 Chaque commande a sa propre cible et son appel de script dans le Makefile.
 À la demande de l’utilisateur, le Makefile appelle directement chaque script avec
 ses arguments, sans validateur central ni variable d’environnement intermédiaire.
-`ARGS` retire le nom de la cible et protège chaque mot pour le shell. Chaque script
-vérifie son nombre d’arguments et ses valeurs avant toute action. `setup`, `stop`
-et `clear` n’acceptent aucun argument. `help.sh` accepte les périmètres internes `build`
-et `flash`, l’aide générale reste `make help`. La règle `%` ne fait rien : Make voit
-les arguments comme d’autres cibles, déjà traitées par le script de la commande.
-Un mot inconnu seul est donc sans action. Ne pas ajouter de dispatch central ni
-de cibles individuelles pour chaque valeur d’argument.
+`COMMAND` est le premier mot, `ARGS` protège les mots suivants pour le shell.
+`SCRIPT` vaut bash pour la seule commande principale et : pour les autres cibles.
+Ainsi make app build ne lance jamais le build firmware, même avec make -k ou -j.
+Les arguments qui ne sont pas des commandes sont des cibles phony sans action,
+pour éviter le message up to date quand un port ou fichier existe.
+Garder cette protection commune, pas de ifeq pour chaque recette ni de dispatcher
+central de scripts. Chaque script vérifie ses actions avant toute opération.
+app accepte start/build/test, bat read/avg, usb capture et ble capture/memory/profiles/select/forget.
+profiles lit les emplacements, select exige un index explicite. L’action free
+est retirée de la CLI Make, sans modification du protocole firmware ni de PowerShell.
+Sans action, ces familles affichent leur aide. Une action inconnue ou incomplète
+affiche aussi cette aide, avec un statut non nul. Les anciens alias à tirets sont retirés.
+setup, stop et clear n’acceptent aucun argument. help.sh expose les aides de chaque
+famille et de build/flash. Une commande principale inconnue affiche l’aide générale.
+make port appelle help.sh port pour expliquer la recherche du port série de gauche.
+Cette commande affiche uniquement la méthode, sans lister les ports ni ouvrir de connexion.
+Les aides USB et BLE y renvoient, sans dupliquer la procédure.
 `make build` seul affiche les profils disponibles via `help.sh build`, sans Docker
 ni préparation requise. L’aide présente l’ordre des deux choix obligatoires,
 les valeurs disponibles et des commandes complètes. Les deux moitiés du seul
@@ -896,8 +909,8 @@ SMP sont une piste supplémentaire à évaluer, sans collecte de clés ni nouvel
 
 
 Le passage Windows nécessite un second emplacement d’appairage. La keymap initiale
-n’a pas de sélecteur Bluetooth. Le diagnostic gauche ajoute donc `ble-profile`
-(status, free ou index), sans BT_CLR ni modification de touches. Seul l’index actif
+n’a pas de sélecteur Bluetooth. Le diagnostic gauche expose `ble profiles`
+pour lire et `ble select` pour choisir un index, sans BT_CLR ni modification de touches. Seul l’index actif
 change via l’API native, sauvegardé après 60 secondes, les bonds restent intacts.
 La sélection Windows se fait sur le PC après déplacement des USB et coupure du
 Bluetooth Mac. Le guide [capture-bluetooth-windows.md](docs/capture-bluetooth-windows.md)
@@ -1113,7 +1126,7 @@ comportements sont désormais fixes : barre visible, Dock avec la fenêtre, insc
 Leur interface de réglage reste à concevoir.
 
 Réutiliser la lecture CoreBluetooth existante comme base sans invoquer en boucle
-le programme ponctuel de make bat. Couche, OS et état USB de chaque moitié demandent
+le programme ponctuel de make bat read. Couche, OS et état USB de chaque moitié demandent
 un protocole d’état à concevoir. Ne pas annoncer ces données comme déjà exposées,
 déduire l’OS du Mac collecteur ou interpréter la présence USB comme une charge.
 Les firmwares anciens signalent des capacités manquantes. Aucune capture de
@@ -1122,9 +1135,10 @@ L’app reste facultative et son code doit être séparé de keyboard et diagnos
 La logique de l’app et le futur protocole firmware recevront les tests applicatifs
 adaptés, avec reprise après veille, données périmées et préférences. Le premier lot
 teste le modèle GATT, l’identité, les valeurs et leur péremption sans accès Bluetooth.
-make app compile puis ouvre le bundle, make app-build compile seulement et
-make app-test exécute ses tests. Cibles séparées : make app build ferait aussi
-exécuter la cible build du firmware. Ne pas utiliser ce passage d’argument ici.
+make app start compile puis ouvre le bundle, make app build compile seulement et
+make app test exécute ses tests. make app sans action ou avec une action incorrecte
+affiche l’aide, sans compilateur ni lancement. Le garde SCRIPT du Makefile évite
+de lancer aussi la cible firmware build quand ce mot est un argument de app.
 Le bundle signé ad hoc et ses caches restent dans .local, sans dépendance externe,
 installation dans Applications. L’inscription à l’ouverture de session est demandée
 par l’app uniquement. Le bundle autonome inclut son ICNS généré depuis AppIcon.svg.

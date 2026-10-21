@@ -1,55 +1,79 @@
 .DEFAULT_GOAL := help
 
-.PHONY: help setup build flash bat app app-build app-test usb-capture ble-capture ble-profile ble-memory ble-forget stop clear
+##############
+# Variables  #
+##############
 
-# Récupère les mots après la commande et protège chaque argument pour le shell.
-ARGS = $(foreach arg,$(filter-out $@,$(MAKECMDGOALS)),'$(subst ','"'"',$(arg))')
+COMMANDS := help setup build flash stop clear bat app port usb ble
+COMMAND := $(or $(firstword $(MAKECMDGOALS)),help)
+ARGUMENTS := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
+ARGS = $(foreach arg,$(ARGUMENTS),'$(subst ','"'"',$(arg))')
+
+# Seule la première commande lance Bash. Ainsi, build reste un argument dans make app build.
+SCRIPT = $(if $(filter $@,$(COMMAND)),bash,:)
+.PHONY: $(COMMANDS)
+
+##############
+#    Help    #
+##############
 
 help:
-	@bash scripts/help.sh $(ARGS)
+	@$(SCRIPT) scripts/help.sh $(ARGS)
+
+################
+#   Firmware   #
+################
 
 setup:
-	@bash scripts/setup.sh $(ARGS)
+	@$(SCRIPT) scripts/setup.sh $(ARGS)
 
 build:
-	@bash scripts/build.sh $(ARGS)
+	@$(SCRIPT) scripts/build.sh $(ARGS)
 
 flash:
-	@bash scripts/flash.sh $(ARGS)
-
-bat:
-	@bash scripts/batteries.sh $(ARGS)
-
-app:
-	@bash companion/macos/app.sh $(ARGS)
-
-app-build:
-	@bash companion/macos/app.sh build $(ARGS)
-
-app-test:
-	@bash companion/macos/app.sh test $(ARGS)
-
-usb-capture:
-	@bash diagnostics/os-signature/capture.sh $(ARGS)
-
-ble-capture:
-	@bash diagnostics/os-signature/capture.sh --ble $(ARGS)
-
-ble-profile:
-	@bash diagnostics/os-signature/capture.sh --profile $(ARGS)
-
-ble-memory:
-	@bash diagnostics/os-signature/capture.sh --memory $(ARGS)
-
-ble-forget:
-	@bash diagnostics/os-signature/capture.sh --forget $(ARGS)
+	@$(SCRIPT) scripts/flash.sh $(ARGS)
 
 stop:
-	@sh scripts/stop.sh $(ARGS)
+	@$(SCRIPT) scripts/stop.sh $(ARGS)
 
 clear:
-	@sh scripts/clear.sh $(ARGS)
+	@$(SCRIPT) scripts/clear.sh $(ARGS)
 
-# Make voit aussi wire, bluetooth et avg comme des cibles. Le script reçoit déjà ces mots.
-%:
+################
+#  Batteries   #
+################
+
+bat:
+	@$(SCRIPT) scripts/batteries.sh $(ARGS)
+
+app:
+	@$(SCRIPT) companion/macos/app.sh $(ARGS)
+
+##############
+#   Debug    #
+##############
+
+port:
+	@$(SCRIPT) scripts/help.sh port $(ARGS)
+
+usb:
+	@$(SCRIPT) diagnostics/os-signature/usb.sh $(ARGS)
+
+ble:
+	@$(SCRIPT) diagnostics/os-signature/ble.sh $(ARGS)
+
+################
+#  Arguments   #
+################
+
+# Les arguments sont des cibles sans action, y compris si le mot désigne un fichier existant.
+EXTRA_ARGUMENTS := $(filter-out $(COMMANDS),$(ARGUMENTS))
+ifneq ($(strip $(EXTRA_ARGUMENTS)),)
+.PHONY: $(EXTRA_ARGUMENTS)
+$(EXTRA_ARGUMENTS):
 	@:
+endif
+
+# Une commande inconnue affiche l’aide générale.
+%:
+	@$(SCRIPT) scripts/help.sh

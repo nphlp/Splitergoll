@@ -21,6 +21,10 @@ Les évolutions sont suivies dans le [TODO](../../docs/TODO.md), sans liste dupl
 - `Assets/RenderIcon.swift` : rasterise le SVG en dix PNG, assemblés en ICNS par iconutil. Cache sous .local, invalidé sur changement du SVG ou du convertisseur. Ressource embarquée avant signature.
 - `app.sh` : SwiftPM sans dépendance externe, bundle local et signature ad hoc. Aucun ajout à `/Applications`.
 
+Interface : make app affiche l’aide, make app start compile et ouvre, make app build
+compile seulement, make app test teste. Toute action erronée affiche l’aide avant
+contrôle des outils, création de cache ou accès Bluetooth. Pas d’alias à tirets.
+
 Le nom Bluetooth vient de `CONFIG_ZMK_KEYBOARD_NAME` dans la configuration de la
 centrale et est injecté dans le bundle. Aucun nom implicite en cas de configuration
 manquante. Tous les chemins sont relatifs au checkout. Les caches et le bundle sont
@@ -87,10 +91,10 @@ Le vrai état individuel demandera une télémétrie firmware séparée, notée 
 
 ## Validation
 
-`make app-test` exécute les tests applicatifs sans Bluetooth. Couvrir décodage,
+`make app test` exécute les tests applicatifs sans Bluetooth. Couvrir décodage,
 réponses hors ordre, identités en doublon, valeurs invalides, lecture partielle,
 péremption, horloge reculant et reconnexion sans reprise de canaux anciens.
-`make app-build` compile avec les avertissements traités comme erreurs et vérifie
+`make app build` compile avec les avertissements traités comme erreurs et vérifie
 la signature du bundle. `swift format lint --strict --recursive companion/macos/Sources companion/macos/Tests companion/macos/Package.swift`
 contrôle les sources avec `.swift-format`. Inclure aussi Assets dans ce contrôle.
 Pas de nouvelle suite de tests du script shell ou du dessin de l’icône.

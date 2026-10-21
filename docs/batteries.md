@@ -23,7 +23,7 @@ batteries ne sont pas pleines. Le pilote mesure l’alimentation VDDH du contrô
 influencée par l’USB. Ce 100 % ne permet pas de juger la recharge des cellules.
 
 Pour comparer la charge, garder ON, débrancher les deux USB, appuyer sur une touche
-de chaque moitié et laisser les valeurs se mettre à jour avant `make bat`.
+de chaque moitié et laisser les valeurs se mettre à jour avant `make bat read`.
 Comparer des relevés dans les mêmes conditions, après une période de charge.
 La commande relit les valeurs annoncées, elle ne déclenche pas une nouvelle mesure
 ni un contrôle du courant de charge. Le pourcentage est une estimation par tension.
@@ -91,12 +91,14 @@ pas de deuxième indicateur dans le menu natif lors de cet essai.
 
 Depuis la racine du dépôt, avec les deux moitiés éveillées et le clavier connecté au Mac :
 
+`make bat` affiche l’aide du lecteur, sans accès Bluetooth.
+
 ```sh
-make bat
+make bat read
 make bat avg
 ```
 
-`make bat` affiche les deux derniers niveaux annoncés, sans attendre 30 secondes.
+`make bat read` affiche les deux derniers niveaux annoncés, sans attendre 30 secondes.
 `make bat avg` lit toutes les 5 secondes pendant 30 secondes et affiche la moyenne
 de chaque moitié, séparément. Les nouveaux firmwares Bluetooth mesurent toutes les
 5 secondes pendant l’activité. Les lectures de l’app et les mesures du clavier ne
@@ -117,7 +119,7 @@ Un indicateur unique représentant la batterie la plus faible pourrait aussi êt
 étudié, mais ce calcul ne fait pas partie des deux options natives ci-dessus.
 Il demanderait une adaptation du firmware et une décision sur les mesures absentes.
 
-La commande de lecture est versionnée. `make app` ouvre maintenant le premier lot
+La commande de lecture est versionnée. `make app start` ouvre maintenant le premier lot
 de l’[application macOS](application-macos.md) : deux niveaux dans la barre des menus
 et une fenêtre d’informations, à valider sur V2. Couche, OS et réglages avancés
 viendront ensuite. La validation devra vérifier l’autonomie et le sommeil du Mac, la documentation

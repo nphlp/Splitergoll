@@ -8,8 +8,8 @@ Garder l’USB gauche au Mac pour toutes les lectures, même pendant l’appaira
 
 ```sh
 make flash bluetooth macos left ble-trace
-make ble-profile /dev/cu.usbmodem1101 status
-make ble-memory /dev/cu.usbmodem1101
+make ble profiles /dev/cu.usbmodem1101
+make ble memory /dev/cu.usbmodem1101
 ```
 
 Pas de `settings_reset`. Les appairages créés avant l’ajout de la mémoire restent
@@ -27,13 +27,13 @@ Le PC doit être disponible pour l’essai Windows. Utiliser le clavier intégr�
 Mac pendant la réassociation, car V1 peut être momentanément déconnecté.
 Les index actuels sont Mac 0 et Windows 1, à vérifier dans le statut.
 
-1. Sélectionner l’emplacement testé avec `make ble-profile <port> <index>`.
-2. Lancer `make ble-forget <port> <index>`, vérifier l’index et confirmer avec `y`.
+1. Sélectionner l’emplacement testé avec `make ble select <port> <index>`.
+2. Lancer `make ble forget <port> <index>`, vérifier l’index et confirmer avec `y`.
    La commande refuse un autre emplacement que celui sélectionné et toute saisie en cours.
    Elle efface un seul bond, jamais tous les appairages.
 3. Oublier uniquement Splitergoll dans les réglages Bluetooth de l’ordinateur testé,
    puis l’appairer de nouveau au même emplacement.
-4. Après connexion, lire `ble-capture`, puis `ble-memory`.
+4. Après connexion, lire `ble capture`, puis `ble memory`.
    Résultat attendu : le bon OS, `origin=initial` et `state=saved`.
 5. Déconnecter/reconnecter ce seul hôte sans l’oublier. Relire la mémoire : le même
    `stored` doit être retrouvé, sans nouvel apprentissage.
@@ -52,7 +52,7 @@ Taper n’invalide pas le test de mémoire, mais envoie les touches à l’hôte
 Après lecture des captures, faire un seul reset bref de gauche, sans passer en
 bootloader. Relire le statut et la mémoire après reconnexion : les deux OS doivent
 être conservés. Un emplacement non reconnecté peut rester `unverified`.
-S’il reste déconnecté, sélectionner explicitement cet emplacement avec `ble-profile`,
+S’il reste déconnecté, sélectionner explicitement cet emplacement avec `ble select`,
 sans taper pendant le test, puis relire la mémoire après reconnexion. Revenir ensuite
 à l’ordinateur voulu. Cette sélection ne nécessite aucune manipulation sur le PC.
 Si `error`, `ambiguous` ou `dropped=1` apparaît, garder les captures et diagnostiquer

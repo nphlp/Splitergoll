@@ -26,7 +26,7 @@ ajoutée avec la sélection automatique d’appareil.
 Avec la gauche sous `bluetooth auto ble-trace` :
 
 ```sh
-make ble-profile /dev/cu.usbmodem123 status
+make ble profiles /dev/cu.usbmodem123
 ```
 
 Remplacer le port par celui de la gauche. La ligne `WINDOW` indique le temps

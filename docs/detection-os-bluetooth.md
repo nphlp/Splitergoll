@@ -29,7 +29,7 @@ Le même build servira sur Windows, sans tester la saisie de sa keymap macOS.
    mais échoue, garder cet état pour le diagnostic avant tout oubli ou reset.
 2. Attendre dix secondes après la connexion, sans taper.
 3. Identifier le port de gauche avec `ls /dev/cu.usbmodem*`.
-4. Lancer `make ble-capture <port-série-gauche>` et conserver le chemin affiché.
+4. Lancer `make ble capture <port-série-gauche>` et conserver le chemin affiché.
 
 La lecture récupère les événements antérieurs à son ouverture, puis ferme le port.
 Les fichiers restent dans `.local/ble-traces/`. Un reset physique simple de gauche
@@ -116,7 +116,7 @@ Il combine des recherches et lectures DIS pour macOS, et plusieurs opérations d
 découverte/cache GATT pour Windows. Il n’utilise ni le nom du fichier, ni l’OS du
 lecteur, ni l’emplacement Bluetooth pour décider.
 
-Après flash de la gauche mise à jour, `make ble-capture <port>` affiche une hypothèse
+Après flash de la gauche mise à jour, `make ble capture <port>` affiche une hypothèse
 pour chaque session conservée. Le diagnostic récent sépare les connexions simultanées
 et indique leur emplacement, sans le prendre pour une signature d’OS. Une lecture avec l’ancien firmware reste possible,
 avec le message « Classification absente ». Aucun reset des appairages nécessaire.

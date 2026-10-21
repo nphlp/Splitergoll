@@ -37,7 +37,7 @@ Une erreur d’écriture reste visible et ne vaut pas confirmation de sauvegarde
 ## Vérifier la mémoire
 
 ```sh
-make ble-memory /dev/cu.usbmodem1101
+make ble memory /dev/cu.usbmodem1101
 ```
 
 Adapter le port à la gauche. Cette lecture ne change ni la destination des touches,
@@ -54,7 +54,7 @@ Après redémarrage, `measured=unknown` avec `stored=windows` peut être normal 
 Windows a été retrouvé en mémoire, sans nouvelle détection.
 Un appareil pas encore reconnecté peut afficher `stored=unknown` et `unverified` :
 son enregistrement attend la vérification de son identité, il n’est pas forcément perdu.
-Le diagnostic détaillé des échanges reste `make ble-capture <port>`.
+Le diagnostic détaillé des échanges reste `make ble capture <port>`.
 
 Les [essais de mémoire](tests-memoire-os.md) regroupent les tests Mac et Windows.
 

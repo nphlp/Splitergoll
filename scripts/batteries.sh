@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Prépare le lecteur CoreBluetooth natif et affiche les deux batteries sur macOS.
-# Sans argument : lecture immédiate. avg : moyenne des lectures pendant 30 secondes.
+# read : lecture immédiate. avg : moyenne sur 30 secondes. Sans action : aide.
 
 set -eu
 
@@ -14,11 +14,19 @@ BATTERY_SOURCE="$SCRIPT_DIRECTORY/batteries.swift"
 BATTERY_INFO="$SCRIPT_DIRECTORY/batteries-info.plist"
 CENTRAL_CONFIGURATION="$KEYBOARD_ROOT/boards/shields/splitergoll/splitergoll_left.conf"
 
-[ "$#" -le 1 ] || fail 'Utilise make bat ou make bat avg'
+# Une demande d’aide ou une action invalide ne compile rien et n’utilise pas le Bluetooth.
+usage() {
+    bash "$SCRIPT_DIRECTORY/help.sh" bat
+    exit "${1:-0}"
+}
+
+[ "$#" -gt 0 ] || usage
+[ "$#" -eq 1 ] || usage 1
 case "${1-}" in
-    '') mode=snapshot ;;
+    read) mode=snapshot ;;
     avg) mode=average ;;
-    *) fail 'Utilise make bat ou make bat avg' ;;
+    help) usage ;;
+    *) usage 1 ;;
 esac
 
 [ "$(uname -s)" = Darwin ] || fail 'La lecture des batteries utilise CoreBluetooth et nécessite macOS'

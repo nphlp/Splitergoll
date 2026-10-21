@@ -9,33 +9,33 @@ DIAGNOSTIC_DIRECTORY=$(CDPATH= cd "$(dirname "$0")" && pwd)
 REPOSITORY=$(CDPATH= cd "$DIAGNOSTIC_DIRECTORY/../.." && pwd)
 TRACE_ROOT="$REPOSITORY/.local/usb-traces"
 protocol=USBTRACE
-command_name=usb-capture
+command_name='usb capture'
 validator="$DIAGNOSTIC_DIRECTORY/check.awk"
 serial_command=D
 if [ "${1-}" = --ble ]; then
     shift
     TRACE_ROOT="$REPOSITORY/.local/ble-traces"
     protocol=BLETRACE
-    command_name=ble-capture
+    command_name='ble capture'
     validator="$DIAGNOSTIC_DIRECTORY/check-ble.awk"
 elif [ "${1-}" = --profile ]; then
     shift
     TRACE_ROOT="$REPOSITORY/.local/ble-profiles"
     protocol=BLEPROFILE
-    command_name=ble-profile
+    command_name='ble profiles'
     validator="$DIAGNOSTIC_DIRECTORY/check-profile.awk"
 elif [ "${1-}" = --memory ]; then
     shift
     TRACE_ROOT="$REPOSITORY/.local/ble-memory"
     protocol=BLEMEM
-    command_name=ble-memory
+    command_name='ble memory'
     validator="$DIAGNOSTIC_DIRECTORY/check-memory.awk"
     serial_command=M
 elif [ "${1-}" = --forget ]; then
     shift
     TRACE_ROOT="$REPOSITORY/.local/ble-profiles"
     protocol=BLEFORGET
-    command_name=ble-forget
+    command_name='ble forget'
     validator="$DIAGNOSTIC_DIRECTORY/check-forget.awk"
 fi
 
@@ -47,11 +47,11 @@ fail() {
 
 if [ "$#" -eq 0 ]; then
     if [ "$protocol" = BLEFORGET ]; then
-        printf '%s\n' 'Utilise make ble-forget <port-série-gauche> <index>. Effacement ciblé après confirmation.'
+        printf '%s\n' 'Utilise make ble forget <port-série-gauche> <index>. Effacement ciblé après confirmation.'
         exit 0
     fi
     if [ "$protocol" = BLEPROFILE ]; then
-        printf '%s\n' 'Utilise make ble-profile <port-série-gauche> <status|free|index>'
+        printf '%s\n' 'Utilise make ble profiles <port-série-gauche> ou make ble select <port-série-gauche> <index>'
         exit 0
     fi
     printf 'Utilise make %s <port-série-gauche>\n' "$command_name"
@@ -59,18 +59,17 @@ if [ "$#" -eq 0 ]; then
     exit 0
 fi
 if [ "$protocol" = BLEFORGET ]; then
-    [ "$#" -eq 2 ] || fail 'Utilise make ble-forget <port-série-gauche> <index>'
+    [ "$#" -eq 2 ] || fail 'Utilise make ble forget <port-série-gauche> <index>'
     case "$2" in
         [0-9]) serial_command="!CLEAR $2" ;;
         *) fail 'Index attendu : de 0 à 9, sans sélection implicite' ;;
     esac
 elif [ "$protocol" = BLEPROFILE ]; then
-    [ "$#" -eq 2 ] || fail 'Utilise make ble-profile <port-série-gauche> <status|free|index>'
+    [ "$#" -eq 2 ] || fail 'Utilise make ble profiles <port-série-gauche> ou make ble select <port-série-gauche> <index>'
     case "$2" in
         status) serial_command=S ;;
-        free) serial_command=F ;;
         [0-9]) serial_command=$2 ;;
-        *) fail 'Action attendue : status, free ou un index de 0 à 9' ;;
+        *) fail 'Utilise make ble profiles <port> pour lire ou make ble select <port> <index> pour sélectionner' ;;
     esac
 else
     [ "$#" -eq 1 ] || fail 'Un seul port série explicite est attendu'
@@ -175,7 +174,7 @@ if [ "$protocol" = BLEMEM ]; then
 fi
 if [ "$protocol" = BLEPROFILE ]; then
     cat "$capture"
-    grep -q ' status=ok ' "$capture" || fail 'Sélection refusée : busy = saisie en cours (ancien firmware : hôte connecté), full = aucun emplacement libre'
+    grep -q ' status=ok ' "$capture" || fail 'Sélection refusée : busy = saisie en cours (ancien firmware : hôte connecté)'
     exit 0
 fi
 if [ "$protocol" = BLETRACE ]; then
@@ -195,7 +194,7 @@ if [ "$protocol" = BLETRACE ]; then
         }
         END { if (!reports) print "Classification absente : ancien firmware de capture" }
     ' "$capture"
-    printf '%s\n' 'Signatures de session uniquement. Pour l’OS mémorisé, utilise make ble-memory <port>.'
+    printf '%s\n' 'Signatures de session uniquement. Pour l’OS mémorisé, utilise make ble memory <port>.'
     exit 0
 fi
 

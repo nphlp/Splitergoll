@@ -65,7 +65,7 @@ Le [guide de build](build-local.md) détaille les prérequis et les fichiers UF2
 Ces commandes ne flashent pas le clavier.
 Sur macOS, `make flash wire macos right` sélectionne le dernier build correspondant
 et demande confirmation avant sa copie. Voir [le guide de flash](flash-firmware.md).
-`make help` affiche toutes les commandes. Sur macOS, `make bat` lit les deux batteries
+`make help` affiche toutes les commandes. Sur macOS, `make bat read` lit les deux batteries
 et `make bat avg` calcule une moyenne par moitié sur 30 secondes.
 
 ## Documentation

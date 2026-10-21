@@ -21,12 +21,12 @@ Bluetooth. La keymap reste macOS, même lorsque Windows reçoit les touches.
 
 Les essais actuels utilisent Mac en emplacement 0 et Windows en 1. Ces index
 viennent de nos appairages, ils ne sont pas imposés par le firmware.
-Adapter le port si `ls /dev/cu.usbmodem*` donne un autre nom.
+`make port` explique comment trouver le port de gauche. Adapter les exemples au nom trouvé.
 
 ```sh
-make ble-profile /dev/cu.usbmodem1101 status
-make ble-capture /dev/cu.usbmodem1101
-make ble-memory /dev/cu.usbmodem1101
+make ble profiles /dev/cu.usbmodem1101
+make ble capture /dev/cu.usbmodem1101
+make ble memory /dev/cu.usbmodem1101
 ```
 
 `paired=1` indique un appairage enregistré, `connected=1` une liaison active.
@@ -37,8 +37,8 @@ un emplacement et l’état connecté/déconnecté pour chaque session.
 Pour envoyer les prochaines frappes à Windows, puis revenir au Mac :
 
 ```sh
-make ble-profile /dev/cu.usbmodem1101 1
-make ble-profile /dev/cu.usbmodem1101 0
+make ble select /dev/cu.usbmodem1101 1
+make ble select /dev/cu.usbmodem1101 0
 ```
 
 Exécuter une seule sélection à la fois et vérifier son résultat avant de taper.
@@ -48,7 +48,7 @@ son entrée dans les réglages de l’ordinateur, sans l’oublier.
 `busy` demande de relâcher les touches et d’attendre une seconde avant de réessayer.
 Cette garde concerne la saisie, pas la présence d’un autre ordinateur connecté.
 
-Après une nouvelle connexion, attendre dix secondes puis relancer `ble-capture`.
+Après une nouvelle connexion, attendre dix secondes puis relancer `ble capture`.
 C’est une marge d’observation, pas un délai du classifieur. Avant une capture
 réalisée par l’agent, annoncer que le clavier est prêt. Les fichiers restent dans
 `.local/ble-traces/`. Leur préfixe `macos` désigne le collecteur USB, pas l’hôte BLE.

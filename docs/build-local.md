@@ -89,9 +89,16 @@ L’étude des signatures
 est séparée dans `diagnostics/os-signature/`, son firmware n’est ajouté qu’aux builds `usb-trace` et `ble-trace`.
 
 Chaque commande a sa propre cible dans le Makefile et appelle directement son script.
-Les mots après la commande sont ses arguments, vérifiés dans le script :
+Les sections séparent aide, Firmware, Batteries (bat/app) et Debug (port/usb/ble). Les mots après la
+première commande sont uniquement ses arguments : `make app build` ne lance pas
+le build firmware. Les scripts contrôlent leurs arguments avant toute action.
+`make app`, `make bat`, `make usb` et `make ble` affichent leurs aides, de même
+qu’une sous-commande erronée. Celle-ci renvoie aussi un statut d’erreur.
+
+Les scripts se répartissent ainsi :
 
 - `scripts/help.sh` et `terminal-colors.sh` : aide colorée et palette partagée avec les journaux.
+  `make port` explique comment trouver le port série du clavier, sans ouvrir de connexion.
 - `scripts/build-common.sh` : constantes de chemins et d’image, contrôles et lancement Docker.
 - `scripts/build-logs.sh` : affichage des étapes, durées et journaux complets.
 - `scripts/setup.sh` : préparation des dépendances.
@@ -100,6 +107,9 @@ Les mots après la commande sont ses arguments, vérifiés dans le script :
 - `scripts/container.sh` : commandes `west` et contrôles dans le conteneur.
 - `scripts/stop.sh` : arrêt des conteneurs de build du checkout.
 - `scripts/clear.sh` : arrêt et suppression des fichiers locaux générés.
+- `scripts/batteries.sh` : `make bat read` et `make bat avg`, sans Docker.
+- `companion/macos/app.sh` : `make app start`, `build` et `test`.
+- `diagnostics/os-signature/usb.sh` et `ble.sh` : sous-commandes de diagnostic.
 
 Les chemins locaux sont calculés depuis le dépôt. Aucun `.env` n’est nécessaire.
 Les caches CMake du nouveau rangement utilisent `build/keyboard/` dans le workspace

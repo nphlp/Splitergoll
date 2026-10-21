@@ -20,7 +20,7 @@ make flash bluetooth macos left ble-trace
 Après redémarrage, repérer son port série et lire les emplacements :
 
 ```sh
-make ble-profile /dev/cu.usbmodem1101 status
+make ble profiles /dev/cu.usbmodem1101
 ```
 
 Adapter le port si nécessaire. Noter la case `connected=1` du Mac, pas seulement
@@ -74,18 +74,18 @@ Rebrancher l’USB de gauche au Mac, garder les deux Bluetooth actifs, puis sél
 l’index Mac noté auparavant :
 
 ```sh
-make ble-profile /dev/cu.usbmodem1101 0
+make ble select /dev/cu.usbmodem1101 0
 ```
 
 Remplacer `0` par l’index réellement noté.
 La connexion existante doit reprendre sans nouvel appairage.
 
-Si le Mac affiche « Connecté » sans recevoir les touches, lire `make ble-profile
-<port> status` : son emplacement peut être connecté alors qu’un autre reste actif
+Si le Mac affiche « Connecté » sans recevoir les touches, lire
+`make ble profiles <port>` : son emplacement peut être connecté alors qu’un autre reste actif
 pour la saisie. Sélectionner son index, sans couper le Bluetooth. Une connexion
 affichée ne suffit pas à sélectionner la destination des touches. Aucun reset des appairages n’est nécessaire.
 
 Le sélecteur utilise l’API native de ZMK, qui sauvegarde l’index actif après
 60 secondes sous tension. Une coupure plus tôt peut restaurer l’ancien index,
-sans effacer les appairages. `status` permet de le vérifier et un index explicite
+sans effacer les appairages. `make ble profiles <port>` permet de le vérifier et un index explicite
 de le corriger. La commande ne lance aucun flash, reset ou effacement de clés.

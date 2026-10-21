@@ -168,7 +168,7 @@ de préparer la mémoire d’OS propre à V2, absente du profil macOS normal.
 - [ ] Vérifier le refus de bascule pendant un maintien et sa réussite après relâchement.
 - [x] Lire les traces Mac et Windows avec l’USB gauche conservé sur le Mac.
   Les deux ordinateurs restent appairés, il s’agit de reconnexions.
-- [x] Préparer l’effacement ciblé `ble-forget` et le [protocole mémoire](tests-memoire-os.md),
+- [x] Préparer l’effacement ciblé `ble forget` et le [protocole mémoire](tests-memoire-os.md),
   sans exécuter d’effacement sur les appairages actuels.
 - [ ] Réaliser les essais de nouvel appairage avec effacement ciblé autorisé,
   sans reset de tous les bonds, puis répéter les captures sur chaque ordinateur.
@@ -308,8 +308,10 @@ de préparer la mémoire d’OS propre à V2, absente du profil macOS normal.
 - [x] Tester la saisie sur batterie seule, sans USB ni dongle.
 - [x] Activer la récupération et le proxy de batterie droite sur la centrale Bluetooth.
 - [x] Lire les deux mesures sur le Mac : gauche 63 %, droite 62 %. Le menu natif n’affiche que la gauche, voir [batteries](batteries.md).
-- [x] Ajouter `make bat` pour une lecture rapide et `make bat avg` pour une moyenne par moitié sur 30 secondes.
+- [x] Ajouter `make bat read` pour une lecture rapide et `make bat avg` pour une moyenne par moitié sur 30 secondes.
 - [x] Garder un Makefile direct : chaque commande appelle son script, qui valide ses arguments. L’aide colorée est dans un script Bash.
+- [x] Regrouper les commandes avec des séparateurs : aide, Firmware, Batteries
+  (bat/app) et Debug (port/usb/ble). Sous-commandes par espace, aide sans action ou en cas d’argument erroné.
 - [x] Implémenter le premier lot de l’[application macOS](application-macos.md) en Swift : batteries
   gauche/droite dans une fenêtre et la barre des menus, actualisation et reconnexion.
   Services GATT existants, limites USB indiquées, tests du modèle. Essais matériels encore à faire.
@@ -328,6 +330,10 @@ de préparer la mémoire d’OS propre à V2, absente du profil macOS normal.
   en conservant la variante sur fond noir à côté.
 - [ ] Exposer l’état de liaison de droite pour masquer son niveau si elle se
   déconnecte seule. Le proxy batterie actuel conserve sa dernière valeur.
+- [ ] Après le rangement du Makefile, afficher 0 % comme un tiret dans l’app,
+  par convention, en conservant la mesure brute. Le lecteur CLI garde sa valeur.
+- [ ] Après le rangement du Makefile, corriger le symbole de batterie avec éclair
+  dans la barre des menus : il paraît écrasé verticalement, respecter ses proportions.
 - [ ] Valider le lecteur permanent : mises à jour, données indisponibles, déconnexions,
   autonomie, sommeil du Mac, ouverture de session et présentation honnête des mesures sous USB.
 - [ ] Ensuite, ajouter couche active et OS utilisé par la keymap dans l’app.
