@@ -92,7 +92,10 @@ isolés. Cette autorisation ne déclenche aucun flash ni effacement d’appairag
   le commit initial `6cbbfe8`. Les commits de refonte sont conservés avec de nouveaux
   identifiants. Cette racine n’a pas d’ancêtre commun avec `main` ou `dongle`.
   La promotion vers `main` reste une opération distincte à valider.
-- Le README reste au contenu validé du commit `6f89015` jusqu’à sa mise à jour finale.
+- Les ressources matérielles et les photos sont dans `design-pcb/`, `design-3d/`
+  et `images/`. Leurs noms de fichiers et sous-dossiers historiques sont conservés.
+- Le README reste au contenu validé du commit `6f89015` jusqu’à sa mise à jour finale,
+  sauf l’adaptation des chemins d’images après le renommage des dossiers.
 - Distinguer l’OS, le rôle central/périphérique et la sortie USB/Bluetooth.
 - Le BLE entre moitiés reste nécessaire avec le câblage actuel. Le Bluetooth direct
   fonctionne sur le Mac avec alimentation USB et sur batterie seule. Veille et réveil

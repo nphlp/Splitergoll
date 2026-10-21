@@ -12,7 +12,7 @@ de la batterie et la broche `B+` du contrôleur. **Laisser les deux interrupteur
 sur ON pour charger par USB.** OFF déconnecte aussi la batterie du circuit de charge,
 alors que l’USB continue d’alimenter le clavier.
 
-Cela décrit le câblage prévu dans `Design PCB/`. Après une charge USB avec ON,
+Cela décrit le câblage prévu dans `design-pcb/`. Après une charge USB avec ON,
 les niveaux relevés sur batterie passent de 53/57 % à 63/67 % : une progression
 cohérente avec une recharge des deux moitiés, sans mesure du courant ni de la capacité.
 Le chargeur est intégré au contrôleur, voir la [documentation nice!nano](https://nicekeyboards.com/docs/nice-nano/faq/).

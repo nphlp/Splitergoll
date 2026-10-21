@@ -13,16 +13,16 @@ In this repository, you will find:
 - The complete [ZMK firmware](https://github.com/zmkfirmware/zmk) configuration for the **Splitergoll**.
 
 <div>
-    <img src="/Images/IMG_7786.webp"/>
+    <img src="/images/IMG_7786.webp"/>
     <div style="display: flex; flex-direction: row; justify-content: space-between;">
-        <img src="/Images/IMG_7666.webp" width="49.5%"/>
-        <img src="/Images/IMG_7669.webp" width="49.5%"/> 
+        <img src="/images/IMG_7666.webp" width="49.5%"/>
+        <img src="/images/IMG_7669.webp" width="49.5%"/>
     </div>
     <div style="display: flex; flex-direction: row; justify-content: space-between;">
-        <img src="/Images/IMG_7670.webp" width="49.5%"/>
-        <img src="/Images/IMG_7671.webp" width="49.5%"/> 
+        <img src="/images/IMG_7670.webp" width="49.5%"/>
+        <img src="/images/IMG_7671.webp" width="49.5%"/>
     </div>
-    <img src="/Images/IMG_7981.webp"/>
+    <img src="/images/IMG_7981.webp"/>
 </div>
 
 ## Licenses and Inspirations

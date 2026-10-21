@@ -24,7 +24,7 @@ disponible pour le profil dongle historique.
 | Batteries de V2 | Alimentation des moitiés sans câble permanent |
 
 Le Nordic des anciennes photos n’est pas utilisé. Les fichiers de
-[PCB](<../Design PCB/>) et de [boîtier](<../Design 3D/>) sont dans le dépôt.
+[PCB](<../design-pcb/>) et de [boîtier](<../design-3d/>) sont dans le dépôt.
 Aucune LED externe n’est installée, seules celles des microcontrôleurs sont présentes.
 La migration n’active pas d’indicateur LED supplémentaire.
 
