@@ -216,8 +216,12 @@ Le réglage final demandé est deux minutes d’inactivité normale.
 bluetooth.conf fixe désormais ZMK_IDLE_TIMEOUT à 120000 et le garde de build
 exige cette valeur. L’utilisateur retient dix minutes avant veille profonde :
 ZMK_IDLE_SLEEP_TIMEOUT et son garde passent à 600000 ms. Les deux délais courent
-depuis la dernière activité et ne s’additionnent pas. La mesure batterie reste
-à 60 secondes. Le dernier flash explicitement confirmé reste le diagnostic à
+depuis la dernière activité et ne s’additionnent pas. Les premiers builds normaux
+validés gardaient une mesure batterie à 60 secondes. Les nouveaux builds passent
+à 5 secondes pendant ACTIVE, à la demande de l’utilisateur pour l’app compagnon.
+Le garde dans container.sh impose aussi cette cadence sur les deux moitiés.
+IDLE/SLEEP continuent d’arrêter les mesures, les délais 120/600 s sont conservés.
+Le dernier flash explicitement confirmé reste le diagnostic à
 10 secondes d’inactivité et 60 secondes de veille profonde. Les commandes de
 retour au profil normal ont été données, sans confirmation de ce reflash.
 L’utilisateur demande de refaire les deux protocoles de reprise exclusivement
@@ -418,7 +422,9 @@ versionnée dans `scripts/batteries.sh`, `batteries.swift` et `batteries-info.pl
 démarre une fenêtre de 30 secondes après réception de la première paire, relit
 toutes les 5 secondes et calcule une moyenne arithmétique par moitié, sans combiner
 les deux batteries. Ce sont les valeurs annoncées, pas des mesures ADC forcées :
-le profil normal les actualise toutes les 60 secondes. La première connexion et
+les nouveaux builds Bluetooth les actualisent toutes les 5 secondes pendant ACTIVE,
+après reflash des deux moitiés. Les builds précédents étaient à 60 secondes.
+La première connexion et
 lecture est limitée à 15 secondes, les erreurs rendent un statut non nul.
 Le lecteur nécessite macOS et Swift, compile automatiquement dans
 `.local/tools/batteries/` si ses sources ou métadonnées changent, sans Docker.
@@ -1066,20 +1072,42 @@ Le protocole BLEPROFILE v3 ajoute WINDOW sans données privées, lecture S passi
 La prochaine étape matérielle consiste à flasher seulement la gauche auto ble-trace,
 sans reset des réglages, puis contrôler les deux retours et la fermeture sur V1.
 
-## Application compagnon macOS prévue
+## Application compagnon macOS
 
-Le périmètre demandé est décrit dans docs/application-macos.md, sans code applicatif
-créé à ce stade. L’utilisateur choisit de commencer uniquement par les batteries :
-fenêtre simple, deux niveaux dans la barre des menus, actualisation, reconnexion,
-actions pour rouvrir et quitter. Réutiliser le firmware existant. Signaler la mesure
+Le périmètre demandé est décrit dans docs/application-macos.md. Le premier lot
+est implémenté dans companion/macos, avec ses invariants dans son AGENTS.md.
+L’utilisateur choisit de commencer uniquement par les batteries :
+fenêtre simple, deux niveaux dans la barre des menus, lecture automatique, reconnexion,
+actions pour rouvrir et quitter. Réutiliser les services GATT existants. Signaler la mesure
 non fiable sous USB sans supposer que l’app connaît l’alimentation de chaque moitié.
+Le format demandé devient une petite fenêtre fixe et deux lignes dans la barre
+des menus, gauche au-dessus de droite, avec lecture toutes les 5 secondes.
+Le dernier ajustement fixe 320 × 174 points, avec seulement titre, connexion
+et deux batteries. Aucun bouton d’actualisation, cadence ou date dans la fenêtre.
+Le menu contient seulement connexion, Ouvrir l’app et Quitter l’app.
+Les niveaux indisponibles deviennent un tiret simple, sans ancienne valeur dans la fenêtre.
+La droite seule hors ligne n’est pas détectable avec le service BAS actuel : le
+getter central restitue sa dernière valeur en cache, sans état de liaison.
+Ne pas confondre stabilité du pourcentage et déconnexion. L’état individuel est au TODO.
+L’app démarre sans fenêtre ni Dock. Ouvrir la fenêtre la passe en politique regular
+et affiche le Dock. Fermer la fenêtre revient en accessory et garde le lecteur et
+la barre des menus. Une minimisation garde le Dock. Le premier lancement
+réel demande l’inscription SMAppService à l’ouverture de session. Une approbation
+requise est signalée, une désactivation ultérieure par macOS est respectée.
+Cette inscription et les préférences utilisateur ne sont jamais modifiées par
+le build ni les tests. Les sept scénarios de session utilisent des callbacks simulés.
+À 100 %, présenter une batterie avec éclair dans la fenêtre et la barre des menus.
+L’accessibilité et l’infobulle conservent l’information de charge possible : la batterie
+pleine sans USB produit aussi ce niveau. La donnée brute et les tests restent distincts
+de cette présentation. Les détails de taille et de cadence sont dans la spec de l’app.
 Couche, OS, nouveau protocole et réglages avancés sont reportés.
 
 La cible ultérieure Swift/SwiftUI garde Informations et Réglages, avec les deux
 batteries, la couche active et l’OS utilisé par le clavier. Cinq réglages :
 présence dans la barre des menus, masquage du Dock, ouverture de session, affichage
-des batteries et affichage de la couche dans la barre des menus. L’ouverture de
-session est volontaire et discrète, les valeurs initiales restent à choisir.
+des batteries et affichage de la couche dans la barre des menus. Les trois premiers
+comportements sont désormais fixes : barre visible, Dock avec la fenêtre, inscription demandée.
+Leur interface de réglage reste à concevoir.
 
 Réutiliser la lecture CoreBluetooth existante comme base sans invoquer en boucle
 le programme ponctuel de make bat. Couche, OS et état USB de chaque moitié demandent
@@ -1089,8 +1117,35 @@ Les firmwares anciens signalent des capacités manquantes. Aucune capture de
 frappes, sélection de destination ou modification d’appairage pour observer.
 L’app reste facultative et son code doit être séparé de keyboard et diagnostics.
 La logique de l’app et le futur protocole firmware recevront les tests applicatifs
-adaptés, avec reprise après veille, données périmées et préférences. Rien n’est
-installé, lancé au démarrage ou modifié sur le Mac pendant ce cadrage documentaire.
+adaptés, avec reprise après veille, données périmées et préférences. Le premier lot
+teste le modèle GATT, l’identité, les valeurs et leur péremption sans accès Bluetooth.
+make app compile puis ouvre le bundle, make app-build compile seulement et
+make app-test exécute ses tests. Cibles séparées : make app build ferait aussi
+exécuter la cible build du firmware. Ne pas utiliser ce passage d’argument ici.
+Le bundle signé ad hoc et ses caches restent dans .local, sans dépendance externe,
+installation dans Applications. L’inscription à l’ouverture de session est demandée
+par l’app uniquement. Le bundle autonome inclut son ICNS généré depuis AppIcon.svg.
+Le SVG sélectionné représente seulement la silhouette noire de gauche, aux angles
+adoucis, sur un carré blanc arrondi de style macOS. Les deux variantes sur fond noir
+et blanc restent côte à côte dans Assets. Le dessin Swift sert uniquement à
+rasteriser cette source. Le bundle peut être copié dans Applications
+par l’utilisateur, après avoir quitté
+l’app. Vérifier l’entrée d’ouverture de session après changement de chemin.
+make clear supprime la copie locale mais ne touche pas la copie installée.
+Le script définit seulement
+CLANG_MODULE_CACHE_PATH pour ses sous-processus afin d’isoler aussi ce cache.
+Les essais Bluetooth matériels, consommation et veille du Mac restent à faire.
+Ne pas lancer l’app implicitement pour lire le clavier pendant la validation du build.
+
+Le lot compact passe les 21 tests Swift, le format, la syntaxe shell, les plists
+et la signature ad hoc. Les rendus connecté, déconnecté et charge possible utilisent
+des données fictives hors écran, sans lecteur Bluetooth. L’inscription réelle de
+session reste à valider avec l’utilisateur, les tests ne la déclenchent pas.
+La paire bluetooth-macos-2026-10-21-15-28-52 compile en 33 secondes et passe les
+gardes de build, UF2 et SHA-256. Les configurations vérifient 5/120/600 secondes,
+sans logs USB. Les avertissements connus Docker insecure, KSCAN et const tap-dance
+restent visibles. Le conteneur éphémère a disparu, les trois services existants
+sont préservés. Aucun flash ni lancement de l’app réelle effectué par l’agent.
 
 ## Ideas / backlog
 

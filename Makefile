@@ -1,6 +1,6 @@
 .DEFAULT_GOAL := help
 
-.PHONY: help setup build flash bat usb-capture ble-capture ble-profile ble-memory ble-forget stop clear
+.PHONY: help setup build flash bat app app-build app-test usb-capture ble-capture ble-profile ble-memory ble-forget stop clear
 
 # Récupère les mots après la commande et protège chaque argument pour le shell.
 ARGS = $(foreach arg,$(filter-out $@,$(MAKECMDGOALS)),'$(subst ','"'"',$(arg))')
@@ -19,6 +19,15 @@ flash:
 
 bat:
 	@bash scripts/batteries.sh $(ARGS)
+
+app:
+	@bash companion/macos/app.sh $(ARGS)
+
+app-build:
+	@bash companion/macos/app.sh build $(ARGS)
+
+app-test:
+	@bash companion/macos/app.sh test $(ARGS)
 
 usb-capture:
 	@bash diagnostics/os-signature/capture.sh $(ARGS)

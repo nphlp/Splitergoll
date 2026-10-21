@@ -85,6 +85,9 @@ show_command 'make flash wire macos right' 'Flasher le dernier build corresponda
 printf '\n%sBatteries sur macOS%s\n' "$LOG_HEADING" "$LOG_RESET"
 show_command 'make bat' 'Lire les deux derniers niveaux annoncés'
 show_command 'make bat avg' 'Calculer une moyenne par moitié sur 30 secondes'
+show_command 'make app' 'Compiler et ouvrir l’app des deux batteries'
+show_command 'make app-build' 'Compiler seulement l’app macOS, sans la lancer'
+show_command 'make app-test' 'Tester la logique de l’app sans accès Bluetooth'
 
 printf '\n%sDiagnostic de connexion USB%s\n' "$LOG_HEADING" "$LOG_RESET"
 show_command 'make usb-capture <port-série-gauche>' 'Lire les requêtes du firmware wire avec option usb-trace'

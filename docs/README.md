@@ -94,7 +94,7 @@ et `make bat avg` calcule une moyenne par moitié sur 30 secondes.
 - [Flash du firmware](flash-firmware.md) : copie des UF2, bootloader et messages du Finder.
 - [Appairage Bluetooth](appairage-bluetooth.md) : clés de connexion, reset et diagnostic.
 - [Batteries](batteries.md) : mesure actuelle et affichage des deux niveaux.
-- [Application macOS](application-macos.md) : premier lot batteries dans une fenêtre et la barre des menus, puis couche, OS et réglages.
+- [Application macOS](application-macos.md) : lancer le lecteur des deux batteries dans une fenêtre et la barre des menus, puis le valider sur V2.
 - [Keymap automatique USB](keymap-auto.md) : macOS ou Windows avec gaming, sélection à la connexion.
 - [Keymap automatique Bluetooth](keymap-auto-bluetooth.md) : OS mémorisé et bascule Mac/Windows confirmés sur V1 en diagnostic.
 - [Keymap](keymap.md) : organisation, couches et sept schémas de touches.

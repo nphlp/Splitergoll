@@ -310,17 +310,32 @@ de préparer la mémoire d’OS propre à V2, absente du profil macOS normal.
 - [x] Lire les deux mesures sur le Mac : gauche 63 %, droite 62 %. Le menu natif n’affiche que la gauche, voir [batteries](batteries.md).
 - [x] Ajouter `make bat` pour une lecture rapide et `make bat avg` pour une moyenne par moitié sur 30 secondes.
 - [x] Garder un Makefile direct : chaque commande appelle son script, qui valide ses arguments. L’aide colorée est dans un script Bash.
-- [ ] Premier lot de l’[application macOS](application-macos.md) en Swift : batteries
+- [x] Implémenter le premier lot de l’[application macOS](application-macos.md) en Swift : batteries
   gauche/droite dans une fenêtre et la barre des menus, actualisation et reconnexion.
-  Réutiliser le firmware existant et rappeler les limites de mesure sous USB.
-- [ ] Valider le lecteur permanent : mises à jour, données anciennes, déconnexions,
-  autonomie, sommeil du Mac et présentation honnête des mesures sous USB.
+  Services GATT existants, limites USB indiquées, tests du modèle. Essais matériels encore à faire.
+- [x] Compacter la fenêtre avec une taille fixe, lire toutes les 5 secondes et
+  afficher gauche/droite sur deux lignes dans la barre des menus. À 100 %, indiquer
+  une charge possible sans la présenter comme une charge détectée.
+- [x] Simplifier la fenêtre : titre, connexion et deux batteries. Menu limité à connexion,
+  ouvrir et quitter. Dock limité à la fenêtre ouverte, inscription native à l’ouverture de session.
+- [x] Passer les mesures des deux moitiés à 5 secondes pendant l’activité et préparer
+  la paire `bluetooth macos`. Reflash et impact sur l’autonomie restent à valider.
+- [x] Ajouter une icône à l’app, une batterie avec éclair à 100 % et un tiret pour
+  les valeurs indisponibles. Documenter la copie autonome dans Applications.
+- [x] Remplacer l’icône stylisée par un SVG aux contours et positions réels du PCB.
+  Afficher le Dock à l’ouverture de la fenêtre et le masquer à sa fermeture.
+- [x] Retenir la silhouette noire de gauche sur carré blanc arrondi comme icône,
+  en conservant la variante sur fond noir à côté.
+- [ ] Exposer l’état de liaison de droite pour masquer son niveau si elle se
+  déconnecte seule. Le proxy batterie actuel conserve sa dernière valeur.
+- [ ] Valider le lecteur permanent : mises à jour, données indisponibles, déconnexions,
+  autonomie, sommeil du Mac, ouverture de session et présentation honnête des mesures sous USB.
 - [ ] Ensuite, ajouter couche active et OS utilisé par la keymap dans l’app.
   Définir leur transmission et celle de l’état USB par moitié, avec compatibilité
   des firmwares anciens. Ce protocole ne bloque pas le premier lot batteries.
-- [ ] Ensuite, ajouter les cinq options prévues : présence dans la barre des menus,
-  masquage du Dock, lancement à l’ouverture de session, batteries et couche dans
-  la barre des menus.
+- [ ] Ensuite, rendre configurables la présence dans la barre des menus, le Dock,
+  le lancement à l’ouverture de session et les informations affichées. Le mode
+  actuel garde la barre des menus, montre le Dock avec la fenêtre et demande le lancement automatique.
 - [ ] Comparer la veille profonde de la centrale et son maintien en inactivité : reprise depuis la droite, première frappe, délai de reconnexion et impact sur l’autonomie, puis choisir le comportement.
 - [ ] Tester branchement USB, débranchement, charge secteur et préférences sauvegardées.
 - [ ] Vérifier l’outillage de build sur Windows/WSL.

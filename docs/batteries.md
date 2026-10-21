@@ -49,7 +49,8 @@ Le schéma du clavier ne décrit pas les composants internes des contrôleurs.
 
 Chaque moitié possède son capteur et `CONFIG_ZMK_BATTERY_REPORTING=y`.
 La gauche est la seule connectée au Mac. Son service Battery Service annonce
-sa mesure locale. L’intervalle normal est de 60 secondes pendant l’activité.
+sa mesure locale. Les nouveaux builds Bluetooth mesurent toutes les 5 secondes pendant l’activité,
+après reflash des deux moitiés. Les anciens firmwares restent à leur cadence initiale.
 **ZMK arrête les mesures en inactivité et les relance au réveil d’activité.**
 Une lecture GATT ne relance pas elle-même la mesure. Pour comparer la charge,
 appuyer sur une touche de chaque moitié avant le relevé.
@@ -97,9 +98,10 @@ make bat avg
 
 `make bat` affiche les deux derniers niveaux annoncés, sans attendre 30 secondes.
 `make bat avg` lit toutes les 5 secondes pendant 30 secondes et affiche la moyenne
-de chaque moitié, séparément. Le profil normal mesure les batteries toutes les
-60 secondes pendant l’activité : plusieurs lectures peuvent donc porter sur la
-même mesure, notamment après le passage en inactivité.
+de chaque moitié, séparément. Les nouveaux firmwares Bluetooth mesurent toutes les
+5 secondes pendant l’activité. Les lectures de l’app et les mesures du clavier ne
+sont pas synchronisées : elles peuvent porter sur la même mesure, surtout en inactivité.
+L’impact de cette cadence sur l’autonomie reste à mesurer.
 
 Le lecteur nécessite macOS et les outils de ligne de commande Xcode pour Swift.
 Il se compile automatiquement au premier lancement, puis utilise son cache dans
@@ -115,11 +117,10 @@ Un indicateur unique représentant la batterie la plus faible pourrait aussi êt
 étudié, mais ce calcul ne fait pas partie des deux options natives ci-dessus.
 Il demanderait une adaptation du firmware et une décision sur les mesures absentes.
 
-La commande de lecture est versionnée. L’affichage des deux niveaux dans la barre
-des menus est prévu dans le premier lot de l’[application macOS](application-macos.md),
-avec une fenêtre d’informations. Couche, OS et réglages avancés viendront ensuite.
-La validation devra vérifier
-l’autonomie et le sommeil du Mac, la documentation
+La commande de lecture est versionnée. `make app` ouvre maintenant le premier lot
+de l’[application macOS](application-macos.md) : deux niveaux dans la barre des menus
+et une fenêtre d’informations, à valider sur V2. Couche, OS et réglages avancés
+viendront ensuite. La validation devra vérifier l’autonomie et le sommeil du Mac, la documentation
 signalant que les notifications batterie peuvent réveiller certains hôtes macOS.
 
 ## Sources

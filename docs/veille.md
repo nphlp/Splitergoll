@@ -88,7 +88,7 @@ qu’en veille profonde est une option à décider après les essais.
 
 Reflasher les deux UF2 du profil `bluetooth`, disponibles pour V2 après `make build bluetooth macos`,
 sans firmware de reset. Cela rétablit l’inactivité à deux minutes, la veille à
-dix minutes et la mesure batterie à 60 secondes. Les appairages sont conservés.
+dix minutes et la mesure batterie à 5 secondes pendant l’activité. Les appairages sont conservés.
 La remise du nouveau build normal sur V2 reste à faire après les essais.
 Les USB branchés pour charger bloquent la veille profonde pendant la charge.
 Dans `multi`, la première frappe de réveil et le retour à Windows restent les mêmes

@@ -19,7 +19,7 @@ il n’est pas nécessaire d’avoir V1 et V2 ensemble.
 | Veille et réveil | Reprise courte et réveil par la gauche confirmés. Compléter première frappe, encodeurs et OS après réveil | La droite seule ne réveille pas la centrale en veille profonde. Essais sur batterie, sans USB |
 | Politique de veille et autonomie | Comparer veille profonde et centrale maintenue en inactivité, puis décider du compromis | Demande un firmware d’essai et des mesures sur une durée suffisante |
 | Keymap et matériel côté Mac | Compléter touches, accents, couches, encodeurs, bootloader et redémarrage | La validation Windows avec gaming reste indépendante |
-| [Application macOS](application-macos.md) | Premier lot : deux batteries dans une fenêtre et la barre des menus, reprise et actualisation | Lecture existante réutilisable, limites USB à afficher. Couche, OS et réglages avancés reportés. Tester consommation et sommeil du Mac |
+| [Application macOS](application-macos.md) | Premier lot implémenté : deux batteries dans une fenêtre et la barre des menus, à valider sur V2 | Modèle et inscription simulée testés. Vérifier lecture à 5 s, reprise, sommeil du Mac et ouverture de session. Couche, OS et réglages avancés reportés |
 | Correction manuelle de l’OS mémorisé | Développer et tester correction, sauvegarde, reconnexion et redémarrage sur Mac | Choisir d’abord le raccourci et préparer la mémoire d’OS de V2. Une vérification Windows restera nécessaire |
 
 Le profil courant retenu pour V2 est `bluetooth macos` normal : keymap fixe,
