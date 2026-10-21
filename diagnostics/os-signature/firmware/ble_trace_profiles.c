@@ -16,6 +16,13 @@
 #include <zmk/matrix.h>
 #if defined(CONFIG_SPLITERGOLL_BLE_AUTO)
 #include <splitergoll/ble_auto.h>
+#include <splitergoll/ble_reconnect.h>
+#endif
+
+#if defined(CONFIG_SPLITERGOLL_BLE_RECONNECT)
+#define BLE_PROFILE_VERSION "3"
+#else
+#define BLE_PROFILE_VERSION "2"
 #endif
 
 BUILD_ASSERT(ZMK_BLE_PROFILE_COUNT <= BLE_PROFILE_LIMIT);
@@ -161,7 +168,7 @@ void splitergoll_ble_profile_command(const struct device *uart, char command) {
     }
     unlock_selection();
     char line[170];
-    snprintf(line, sizeof(line), "BLEPROFILE BEGIN version=2 count=%u active=%d save_delay_ms=%u\n",
+    snprintf(line, sizeof(line), "BLEPROFILE BEGIN version=" BLE_PROFILE_VERSION " count=%u active=%d save_delay_ms=%u\n",
              ZMK_BLE_PROFILE_COUNT, zmk_ble_active_profile_index(), CONFIG_ZMK_SETTINGS_SAVE_DEBOUNCE);
     if (!trace_send_line(uart, line)) {
         return;
@@ -173,6 +180,13 @@ void splitergoll_ble_profile_command(const struct device *uart, char command) {
             return;
         }
     }
+#if defined(CONFIG_SPLITERGOLL_BLE_RECONNECT)
+    struct ble_reconnect_status reconnect = splitergoll_ble_reconnect_status();
+    snprintf(line, sizeof(line), "BLEPROFILE WINDOW ready=%u remaining_ms=%u advertising=%u known=%u connected=%u error=%d\n",
+             reconnect.ready, reconnect.remaining_ms, reconnect.advertising,
+             reconnect.known, reconnect.connected, reconnect.error);
+    if (!trace_send_line(uart, line)) return;
+#endif
     snprintf(line, sizeof(line), "BLEPROFILE RESULT command=%c status=%s selected=%d changed=%u error=%d\n",
              command, status, zmk_ble_active_profile_index(), changed, error);
     if (trace_send_line(uart, line)) {

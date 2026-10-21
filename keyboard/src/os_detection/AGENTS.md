@@ -545,6 +545,12 @@ annonce ne garantit une reconnexion instantanée d’un ordinateur qui ne cherch
 
 ## Direction future USB + BLE
 
+Le lot suivant ne réalise pas encore ce mode mixte. Il active la reconnexion des
+hôtes connus sur dix secondes au démarrage et via le raccourci, uniquement dans
+bluetooth auto. Le contrat radio est dans ../connections/AGENTS.md. Le sélecteur
+garde ses gardes et son cycle actuel, sans bascule automatique sur une arrivée.
+La mémoire d’OS et les identités de bonds restent inchangées.
+
 Le cadrage utilisateur passe du slot BLE à une destination regroupant appareil,
 liaisons disponibles et OS. Priorité USB au BLE pour un appareil associé, pas
 priorité USB globale. Le cycle doit garder Mac BLE accessible lorsque Windows USB

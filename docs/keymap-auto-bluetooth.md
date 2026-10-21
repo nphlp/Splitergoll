@@ -16,6 +16,11 @@ Au premier appairage, le clavier observe les services demandés et
 il reprend exclusivement cet OS. Les appairages et enregistrements déjà créés
 par notre diagnostic sont compatibles, aucun reset n’est nécessaire.
 
+Le nouveau firmware ouvre [dix secondes de reconnexion](reconnexion-bluetooth.md)
+au démarrage et avec le raccourci. Il est réservé aux appareils déjà appairés :
+l’accueil d’un nouveau bond reste à développer, les profils fixes permettent encore
+de réaliser cet appairage et son acquisition d’OS.
+
 Une fois la connexion sécurisée et sa mémoire vérifiée, les couches du bon OS
 deviennent disponibles. Les affectations sont partagées avec les profils fixes,
 y compris le pavé numérique et le gaming Windows.
@@ -54,6 +59,8 @@ Adapter le port et l’index au statut réel, ici Mac 0 et Windows 1. Une fois c
 le clic droit doit afficher Windows. Tester Control, le gaming et le retour à sa base.
 Revenir au Mac avec le même sélecteur sur 0, puis vérifier l’affichage macOS et Command.
 Ne pas taper sur Splitergoll pendant les changements de destination.
+Si Windows est déconnecté après la fermeture de la fenêtre, faire L1 + clic droit
+pour la rouvrir avant de le reconnecter. Une sélection USB seule ne l’ouvre pas.
 
 Le diagnostic de session Windows peut rester inconnu en reconnexion : la décision
 vient de `stored=windows`, pas d’une nouvelle reconnaissance. Les essais avec
@@ -63,5 +70,6 @@ V2 sur batterie, Linux et d’autres ordinateurs restent à tester.
 Lorsque le PC est disponible, vérifier le raccourci avec les deux hôtes connectés :
 maintenir L1, cliquer à droite, tout relâcher, puis contrôler l’OS au clic simple.
 Refaire le geste pour revenir au Mac. Avec le Mac seul connecté, le geste ne doit
-rien changer. Si Windows reste déconnecté, sa reconnexion doit être établie avant
-ce test, le raccourci ne la déclenche pas.
+pas changer la destination, mais ouvre dix secondes. Si Windows revient pendant
+cette fenêtre, un nouveau geste permet ensuite de le sélectionner. Cette nouvelle
+gestion de reconnexion reste à valider sur V1.

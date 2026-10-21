@@ -109,12 +109,14 @@ function Test-BleCapture {
 function Test-BleProfile {
     param([System.Collections.Generic.List[string]]$Lines, [string]$Command)
 
-    if ($Lines.Count -lt 5 -or $Lines[1] -notmatch '^BLEPROFILE BEGIN version=[12] count=([0-9]+) active=([0-9]+) save_delay_ms=[0-9]+$') {
+    if ($Lines.Count -lt 5 -or $Lines[1] -notmatch '^BLEPROFILE BEGIN version=([123]) count=([0-9]+) active=([0-9]+) save_delay_ms=[0-9]+$') {
         throw 'Réponse incorrecte : firmware ble-trace avec contrôle des emplacements requis.'
     }
-    $Expected = [int]$Matches[1]
-    $Active = [int]$Matches[2]
-    if ($Expected -lt 1 -or $Expected -gt 10 -or $Active -ge $Expected -or $Lines.Count -ne $Expected + 4) {
+    $Version = [int]$Matches[1]
+    $Expected = [int]$Matches[2]
+    $Active = [int]$Matches[3]
+    $Extra = [int]($Version -eq 3)
+    if ($Expected -lt 1 -or $Expected -gt 10 -or $Active -ge $Expected -or $Lines.Count -ne $Expected + 4 + $Extra) {
         throw 'Réponse des emplacements tronquée ou incohérente.'
     }
     for ($Index = 0; $Index -lt $Expected; $Index++) {
@@ -122,8 +124,24 @@ function Test-BleProfile {
             throw 'Liste des emplacements incorrecte.'
         }
     }
-    if ($Lines[$Expected + 2] -notmatch '^BLEPROFILE RESULT command=([SF0-9]) status=(ok|busy|full|invalid|failed) selected=([0-9]+) changed=[01] error=-?[0-9]+$' -or
-        $Matches[1] -ne $Command -or [int]$Matches[3] -ne $Active -or $Lines[$Expected + 3] -ne 'BLEPROFILE END') {
+    if ($Version -eq 3) {
+        if ($Lines[$Expected + 2] -notmatch '^BLEPROFILE WINDOW ready=([01]) remaining_ms=([0-9]+) advertising=([01]) known=([0-9]+) connected=([0-9]+) error=-?[0-9]+$') {
+            throw 'État de reconnexion absent ou incorrect.'
+        }
+        $Ready = [int]$Matches[1]
+        $Remaining = [int]$Matches[2]
+        $Advertising = [int]$Matches[3]
+        $Known = [int]$Matches[4]
+        $Connected = [int]$Matches[5]
+        $Limit = 1 -shl $Expected
+        if ($Remaining -gt 10000 -or $Known -ge $Limit -or $Connected -ge $Limit -or
+            ($Connected -band (-bnot $Known)) -ne 0 -or
+            ($Ready -eq 0 -and ($Remaining -ne 0 -or $Advertising -ne 0 -or $Known -ne 0 -or $Connected -ne 0))) {
+            throw 'État de reconnexion incohérent.'
+        }
+    }
+    if ($Lines[$Expected + 2 + $Extra] -notmatch '^BLEPROFILE RESULT command=([SF0-9]) status=(ok|busy|full|invalid|failed) selected=([0-9]+) changed=[01] error=-?[0-9]+$' -or
+        $Matches[1] -ne $Command -or [int]$Matches[3] -ne $Active -or $Lines[$Expected + 3 + $Extra] -ne 'BLEPROFILE END') {
         throw 'Résultat du contrôle incorrect.'
     }
 }

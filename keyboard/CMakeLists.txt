@@ -32,9 +32,18 @@ if(CONFIG_SPLITERGOLL_OS_AUTO)
   zephyr_library_sources(src/os_detection/usb_auto_state.c)
   zephyr_link_libraries(-Wl,--wrap=zmk_event_manager_raise -Wl,--wrap=zmk_keymap_layer_to)
   if(CONFIG_SPLITERGOLL_BLE_AUTO)
+    if(NOT CONFIG_SPLITERGOLL_BLE_RECONNECT)
+      message(FATAL_ERROR "BLE auto requires the legacy known-host reconnect controller")
+    endif()
     zephyr_library_sources(src/os_detection/ble_auto_state.c src/os_detection/ble_auto.c
                            src/os_detection/ble_device_state.c src/os_detection/ble_device_behavior.c)
   else()
     zephyr_library_sources(src/os_detection/usb_auto.c)
   endif()
+endif()
+if(CONFIG_SPLITERGOLL_BLE_RECONNECT)
+  zephyr_library_sources(src/connections/host_window_policy.c
+                         src/connections/ble_reconnect_state.c src/connections/ble_reconnect.c)
+  zephyr_link_libraries(-Wl,--wrap=bt_le_adv_start -Wl,--wrap=bt_le_adv_stop
+                       -Wl,--wrap=bt_conn_auth_cb_register)
 endif()

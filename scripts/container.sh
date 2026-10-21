@@ -114,13 +114,21 @@ check_firmware() {
 
     if [ "$PROFILE" = bluetooth ] && [ "$KEYMAP_PROFILE" = auto ] && [ "$side" = left ]; then
         grep -qx 'CONFIG_SPLITERGOLL_BLE_AUTO=y' "$configuration" || fail 'Sélecteur de keymap BLE absent'
+        grep -qx 'CONFIG_SPLITERGOLL_BLE_RECONNECT=y' "$configuration" || fail 'Fenêtre de reconnexion BLE absente'
+        grep -qx 'CONFIG_BT_FILTER_ACCEPT_LIST=y' "$configuration" || fail 'Filtre des hôtes connus absent'
+        grep -qx 'CONFIG_BT_SMP_APP_PAIRING_ACCEPT=y' "$configuration" || fail 'Contrôle des nouveaux appairages absent'
         for symbol in splitergoll_ble_acquisition_snapshot ble_auto_can_select __wrap_bt_l2cap_recv splitergoll_ble_auto_next_device; do
             grep -Eq "0x[0-9a-f]+[[:space:]]+$symbol$" "$directory/zephyr/zmk.map" || fail "Composant auto BLE absent : $symbol"
+        done
+        for symbol in __wrap_bt_le_adv_start __wrap_bt_le_adv_stop __wrap_bt_conn_auth_cb_register ble_reconnect_apply; do
+            grep -Eq "0x[0-9a-f]+[[:space:]]+$symbol$" "$directory/zephyr/zmk.map" || fail "Contrôle de reconnexion absent : $symbol"
         done
         grep -q 'device-modifier-position = < 0x28 >' "$directory/zephyr/zephyr.dts" || fail 'Position L1 du raccourci absente'
         grep -q 'device-next-position = < 0x2b >' "$directory/zephyr/zephyr.dts" || fail 'Position encodeur du raccourci absente'
     elif grep -qx 'CONFIG_SPLITERGOLL_BLE_AUTO=y' "$configuration"; then
         fail 'Sélecteur BLE présent hors du profil auto bluetooth central'
+    elif grep -qx 'CONFIG_SPLITERGOLL_BLE_RECONNECT=y' "$configuration"; then
+        fail 'Reconnexion connue présente hors du profil auto bluetooth central'
     fi
 
     if [ "$side" = left ]; then

@@ -18,19 +18,24 @@
 
 Détection USB et BLE Mac/Windows, mémoire d’OS et bascule entre appareils sont
 validées sur V1 dans les conditions indiquées ci-dessous. Linux automatique reste à faire.
-Les fenêtres de dix secondes et les destinations mixtes ne sont pas encore actives.
+La reconnexion connue sur dix secondes est intégrée au nouveau firmware, à valider
+sur V1. L’accueil des nouveaux appareils et les destinations mixtes restent à faire.
 
 Ordre des prochains lots :
 
-1. Intégrer à ZMK le moteur des fenêtres, la reconnexion et l’ajout d’appareil sans
-   détourner la saisie. Le moteur pur est développé et testé, les API radio restent à raccorder.
+1. Valider sur V1 les fenêtres de reconnexion des appareils connus. Puis séparer
+   l’accueil d’un nouveau bond de la sélection, sans détourner la saisie.
 2. Réunir USB et BLE autour des [destinations](destinations-saisie.md), en résolvant
    l’association entre l’hôte USB et son éventuel bond BLE. Puis intégrer Gaming USB.
 3. Compléter le retour au précédent appareil au réveil, la correction manuelle d’OS,
    l’optimisation du délai de bascule, puis Linux et le dongle.
 
-Les essais de veille et d’autonomie nécessitent V2. Aucun nouveau reset d’appairage,
+V2 est au bureau avec le Mac, le firmware Bluetooth macOS fixe a été installé.
+Les essais de reconnexion Mac/Windows sur V1 sont reportés. La validation de veille
+et d’autonomie de V2 après migration reste à faire. Aucun nouveau reset d’appairage,
 flash, bascule matérielle ou intervention sur le PC occupé n’est implicite dans ce travail.
+Un essai des fenêtres avec le Mac seul resterait partiel. Il demanderait d’abord
+de préparer la mémoire d’OS propre à V2, absente du profil macOS normal.
 
 - [x] Préparer le diagnostic USB sans bascule de keymap et valider une première
   lecture sur V1 et le Mac : 24 requêtes sans perte, voir [le protocole](detection-os.md).
@@ -180,6 +185,17 @@ flash, bascule matérielle ou intervention sur le PC occupé n’est implicite d
 - [ ] Raccorder ce moteur aux annonces, à l’admission et à l’affectation des nouveaux
   bonds dans ZMK, sans modifier silencieusement les dépendances ni changer la
   destination de saisie pour choisir temporairement un slot libre.
+- [x] Séparer la reconnexion connue du nouvel appairage dans le périmètre du développement.
+  Un appareil connu garde son slot et ses clés. ZMK exige actuellement un slot actif
+  vide pour un nouveau bond et refuse un slot occupé, sans remplacement automatique.
+- [x] Intégrer les annonces filtrées de reconnexion dans `bluetooth auto` : dix secondes
+  au démarrage et avec L1 + clic droit, sans changement de slot à l’arrivée d’un hôte.
+  Aucun nouvel appairage admis dans ce premier lot, aucune suppression de clés.
+- [ ] Valider sur V1 les deux ordres de retour Mac/Windows, la fermeture à dix secondes,
+  la réouverture par raccourci et la saisie sur l’appareil resté sélectionné.
+- [ ] Séparer dans l’adaptation ZMK le slot d’accueil d’un nouvel appareil et le slot
+  de saisie. Définir l’ouverture de cet accueil, sa fermeture pendant une transaction,
+  les slots pleins et la sérialisation de plusieurs demandes, sans écrasement de bond.
 - [ ] Gérer les annonces pour accueillir un second ordinateur pendant que le premier
   est connecté. Les deux connexions simultanées sont observées sur V1, l’arrivée
   contrôlée d’un second hôte pendant que le premier est déjà connecté reste à tester.

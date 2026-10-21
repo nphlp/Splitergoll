@@ -1277,6 +1277,18 @@ dans le test du classifieur. Aucun besoin de nouvelle collecte pour ce correctif
 
 ## Diagnostic partagé avec Bluetooth auto
 
+Le nouveau contrôleur de reconnexion connue ajoute BLEPROFILE v3 dans bluetooth
+auto ble-trace. Une ligne WINDOW précède RESULT : ready, remaining_ms, advertising,
+known, connected et error. Aucun identifiant privé. Les lecteurs AWK et PowerShell
+acceptent v1/v2 sans ligne et v3 avec exactement une ligne, des masques bornés et
+un délai au plus 10000 ms. Une lecture S n’ouvre aucune fenêtre et ne mute aucun slot.
+Le profil fixe ble-trace reste v2 et conserve l’appairage ZMK natif. Dans auto,
+sélectionner un slot libre ne permet pas encore un nouvel appairage, le contrôleur
+refuse les nouveaux bonds. Voir le contrat keyboard/src/connections/AGENTS.md.
+Validation : 42 réponses positives/négatives communes AWK/PowerShell, syntaxe PS
+et BOM UTF-8 conservés. Le témoin bluetooth macos ble-trace v2 conserve exactement
+ses deux UF2. Le nouveau auto ble-trace v3 compile, sans essai matériel à ce stade.
+
 La collecte active et la mémoire appartiennent maintenant au clavier, voir son
 AGENTS. ble_trace.c garde seulement le tampon historique et son dump, ble_trace_memory.c
 seulement le format BLEMEM. Le classifieur et son test sont déplacés avec git mv.

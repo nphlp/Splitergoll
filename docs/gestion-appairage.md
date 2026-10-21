@@ -1,9 +1,11 @@
 # Ouvrir et fermer l’appairage
 
-**Proposition en discussion, pas encore implémentée.** L’appairage crée une nouvelle
+**Règles cibles, partiellement implémentées.** L’appairage crée une nouvelle
 association. La reconnexion réutilise une association existante, sans la refaire.
-Le moteur de décision est développé et testé sans matériel. Les annonces, l’admission
-et les raccourcis du firmware ne l’utilisent pas encore, aucun nouveau flash n’est prêt.
+Le premier lot traite seulement les [reconnexions connues](reconnexion-bluetooth.md)
+pendant dix secondes, au démarrage et avec le raccourci. Les nouveaux appairages,
+la recherche avec bascule automatique et Gaming USB restent à développer.
+Les tests logiciels ne remplacent pas la validation de ce lot sur V1.
 
 ## Fenêtres de dix secondes
 
@@ -58,11 +60,14 @@ mixte avec Gaming USB, pas une coupure de la seule sortie d’un clavier en Blue
 
 ## Décisions restantes
 
+- Séparer le slot d’accueil d’un nouvel appareil de la destination des frappes.
+  ZMK exige actuellement un slot actif vide, un slot occupé refuse l’appairage.
+- Définir comment ouvrir l’accueil d’un nouvel appareil pendant l’usage d’un connu.
 - Définir la fin d’un appairage commencé avant la fermeture de la fenêtre.
 - Prévoir le cas où tous les slots sont occupés, sans effacement automatique.
 - Préciser si Gaming USB déconnecte aussi Windows BLE, en plus du Mac.
 
-L1 + clic encodeur droit réunit le choix de destination et l’ouverture de la fenêtre.
-Le diagnostic USB permet déjà de choisir un slot libre, mais ne constitue pas encore
-cette gestion d’ouverture/fermeture. La [procédure de réparation](appairage-bluetooth.md)
+À terme, L1 + clic encodeur droit réunira le choix de destination et l’ouverture
+complète de la fenêtre. Le diagnostic USB permet déjà de choisir un slot libre,
+mais ce choix change aussi la destination. La [procédure de réparation](appairage-bluetooth.md)
 reste distincte, aucun effacement des réglages n’est nécessaire pour ajouter un appareil.

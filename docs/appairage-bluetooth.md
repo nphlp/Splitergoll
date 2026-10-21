@@ -4,6 +4,21 @@ La gauche est la centrale : elle se connecte à la droite et au Mac. Ces deux
 liaisons ont leurs propres clés d’appairage. Flasher une nouvelle keymap ou
 appuyer sur reset ne supprime pas ces clés.
 
+## Effacer seulement les ordinateurs appairés
+
+Avec la keymap fixe `macos`, maintenir **L1 + L2**, attendre une demi-seconde,
+puis cliquer sur **l’encodeur droit**. Relâcher les touches. Ce raccourci appelle
+`BT_CLR_ALL` : tous les slots d’ordinateurs sont vidés et le slot 0 est sélectionné.
+La liaison entre les deux moitiés et la keymap sont conservées.
+
+Oublier ensuite l’ancienne entrée Splitergoll dans les réglages Bluetooth du Mac,
+puis l’appairer à nouveau. Les deux moitiés doivent pouvoir communiquer pour
+effectuer le raccourci. Le clic gauche de cette même couche ouvre le bootloader.
+
+Ce geste ne fait pas un `settings_reset`. Le bouton reset redémarre seulement
+le contrôleur. Le nouveau `bluetooth auto` de reconnexion ne permet pas encore
+de nouveaux appairages, utiliser ici le profil fixe prévu pour V2.
+
 ## Réinitialiser les réglages
 
 Lors d’un changement de centrale ou d’un appairage incohérent :

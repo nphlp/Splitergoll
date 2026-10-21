@@ -17,8 +17,10 @@ l’ordinateur connecté suivant. Le clavier attend la fin des appuis et des
 comportements différés avant de changer de destination, puis charge son OS mémorisé.
 Le clic simple sur l’encodeur continue d’afficher l’OS.
 
-Les emplacements vides ou déconnectés sont ignorés. Si le seul ordinateur connecté
-est déjà sélectionné, rien ne change. Le geste reste disponible quand l’OS sélectionné
+Les emplacements vides ou déconnectés sont ignorés pour la sélection immédiate.
+Le geste ouvre aussi [dix secondes de reconnexion](reconnexion-bluetooth.md).
+Si le seul ordinateur connecté est déjà sélectionné, la destination reste inchangée.
+Le geste reste disponible quand l’OS sélectionné
 est inconnu. Il ne modifie ni les appairages ni l’OS enregistré. La bascule et
 l’association des keymaps sont confirmées sur V1 entre Mac et Windows en `ble-trace`.
 
@@ -26,9 +28,9 @@ L’attente ressentie est d’environ deux secondes, sans mesure instrumentée. 
 prévoit une garde de 750 ms après la dernière activité admise pour laisser finir
 les comportements différés. Le délai complet reste à mesurer puis à optimiser.
 
-**Comportement actuel de ZMK :** il arrête ses annonces quand l’ordinateur sélectionné est
-connecté. Le raccourci ne provoque donc pas la reconnexion d’un appareil seulement
-appairé. L’accueil du second ordinateur sera traité avec l’automatisation ci-dessous.
+**ZMK standard** arrête ses annonces quand l’ordinateur sélectionné est connecté.
+Le nouveau contrôleur de `bluetooth auto` les permet pendant dix secondes pour les
+autres ordinateurs connus, sans déplacer la sélection. Ce lot reste à tester sur V1.
 
 La proposition suivante ouvre les annonces pendant dix secondes au démarrage et
 au retour de Gaming USB vers Windows, ainsi qu’avec L1 + clic encodeur droit.
@@ -38,7 +40,7 @@ ultérieure ne prend pas sa place. Les ouvertures sans ce geste ne font pas pren
 la sélection au nouvel arrivant. Un nouvel appareil peut être ajouté sur un slot libre.
 Après fermeture, les connexions établies restent présentes. Les annonces sont
 arrêtées pendant Gaming USB, avec déconnexion du Mac et conservation de son appairage.
-Voir [la gestion de l’appairage](gestion-appairage.md) pour ce cadrage encore à implémenter.
+Voir [la gestion de l’appairage](gestion-appairage.md) pour les règles encore à implémenter.
 L’ordinateur décide quand se connecter, le clavier se rend disponible.
 
 ## Sélection automatique prévue

@@ -3,8 +3,9 @@
 ## Intention
 
 Séparer la politique de connexion des API radio et de la détection d’OS.
-Ce premier lot fournit un moteur C pur et ses tests. Il n’est pas encore relié
-au firmware, aux annonces ou aux callbacks d’authentification ZMK.
+Le moteur C pur et ses tests couvrent la politique cible. Un premier adaptateur
+relie uniquement les fenêtres de reconnexion connue au firmware bluetooth auto.
+La recherche avec sélection, l’accueil d’un nouveau bond et Gaming USB restent séparés.
 Les règles humaines sont dans docs/gestion-appairage.md et docs/destinations-saisie.md.
 
 ## Contrat
@@ -48,7 +49,50 @@ Les fenêtres n’impliquent pas une garantie de reconnexion instantanée par l�
 ZMK lie actuellement le nouvel appairage au profil actif. Ne pas remplacer ce
 comportement par une bascule temporaire qui détourne la saisie pendant l’ajout.
 Définir explicitement l’intégration des annonces, de l’admission et de l’affectation
-du bond avant de brancher ce moteur. Aucun patch implicite des dépendances.
+du bond avant de brancher l’accueil des nouveaux appareils. Aucun patch implicite des dépendances.
+
+## Reconnexion connue
+
+`ble_reconnect.c` intercepte les appels externes bt_le_adv_start/stop de ZMK et
+les convertit en notifications d’un seul worker. Seul ce worker appelle les vraies
+API legacy. Les valeurs de retour des wrappers accusent réception de la demande,
+pas une réussite HCI, les erreurs effectives sont exposées dans le statut et les logs.
+Ne pas lancer en parallèle les annonces natives et un second advertiser.
+Les données et paramètres natifs sont copiés dans un stockage borné, sans pointeur
+de pile conservé. La fenêtre commence au premier appel ZMK après chargement des bonds.
+
+Le worker réutilise host_window_policy pour le délai. Le raccourci réarme la fenêtre
+et garde sa bascule actuelle vers un hôte déjà connecté. Aucune arrivée ne sélectionne
+de profil dans ce lot, même après une recherche avec un seul appareil. Les règles
+complètes du moteur restent à raccorder au sélecteur ultérieurement.
+
+`ble_reconnect_state.c` impose arrêt, filtre puis démarrage, avec revérification de
+l’échéance/génération avant et après HCI. Une liste partielle ou un échec d’arrêt
+n’autorise aucun démarrage non filtré. La liste autorise seulement les profils hôtes
+avec un bond existant, en retirant les hôtes déjà connectés. Le contrôleur résout
+les adresses privées avec sa liste native, dimensionnée pour tous les bonds.
+Le scanner split ZMK reste passif sans filtre, la liste du contrôleur lui est globale.
+Ne pas ajouter d’autre utilisateur de cette liste sans revoir cette intégration.
+
+Le wrapper d’enregistrement des callbacks d’authentification refuse tout nouvel
+appairage hôte. Les callbacks et l’admission de la moitié droite restent natifs.
+La connexion hôte est aussi contrôlée à son arrivée : slot connu, bond présent,
+fenêtre encore ouverte. Les connexions établies restent actives à l’échéance.
+Un hôte qui termine sa reconnexion après l’échéance est refusé. Cela reste à vérifier
+sur les hôtes réels, surtout les adresses privées et les retours tardifs.
+
+Les callbacks radio ne prennent pas le mutex du sélecteur et ne font aucune
+commande HCI synchrone. Le worker prend ce mutex seulement pour son instantané
+des profils, le relâche avant les API radio. Les échecs ont au plus trois réessais
+temporisés par révision, pas de boucle de reconnexion infinie. Aucun bond ni OS NVS
+n’est modifié. La fonction est réservée à la gauche bluetooth auto, profils fixes
+et droite inchangés. L’ajout d’un appareil reste possible avec leur firmware habituel.
+
+BLEPROFILE v3 ajoute une ligne WINDOW avant RESULT pour la disponibilité du
+contrôleur, le temps restant, les annonces, masques connus/connectés et erreur.
+La lecture S reste passive. Les lecteurs gardent la compatibilité v1/v2.
+Le contrôleur impose la pile legacy sans EXT_ADV/LTO, le filtre hôte et une liste
+contrôleur assez grande. Les sources ZMK/Zephyr restent intactes.
 
 ## Validation
 
@@ -67,3 +111,30 @@ Les identités remplacées, changements explicites externes, masques invalides e
 travaux munis d’un ancien ticket ne sélectionnent aucune cible. Les tests distinguent
 arrivée à l’échéance refusée et cible déjà prête gardée avant l’échéance.
 Aucune compilation Docker, lecture série, action radio ou écriture NVS dans ce lot.
+
+Validation de l’adaptation de reconnexion : onze suites natives avec ASan/UBSan,
+nouvelle politique également en -Wconversion -Wshadow -pedantic. L’analyse statique
+Clang ne trouve pas de diagnostic. Un harnais privé compile le vrai ble_reconnect.c
+avec doubles ZMK/HCI : notifications natives, copie bornée des annonces, admission
+connue/inconnue/tardive, callbacks d’authentification préservés côté split, fermeture,
+réouverture, erreurs radio et réessais bornés. Le harnais du vrai ble_auto.c conserve
+les scénarios du raccourci, des relâchements et des identités remplacées. Ces harnais
+ne simulent ni le contrôleur radio réel ni les reconnexions des OS.
+
+Les lecteurs AWK/PowerShell acceptent/refusent les mêmes 42 réponses, dont v1/v2,
+v3, ligne manquante/doublée, dépassements, masques incohérents et erreur radio.
+Le BOM UTF-8 PowerShell est conservé. Les trois paires bluetooth auto normal,
+debug et ble-trace compilent, leurs six arbres gardent les mêmes couches, macros,
+conditions, encodeurs et comportements que la référence du raccourci précédent.
+Les trois UF2 droits sont identiques aux précédents. Deux paires témoins wire auto
+normal et bluetooth macos ble-trace sont identiques sur les deux moitiés, même
+le diagnostic fixe conserve son protocole v2 et son binaire. Les dix UF2 passent
+SHA-256 et les gardes de blocs/partitionnement.
+
+Le désassemblage ARM confirme que update_advertising passe par les deux wrappers,
+l’enregistrement natif par le wrapper d’authentification, et les opérations du worker
+par les vraies API radio. Les dépendances restent aux commits prévus, sans patch.
+Les avertissements observés restent KSCAN, const du tap-dance et le drapeau Docker
+déjà connus. Aucun diagnostic nouveau dans le C local. Les conteneurs éphémères
+ont disparu, les trois services préexistants sont conservés. Aucun flash ni accès
+USB série effectué. Les preuves restent dans .local/validation/ble-reconnect/.

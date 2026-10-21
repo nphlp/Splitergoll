@@ -18,7 +18,8 @@ et Zephyr 4.1. Les moitiés communiquent en BLE, la gauche envoie la saisie à l
 | Détection USB et keymap `wire auto` | Mac/Windows validés sur V1 en firmware normal |
 | Détection BLE initiale, mémoire et restauration par appareil | Mac/Windows validés sur V1, sans nouvelle détection aux reconnexions |
 | `bluetooth auto` et L1 + clic encodeur droit | Bascule entre appareils connectés et bonnes keymaps confirmées sur V1 en `ble-trace` |
-| Fenêtres de 10 secondes, recherche et transitions Gaming | Moteur C développé et testé, intégration au firmware à faire |
+| Reconnexion des hôtes connus pendant dix secondes | Intégrée au nouveau `bluetooth auto`, validation matérielle à faire |
+| Recherche avec bascule automatique et transitions Gaming | Moteur C développé et testé, intégration au firmware à faire |
 | Arrêt des annonces et déconnexion du Mac en Gaming USB | Spécifiés, non implémentés sur le clavier |
 | Destinations mixtes USB/BLE avec priorité USB par ordinateur | Spécifiées, association des identités USB/BLE à résoudre |
 | Retour à l’ancien appareil dans les cinq secondes au réveil | Spécifié, non implémenté |
@@ -33,7 +34,8 @@ et les essais de veille de V2 sont validés sur l’ancienne 0.3.0 : première f
 réveil perdue, réveil de la gauche nécessaire avant la droite. Ces essais restent
 à reprendre après migration. Les autres validations sont dans le [TODO](TODO.md).
 
-La priorité est d’intégrer les fenêtres Bluetooth, puis le firmware USB + BLE commun,
+La priorité est de valider les reconnexions connues puis de traiter l’accueil des
+nouveaux appareils. Vient ensuite le firmware USB + BLE commun,
 avec Gaming USB et le choix de destination. Les noms des futurs profils ne sont pas
 encore fixés. Le [cadrage de l’appairage](gestion-appairage.md) distingue règles
 prévues et moteur déjà développé. Les branches historiques et les variantes minimales
@@ -75,6 +77,7 @@ et `make bat avg` calcule une moyenne par moitié sur 30 secondes.
 - [Détection d’OS](detection-os.md) : préparer et comparer les captures de connexion USB, puis BLE.
 - [Diagnostic Bluetooth](detection-os-bluetooth.md) : comparer Mac et Windows sans sélection automatique.
 - [Sélection de l’ordinateur](selection-appareil.md) : comportement Bluetooth prévu, bascule et reprise après veille.
+- [Reconnexion Bluetooth](reconnexion-bluetooth.md) : fenêtre de dix secondes pour les appareils connus, sans nouvel appairage.
 - [Destinations de saisie](destinations-saisie.md) : futur choix USB/Bluetooth et priorité par ordinateur.
 - [Gestion de l’appairage](gestion-appairage.md) : définir l’ouverture aux nouveaux appareils et les reconnexions.
 - [Mémoire de l’OS](memoire-os.md) : acquisition initiale et sauvegarde expérimentale, correction manuelle prévue.

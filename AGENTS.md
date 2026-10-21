@@ -98,6 +98,25 @@ techniques. Distinguer clairement comportement prévu, implémenté et testé.
 
 ## Étape active et validation
 
+Contexte matériel courant : au bureau avec le Mac et V2 seulement. Les essais des
+fenêtres de reconnexion Mac/Windows sur V1 sont différés. Pour remettre V2 à jour,
+le profil retenu pour le flash guidé est bluetooth macos normal, sans contrôleur
+expérimental de reconnexion ni mémoire d’OS à initialiser. La paire existante
+bluetooth-macos-2026-10-20-18-11-31 passe SHA-256 et les gardes UF2. Elle conserve
+les deux mesures de batterie, inactivité 30 secondes et veille profonde 15 minutes.
+L’utilisateur indique avoir installé ce firmware sur V2. La veille, le réveil et
+les deux remontées de batterie après migration restent à vérifier séparément.
+Le profil fixe ne détecte ni ne mémorise l’OS. Ne pas passer V2 directement au
+nouveau auto en supposant qu’il a reçu la mémoire créée sur V1 : celle-ci est propre
+aux bonds du contrôleur. Un essai auto sur V2 demande d’abord de préparer son OS
+mémorisé avec le diagnostic fixe lors de l’appairage, puis de vérifier sa sauvegarde.
+Le Mac seul permettrait une validation partielle des fenêtres, jamais la reconnexion
+simultanée Mac/Windows. Les essais V1 restent explicitement en attente.
+Le raccourci tertiaire de la keymap macOS est BT_CLR_ALL, pas BT_CLR : L1 + L2
+puis clic encodeur droit efface tous les slots hôtes et sélectionne zéro, sans
+effacer le bond de la moitié droite. Le bouton reset seul conserve les bonds.
+Le guide docs/appairage-bluetooth.md distingue cet effacement du settings_reset complet.
+
 Build local et profil `wire` : gauche centrale USB, droite périphérique BLE,
 alimentation USB, sans veille profonde ni reporting batterie.
 Le Clavier V1 sans batterie est utilisé sur le MacBook Pro M4 Max en télétravail.
@@ -873,9 +892,9 @@ secondes est indépendante du retour au précédent hôte dans les cinq secondes
 Le moteur C pur est dans keyboard/src/connections/host_window_policy.c, avec son
 contrat dans le même dossier et l’interface dans keyboard/include/splitergoll/.
 Il décide des fenêtres de dix secondes, de la recherche, des demandes de bascule
-et des transitions Gaming. Il n’est pas encore compilé par CMake ni raccordé aux
-callbacks radio. Le firmware installé et les builds existants gardent leur comportement.
-Ne pas présenter ce lot comme un firmware prêt à flasher pour obtenir les fenêtres.
+et des transitions Gaming. Son premier lot pur ne changeait pas le firmware.
+L’adaptation suivante utilise maintenant son délai pour la reconnexion connue,
+sans activer la recherche avec sélection ni les transitions Gaming.
 
 Les dix suites C natives passent en C11 strict avec ASan/UBSan. La nouvelle suite
 couvre aussi limites temporelles exactes, horloge 32 bits, gestes répétés, arrivées
@@ -891,6 +910,27 @@ cela en changeant provisoirement le slot de saisie pendant l’ajout d’un appa
 Il faut un raccordement cohérent pour annonces, admission et attribution du bond,
 en conservant les callbacks de mémoire et les contrôles de sécurité existants.
 Pas de patch implicite des dépendances ni de second gestionnaire d’annonces concurrent.
+
+Le lot de reconnexion connue est maintenant raccordé au firmware bluetooth auto,
+avec dix secondes au démarrage Bluetooth et à chaque L1 + clic encodeur droit.
+Le moteur, le contrôleur filtré unique et ses contraintes sont décrits dans
+keyboard/src/connections/AGENTS.md. Les appels ZMK d’annonces sont arbitrés sans
+modifier ses sources, aucun slot de saisie n’est déplacé pour chercher un autre hôte.
+Les appareils nouveaux sont refusés dans ce lot, y compris sur un slot libre actif.
+Leur accueil demande de séparer slot d’enregistrement et destination, car ZMK
+refuse un nouvel appairage sur un slot actif occupé. Ne pas présenter ce refus
+comme un écrasement automatique. Les règles cibles restent documentées et à développer.
+La bascule sur une arrivée après recherche, les cinq secondes de restauration,
+Gaming USB et le mode mixte ne sont pas activés. Les essais matériels du lot restent à faire.
+Le guide docs/reconnexion-bluetooth.md sépare usage présent, diagnostic et accueil futur.
+Les onze suites natives, les harnais de l’adaptateur/sélecteur et les 42 cas des
+lecteurs passent. Les trois paires auto BLE et deux paires témoins compilent avec
+les gardes UF2. Droites et témoins sont identiques aux versions précédentes.
+Les erreurs connues du socle restent visibles, sans nouvel avertissement local.
+Les conteneurs de validation sont supprimés, les services existants conservés.
+Le protocole BLEPROFILE v3 ajoute WINDOW sans données privées, lecture S passive.
+La prochaine étape matérielle consiste à flasher seulement la gauche auto ble-trace,
+sans reset des réglages, puis contrôler les deux retours et la fermeture sur V1.
 
 ## Ideas / backlog
 

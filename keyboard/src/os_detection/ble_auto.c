@@ -4,6 +4,7 @@
 #include <splitergoll/ble_device_state.h>
 #include <splitergoll/ble_acquisition.h>
 #include <splitergoll/ble_observer.h>
+#include <splitergoll/ble_reconnect.h>
 #include "common/auto-layers.h"
 #include <zephyr/init.h>
 #include <zephyr/kernel.h>
@@ -81,6 +82,7 @@ static uint16_t connected_hosts(void) {
 // Mémorise une demande sans interrompre les touches ou les macros en cours.
 int splitergoll_ble_auto_next_device(void) {
     splitergoll_ble_auto_lock();
+    splitergoll_ble_reconnect_open();
     bool pending = ble_device_next(&device_request, ZMK_BLE_PROFILE_COUNT,
                                    zmk_ble_active_profile_index(), connected_hosts());
     if (pending) bt_addr_le_copy(&requested_peer, zmk_ble_profile_address(device_request.target));
