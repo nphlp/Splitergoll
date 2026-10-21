@@ -347,6 +347,21 @@ de préparer la mémoire d’OS propre à V2, absente du profil macOS normal.
 - [ ] Vérifier l’outillage de build sur Windows/WSL.
 - [ ] Promouvoir `docs/README.md` à la racine à la fin, adapter les liens et conserver les photos, conceptions et inspirations historiques.
 
+## Photos publiques et historique Git
+
+- [x] Renommer les six photos avec des noms descriptifs en kebab-case et corriger les liens.
+- [x] Retirer les blocs annexes des six WebP sans réencodage. Les pixels et dimensions
+  sont conservés. Aucun EXIF, XMP ou GPS trouvé dans les onze objets image audités
+  dans les références locales, seuls les huit WebP avaient un profil couleur ICC.
+- [ ] Préparer la purge des anciennes photos et de leurs métadonnées dans Git.
+  Inventorier les anciens chemins, blobs, branches et tags concernés, puis décider
+  ensemble du périmètre : les branches historiques doivent actuellement rester intactes.
+  Un blob encore accessible dans un commit n’est pas orphelin. Après une réécriture
+  validée, supprimer les objets devenus orphelins en tenant compte des reflogs.
+  Traiter séparément GitHub, ses références/caches et les autres copies éventuelles,
+  selon les [limites de purge GitHub](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/removing-sensitive-data-from-a-repository)
+  et la [conservation des objets Git](https://git-scm.com/docs/git-gc#_notes).
+
 ## Idées
 
 - [ ] Détecter l’OS de l’ordinateur connecté (Windows, macOS, Linux) et sélectionner automatiquement la keymap adaptée.
