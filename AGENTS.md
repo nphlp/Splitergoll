@@ -1066,6 +1066,32 @@ Le protocole BLEPROFILE v3 ajoute WINDOW sans données privées, lecture S passi
 La prochaine étape matérielle consiste à flasher seulement la gauche auto ble-trace,
 sans reset des réglages, puis contrôler les deux retours et la fermeture sur V1.
 
+## Application compagnon macOS prévue
+
+Le périmètre demandé est décrit dans docs/application-macos.md, sans code applicatif
+créé à ce stade. L’utilisateur choisit de commencer uniquement par les batteries :
+fenêtre simple, deux niveaux dans la barre des menus, actualisation, reconnexion,
+actions pour rouvrir et quitter. Réutiliser le firmware existant. Signaler la mesure
+non fiable sous USB sans supposer que l’app connaît l’alimentation de chaque moitié.
+Couche, OS, nouveau protocole et réglages avancés sont reportés.
+
+La cible ultérieure Swift/SwiftUI garde Informations et Réglages, avec les deux
+batteries, la couche active et l’OS utilisé par le clavier. Cinq réglages :
+présence dans la barre des menus, masquage du Dock, ouverture de session, affichage
+des batteries et affichage de la couche dans la barre des menus. L’ouverture de
+session est volontaire et discrète, les valeurs initiales restent à choisir.
+
+Réutiliser la lecture CoreBluetooth existante comme base sans invoquer en boucle
+le programme ponctuel de make bat. Couche, OS et état USB de chaque moitié demandent
+un protocole d’état à concevoir. Ne pas annoncer ces données comme déjà exposées,
+déduire l’OS du Mac collecteur ou interpréter la présence USB comme une charge.
+Les firmwares anciens signalent des capacités manquantes. Aucune capture de
+frappes, sélection de destination ou modification d’appairage pour observer.
+L’app reste facultative et son code doit être séparé de keyboard et diagnostics.
+La logique de l’app et le futur protocole firmware recevront les tests applicatifs
+adaptés, avec reprise après veille, données périmées et préférences. Rien n’est
+installé, lancé au démarrage ou modifié sur le Mac pendant ce cadrage documentaire.
+
 ## Ideas / backlog
 
 Consigner les idées dans [docs/TODO.md](docs/TODO.md), sans dupliquer les listes.

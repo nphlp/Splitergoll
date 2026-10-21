@@ -310,9 +310,17 @@ de préparer la mémoire d’OS propre à V2, absente du profil macOS normal.
 - [x] Lire les deux mesures sur le Mac : gauche 63 %, droite 62 %. Le menu natif n’affiche que la gauche, voir [batteries](batteries.md).
 - [x] Ajouter `make bat` pour une lecture rapide et `make bat avg` pour une moyenne par moitié sur 30 secondes.
 - [x] Garder un Makefile direct : chaque commande appelle son script, qui valide ses arguments. L’aide colorée est dans un script Bash.
-- [ ] Ajouter un affichage permanent des deux batteries dans la barre des menus du Mac,
-  demandé par l’utilisateur. Valider les notifications, l’autonomie, le sommeil de
-  l’hôte et la présentation honnête des mesures sous USB.
+- [ ] Premier lot de l’[application macOS](application-macos.md) en Swift : batteries
+  gauche/droite dans une fenêtre et la barre des menus, actualisation et reconnexion.
+  Réutiliser le firmware existant et rappeler les limites de mesure sous USB.
+- [ ] Valider le lecteur permanent : mises à jour, données anciennes, déconnexions,
+  autonomie, sommeil du Mac et présentation honnête des mesures sous USB.
+- [ ] Ensuite, ajouter couche active et OS utilisé par la keymap dans l’app.
+  Définir leur transmission et celle de l’état USB par moitié, avec compatibilité
+  des firmwares anciens. Ce protocole ne bloque pas le premier lot batteries.
+- [ ] Ensuite, ajouter les cinq options prévues : présence dans la barre des menus,
+  masquage du Dock, lancement à l’ouverture de session, batteries et couche dans
+  la barre des menus.
 - [ ] Comparer la veille profonde de la centrale et son maintien en inactivité : reprise depuis la droite, première frappe, délai de reconnexion et impact sur l’autonomie, puis choisir le comportement.
 - [ ] Tester branchement USB, débranchement, charge secteur et préférences sauvegardées.
 - [ ] Vérifier l’outillage de build sur Windows/WSL.

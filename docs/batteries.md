@@ -116,7 +116,9 @@ Un indicateur unique représentant la batterie la plus faible pourrait aussi êt
 Il demanderait une adaptation du firmware et une décision sur les mesures absentes.
 
 La commande de lecture est versionnée. L’affichage des deux niveaux dans la barre
-des menus est la prochaine amélioration souhaitée. La validation devra vérifier
+des menus est prévu dans le premier lot de l’[application macOS](application-macos.md),
+avec une fenêtre d’informations. Couche, OS et réglages avancés viendront ensuite.
+La validation devra vérifier
 l’autonomie et le sommeil du Mac, la documentation
 signalant que les notifications batterie peuvent réveiller certains hôtes macOS.
 
