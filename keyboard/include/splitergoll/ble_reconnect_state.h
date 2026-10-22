@@ -10,6 +10,7 @@ struct ble_reconnect_view {
     uint16_t connected;
     uint32_t revision;
     bool window_open;
+    bool pairing_open;
 };
 
 struct ble_reconnect_state {
@@ -17,6 +18,7 @@ struct ble_reconnect_state {
     uint32_t revision;
     bool advertising;
     int error;
+    bool pairing_open;
 };
 
 struct ble_reconnect_ops {

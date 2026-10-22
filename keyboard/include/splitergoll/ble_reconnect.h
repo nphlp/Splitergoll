@@ -1,4 +1,4 @@
-// Fenêtre de reconnexion BLE des hôtes déjà appairés, distincte de leur sélection.
+// Fenêtre commune de reconnexion et d’accueil BLE, distincte de la destination des frappes.
 #ifndef SPLITERGOLL_BLE_RECONNECT_H
 #define SPLITERGOLL_BLE_RECONNECT_H
 #include <stdbool.h>
@@ -11,6 +11,10 @@ struct ble_reconnect_status {
     bool ready;
     bool advertising;
     int error;
+    uint16_t free_slots;
+    int pairing_slot;
+    uint32_t pairing_remaining_ms;
+    bool accepting_new;
 };
 
 // Réarme dix secondes depuis le raccourci, sans changer de slot ou effacer de bond.

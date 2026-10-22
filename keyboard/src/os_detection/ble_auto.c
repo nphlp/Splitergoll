@@ -79,6 +79,16 @@ static uint16_t connected_hosts(void) {
     return connected;
 }
 
+// Une première association utilise les mêmes gardes de relâchement qu’une bascule explicite.
+void splitergoll_ble_auto_adopt_device(unsigned target, unsigned origin) {
+    splitergoll_ble_auto_lock();
+    bool pending = ble_device_adopt(&device_request, ZMK_BLE_PROFILE_COUNT,
+                                    zmk_ble_active_profile_index(), connected_hosts(), target, origin);
+    if (pending) bt_addr_le_copy(&requested_peer, zmk_ble_profile_address(target));
+    splitergoll_ble_auto_unlock();
+    if (pending) splitergoll_ble_auto_notify();
+}
+
 // Mémorise une demande sans interrompre les touches ou les macros en cours.
 int splitergoll_ble_auto_next_device(void) {
     splitergoll_ble_auto_lock();

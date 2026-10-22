@@ -119,8 +119,44 @@ L’app n’est pas relancée par l’agent. Après réouverture, l’utilisateu
 l’affichage fonctionne sur V2. La reprise après sommeil du Mac, la reconnexion et
 l’ouverture de session restent à valider séparément.
 
+Lors de la séance précédente à domicile, l’app a reçu les corrections zéro/tiret
+et proportions du symbole, plus make app install.
+Le reflash de V1 est préparé en bluetooth auto ble-trace pour reprendre les fenêtres
+de reconnexion avec les deux hôtes. Les USB alimentent V1, la saisie reste en BLE.
+Aucune lecture USB, sélection d’hôte ou réinitialisation n’est implicite dans le build.
+La paire bluetooth-auto-ble-trace-2026-10-21-18-07-22 compile et passe les gardes
+des deux moitiés et SHA-256. Elle conserve 120/600 s, mesure batterie 5 s, mémoire
+d’OS et reconnexion des connus pendant 10 s. L’utilisateur confirme ensuite avoir
+flashé les deux moitiés de V1, effacé les deux slots hôtes avec select/forget,
+oublié l’entrée macOS puis redémarré les deux moitiés. L’absence du clavier dans
+les nouveaux appareils concorde avec le refus explicite des nouveaux bonds dans
+ce lot. Aucun relevé série ne confirme encore les slots, ne pas déduire un effacement
+du bond split. L’utilisateur propose de développer directement la fenêtre complète
+de reconnexion et de nouvel appairage plutôt que le détour par le diagnostic fixe.
+Recommandation : réserver un slot libre distinct de la destination de saisie,
+conserver les connus et leur OS, apprendre l’OS du nouveau bond et rendre utilisable
+le premier hôte s’il n’y a aucune destination. Garder les annonces ouvertes pendant
+la fenêtre même si tous les connus sont revenus, tant qu’un ajout reste possible.
+L’utilisateur confirme qu’un appairage commencé avant l’échéance doit pouvoir finir
+après, avec une limite maximale. La proposition retenue pour l’implémentation est
+30 secondes depuis le début de cet appairage, sans rouvrir l’admission à chaque
+connexion. C’est une borne de transaction, pas une nouvelle fenêtre d’annonces.
+L’utilisateur rappelle que la règle initiale réunissait déjà reconnexions et nouveaux
+appairages. Leur séparation concernait seulement les lots de développement.
+L’attribution ZMK native et les callbacks d’acquisition doivent rester cohérents,
+sans changement temporaire du slot de saisie ni modification implicite des dépendances.
+La nouvelle fenêtre est maintenant implémentée et contrôlée en logiciel. Le build
+de gauche est bluetooth-auto-ble-trace-2026-10-22-08-38-21, avec droite identique
+à la précédente. Son flash est confirmé par l’utilisateur, sans nouvelle lecture USB.
+Les propositions d’icônes sont de vrais SVG dans companion/macos/Assets/proposals.
+L’utilisateur retient le contour le plus épais avec ombre extérieure centrée pour
+l’app et les deux contours validés pour les menus. Ils sont intégrés, avec conversion
+native de l’ombre avant ICNS. Les 27 tests de l’app et son build signé passent.
+Installation autorisée effectuée dans /Applications/Splitergoll.app, signature et
+ressources vérifiées, sans lancement de l’app réelle. Les essais radio restent séparés.
+Les avertissements KSCAN, const tap-dance et Docker insecure restent ceux du socle.
 
-Les essais de reconnexion Mac/Windows sur V1 restent différés. Pour remettre V2 à jour,
+La séance précédente était au bureau avec Mac et V2 seulement. Pour remettre V2 à jour,
 le profil retenu pour le flash guidé est bluetooth macos normal, sans contrôleur
 expérimental de reconnexion ni mémoire d’OS à initialiser. La paire existante
 bluetooth-macos-2026-10-20-18-11-31 passe SHA-256 et les gardes UF2. Elle conserve
@@ -131,8 +167,10 @@ Les essais de reprise après inactivité et de réveil par la gauche après migr
 sont ensuite rapportés sur batterie, avec les limites précisées ci-dessous.
 Le profil fixe ne détecte ni ne mémorise l’OS. Ne pas passer V2 directement au
 nouveau auto en supposant qu’il a reçu la mémoire créée sur V1 : celle-ci est propre
-aux bonds du contrôleur. Un essai auto sur V2 demande d’abord de préparer son OS
-mémorisé avec le diagnostic fixe lors de l’appairage, puis de vérifier sa sauvegarde.
+aux bonds du contrôleur. Un essai auto sur V2 demande d’abord de vérifier son OS mémorisé. S’il manque,
+préparer avec accord un nouvel appairage hôte et vérifier sa sauvegarde. Le nouveau
+firmware auto sait faire cette acquisition directement, le diagnostic fixe reste
+utile pour l’isoler.
 Le Mac seul permettrait une validation partielle des fenêtres, jamais la reconnexion
 simultanée Mac/Windows. Les essais V1 restent explicitement en attente.
 Le guide docs/planification.md distingue validations indépendantes et transitions
@@ -1053,54 +1091,46 @@ revienne à Windows et lance la recherche. Il ne doit donc pas ouvrir l’appair
 tout en restant en Gaming. Distinguer ce geste du retour Gaming → Windows ordinaire,
 qui ouvre dix secondes mais n’arme pas de bascule sur le nouvel arrivant.
 
-L’appairage déjà commencé à l’échéance et la capacité pleine restent à préciser.
-Cette proposition n’est pas implémentée. La fenêtre d’annonces de dix
+Un appairage commencé dans les dix secondes pourra se terminer après leur échéance,
+avec une borne de 30 secondes depuis son début. Les nouvelles demandes restent
+fermées à l’échéance. Des appairages successifs peuvent commencer dans la fenêtre
+encore ouverte, sans la prolonger implicitement. Cette partie est maintenant intégrée au lot d’accueil, à valider sur matériel.
+Une capacité pleine doit conserver tous les bonds et permettre les reconnexions
+connues, sans accueillir de nouveau bond ni en effacer un automatiquement.
+Gaming USB et la recherche avec sélection restent à intégrer. La fenêtre de dix
 secondes est indépendante du retour au précédent hôte dans les cinq secondes.
 
-## Lot suivant commencé : politique de fenêtre
+## Fenêtre commune de connexion
 
-Le moteur C pur est dans keyboard/src/connections/host_window_policy.c, avec son
-contrat dans le même dossier et l’interface dans keyboard/include/splitergoll/.
-Il décide des fenêtres de dix secondes, de la recherche, des demandes de bascule
-et des transitions Gaming. Son premier lot pur ne changeait pas le firmware.
-L’adaptation suivante utilise maintenant son délai pour la reconnexion connue,
-sans activer la recherche avec sélection ni les transitions Gaming.
+Le moteur pur host_window_policy.c porte les règles cibles. L’adaptateur applique
+maintenant les dix secondes aux reconnexions connues et aux nouveaux appairages,
+sans intégrer Gaming USB, recherche avec sélection sur une arrivée ni restauration
+sous cinq secondes. Le contrat détaillé est dans keyboard/src/connections/AGENTS.md.
 
-Les dix suites C natives passent en C11 strict avec ASan/UBSan. La nouvelle suite
-couvre aussi limites temporelles exactes, horloge 32 bits, gestes répétés, arrivées
-groupées, origine modifiée, identités remplacées et garde des appuis. Les preuves
-temporaires restent dans .local/validation/host-window/.
-Une cible prête acceptée avant l’échéance peut finir sa transition après celle-ci,
-sans accepter de nouveaux candidats tardifs. Une capacité de bond pleine n’ouvre
-pas d’appairage neuf, et aucun bond n’est supprimé par ce moteur.
+Une seule réservation accueille un nouveau bond, sans déplacer la destination de
+saisie. Un début SMP admis dans la fenêtre dispose de trente secondes pour finir.
+Le worker contrôle le slot encore libre et la sauvegarde avant le helper ZMK, puis
+arme une seule acquisition d’OS. Le seul nouvel hôte peut devenir la destination
+avec les gardes d’appuis existantes. Un autre hôte connecté interdit cette adoption.
+Les places pleines ne remplacent aucun bond. Une transaction avortée ne peut nettoyer
+que son propre nouveau bond encore non attribué, jamais les connus ou le lien split.
 
-L’intégration ZMK est le prochain lot concret. ZMK app/src/ble.c lie normalement
-auth_pairing_accept et auth_pairing_complete au profil actif. Ne pas contourner
-cela en changeant provisoirement le slot de saisie pendant l’ajout d’un appareil.
-Il faut un raccordement cohérent pour annonces, admission et attribution du bond,
-en conservant les callbacks de mémoire et les contrôles de sécurité existants.
-Pas de patch implicite des dépendances ni de second gestionnaire d’annonces concurrent.
+La paire de diagnostic est bluetooth-auto-ble-trace-2026-10-22-08-38-21.
+Les trois modes auto normal/debug/ble-trace compilent, ainsi que wire auto et le
+diagnostic fixe bluetooth macos ble-trace. Les dix UF2 passent les gardes de build.
+La droite du diagnostic est identique octet pour octet à celle flashée auparavant,
+bluetooth-auto-ble-trace-2026-10-21-18-07-22 : seule la gauche doit être reflashée.
+Les témoins wire sont identiques. Les autres caches témoins étaient plus anciens
+que les réglages batterie/veille actuels, leur empreinte n’est pas une référence
+permettant d’isoler ce lot. Contrôler leurs configurations et keymaps compilées.
 
-Le lot de reconnexion connue est maintenant raccordé au firmware bluetooth auto,
-avec dix secondes au démarrage Bluetooth et à chaque L1 + clic encodeur droit.
-Le moteur, le contrôleur filtré unique et ses contraintes sont décrits dans
-keyboard/src/connections/AGENTS.md. Les appels ZMK d’annonces sont arbitrés sans
-modifier ses sources, aucun slot de saisie n’est déplacé pour chercher un autre hôte.
-Les appareils nouveaux sont refusés dans ce lot, y compris sur un slot libre actif.
-Leur accueil demande de séparer slot d’enregistrement et destination, car ZMK
-refuse un nouvel appairage sur un slot actif occupé. Ne pas présenter ce refus
-comme un écrasement automatique. Les règles cibles restent documentées et à développer.
-La bascule sur une arrivée après recherche, les cinq secondes de restauration,
-Gaming USB et le mode mixte ne sont pas activés. Les essais matériels du lot restent à faire.
-Le guide docs/reconnexion-bluetooth.md sépare usage présent, diagnostic et accueil futur.
-Les onze suites natives, les harnais de l’adaptateur/sélecteur et les 42 cas des
-lecteurs passent. Les trois paires auto BLE et deux paires témoins compilent avec
-les gardes UF2. Droites et témoins sont identiques aux versions précédentes.
-Les erreurs connues du socle restent visibles, sans nouvel avertissement local.
-Les conteneurs de validation sont supprimés, les services existants conservés.
-Le protocole BLEPROFILE v3 ajoute WINDOW sans données privées, lecture S passive.
-La prochaine étape matérielle consiste à flasher seulement la gauche auto ble-trace,
-sans reset des réglages, puis contrôler les deux retours et la fermeture sur V1.
+Douze suites natives passent avec ASan/UBSan, ainsi que les harnais du vrai
+adaptateur et du sélecteur, et les 42 cas de lecteurs. Les réservations, limites,
+concurrence, retour des connus, échec NVS et absence d’écrasement sont vérifiés.
+Le désassemblage confirme l’enregistrement ZMK via les deux wrappers auth, et
+l’appel du helper puis de l’acquisition après attribution. Dépendances intactes,
+aucun flash matériel ni lecteur série lancé dans ce lot. Les essais restent à faire.
+Les preuves privées sont dans .local/validation/ble-pairing/.
 
 ## Application compagnon macOS
 

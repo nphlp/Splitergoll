@@ -4,6 +4,10 @@ But : vérifier détection initiale, sauvegarde puis reconnexion sur Mac et Wind
 avec un seul nouveau flash gauche. La droite et la keymap macOS restent inchangées.
 Garder l’USB gauche au Mac pour toutes les lectures, même pendant l’appairage Windows.
 
+Le nouvel `bluetooth auto` apprend aussi directement l’OS pendant sa fenêtre
+d’accueil. Pour ce parcours, suivre les [essais de connexion](tests-connexions-bluetooth.md).
+Le diagnostic fixe ci-dessous reste utile pour étudier la mémoire séparément.
+
 ## Préparation
 
 ```sh

@@ -15,6 +15,7 @@ static int stop_advertising(struct ble_reconnect_state *state, const struct ble_
     if (error == 0) {
         state->advertising = false;
         state->allowed = 0;
+        state->pairing_open = false;
     }
     state->error = error;
     return error;
@@ -25,14 +26,17 @@ int ble_reconnect_apply(struct ble_reconnect_state *state, struct ble_reconnect_
                          const struct ble_reconnect_ops *ops) {
     bool valid = valid_view(view);
     uint16_t allowed = valid && view.window_open ? view.known & (uint16_t)~view.connected : 0;
-    if (valid && allowed != 0 && state->advertising && state->allowed == allowed &&
+    bool pairing_open = valid && view.window_open && view.pairing_open;
+    bool advertise = allowed != 0 || pairing_open;
+    if (valid && advertise && state->advertising && state->allowed == allowed &&
+        state->pairing_open == pairing_open &&
         state->revision == view.revision && ops->current(ops->context)) return state->error = 0;
 
-    if (state->advertising || allowed != 0 || state->error != 0) {
+    if (state->advertising || advertise || state->error != 0) {
         if (stop_advertising(state, ops) != 0) return state->error;
     }
     if (!valid) return state->error = -EINVAL;
-    if (allowed == 0) return state->error = 0;
+    if (!advertise) return state->error = 0;
     if (!ops->current(ops->context)) return state->error = -EAGAIN;
 
     int error = ops->filter(ops->context, allowed);
@@ -43,6 +47,7 @@ int ble_reconnect_apply(struct ble_reconnect_state *state, struct ble_reconnect_
 
     state->advertising = true;
     state->allowed = allowed;
+    state->pairing_open = pairing_open;
     state->revision = view.revision;
     if (!ops->current(ops->context)) {
         error = stop_advertising(state, ops);

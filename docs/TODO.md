@@ -22,20 +22,27 @@ priorité aux essais de l’app et des batteries. Les transitions Mac/Windows re
 
 Détection USB et BLE Mac/Windows, mémoire d’OS et bascule entre appareils sont
 validées sur V1 dans les conditions indiquées ci-dessous. Linux automatique reste à faire.
-La reconnexion connue sur dix secondes est intégrée au nouveau firmware, à valider
-sur V1. L’accueil des nouveaux appareils et les destinations mixtes restent à faire.
+La fenêtre commune de dix secondes, avec reconnexion et nouvel appairage, est
+intégrée au firmware, à valider sur V1. Les destinations mixtes restent à faire.
 
 Ordre des prochains lots :
 
-1. Valider sur V1 les fenêtres de reconnexion des appareils connus. Puis séparer
-   l’accueil d’un nouveau bond de la sélection, sans détourner la saisie.
+1. Valider la fenêtre commune sur V1 : premier appairage Mac puis Windows,
+   mémoire d’OS, reconnexion des connus, fermeture et réouverture. Le nouveau firmware
+   réserve une place sans détourner la saisie et borne à 30 secondes un appairage
+   commencé dans la fenêtre. Aucun effacement supplémentaire n’est nécessaire.
 2. Réunir USB et BLE autour des [destinations](destinations-saisie.md), en résolvant
    l’association entre l’hôte USB et son éventuel bond BLE. Puis intégrer Gaming USB.
 3. Compléter le retour au précédent appareil au réveil, la correction manuelle d’OS,
    l’optimisation du délai de bascule, puis Linux et le dongle.
 
-V2 est au bureau avec le Mac, le firmware Bluetooth macOS fixe a été installé.
-Les essais de reconnexion Mac/Windows sur V1 sont reportés. Les essais courts sur
+Le matériel courant est Mac + V2 au bureau. Les essais Mac/Windows sont en attente.
+Lors de la séance précédente à domicile, l’utilisateur
+confirme avoir flashé `bluetooth auto ble-trace`, puis effacé les deux slots hôtes
+et oublié l’entrée du Mac. Le lot précédemment flashé refuse les nouveaux
+appairages. La nouvelle gauche lève cette limitation et son flash est confirmé.
+La lecture des slots et le nouvel appairage restent à valider. V2 garde son usage Bluetooth macOS au bureau.
+Les essais courts sur
 batterie de V2 confirment la reprise après inactivité et le réveil par la gauche.
 La première frappe, toutes les touches et l’autonomie restent à vérifier. Aucun nouveau reset d’appairage,
 flash, bascule matérielle ou intervention sur le PC occupé n’est implicite dans ce travail.
@@ -187,20 +194,23 @@ de préparer la mémoire d’OS propre à V2, absente du profil macOS normal.
   recherche avec zéro/une destination, bascule avec plusieurs, transitions Gaming,
   tickets périmés, identités remplacées et attente des relâchements. Aucune API radio
   ni intégration firmware dans ce premier lot.
-- [ ] Raccorder ce moteur aux annonces, à l’admission et à l’affectation des nouveaux
-  bonds dans ZMK, sans modifier silencieusement les dépendances ni changer la
-  destination de saisie pour choisir temporairement un slot libre.
+- [x] Raccorder les annonces, l’admission et l’affectation des nouveaux bonds dans
+  ZMK : place réservée sans changer la destination, sauvegarde contrôlée puis mémoire
+  d’OS, sans patch de dépendance. Les autres décisions du moteur restent à raccorder.
 - [x] Séparer la reconnexion connue du nouvel appairage dans le périmètre du développement.
   Un appareil connu garde son slot et ses clés. ZMK exige actuellement un slot actif
   vide pour un nouveau bond et refuse un slot occupé, sans remplacement automatique.
 - [x] Intégrer les annonces filtrées de reconnexion dans `bluetooth auto` : dix secondes
   au démarrage et avec L1 + clic droit, sans changement de slot à l’arrivée d’un hôte.
-  Aucun nouvel appairage admis dans ce premier lot, aucune suppression de clés.
+  Le premier lot n’admettait aucun nouvel appairage. Le suivant ajoute cet accueil
+  sur une place libre, sans suppression de clé existante.
 - [ ] Valider sur V1 les deux ordres de retour Mac/Windows, la fermeture à dix secondes,
   la réouverture par raccourci et la saisie sur l’appareil resté sélectionné.
-- [ ] Séparer dans l’adaptation ZMK le slot d’accueil d’un nouvel appareil et le slot
-  de saisie. Définir l’ouverture de cet accueil, sa fermeture pendant une transaction,
-  les slots pleins et la sérialisation de plusieurs demandes, sans écrasement de bond.
+- [x] Séparer slot d’accueil et destination de saisie. Sérialiser les nouveaux
+  appairages, garder les connus avec slots pleins et laisser finir SMP sous 30 secondes.
+  Les réservations et erreurs sont testées, sans écrasement d’un slot occupé.
+- [ ] Valider les nouveaux appairages sur V1 avec Mac puis Windows : conservation
+  de la saisie sur le premier hôte, OS initial sauvegardé, raccourci et retour après reset.
 - [ ] Gérer les annonces pour accueillir un second ordinateur pendant que le premier
   est connecté. Les deux connexions simultanées sont observées sur V1, l’arrivée
   contrôlée d’un second hôte pendant que le premier est déjà connecté reste à tester.
@@ -285,6 +295,8 @@ de préparer la mémoire d’OS propre à V2, absente du profil macOS normal.
 - [x] Regrouper cette archive hors du shield et des profils actifs, retirer le doublon de sauvegarde de la configuration.
 - [x] Valider les huit paires normales et leurs affectations compilées, plus `wire macos debug` et `bluetooth windows debug` : vingt UF2 contrôlés.
 - [ ] Tester au clavier les profils fixes : touches, encodeurs, accents, retour du pavé numérique, gaming Windows et démarrage après veille.
+- [ ] Vérifier puis ajouter l’accès à `ü`, signalé manquant dans la keymap.
+  Choisir son geste et valider la saisie sur les OS concernés.
 - [ ] Conserver le choix d’OS de `multi` après veille profonde. Le retour macOS vers Windows est confirmé.
 - [x] Ajouter le Bluetooth direct sans dongle, conservé pendant la charge USB.
 - [ ] Définir puis ajouter un firmware réunissant USB et BLE : L1 + clic encodeur droit

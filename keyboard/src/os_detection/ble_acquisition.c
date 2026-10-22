@@ -60,7 +60,11 @@ void splitergoll_ble_acquisition_event(struct bt_conn *conn, enum ble_trace_kind
 }
 
 // Un appairage neuf arme l’acquisition, la connexion seule ne suffit jamais.
+#if defined(CONFIG_SPLITERGOLL_BLE_RECONNECT)
+void splitergoll_ble_acquisition_paired(struct bt_conn *conn, bool bonded) {
+#else
 static void paired(struct bt_conn *conn, bool bonded) {
+#endif
     struct bt_conn_info info;
     if (!bonded || bt_conn_get_info(conn, &info) != 0 ||
         info.type != BT_CONN_TYPE_LE || info.role != BT_CONN_ROLE_PERIPHERAL) return;
@@ -81,7 +85,12 @@ static void forgotten(uint8_t id, const bt_addr_le_t *peer) {
 
 // Enregistre les notifications avant le démarrage Bluetooth natif de ZMK.
 static int memory_init(void) {
-    static struct bt_conn_auth_info_cb callbacks = {.pairing_complete = paired, .bond_deleted = forgotten};
+    static struct bt_conn_auth_info_cb callbacks = {
+#if !defined(CONFIG_SPLITERGOLL_BLE_RECONNECT)
+        .pairing_complete = paired,
+#endif
+        .bond_deleted = forgotten,
+    };
     return bt_conn_auth_info_cb_register(&callbacks);
 }
 SYS_INIT(memory_init, APPLICATION, 0);

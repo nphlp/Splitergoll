@@ -5,9 +5,10 @@
 Implémentation propre à Splitergoll, sans module tiers ni modification de ZMK/Zephyr.
 `auto` est expérimental : Windows avec gaming et macOS, sans profil Linux.
 Le wire utilise la signature USB. Le Bluetooth utilise l’OS mémorisé de l’appareil
-sélectionné, avec premier essai matériel à faire. L’utilisateur demande ensuite de
-préparer le raccourci avant cet essai pendant que le PC est occupé. La sélection
-automatique d’appareil et le choix manuel forcé d’OS restent différés.
+sélectionné. La bascule entre hôtes connectés et leurs OS est confirmée sur V1.
+La sélection automatique générale d’appareil et le choix manuel forcé d’OS restent
+différés. L’adoption du seul nouvel hôte est maintenant préparée après appairage,
+avec les mêmes gardes d’entrée et sans détourner un autre hôte connecté.
 Les signatures de nos deux hôtes et la sélection de couches sont confirmées avec
 CDC sur V1. L’utilisateur voit macOS sur le Mac et Windows sur le PC via l’encodeur
 droit, confirme gaming puis retour Windows et le fonctionnement habituel sur Mac.
@@ -302,6 +303,12 @@ Les gardes exigent SC-only, sans signing ni vieillissement automatique des clés
 pour que le blob persistant reste stable aux reconnexions. SHA-256 vient de mbedTLS
 déjà présent, sans nouvelle dépendance ni option cryptographique dépréciée.
 
+Dans bluetooth auto, le contrôleur de connexions livre explicitement cette
+notification après attribution et sauvegarde du slot réservé. Le callback direct
+pairing_complete de mémoire y est désactivé, pour éviter une acquisition prématurée
+ou en double. Les profils fixes gardent le callback statique paired natif. Le format
+NVS, les signatures et les règles de classification ne changent pas.
+
 Une notification de nouvel appairage invalide même une empreinte identique.
 Un bond remplacé pendant un autre firmware change son empreinte et perd l’ancien
 OS. Un ancien bond sans cache reste inconnu. Un format/règles inconnus ou une
@@ -545,11 +552,12 @@ annonce ne garantit une reconnexion instantanée d’un ordinateur qui ne cherch
 
 ## Direction future USB + BLE
 
-Le lot suivant ne réalise pas encore ce mode mixte. Il active la reconnexion des
-hôtes connus sur dix secondes au démarrage et via le raccourci, uniquement dans
-bluetooth auto. Le contrat radio est dans ../connections/AGENTS.md. Le sélecteur
-garde ses gardes et son cycle actuel, sans bascule automatique sur une arrivée.
-La mémoire d’OS et les identités de bonds restent inchangées.
+Le lot courant ne réalise pas ce mode mixte. Il ouvre dix secondes de reconnexion
+et de nouvel appairage au démarrage et via le raccourci, dans bluetooth auto.
+Le contrat radio est dans ../connections/AGENTS.md. Le sélecteur conserve ses gardes,
+avec adoption possible du seul nouvel hôte si le choix courant n’a pas changé.
+Un autre hôte connecté interdit cette adoption. La recherche avec bascule sur une
+arrivée reste différée. Le format de mémoire d’OS et les identités restent inchangés.
 
 Le cadrage utilisateur passe du slot BLE à une destination regroupant appareil,
 liaisons disponibles et OS. Priorité USB au BLE pour un appareil associé, pas
@@ -578,7 +586,8 @@ la fin de fenêtre du seul nombre d’hôtes connus déjà connectés.
 Gaming USB arrête les annonces et les nouveaux appairages, déconnecte le Mac BLE,
 préserve bonds/OS et le BLE split. Le sort de Windows BLE en Gaming reste ouvert.
 Le retour Windows garde la destination USB, sans attendre la reconnexion du Mac.
-L’appairage déjà engagé à l’échéance et la capacité pleine restent à préciser.
+Un appairage engagé dans la fenêtre peut finir dans les trente secondes suivant
+son début. Aucun nouveau bond n’est admis si tous les slots sont occupés.
 La catégorie Gaming inclut ses deux couches, le passage interne Gaming → Gaming 2
 ne doit pas réouvrir les annonces. Ne pas appliquer une coupure de BLE hôte si
 l’USB n’offre pas de destination utilisable. Le bénéfice de latence reste à mesurer.

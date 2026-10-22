@@ -16,10 +16,11 @@ Au premier appairage, le clavier observe les services demandés et
 il reprend exclusivement cet OS. Les appairages et enregistrements déjà créés
 par notre diagnostic sont compatibles, aucun reset n’est nécessaire.
 
-Le nouveau firmware ouvre [dix secondes de reconnexion](reconnexion-bluetooth.md)
-au démarrage et avec le raccourci. Il est réservé aux appareils déjà appairés :
-l’accueil d’un nouveau bond reste à développer, les profils fixes permettent encore
-de réaliser cet appairage et son acquisition d’OS.
+Le nouveau firmware ouvre [dix secondes de connexion](reconnexion-bluetooth.md)
+au démarrage et avec le raccourci : retour des connus et accueil des nouveaux sur
+un slot libre, sans détourner la saisie. L’OS est acquis directement pendant ce nouvel
+appairage, le détour par un diagnostic fixe n’est plus nécessaire. Cette extension
+reste à valider sur le clavier.
 
 Une fois la connexion sécurisée et sa mémoire vérifiée, les couches du bon OS
 deviennent disponibles. Les affectations sont partagées avec les profils fixes,

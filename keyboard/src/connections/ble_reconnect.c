@@ -1,14 +1,18 @@
-// Arbitre unique des annonces hôtes de bluetooth auto, sans changer les profils ZMK.
+// Arbitre des annonces et nouveaux slots hôtes de bluetooth auto, sans détourner la saisie.
 #include <splitergoll/ble_reconnect.h>
 #include <splitergoll/ble_reconnect_state.h>
+#include <splitergoll/ble_pairing_state.h>
 #include <splitergoll/host_window_policy.h>
 #include <splitergoll/ble_auto.h>
+#include <splitergoll/ble_acquisition.h>
 #include <errno.h>
+#include <stdio.h>
 #include <string.h>
 #include <zephyr/bluetooth/bluetooth.h>
 #include <zephyr/bluetooth/conn.h>
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
+#include <zephyr/settings/settings.h>
 #include <zmk/ble.h>
 
 LOG_MODULE_REGISTER(splitergoll_ble_reconnect, CONFIG_ZMK_LOG_LEVEL);
@@ -17,6 +21,9 @@ BUILD_ASSERT(IS_ENABLED(CONFIG_BT_FILTER_ACCEPT_LIST) && IS_ENABLED(CONFIG_BT_SM
 BUILD_ASSERT(CONFIG_BT_CTLR_FAL_SIZE >= ZMK_BLE_PROFILE_COUNT);
 BUILD_ASSERT(CONFIG_BT_CTLR_RL_SIZE >= CONFIG_BT_MAX_PAIRED);
 BUILD_ASSERT(ZMK_BLE_PROFILE_COUNT <= 16);
+BUILD_ASSERT(!IS_ENABLED(CONFIG_BT_KEYS_OVERWRITE_OLDEST));
+BUILD_ASSERT(!IS_ENABLED(CONFIG_BT_SMP_ALLOW_UNAUTH_OVERWRITE));
+BUILD_ASSERT(!IS_ENABLED(CONFIG_BT_ID_ALLOW_UNAUTH_OVERWRITE));
 
 #define ADV_FIELD_LIMIT 4
 #define ADV_PAYLOAD_LIMIT 31
@@ -41,6 +48,19 @@ static struct ble_reconnect_state radio_state;
 static struct bt_conn_auth_cb native_auth;
 static struct bt_conn_auth_cb reconnect_auth;
 static bool auth_registered;
+static struct bt_conn_auth_info_cb native_info;
+static struct bt_conn_auth_info_cb pairing_info;
+static struct bt_conn_auth_info_cb *native_info_source;
+static bool info_registered;
+static int selected_profile;
+static struct {
+    struct ble_pairing_state policy;
+    struct bt_conn *conn;
+    bool disconnected;
+    bool abort_sent;
+    bool created_bond;
+} pairing = {.policy = {.slot = -1, .origin = -1}};
+static int pairing_error;
 
 static void reconcile(struct k_work *work);
 K_WORK_DELAYABLE_DEFINE(reconnect_work, reconcile);
@@ -50,6 +70,10 @@ int __real_bt_le_adv_start(const struct bt_le_adv_param *parameters,
                            const struct bt_data *sd, size_t sd_count);
 int __real_bt_le_adv_stop(void);
 int __real_bt_conn_auth_cb_register(const struct bt_conn_auth_cb *callbacks);
+int __real_bt_conn_auth_info_cb_register(struct bt_conn_auth_info_cb *callbacks);
+
+// Helper exporté par ble.c du commit ZMK figé, à recontrôler lors de toute migration.
+void set_profile_address(uint8_t index, const bt_addr_le_t *address);
 
 // Réveille un seul travail sans faire de commande HCI depuis un callback Bluetooth.
 static void notify(void) { k_work_reschedule(&reconnect_work, K_NO_WAIT); }
@@ -70,6 +94,11 @@ struct ble_reconnect_status splitergoll_ble_reconnect_status(void) {
     k_spinlock_key_t key = k_spin_lock(&control_lock);
     struct ble_reconnect_status snapshot = status;
     snapshot.remaining_ms = status.ready ? host_window_remaining(&window, k_uptime_get_32()) : 0;
+    snapshot.pairing_slot = pairing.conn != NULL ? pairing.policy.slot : -1;
+    snapshot.pairing_remaining_ms = ble_pairing_remaining(&pairing.policy, k_uptime_get_32(), snapshot.remaining_ms);
+    snapshot.accepting_new = snapshot.ready && snapshot.remaining_ms != 0 &&
+                             snapshot.free_slots != 0 && pairing.conn == NULL;
+    if (pairing_error != 0) snapshot.error = pairing_error;
     k_spin_unlock(&control_lock, key);
     return snapshot;
 }
@@ -151,14 +180,87 @@ static bool is_host(struct bt_conn *conn) {
            info.role == BT_CONN_ROLE_PERIPHERAL;
 }
 
-// Ce lot réutilise exclusivement les clés existantes, sans réappairage même sur un slot libre actif.
+// Seule la connexion qui possède un slot réservé peut commencer SMP dans la fenêtre.
 static enum bt_security_err pairing_accept(struct bt_conn *conn,
                                            const struct bt_conn_pairing_feat *const features) {
     struct bt_conn_info info;
     if (bt_conn_get_info(conn, &info) != 0) return BT_SECURITY_ERR_UNSPECIFIED;
-    if (info.role == BT_CONN_ROLE_PERIPHERAL) return BT_SECURITY_ERR_PAIR_NOT_ALLOWED;
+    if (info.role == BT_CONN_ROLE_PERIPHERAL) {
+        if (zmk_ble_profile_index(bt_conn_get_dst(conn)) >= 0 || bonded(bt_conn_get_dst(conn))) {
+            return BT_SECURITY_ERR_PAIR_NOT_ALLOWED;
+        }
+        k_spinlock_key_t key = k_spin_lock(&control_lock);
+        bool accepted = pairing.conn == conn && ble_pairing_begin(&pairing.policy,
+            (uint32_t)bt_conn_index(conn) + 1, k_uptime_get_32(),
+            status.ready && host_window_remaining(&window, k_uptime_get_32()) != 0);
+        if (accepted) revision++;
+        k_spin_unlock(&control_lock, key);
+        notify();
+        return accepted ? BT_SECURITY_ERR_SUCCESS : BT_SECURITY_ERR_PAIR_NOT_ALLOWED;
+    }
     return native_auth.pairing_accept != NULL ? native_auth.pairing_accept(conn, features) :
                                                BT_SECURITY_ERR_SUCCESS;
+}
+
+// Le callback ne touche ni à NVS ni au slot actif, l’attribution sera faite hors radio.
+static void pairing_complete(struct bt_conn *conn, bool bonded_now) {
+    if (!is_host(conn)) {
+        if (native_info.pairing_complete != NULL) native_info.pairing_complete(conn, bonded_now);
+        return;
+    }
+    k_spinlock_key_t key = k_spin_lock(&control_lock);
+    bool owned = pairing.conn == conn;
+    if (owned) {
+        pairing.created_bond |= bonded_now;
+        if (pairing.policy.phase != BLE_PAIRING_COMPLETE &&
+            !ble_pairing_complete(&pairing.policy, (uint32_t)bt_conn_index(conn) + 1,
+                                   k_uptime_get_32(), bonded_now)) {
+            pairing.policy.phase = BLE_PAIRING_ABORTED;
+            if (pairing_error == 0) pairing_error = bonded_now ? -ETIMEDOUT : -EPROTO;
+        }
+        revision++;
+    }
+    k_spin_unlock(&control_lock, key);
+    if (!owned) {
+        LOG_WRN("BLE pairing completed without a reserved slot");
+        bt_conn_disconnect(conn, BT_HCI_ERR_REMOTE_USER_TERM_CONN);
+    }
+    notify();
+}
+
+// Un échec libérera sa seule réservation après déconnexion, jamais un bond existant.
+static void pairing_failed(struct bt_conn *conn, enum bt_security_err reason) {
+    if (!is_host(conn)) {
+        if (native_info.pairing_failed != NULL) native_info.pairing_failed(conn, reason);
+        return;
+    }
+    k_spinlock_key_t key = k_spin_lock(&control_lock);
+    if (pairing.conn == conn) {
+        pairing.policy.phase = BLE_PAIRING_ABORTED;
+        if (pairing_error == 0) pairing_error = -EACCES;
+        revision++;
+    }
+    k_spin_unlock(&control_lock, key);
+    LOG_WRN("BLE pairing failed: error=%u", reason);
+    notify();
+}
+
+// Remplace seulement le callback ZMK enregistré juste après son auth_cb dans le socle figé.
+int __wrap_bt_conn_auth_info_cb_register(struct bt_conn_auth_info_cb *callbacks) {
+    if (info_registered && callbacks == native_info_source) return -EALREADY;
+    if (!auth_registered || info_registered || callbacks == NULL || callbacks->pairing_complete == NULL) {
+        return __real_bt_conn_auth_info_cb_register(callbacks);
+    }
+    native_info = *callbacks;
+    pairing_info = *callbacks;
+    pairing_info.pairing_complete = pairing_complete;
+    pairing_info.pairing_failed = pairing_failed;
+    int result = __real_bt_conn_auth_info_cb_register(&pairing_info);
+    if (result == 0) {
+        info_registered = true;
+        native_info_source = callbacks;
+    }
+    return result;
 }
 
 // Conserve les callbacks natifs et protège aussi la liaison entre les deux moitiés.
@@ -177,18 +279,29 @@ int __wrap_bt_conn_auth_cb_register(const struct bt_conn_auth_cb *callbacks) {
     return result;
 }
 
-// Un nouvel hôte consomme les annonces, puis le travail reprend pour les connus encore absents.
+// Réserve une place pour un inconnu, sans changer celle de l’ordinateur déjà sélectionné.
 static void connected(struct bt_conn *conn, uint8_t error) {
     if (!is_host(conn)) return;
     if (error == 0) {
-        struct ble_reconnect_status snapshot = splitergoll_ble_reconnect_status();
         int profile = zmk_ble_profile_index(bt_conn_get_dst(conn));
-        bool allowed = ble_reconnect_accept(snapshot.remaining_ms != 0, profile >= 0,
-                                              profile >= 0 && bonded(bt_conn_get_dst(conn)));
+        bool has_bond = bonded(bt_conn_get_dst(conn));
+        k_spinlock_key_t key = k_spin_lock(&control_lock);
+        bool open = status.ready && host_window_remaining(&window, k_uptime_get_32()) != 0;
+        bool allowed = ble_reconnect_accept(open, profile >= 0, has_bond);
+        if (!allowed && profile < 0 && !has_bond && info_registered && open && pairing.conn == NULL) {
+            int slot = ble_pairing_reserve(&pairing.policy, ZMK_BLE_PROFILE_COUNT,
+                status.free_slots, selected_profile, (uint32_t)bt_conn_index(conn) + 1, open);
+            if (slot >= 0) {
+                pairing.conn = bt_conn_ref(conn);
+                pairing_error = 0;
+                allowed = true;
+            }
+        }
+        k_spin_unlock(&control_lock, key);
         if (!allowed) {
             int result = bt_conn_disconnect(conn, BT_HCI_ERR_REMOTE_USER_TERM_CONN);
             LOG_WRN("BLE reconnect refused: known=%u window=%u error=%d",
-                    profile >= 0, snapshot.remaining_ms != 0, result);
+                    profile >= 0, open, result);
         }
     }
     k_spinlock_key_t key = k_spin_lock(&control_lock);
@@ -202,6 +315,7 @@ static void disconnected(struct bt_conn *conn, uint8_t reason) {
     ARG_UNUSED(reason);
     if (!is_host(conn)) return;
     k_spinlock_key_t key = k_spin_lock(&control_lock);
+    if (pairing.conn == conn) pairing.disconnected = true;
     revision++;
     k_spin_unlock(&control_lock, key);
     notify();
@@ -220,7 +334,121 @@ struct radio_request {
     struct native_advertisement advertisement;
     uint32_t revision;
     bt_addr_le_t peers[ZMK_BLE_PROFILE_COUNT];
+    bool pairing_open;
 };
+
+// Persiste avant le helper ZMK void, sans remplacer une case qui aurait changé depuis sa réservation.
+static int assign_pairing(struct bt_conn *conn, int slot, int origin) {
+    const bt_addr_le_t *peer = bt_conn_get_dst(conn);
+    splitergoll_ble_auto_lock();
+    if (slot < 0 || slot >= ZMK_BLE_PROFILE_COUNT || !zmk_ble_profile_is_open(slot) ||
+        zmk_ble_profile_index(peer) >= 0 || !bonded(peer)) {
+        splitergoll_ble_auto_unlock();
+        return -ESTALE;
+    }
+    const struct zmk_ble_profile *current = CONTAINER_OF(zmk_ble_profile_address(slot), struct zmk_ble_profile, peer);
+    struct zmk_ble_profile saved = *current;
+    bt_addr_le_copy(&saved.peer, peer);
+    char key[24];
+    snprintf(key, sizeof(key), "ble/profiles/%d", slot);
+    int error = settings_save_one(key, &saved, sizeof(saved));
+    if (error == 0) {
+        // La seconde écriture identique du helper est dédupliquée par le backend NVS figé.
+        set_profile_address(slot, peer);
+        splitergoll_ble_acquisition_paired(conn, true);
+        splitergoll_ble_auto_adopt_device((unsigned)slot, (unsigned)origin);
+    }
+    splitergoll_ble_auto_unlock();
+    return error;
+}
+
+// Détache notre référence seulement quand la transaction a été enregistrée ou sa connexion fermée.
+static void release_pairing(struct bt_conn *conn) {
+    k_spinlock_key_t key = k_spin_lock(&control_lock);
+    if (pairing.conn != conn) {
+        k_spin_unlock(&control_lock, key);
+        return;
+    }
+    memset(&pairing, 0, sizeof(pairing));
+    ble_pairing_release(&pairing.policy);
+    revision++;
+    k_spin_unlock(&control_lock, key);
+    bt_conn_unref(conn);
+}
+
+// Attribue les nouveaux bonds hors callback radio et borne les transactions qui ne se terminent pas.
+static uint32_t process_pairing(void) {
+    k_spinlock_key_t key = k_spin_lock(&control_lock);
+    struct bt_conn *conn = pairing.conn;
+    struct ble_pairing_state policy = pairing.policy;
+    bool gone = pairing.disconnected;
+    bool created = pairing.created_bond;
+    uint32_t now_ms = k_uptime_get_32();
+    uint32_t window_remaining = host_window_remaining(&window, now_ms);
+    bool expired = ble_pairing_expired(&policy, now_ms, window_remaining);
+    k_spin_unlock(&control_lock, key);
+    if (conn == NULL) return 0;
+
+    if (policy.phase == BLE_PAIRING_COMPLETE) {
+        int error = assign_pairing(conn, policy.slot, policy.origin);
+        if (error == 0) {
+            key = k_spin_lock(&control_lock);
+            status.free_slots &= (uint16_t)~(UINT32_C(1) << policy.slot);
+            k_spin_unlock(&control_lock, key);
+            LOG_INF("BLE pairing saved: profile=%d", policy.slot);
+            release_pairing(conn);
+            return 0;
+        }
+        key = k_spin_lock(&control_lock);
+        pairing.policy.phase = BLE_PAIRING_ABORTED;
+        pairing_error = error;
+        k_spin_unlock(&control_lock, key);
+        LOG_ERR("BLE pairing profile save failed: profile=%d error=%d", policy.slot, error);
+        expired = true;
+    }
+
+    if (gone) {
+        // Nettoie seulement le bond neuf de notre transaction, jamais celui d’un slot connu.
+        if (created && zmk_ble_profile_index(bt_conn_get_dst(conn)) < 0) {
+            int error = bt_unpair(BT_ID_DEFAULT, bt_conn_get_dst(conn));
+            if (error != 0) {
+                key = k_spin_lock(&control_lock);
+                pairing_error = error;
+                k_spin_unlock(&control_lock, key);
+                LOG_ERR("BLE incomplete pairing cleanup failed: error=%d", error);
+            }
+        }
+        release_pairing(conn);
+        return 0;
+    }
+
+    if (expired) {
+        key = k_spin_lock(&control_lock);
+        bool abort = !pairing.abort_sent;
+        pairing.abort_sent = true;
+        pairing.policy.phase = BLE_PAIRING_ABORTED;
+        if (pairing_error == 0) pairing_error = -ETIMEDOUT;
+        k_spin_unlock(&control_lock, key);
+        if (abort) {
+            bt_conn_auth_cancel(conn);
+            int error = bt_conn_disconnect(conn, BT_HCI_ERR_REMOTE_USER_TERM_CONN);
+            if (error == -ENOTCONN) {
+                key = k_spin_lock(&control_lock);
+                pairing.disconnected = true;
+                k_spin_unlock(&control_lock, key);
+                notify();
+            } else if (error != 0) {
+                key = k_spin_lock(&control_lock);
+                pairing_error = error;
+                k_spin_unlock(&control_lock, key);
+                LOG_ERR("BLE pairing disconnect failed: error=%d", error);
+            }
+            LOG_INF("BLE pairing closed: profile=%d", policy.slot);
+        }
+        return 0;
+    }
+    return ble_pairing_remaining(&policy, now_ms, window_remaining);
+}
 
 // Le contrôleur legacy figé accepte cet arrêt même si la connexion a déjà consommé les annonces.
 static int stop_radio(void *context) {
@@ -260,7 +488,11 @@ static int start_radio(void *context) {
         ad[i] = (struct bt_data){.type = advertisement->types[i], .data_len = advertisement->lengths[i],
                                 .data = advertisement->payload + advertisement->offsets[i]};
     }
-    advertisement->parameters.options |= BT_LE_ADV_OPT_FILTER_CONN | BT_LE_ADV_OPT_FILTER_SCAN_REQ;
+    if (request->pairing_open) {
+        advertisement->parameters.options &= ~(BT_LE_ADV_OPT_FILTER_CONN | BT_LE_ADV_OPT_FILTER_SCAN_REQ);
+    } else {
+        advertisement->parameters.options |= BT_LE_ADV_OPT_FILTER_CONN | BT_LE_ADV_OPT_FILTER_SCAN_REQ;
+    }
     return __real_bt_le_adv_start(&advertisement->parameters, ad, advertisement->count, NULL, 0);
 }
 
@@ -269,6 +501,7 @@ static void reconcile(struct k_work *work) {
     static unsigned retries;
     static uint32_t retry_revision;
     static uint32_t retry_at_ms;
+    uint32_t pairing_delay = process_pairing();
     struct radio_request request;
     k_spinlock_key_t key = k_spin_lock(&control_lock);
     if (!status.ready) {
@@ -285,6 +518,7 @@ static void reconcile(struct k_work *work) {
         uint32_t retry_wait = retry_at_ms - k_uptime_get_32();
         if (retries > RADIO_RETRIES || (retry_wait > 0 && retry_wait <= RADIO_RETRY_MS)) {
             uint32_t delay = retries > RADIO_RETRIES ? remaining : MIN(remaining, retry_wait);
+            if (pairing_delay != 0) delay = MIN(delay, pairing_delay);
             k_work_schedule(k_work_delayable_from_work(work), K_MSEC(delay));
             return;
         }
@@ -292,15 +526,24 @@ static void reconcile(struct k_work *work) {
 
     struct ble_reconnect_view view = {.count = ZMK_BLE_PROFILE_COUNT,
         .revision = request.revision, .window_open = remaining != 0};
+    uint16_t free_slots = 0;
     splitergoll_ble_auto_lock();
+    int selected = zmk_ble_active_profile_index();
     for (unsigned i = 0; i < ZMK_BLE_PROFILE_COUNT; i++) {
         bt_addr_le_copy(&request.peers[i], zmk_ble_profile_address(i));
+        if (zmk_ble_profile_is_open(i)) free_slots |= UINT16_C(1) << i;
         if (!zmk_ble_profile_is_open(i) && bonded(&request.peers[i])) {
             view.known |= UINT16_C(1) << i;
             if (zmk_ble_profile_is_connected(i)) view.connected |= UINT16_C(1) << i;
         }
     }
     splitergoll_ble_auto_unlock();
+    key = k_spin_lock(&control_lock);
+    status.free_slots = free_slots;
+    selected_profile = selected;
+    view.pairing_open = free_slots != 0 && pairing.conn == NULL && info_registered;
+    request.pairing_open = view.pairing_open;
+    k_spin_unlock(&control_lock, key);
     const struct ble_reconnect_ops ops = {&request, stop_radio, filter_radio, start_radio, request_current};
     int error = ble_reconnect_apply(&radio_state, view, &ops);
     key = k_spin_lock(&control_lock);
@@ -325,7 +568,9 @@ static void reconcile(struct k_work *work) {
     } else if (error != 0 && error != -EAGAIN && retries++ < RADIO_RETRIES) {
         retry_at_ms = k_uptime_get_32() + RADIO_RETRY_MS;
         k_work_schedule(k_work_delayable_from_work(work), K_MSEC(RADIO_RETRY_MS));
-    } else if (remaining != 0) {
-        k_work_schedule(k_work_delayable_from_work(work), K_MSEC(remaining));
+    } else {
+        uint32_t delay = remaining;
+        if (pairing_delay != 0 && (delay == 0 || pairing_delay < delay)) delay = pairing_delay;
+        if (delay != 0) k_work_schedule(k_work_delayable_from_work(work), K_MSEC(delay));
     }
 }

@@ -10,6 +10,7 @@ struct radio {
     uint16_t allowed;
     bool active;
     bool current;
+    bool pairing_open;
     unsigned expire_on;
     int stop_error, filter_error, start_error;
 };
@@ -26,7 +27,7 @@ static int stop(void *context) {
 // Une erreur de filtre interdit le démarrage, même si une partie de la liste a été écrite.
 static int filter(void *context, uint16_t allowed) {
     struct radio *radio = context;
-    assert(!radio->active && allowed != 0);
+    assert(!radio->active);
     radio->filters++;
     radio->allowed = allowed;
     if (radio->expire_on == 1) radio->current = false;
@@ -36,7 +37,7 @@ static int filter(void *context, uint16_t allowed) {
 // Le contrôleur n’accepte jamais un démarrage doublé ou sans filtre.
 static int start(void *context) {
     struct radio *radio = context;
-    assert(!radio->active && radio->allowed != 0);
+    assert(!radio->active && (radio->allowed != 0 || radio->pairing_open));
     radio->starts++;
     if (radio->start_error) return radio->start_error;
     radio->active = true;
@@ -57,7 +58,7 @@ static void known_hosts(void) {
     struct radio radio = {.current = true};
     struct ble_reconnect_ops ops = operations(&radio);
     struct ble_reconnect_state state = {0};
-    struct ble_reconnect_view view = {5, 3, 1, 1, true};
+    struct ble_reconnect_view view = {5, 3, 1, 1, true, false};
     assert(ble_reconnect_apply(&state, view, &ops) == 0);
     assert(state.advertising && radio.allowed == 2);
     assert(radio.stops == 1 && radio.filters == 1 && radio.starts == 1);
@@ -87,7 +88,7 @@ static void all_topologies(void) {
             struct radio radio = {.current = true};
             struct ble_reconnect_ops ops = operations(&radio);
             struct ble_reconnect_state state = {0};
-            struct ble_reconnect_view view = {8, (uint16_t)known, (uint16_t)connected, 1, true};
+            struct ble_reconnect_view view = {8, (uint16_t)known, (uint16_t)connected, 1, true, false};
             int result = ble_reconnect_apply(&state, view, &ops);
             if (connected & ~known) {
                 assert(result == -EINVAL && radio.starts == 0);
@@ -101,12 +102,12 @@ static void all_topologies(void) {
     struct radio radio = {.current = true};
     struct ble_reconnect_ops ops = operations(&radio);
     struct ble_reconnect_state state = {0};
-    assert(ble_reconnect_apply(&state, (struct ble_reconnect_view){16, 0x8000, 0, 1, true}, &ops) == 0);
+    assert(ble_reconnect_apply(&state, (struct ble_reconnect_view){16, 0x8000, 0, 1, true, false}, &ops) == 0);
     assert(radio.allowed == 0x8000);
     assert(ble_reconnect_apply(&state, (struct ble_reconnect_view){0}, &ops) == -EINVAL);
     assert(!state.advertising);
-    assert(ble_reconnect_apply(&state, (struct ble_reconnect_view){17, 1, 0, 1, true}, &ops) == -EINVAL);
-    assert(ble_reconnect_apply(&state, (struct ble_reconnect_view){5, 32, 0, 1, true}, &ops) == -EINVAL);
+    assert(ble_reconnect_apply(&state, (struct ble_reconnect_view){17, 1, 0, 1, true, false}, &ops) == -EINVAL);
+    assert(ble_reconnect_apply(&state, (struct ble_reconnect_view){5, 32, 0, 1, true, false}, &ops) == -EINVAL);
 }
 
 // Une échéance pendant la mise à jour ou le démarrage ne laisse pas les annonces ouvertes.
@@ -115,7 +116,7 @@ static void stale_work(void) {
         struct radio radio = {.current = expire != 0, .expire_on = expire};
         struct ble_reconnect_ops ops = operations(&radio);
         struct ble_reconnect_state state = {0};
-        assert(ble_reconnect_apply(&state, (struct ble_reconnect_view){5, 3, 0, 1, true}, &ops) == -EAGAIN);
+        assert(ble_reconnect_apply(&state, (struct ble_reconnect_view){5, 3, 0, 1, true, false}, &ops) == -EAGAIN);
         assert(!state.advertising && !radio.active);
         assert(radio.starts == (expire == 2 ? 1u : 0u));
     }
@@ -130,7 +131,7 @@ static void radio_errors(void) {
         if (failure == 2) radio.start_error = -ENOMEM;
         struct ble_reconnect_ops ops = operations(&radio);
         struct ble_reconnect_state state = {0};
-        struct ble_reconnect_view view = {5, 3, 0, 1, true};
+        struct ble_reconnect_view view = {5, 3, 0, 1, true, false};
         assert(ble_reconnect_apply(&state, view, &ops) == (failure == 0 ? -EIO : -ENOMEM));
         assert(state.error != 0 && !state.advertising && !radio.active);
         assert(radio.filters == (failure == 0 ? 0u : 1u));
@@ -158,7 +159,7 @@ static void deadlines_and_admission(void) {
     struct radio radio = {.current = true};
     struct ble_reconnect_ops ops = operations(&radio);
     struct ble_reconnect_state state = {0};
-    struct ble_reconnect_view view = {5, 3, 1, 1, true};
+    struct ble_reconnect_view view = {5, 3, 1, 1, true, false};
     assert(ble_reconnect_apply(&state, view, &ops) == 0);
     host_window_start(&window, 20000);
     assert(host_window_remaining(&window, 29999) == 1);
@@ -169,9 +170,38 @@ static void deadlines_and_admission(void) {
     assert(ble_reconnect_apply(&state, view, &ops) == 0 && state.advertising);
 }
 
+// Les annonces ouvertes permettent un premier appairage ou un ajout quand tous les connus sont revenus.
+static void open_pairing(void) {
+    struct radio radio = {.current = true, .pairing_open = true};
+    struct ble_reconnect_ops ops = operations(&radio);
+    struct ble_reconnect_state state = {0};
+    struct ble_reconnect_view view = {5, 0, 0, 1, true, true};
+    assert(ble_reconnect_apply(&state, view, &ops) == 0);
+    assert(state.advertising && state.pairing_open && radio.allowed == 0);
+    view.known = view.connected = 1;
+    view.revision++;
+    assert(ble_reconnect_apply(&state, view, &ops) == 0 && state.advertising);
+    view.pairing_open = false;
+    radio.pairing_open = false;
+    view.revision++;
+    assert(ble_reconnect_apply(&state, view, &ops) == 0 && !state.advertising);
+    view.known = 3;
+    view.revision++;
+    assert(ble_reconnect_apply(&state, view, &ops) == 0);
+    assert(state.advertising && !state.pairing_open && radio.allowed == 2);
+    view.window_open = false;
+    view.pairing_open = true;
+    assert(ble_reconnect_apply(&state, view, &ops) == 0 && !state.advertising);
+    view.window_open = true;
+    radio.pairing_open = true;
+    radio.filter_error = -EIO;
+    assert(ble_reconnect_apply(&state, view, &ops) == -EIO && !state.advertising);
+}
+
 // Exécute les scénarios utilisés par le contrôleur réel, sans matériel ni appairage.
 int main(void) {
     known_hosts();
+    open_pairing();
     all_topologies();
     stale_work();
     radio_errors();

@@ -30,7 +30,9 @@ les comportements différés. Le délai complet reste à mesurer puis à optimis
 
 **ZMK standard** arrête ses annonces quand l’ordinateur sélectionné est connecté.
 Le nouveau contrôleur de `bluetooth auto` les permet pendant dix secondes pour les
-autres ordinateurs connus, sans déplacer la sélection. Ce lot reste à tester sur V1.
+connus et les nouveaux appareils sur slot libre, sans déplacer la sélection pour
+réserver une place. Le seul nouvel hôte peut devenir la destination s’il n’y en a
+pas d’autre connecté. Ce lot reste à tester sur V1.
 
 La proposition suivante ouvre les annonces pendant dix secondes au démarrage et
 au retour de Gaming USB vers Windows, ainsi qu’avec L1 + clic encodeur droit.

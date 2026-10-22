@@ -12,4 +12,7 @@ bool splitergoll_ble_auto_busy(void);
 
 // Demande le prochain hôte connecté, sans mutation tant qu’un appui reste actif.
 int splitergoll_ble_auto_next_device(void);
+
+// Rend utilisable un premier appairage si aucun autre hôte n’est connecté et le choix est inchangé.
+void splitergoll_ble_auto_adopt_device(unsigned target, unsigned origin);
 #endif

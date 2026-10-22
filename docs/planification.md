@@ -36,7 +36,7 @@ grâce à ses USB d’alimentation. V2 peut fonctionner en USB avec le profil ad
 | --- | --- | --- |
 | Fenêtres de reconnexion de 10 secondes | Mac + Windows + un clavier, deux appairages avec OS mémorisés | Code compilé et contrôlé. Attendre les deux hôtes pour tester les deux ordres de retour, la fermeture et la réouverture |
 | Sélection automatique et retour au précédent sous 5 secondes | Mac + Windows + un clavier. V2 ajoute l’essai après vraie veille profonde | Logique et tests automatisés, puis essai groupé avec les deux ordres et des frappes pendant la fenêtre |
-| Accueil d’un nouvel appareil sans détourner la saisie | Mac + Windows + un clavier | Cadrage et tests des slots libres/pleins et des demandes concurrentes. Intégration après validation des reconnexions connues |
+| Accueil d’un nouvel appareil sans détourner la saisie | Mac + Windows + un clavier | Cadrage et tests des slots libres/pleins et des demandes concurrentes. Intégré et testé en logiciel. Valider ensemble appairage initial et reconnexion |
 | Réduire le délai de bascule | Mac + Windows + un clavier | Inspecter les gardes et préparer les mesures. Comparer les deux sens avec le même firmware |
 | Destinations USB/BLE et priorité USB | Mac + Windows + un clavier | Concevoir l’association des identités. Tester ensuite branchement, retrait, repli et absence de doublon. Deux PC Windows seraient utiles pour éprouver l’identité au-delà de l’OS |
 | Gaming USB et fermeture du BLE vers les hôtes | Windows + un clavier, avec Mac pour le scénario BLE simultané | Logique et tests automatisés après le lot destinations. Vérifier ensuite saisie Windows, déconnexion Mac et reprise, sans couper le BLE entre moitiés |
@@ -46,10 +46,10 @@ ces transitions restent **non validées matériellement** tant que le scénario 
 n’a pas été joué. Garder une même version de firmware pendant la séance Mac/Windows
 évite d’attribuer à l’OS une différence introduite entre deux builds.
 
-Un essai Mac seul des fenêtres est possible mais partiel. Sur V2, il demanderait
-d’abord un appairage avec le diagnostic fixe pour enregistrer son OS, puis le passage
-à `auto`. La mémoire créée sur V1 ne se transfère pas à V2. Ce détour n’est pas
-nécessaire pour les essais batterie et veille.
+Un essai Mac seul des fenêtres est possible mais partiel. Sur V2, vérifier d’abord
+l’OS mémorisé : la mémoire créée sur V1 ne s’y transfère pas. S’il manque, préparer
+avec accord un nouvel appairage hôte. Le nouvel `auto` peut alors apprendre l’OS
+directement. Les essais batterie et veille n’en ont pas besoin.
 
 ## Autres sujets du backlog
 
@@ -68,8 +68,9 @@ nécessaire pour les essais batterie et veille.
    La correction est installée et l’affichage confirmé : compléter les déconnexions,
    la reprise après sommeil du Mac et l’ouverture de session.
 2. Compléter première frappe, encodeurs et autonomie de V2 sur batterie.
-3. Dès que Mac + Windows sont disponibles : valider le lot de reconnexion déjà committé,
-   avant d’ajouter l’accueil des nouveaux appareils et les destinations USB/BLE.
+3. Au retour à domicile : V1 a reçu la nouvelle gauche `bluetooth auto ble-trace`,
+   qui accueille les nouveaux appareils dans les dix secondes. Tester ensemble
+   appairage initial et reconnexion sur Mac/Windows, puis les destinations USB/BLE.
 
 La documentation décrit les résultats observés, les essais encore partiels et les
 choix restant à faire. Un firmware compilé n’est pas une validation sur le clavier.

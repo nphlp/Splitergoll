@@ -111,6 +111,25 @@ static void complete_drain(void) {
     assert(ble_auto_can_select(&state, false, 739));
 }
 
+// Un premier hôte peut devenir la destination, un ajout ne vole jamais une connexion existante.
+static void initial_pairing(void) {
+    struct ble_device_request request = {0};
+    assert(ble_device_adopt(&request, 5, 4, 1, 0, 4));
+    assert(request.target == 0 && request.origin == 4);
+    assert(ble_device_take(&request, 5, 4, 1, true) == -1 && request.pending);
+    assert(ble_device_take(&request, 5, 4, 1, false) == 0);
+    assert(!ble_device_adopt(&request, 5, 0, 1, 0, 0));
+    assert(!ble_device_adopt(&request, 5, 0, 3, 1, 0));
+    assert(!ble_device_adopt(&request, 5, 3, 2, 1, 0));
+    assert(!ble_device_adopt(&request, 5, 0, 0, 1, 0));
+    assert(!ble_device_adopt(&request, 5, 0, 2, 16, 0));
+    assert(!ble_device_adopt(&request, 0, 0, 2, 1, 0));
+    assert(!ble_device_adopt(&request, 17, 0, 2, 1, 0));
+    request = (struct ble_device_request){.origin = 0, .target = 2, .pending = true};
+    assert(!ble_device_adopt(&request, 5, 0, 2, 1, 0));
+    assert(request.pending && request.target == 2);
+}
+
 // Exécute la politique utilisée par le comportement ZMK et le chemin de secours.
 int main(void) {
     connected_only();
@@ -118,6 +137,7 @@ int main(void) {
     pending_requests();
     unavailable_keymap();
     complete_drain();
+    initial_pairing();
     puts("ble_device_state: ok");
     return 0;
 }

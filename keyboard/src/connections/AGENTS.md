@@ -3,9 +3,9 @@
 ## Intention
 
 Séparer la politique de connexion des API radio et de la détection d’OS.
-Le moteur C pur et ses tests couvrent la politique cible. Un premier adaptateur
-relie uniquement les fenêtres de reconnexion connue au firmware bluetooth auto.
-La recherche avec sélection, l’accueil d’un nouveau bond et Gaming USB restent séparés.
+Le moteur C pur et ses tests couvrent la politique cible. L’adaptateur relie les
+fenêtres de reconnexion et l’accueil d’un nouveau bond au firmware bluetooth auto.
+La recherche avec sélection sur une arrivée et Gaming USB restent séparés.
 Les règles humaines sont dans docs/gestion-appairage.md et docs/destinations-saisie.md.
 
 ## Contrat
@@ -46,53 +46,70 @@ pas la réussite d’un appel natif. Toute erreur de sélection native doit rest
 Le compteur de slots libres et les capacités radio restent fournis par ZMK.
 Les fenêtres n’impliquent pas une garantie de reconnexion instantanée par l’hôte.
 
-ZMK lie actuellement le nouvel appairage au profil actif. Ne pas remplacer ce
-comportement par une bascule temporaire qui détourne la saisie pendant l’ajout.
-Définir explicitement l’intégration des annonces, de l’admission et de l’affectation
-du bond avant de brancher l’accueil des nouveaux appareils. Aucun patch implicite des dépendances.
+ZMK lie nativement le nouvel appairage au profil actif. L’adaptateur réserve au
+contraire un slot vide sans déplacer ce profil. Aucun patch des dépendances.
 
-## Reconnexion connue
+## Fenêtre commune et attribution
 
-`ble_reconnect.c` intercepte les appels externes bt_le_adv_start/stop de ZMK et
-les convertit en notifications d’un seul worker. Seul ce worker appelle les vraies
-API legacy. Les valeurs de retour des wrappers accusent réception de la demande,
-pas une réussite HCI, les erreurs effectives sont exposées dans le statut et les logs.
-Ne pas lancer en parallèle les annonces natives et un second advertiser.
-Les données et paramètres natifs sont copiés dans un stockage borné, sans pointeur
-de pile conservé. La fenêtre commence au premier appel ZMK après chargement des bonds.
+`ble_reconnect.c` intercepte bt_le_adv_start/stop et les convertit en notifications
+d’un seul worker. Lui seul appelle les vraies API legacy. Les wrappers accusent
+réception, les erreurs HCI restent dans le statut. Les données d’annonces sont
+copiées dans un stockage borné. La fenêtre commence après chargement des bonds.
 
-Le worker réutilise host_window_policy pour le délai. Le raccourci réarme la fenêtre
-et garde sa bascule actuelle vers un hôte déjà connecté. Aucune arrivée ne sélectionne
-de profil dans ce lot, même après une recherche avec un seul appareil. Les règles
-complètes du moteur restent à raccorder au sélecteur ultérieurement.
+Avec des places libres et sans transaction en cours, les annonces acceptent les
+connexions connues et nouvelles. Sans place ou pendant un appairage, le filtre
+n’autorise que les connus absents. Arrêt, filtre puis démarrage sont ordonnés et
+revérifiés avant/après HCI. Une erreur de filtre ne permet aucun démarrage ouvert.
+Le scanner split reste passif sans filtre. La liste du contrôleur lui est globale,
+ne pas ajouter un autre utilisateur sans revoir cette intégration.
 
-`ble_reconnect_state.c` impose arrêt, filtre puis démarrage, avec revérification de
-l’échéance/génération avant et après HCI. Une liste partielle ou un échec d’arrêt
-n’autorise aucun démarrage non filtré. La liste autorise seulement les profils hôtes
-avec un bond existant, en retirant les hôtes déjà connectés. Le contrôleur résout
-les adresses privées avec sa liste native, dimensionnée pour tous les bonds.
-Le scanner split ZMK reste passif sans filtre, la liste du contrôleur lui est globale.
-Ne pas ajouter d’autre utilisateur de cette liste sans revoir cette intégration.
+`ble_pairing_state.c` réserve une seule place libre, de préférence le slot actif
+s’il est vide. Une référence de connexion garde son identité pendant SMP et la
+résolution d’adresse privée. Une autre arrivée inconnue est refusée jusqu’à libération.
+Le début SMP doit appartenir aux dix secondes. Il dispose ensuite de 30000 ms,
+indépendants des réouvertures et sans réarmer la fenêtre. Une réussite reçue avant
+cette borne peut attendre le worker, y compris après une déconnexion immédiate.
+Sans début SMP, la connexion candidate expire avec la fenêtre.
 
-Le wrapper d’enregistrement des callbacks d’authentification refuse tout nouvel
-appairage hôte. Les callbacks et l’admission de la moitié droite restent natifs.
-La connexion hôte est aussi contrôlée à son arrivée : slot connu, bond présent,
-fenêtre encore ouverte. Les connexions établies restent actives à l’échéance.
-Un hôte qui termine sa reconnexion après l’échéance est refusé. Cela reste à vérifier
-sur les hôtes réels, surtout les adresses privées et les retours tardifs.
+Le wrapper auth_cb conserve les callbacks split natifs et contrôle l’admission hôte.
+Le wrapper auth_info_cb remplace seulement le callback ZMK enregistré juste après
+son auth_cb dans le socle figé. Les inscriptions antérieures restent natives, une
+seconde inscription du même callback ZMK est refusée. Pas de nouvel appairage d’une
+identité déjà enregistrée, d’écrasement automatique de clé ou de slot occupé.
 
-Les callbacks radio ne prennent pas le mutex du sélecteur et ne font aucune
-commande HCI synchrone. Le worker prend ce mutex seulement pour son instantané
-des profils, le relâche avant les API radio. Les échecs ont au plus trois réessais
-temporisés par révision, pas de boucle de reconnexion infinie. Aucun bond ni OS NVS
-n’est modifié. La fonction est réservée à la gauche bluetooth auto, profils fixes
-et droite inchangés. L’ajout d’un appareil reste possible avec leur firmware habituel.
+Après réussite SMP avec bond, le worker reprend le verrou du sélecteur et revérifie
+slot vide, identité non attribuée et bond présent. Il préécrit la structure publique
+zmk_ble_profile en conservant son nom, avec retour d’erreur settings_save_one.
+Il appelle ensuite le helper exporté set_profile_address du ble.c figé, qui n’a pas
+encore de déclaration dans ble.h. Sa seconde écriture identique est dédupliquée par
+NVS. Ce lien est spécifique au commit actuel : recontrôler prototype, disposition de
+la structure et ordre des callbacks à chaque migration. Aucun en-tête privé Zephyr.
+Une erreur de sauvegarde ne modifie pas la case en RAM et reste visible.
 
-BLEPROFILE v3 ajoute une ligne WINDOW avant RESULT pour la disponibilité du
-contrôleur, le temps restant, les annonces, masques connus/connectés et erreur.
-La lecture S reste passive. Les lecteurs gardent la compatibilité v1/v2.
-Le contrôleur impose la pile legacy sans EXT_ADV/LTO, le filtre hôte et une liste
-contrôleur assez grande. Les sources ZMK/Zephyr restent intactes.
+La mémoire reçoit explicitement pairing_complete après cette attribution, via
+splitergoll_ble_acquisition_paired. En auto, son ancien callback direct est désactivé
+pour éviter un apprentissage avant l’attribution ou en double. Les profils fixes
+gardent leur callback statique paired et leur comportement natif. Le worker de
+mémoire conserve ses événements ATT antérieurs, sa sécurité et ses gardes d’identité.
+
+Le seul nouvel hôte peut être adopté si la sélection est encore celle observée à
+l’accueil et qu’aucune demande explicite n’attend. Les mêmes gardes d’appuis, HID
+vide et drainage s’appliquent. Un autre hôte connecté interdit cette adoption.
+L’ajout pendant l’usage d’un connu ne détourne donc pas les frappes.
+La recherche avec bascule sur une arrivée et le retour au précédent restent séparés.
+
+Les callbacks ne prennent pas le mutex du sélecteur et n’écrivent pas NVS. Le worker
+borne les transactions, annule SMP puis déconnecte un candidat expiré, et conserve
+sa référence jusqu’à la fin de connexion. Seul le bond neuf non attribué de cette
+transaction peut être nettoyé. Aucun bond d’un slot connu ni lien split n’est supprimé.
+Les erreurs d’appairage/sauvegarde/nettoyage restent dans WINDOW.error, jusqu’à une
+nouvelle réservation. Les erreurs radio conservent leurs réessais bornés par révision.
+
+La lecture S de BLEPROFILE v3 reste passive, au format antérieur. WINDOW indique
+le temps d’admission, pas le temps de fin SMP. L’instantané C expose aussi la place
+réservée, son temps restant et la possibilité d’accueil, sans adresse ni clé.
+La fonction est réservée à la gauche bluetooth auto. La droite et les profils fixes
+conservent leur fonctionnement. USB/BLE mixtes et Gaming USB restent à développer.
 
 ## Validation
 
@@ -138,3 +155,16 @@ Les avertissements observés restent KSCAN, const du tap-dance et le drapeau Doc
 déjà connus. Aucun diagnostic nouveau dans le C local. Les conteneurs éphémères
 ont disparu, les trois services préexistants sont conservés. Aucun flash ni accès
 USB série effectué. Les preuves restent dans .local/validation/ble-reconnect/.
+
+Validation du lot d’appairage : douze suites natives avec ASan/UBSan, dont la nouvelle
+réservation testée sur tous les masques jusqu’à huit slots, la limite seize, les
+échéances exactes, débordement, concurrence et absence de réarmement par doublon.
+Le test du sélecteur couvre adoption du seul hôte, destination occupée et changement
+explicite. Le harnais du vrai sélecteur vérifie aussi l’adoption immédiate à froid
+et le drainage de 750 ms lorsqu’un ancien comportement reste possible.
+Un harnais privé exécute le vrai adaptateur : slots vides/pleins, retours
+simultanés, appairages successifs, résolution d’identité, succès après fermeture,
+expiration à la borne, panne NVS, slot modifié pendant SMP et nettoyage du seul bond
+neuf. Les références sont libérées et aucun callback ne sauvegarde dans ce harnais.
+Les tests ne simulent pas le contrôleur radio réel ni une coupure de courant pendant NVS.
+Preuves dans .local/validation/ble-pairing, sans accès USB ou modification des bonds réels.

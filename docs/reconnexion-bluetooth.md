@@ -1,50 +1,49 @@
-# Reconnecter les ordinateurs connus
+# Connecter les ordinateurs en dix secondes
 
-Dans le nouveau `bluetooth auto`, la gauche ouvre **10 secondes de reconnexion**
-quand Bluetooth et les appairages sauvegardés sont prêts au démarrage. Reset ou
-réveil après veille profonde recommencent ce démarrage. La validation matérielle
-de ce nouveau comportement reste à faire.
+Dans `bluetooth auto`, la gauche ouvre **10 secondes** au démarrage, après reset
+et avec **L1 + clic encodeur droit**. Un réveil de veille profonde recommence le
+démarrage. Ce nouveau lot est compilé et testé en logiciel, à valider sur V1.
 
-Le Mac et Windows peuvent ainsi revenir tous les deux. La connexion du Mac ne
-coupe plus la recherche de Windows. Chaque ordinateur décide quand il se reconnecte.
+## Reconnexion et nouvel appareil
 
-## Ce qui se passe pendant la fenêtre
+- Un ordinateur connu revient avec son appairage et son OS mémorisé.
+- Un nouvel ordinateur peut s’appairer si un slot est libre. Le clavier réserve
+  ce slot sans changer la destination des frappes, puis apprend et mémorise son OS.
+- Un seul nouvel appairage est traité à la fois. Plusieurs peuvent se succéder
+  pendant la fenêtre. Les connus peuvent revenir pendant ce temps.
+- Si tous les connus sont revenus, l’accueil reste ouvert jusqu’à l’échéance
+  tant qu’une place est disponible. Si les slots sont pleins, aucun n’est effacé.
+- À dix secondes, les nouvelles demandes se ferment. Un appairage déjà commencé
+  peut finir, au plus tard **30 secondes après son début**. Les connexions établies restent actives.
 
-- Seuls les ordinateurs déjà enregistrés dans un slot avec leurs clés sont admis.
-- Revenir ne change ni la destination sélectionnée ni son OS mémorisé.
-- Après 10 secondes, les annonces cessent. Les connexions établies restent actives.
-- Si tous les connus sont connectés, les annonces peuvent s’arrêter plus tôt.
-  La fenêtre reste ouverte jusqu’à son échéance si l’un se déconnecte entre-temps.
+Le premier nouvel appareil devient utilisable s’il est seul connecté et si la
+destination sélectionnée est toujours celle observée à son accueil. L’ajout d’un autre appareil ne prend pas
+la main sur celui utilisé. Les touches attendent une connexion sécurisée et un OS reconnu.
 
-**L1 + clic encodeur droit** réouvre dix secondes et garde la bascule existante
-vers le prochain ordinateur déjà connecté. Si Windows arrive ensuite, un nouveau
-geste permet de le sélectionner. La bascule automatique sur cette arrivée sera
-ajoutée avec la sélection automatique d’appareil.
+## Changer d’ordinateur
 
-## Lire l’état sans rien changer
+**L1 + clic encodeur droit**, puis relâchement, ouvre de nouveau dix secondes et
+sélectionne le prochain ordinateur déjà connecté. Si l’autre arrive ensuite,
+refaire le geste pour le sélectionner. La recherche avec bascule sur une arrivée
+et le [retour au précédent appareil](selection-appareil.md) restent à développer.
+Le raccourci reste accessible même si aucune keymap d’OS n’est encore utilisable.
+
+Pas besoin d’effacer les slots pour reconnecter les connus ou ajouter un appareil.
+Les anciens firmwares réservés aux connus refusaient les nouveaux appairages,
+même avec tous les slots vides. Reflasher la nouvelle gauche lève cette limitation,
+sans `settings_reset` ni modification de la liaison entre les moitiés.
+
+## Lire l’état
 
 Avec la gauche sous `bluetooth auto ble-trace` :
 
 ```sh
 make ble profiles /dev/cu.usbmodem123
+make ble memory /dev/cu.usbmodem123
 ```
 
-Remplacer le port par celui de la gauche. La ligne `WINDOW` indique le temps
-restant en millisecondes, les annonces actives et une éventuelle erreur radio.
-`SLOT` indique les appareils appairés et connectés. Lire cet état ne réouvre pas
-la fenêtre, ne change pas la sélection et ne modifie aucun appairage.
-
-## Ajouter un nouvel appareil
-
-Cette étape est distincte et reste à développer. Dans ce premier lot, les nouveaux
-appairages sont refusés, même si un slot est libre. Les profils fixes conservent
-leur fonctionnement d’appairage ZMK habituel.
-
-ZMK associe actuellement l’accueil d’un nouvel appareil au slot sélectionné.
-Un slot occupé refuse cet appairage, il n’est pas remplacé automatiquement.
-Nous devons pouvoir réserver un slot vide tout en continuant à taper sur l’appareil
-sélectionné. Il reste à décider comment ouvrir cet accueil, gérer les slots pleins
-et terminer un appairage commencé juste avant la fermeture de sa fenêtre.
-
-Les [règles cibles d’appairage](gestion-appairage.md) et le
-[retour au précédent appareil](selection-appareil.md) restent des étapes séparées.
+Adapter le port à la gauche. `WINDOW` indique le temps d’accueil restant, les annonces
+et les erreurs, `SLOT` les hôtes appairés/connectés. Le temps de `WINDOW` ne représente
+pas la marge de fin d’appairage. La mémoire confirme l’OS et sa sauvegarde.
+Ces lectures n’ouvrent aucune fenêtre et ne changent aucun appairage ni sélection.
+La [gestion d’appairage](gestion-appairage.md) distingue ce lot des prochaines étapes.

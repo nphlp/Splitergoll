@@ -120,8 +120,15 @@ check_firmware() {
         for symbol in splitergoll_ble_acquisition_snapshot ble_auto_can_select __wrap_bt_l2cap_recv splitergoll_ble_auto_next_device; do
             grep -Eq "0x[0-9a-f]+[[:space:]]+$symbol$" "$directory/zephyr/zmk.map" || fail "Composant auto BLE absent : $symbol"
         done
-        for symbol in __wrap_bt_le_adv_start __wrap_bt_le_adv_stop __wrap_bt_conn_auth_cb_register ble_reconnect_apply; do
+        for symbol in __wrap_bt_le_adv_start __wrap_bt_le_adv_stop __wrap_bt_conn_auth_cb_register \
+            __wrap_bt_conn_auth_info_cb_register ble_pairing_reserve ble_pairing_complete \
+            splitergoll_ble_acquisition_paired set_profile_address ble_reconnect_apply; do
             grep -Eq "0x[0-9a-f]+[[:space:]]+$symbol$" "$directory/zephyr/zmk.map" || fail "Contrôle de reconnexion absent : $symbol"
+        done
+        for option in CONFIG_BT_KEYS_OVERWRITE_OLDEST CONFIG_BT_SMP_ALLOW_UNAUTH_OVERWRITE CONFIG_BT_ID_ALLOW_UNAUTH_OVERWRITE; do
+            if grep -qx "$option=y" "$configuration"; then
+                fail "Remplacement automatique de clés interdit : $option"
+            fi
         done
         grep -q 'device-modifier-position = < 0x28 >' "$directory/zephyr/zephyr.dts" || fail 'Position L1 du raccourci absente'
         grep -q 'device-next-position = < 0x2b >' "$directory/zephyr/zephyr.dts" || fail 'Position encodeur du raccourci absente'

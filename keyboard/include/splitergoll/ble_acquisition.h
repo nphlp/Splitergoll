@@ -20,6 +20,9 @@ struct ble_acquisition_snapshot {
 void splitergoll_ble_acquisition_event(struct bt_conn *conn, enum ble_trace_kind kind,
                                       const uint32_t data[5], uint16_t uuid, bool reliable);
 
+// Arme l’apprentissage après attribution du nouveau bond à son slot définitif.
+void splitergoll_ble_acquisition_paired(struct bt_conn *conn, bool bonded);
+
 // Vérifie ensemble l’association sauvegardée et la sécurité de sa connexion courante.
 struct ble_acquisition_snapshot splitergoll_ble_acquisition_snapshot(unsigned profile);
 

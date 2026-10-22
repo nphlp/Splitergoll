@@ -13,6 +13,10 @@ struct ble_device_request {
 bool ble_device_next(struct ble_device_request *request, unsigned count, unsigned active,
                       uint16_t connected);
 
+// Adopte le seul nouvel hôte sans remplacer une destination connectée ou un choix explicite.
+bool ble_device_adopt(struct ble_device_request *request, unsigned count, unsigned active,
+                      uint16_t connected, unsigned target, unsigned origin);
+
 // Annule une demande périmée, ou la conserve tant que les touches ne sont pas au repos.
 int ble_device_take(struct ble_device_request *request, unsigned count, unsigned active,
                      uint16_t connected, bool busy);

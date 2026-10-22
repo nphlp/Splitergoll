@@ -7,6 +7,15 @@ static bool valid_mask(unsigned count, unsigned active, uint16_t connected) {
            ((uint32_t)connected >> count) == 0;
 }
 
+// Une connexion nouvelle ne prend pas la main sur un hôte existant ni une demande en cours.
+bool ble_device_adopt(struct ble_device_request *request, unsigned count, unsigned active,
+                      uint16_t connected, unsigned target, unsigned origin) {
+    if (!valid_mask(count, active, connected) || target >= count || active != origin ||
+        request->pending || connected != (UINT32_C(1) << target) || active == target) return false;
+    *request = (struct ble_device_request){.origin = origin, .target = target, .pending = true};
+    return true;
+}
+
 // Deux demandes rapides avancent deux fois, y compris si cela annule le premier changement.
 bool ble_device_next(struct ble_device_request *request, unsigned count, unsigned active,
                       uint16_t connected) {

@@ -2,9 +2,9 @@
 
 **Règles cibles, partiellement implémentées.** L’appairage crée une nouvelle
 association. La reconnexion réutilise une association existante, sans la refaire.
-Le premier lot traite seulement les [reconnexions connues](reconnexion-bluetooth.md)
-pendant dix secondes, au démarrage et avec le raccourci. Les nouveaux appairages,
-la recherche avec bascule automatique et Gaming USB restent à développer.
+Le firmware traite les [reconnexions et nouveaux appairages](reconnexion-bluetooth.md)
+pendant dix secondes, au démarrage et avec le raccourci. La recherche avec bascule
+sur une arrivée et Gaming USB restent à développer.
 Les tests logiciels ne remplacent pas la validation de ce lot sur V1.
 
 ## Fenêtres de dix secondes
@@ -21,6 +21,14 @@ pas une fermeture anticipée si un nouvel appareil peut encore être ajouté.
 
 Après la fenêtre, les annonces et les nouveaux appairages se ferment, les connexions
 établies restent présentes. Le même raccourci peut rouvrir la fenêtre plus tard.
+
+Un appairage commencé pendant ces dix secondes pourra se terminer ensuite, dans
+la limite de **30 secondes depuis son début**. Cette marge ne rouvre pas l’accueil
+aux autres appareils. Plusieurs appairages peuvent se succéder si leur démarrage
+reste dans la fenêtre. Cette extension est implémentée, sa validation matérielle reste à faire.
+
+Si tous les slots sont occupés, seuls les connus pourront revenir. Aucun appareil
+enregistré ne sera effacé automatiquement pour faire de la place.
 
 ## Effet du raccourci
 
@@ -60,14 +68,11 @@ mixte avec Gaming USB, pas une coupure de la seule sortie d’un clavier en Blue
 
 ## Décisions restantes
 
-- Séparer le slot d’accueil d’un nouvel appareil de la destination des frappes.
-  ZMK exige actuellement un slot actif vide, un slot occupé refuse l’appairage.
-- Définir comment ouvrir l’accueil d’un nouvel appareil pendant l’usage d’un connu.
-- Définir la fin d’un appairage commencé avant la fermeture de la fenêtre.
-- Prévoir le cas où tous les slots sont occupés, sans effacement automatique.
+- Rendre visible le manque de place lorsque tous les slots sont occupés.
 - Préciser si Gaming USB déconnecte aussi Windows BLE, en plus du Mac.
 
-À terme, L1 + clic encodeur droit réunira le choix de destination et l’ouverture
-complète de la fenêtre. Le diagnostic USB permet déjà de choisir un slot libre,
-mais ce choix change aussi la destination. La [procédure de réparation](appairage-bluetooth.md)
+L1 + clic encodeur droit réunit déjà le choix d’un hôte connecté et l’ouverture
+complète de la fenêtre. La bascule automatique sur un hôte qui arrive pendant la
+recherche reste à raccorder. La réservation d’un slot d’accueil est indépendante
+de la destination des frappes. La [procédure de réparation](appairage-bluetooth.md)
 reste distincte, aucun effacement des réglages n’est nécessaire pour ajouter un appareil.
