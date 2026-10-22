@@ -16,4 +16,15 @@ int splitergoll_ble_auto_next_device(void);
 
 // Adopte un premier hôte ou l’appairage commencé pendant la recherche explicite encore courante.
 void splitergoll_ble_auto_adopt_device(unsigned target, unsigned origin, uint32_t started_at_ms);
+
+struct ble_auto_policy_status {
+    int remembered;
+    int save_error;
+    bool saved;
+    bool loaded;
+    bool restoring;
+};
+
+// Expose seulement le slot reconnu et l’état de sauvegarde, sans identité exportable.
+struct ble_auto_policy_status splitergoll_ble_auto_policy_status(void);
 #endif

@@ -154,3 +154,14 @@ struct ble_os_memory ble_os_settings_snapshot(unsigned profile) {
     memset(snapshot.identity, 0, sizeof(snapshot.identity));
     return snapshot;
 }
+
+// Une association remplacée ou non vérifiée ne peut restaurer une préférence de destination.
+bool ble_os_settings_identity(unsigned profile, uint8_t identity[BLE_OS_MEMORY_ID_SIZE]) {
+    if (profile >= ZMK_BLE_PROFILE_COUNT || !atomic_get(&ready)) return false;
+    k_mutex_lock(&memory_mutex, K_FOREVER);
+    const struct ble_os_memory *memory = &memories[profile];
+    bool valid = memory->present && memory->verified && !memory->dirty && !memory->error;
+    if (valid) memcpy(identity, memory->identity, BLE_OS_MEMORY_ID_SIZE);
+    k_mutex_unlock(&memory_mutex);
+    return valid;
+}

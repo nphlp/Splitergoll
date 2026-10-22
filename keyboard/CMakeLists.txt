@@ -43,6 +43,7 @@ if(CONFIG_SPLITERGOLL_OS_AUTO)
 endif()
 if(CONFIG_SPLITERGOLL_BLE_RECONNECT)
   zephyr_library_sources(src/connections/host_window_policy.c
+                         src/connections/host_preference.c src/connections/host_preference_settings.c
                          src/connections/ble_reconnect_state.c src/connections/ble_pairing_state.c
                          src/connections/ble_reconnect.c)
   zephyr_link_libraries(-Wl,--wrap=bt_le_adv_start -Wl,--wrap=bt_le_adv_stop

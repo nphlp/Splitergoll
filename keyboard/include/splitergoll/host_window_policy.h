@@ -59,4 +59,25 @@ bool host_window_pairing_allowed(const struct host_window_policy *policy, uint32
 
 // Une sélection explicite externe annule les décisions en attente, pas les connexions.
 void host_window_cancel_selection(struct host_window_policy *policy);
+
+struct host_discovery_policy {
+    uint32_t opened_at_ms;
+    uint32_t generation;
+    uint16_t connected;
+    bool awake;
+    bool opened;
+};
+
+// Démarre la recherche, prolongée sans hôte tant que le clavier reste actif.
+void host_discovery_start(struct host_discovery_policy *policy, uint32_t now_ms);
+
+// Ouvre une fenêtre explicite, sans changer les appareils connectés.
+void host_discovery_open(struct host_discovery_policy *policy, uint32_t now_ms);
+
+// Le premier retour ouvre une fenêtre bornée, une perte partielle ne la réarme pas.
+void host_discovery_update(struct host_discovery_policy *policy, uint32_t now_ms,
+                           uint16_t connected, bool awake);
+
+// Sans hôte actif, retourne la durée nominale pour indiquer une admission continue.
+uint32_t host_discovery_remaining(const struct host_discovery_policy *policy, uint32_t now_ms);
 #endif

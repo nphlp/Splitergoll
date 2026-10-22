@@ -18,4 +18,7 @@ void ble_os_settings_forget(unsigned profile);
 // Copie un état sans identifiant exportable et sans déclencher de sauvegarde.
 struct ble_os_memory ble_os_settings_snapshot(unsigned profile);
 
+// Copie l’empreinte vérifiée pour une autre mémoire interne, jamais pour un diagnostic.
+bool ble_os_settings_identity(unsigned profile, uint8_t identity[BLE_OS_MEMORY_ID_SIZE]);
+
 #endif

@@ -191,3 +191,37 @@ int host_window_take(struct host_window_policy *policy, const struct host_window
     policy->source_identity = view->identities[target];
     return target;
 }
+
+// Toute nouvelle fenêtre invalide une échéance copiée par le travail radio.
+void host_discovery_open(struct host_discovery_policy *policy, uint32_t now_ms) {
+    policy->opened = true;
+    policy->opened_at_ms = now_ms;
+    if (++policy->generation == 0) policy->generation = 1;
+}
+
+// Le démarrage ne présume aucune connexion et ne modifie aucune sélection native.
+void host_discovery_start(struct host_discovery_policy *policy, uint32_t now_ms) {
+    *policy = (struct host_discovery_policy){.awake = true};
+    host_discovery_open(policy, now_ms);
+}
+
+// IDLE ferme l’admission, le retour ACTIVE seul ne rouvre que s’il n’y a aucun hôte.
+void host_discovery_update(struct host_discovery_policy *policy, uint32_t now_ms,
+                           uint16_t connected, bool awake) {
+    if (policy->opened && (uint32_t)(now_ms - policy->opened_at_ms) >= HOST_WINDOW_DURATION_MS) {
+        policy->opened = false;
+    }
+    if (awake && policy->connected == 0 && connected != 0) host_discovery_open(policy, now_ms);
+    if (!awake) policy->opened = false;
+    policy->connected = connected;
+    policy->awake = awake;
+}
+
+// La radio sans hôte reste ouverte sans devoir relancer un minuteur ou l’activité ZMK.
+uint32_t host_discovery_remaining(const struct host_discovery_policy *policy, uint32_t now_ms) {
+    if (!policy->awake) return 0;
+    if (policy->connected == 0) return HOST_WINDOW_DURATION_MS;
+    uint32_t elapsed = now_ms - policy->opened_at_ms;
+    if (!policy->opened || elapsed >= HOST_WINDOW_DURATION_MS) return 0;
+    return HOST_WINDOW_DURATION_MS - elapsed;
+}

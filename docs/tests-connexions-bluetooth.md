@@ -9,8 +9,21 @@ Le diagnostic ponctuel utilise **10 secondes**, les builds normaux **30 secondes
 Il est dans `.local/flash/ble-window-10s/`, sans nouveau profil public. Le flasher
 par son chemin UF2 explicite, uniquement sur la gauche. La droite reste identique.
 La limite de fin d’un appairage commencé reste 30 secondes depuis son début.
+Les fichiers sont déjà préparés. Dans ce checkout, la commande suivante cible le
+dernier diagnostic court, pas un build normal. Passer uniquement la gauche en bootloader :
 
-## Résultats sur V1
+```sh
+make flash "$(cat .local/diagnostic/ble-window-10s/latest-artifacts)/splitergoll-bluetooth-auto-ble-trace-left.uf2"
+```
+
+Pour régénérer ce diagnostic privé :
+
+```sh
+bash -c '. scripts/build-common.sh; . .local/diagnostic/ble-window-10s/prepare.sh' scripts/build.sh
+```
+
+
+## Résultats du lot précédent sur V1
 
 Confirmés avec ce diagnostic : allers-retours Mac/Windows et bonnes keymaps,
 frappes retenues pendant la transition, attente du relâchement de Shift,
@@ -19,6 +32,8 @@ qui garde la sélection quand Windows rejoint. Le reset simple fonctionne.
 Les lectures initiales confirment les deux OS sauvegardés et les deux connexions,
 sans erreur. Le retour au build normal de trente secondes reste à confirmer.
 Les nouveaux appairages et les cas limites du dernier paragraphe restent séparés.
+Le nouveau lot ajoute la préférence durable et la recherche sans hôte. Ces fonctions
+ne sont pas déduites de ces résultats : elles ont leurs essais ci-dessous.
 
 Faire les cas dans cet ordre. Si un cas échoue, noter le résultat avant de passer
 au suivant. Tous les gestes concernent V1, avec relâchement complet de L1 et du clic.
@@ -66,7 +81,8 @@ plus repousser indéfiniment la bascule. La phrase exerce les deux moitiés.
 Les douze secondes servent seulement à assurer la fermeture du diagnostic de dix
 secondes. Si `WINDOW` indique déjà `remaining_ms=0 advertising=0`, inutile de les
 attendre. Pour le build normal, attendre plus de trente secondes depuis l’ouverture.
-La fenêtre commence au démarrage ou au raccourci, pas à la dernière frappe.
+Une fenêtre s’ouvre au démarrage, au premier retour après zéro connexion ou au
+raccourci, jamais à la dernière frappe. Sans hôte actif, la recherche est continue.
 
 Quand le Bluetooth Mac est coupé, utiliser son clavier et son trackpad intégrés.
 Le passage sur le nouvel hôte attend sa connexion sécurisée et son OS mémorisé.
@@ -79,7 +95,8 @@ Le passage sur le nouvel hôte attend sa connexion sécurisée et son OS mémori
    pendant la même fenêtre si possible : son arrivée ne doit pas reprendre la sélection.
 4. Avec les deux connectés, un nouveau geste doit permettre de sélectionner Windows.
 
-Si la manipulation dépasse dix secondes, rouvrir la fenêtre avant de réessayer.
+La recherche sans hôte reste ouverte jusqu’à la veille légère. La première
+connexion ouvre dix secondes pour les suivants dans ce diagnostic.
 
 ## 6. Redémarrage et mémoire
 
@@ -88,9 +105,10 @@ Si la manipulation dépasse dix secondes, rouvrir la fenêtre avant de réessaye
 3. Tester les deux destinations : bon OS, deux moitiés actives, aucun nouvel appairage.
 4. Vérifier `stored=macos/windows`, `state=saved` et l’absence d’erreur dans la mémoire.
 
-Ne pas exiger ici le retour prioritaire au précédent hôte pendant la fenêtre de
-démarrage : cette politique reste à développer. Le slot préféré ZMK a sa propre
-sauvegarde différée.
+Poursuivre avec [les essais de préférence et de reprise](tests-reprise-bluetooth.md),
+puis [la recherche sans hôte et la veille légère](tests-recherche-bluetooth.md).
+Le nouveau diagnostic ajoute `POLICY` à `make ble profiles`, voir
+[la lecture de l’état](reconnexion-bluetooth.md).
 
 ## 7. Nouvel appairage et cas limites, séparément
 

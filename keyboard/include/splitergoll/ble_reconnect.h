@@ -6,6 +6,8 @@
 
 struct ble_reconnect_status {
     uint32_t remaining_ms;
+    uint32_t opened_at_ms;
+    uint32_t generation;
     uint16_t known;
     uint16_t connected;
     bool ready;
@@ -15,6 +17,8 @@ struct ble_reconnect_status {
     int pairing_slot;
     uint32_t pairing_remaining_ms;
     bool accepting_new;
+    bool active;
+    bool without_host;
 };
 
 // Réarme trente secondes depuis le raccourci, sans changer de slot ou effacer de bond.

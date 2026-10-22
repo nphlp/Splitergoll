@@ -1,8 +1,9 @@
 # Connecter les ordinateurs en trente secondes
 
 Dans `bluetooth auto`, la gauche ouvre **30 secondes** au démarrage, après reset
-et avec **L1 + clic encodeur droit**. Un réveil de veille profonde recommence le
-démarrage. Les essais V1 avec la fenêtre temporaire de dix secondes confirment les
+et avec **L1 + clic encodeur droit**. Sans hôte, la recherche reste ouverte tant
+que le clavier est actif. La première connexion ouvre trente secondes pour les
+suivants. Un réveil de veille profonde recommence le démarrage. Les essais V1 avec la fenêtre temporaire de dix secondes confirment les
 bascules, la saisie retenue et la reconnexion Windows sur demande. Le retour au
 build normal de trente secondes est prévu, pas encore confirmé.
 
@@ -40,7 +41,8 @@ La garde de 750 ms laisse finir les anciens comportements. La file est bornée �
 orpheline. Les rotations pendant cette courte transition sont ignorées.
 Les allers-retours et la saisie immédiate sont confirmés sur V1, ainsi que le blocage
 par Shift maintenu puis la reprise après relâchement.
-Le [retour au précédent appareil](selection-appareil.md) reste à développer.
+Le [retour au précédent appareil](selection-appareil.md) et sa préférence durable
+sont implémentés dans le nouveau lot, à valider sur matériel.
 Le raccourci reste accessible même si aucune keymap d’OS n’est encore utilisable.
 
 Pas besoin d’effacer les slots pour reconnecter les connus ou ajouter un appareil.
@@ -62,3 +64,12 @@ et les erreurs, `SLOT` les hôtes appairés/connectés. Le temps de `WINDOW` ne 
 pas la marge de fin d’appairage. La mémoire confirme l’OS et sa sauvegarde.
 Ces lectures n’ouvrent aucune fenêtre et ne changent aucun appairage ni sélection.
 La [gestion d’appairage](gestion-appairage.md) distingue ce lot des prochaines étapes.
+
+Le nouveau diagnostic `BLEPROFILE` v4 ajoute `POLICY` : `active` indique l’activité,
+`without_host=1` une recherche continue sans hôte, `remembered` le slot dont le bond
+vérifié correspond à la préférence, et `saved` sa présence en mémoire.
+`remembered=-1` peut simplement signifier que le bond n’est pas encore vérifié
+pour ce démarrage. `restoring` indique le retour prioritaire encore autorisé.
+`POLICY error` concerne la sauvegarde de préférence, `WINDOW error` la radio/appairage.
+Sans hôte, `remaining_ms` reste à la durée nominale, ce n’est pas un compte à rebours.
+Les lecteurs restent compatibles avec les anciens diagnostics.

@@ -20,7 +20,7 @@
 #endif
 
 #if defined(CONFIG_SPLITERGOLL_BLE_RECONNECT)
-#define BLE_PROFILE_VERSION "3"
+#define BLE_PROFILE_VERSION "4"
 #else
 #define BLE_PROFILE_VERSION "2"
 #endif
@@ -185,6 +185,11 @@ void splitergoll_ble_profile_command(const struct device *uart, char command) {
     snprintf(line, sizeof(line), "BLEPROFILE WINDOW ready=%u remaining_ms=%u advertising=%u known=%u connected=%u error=%d\n",
              reconnect.ready, reconnect.remaining_ms, reconnect.advertising,
              reconnect.known, reconnect.connected, reconnect.error);
+    if (!trace_send_line(uart, line)) return;
+    struct ble_auto_policy_status policy = splitergoll_ble_auto_policy_status();
+    snprintf(line, sizeof(line), "BLEPROFILE POLICY active=%u without_host=%u loaded=%u saved=%u remembered=%d restoring=%u error=%d\n",
+             reconnect.active, reconnect.without_host, policy.loaded, policy.saved,
+             policy.remembered, policy.restoring, policy.save_error);
     if (!trace_send_line(uart, line)) return;
 #endif
     snprintf(line, sizeof(line), "BLEPROFILE RESULT command=%c status=%s selected=%d changed=%u error=%d\n",

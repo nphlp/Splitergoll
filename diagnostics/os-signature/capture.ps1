@@ -109,13 +109,13 @@ function Test-BleCapture {
 function Test-BleProfile {
     param([System.Collections.Generic.List[string]]$Lines, [string]$Command)
 
-    if ($Lines.Count -lt 5 -or $Lines[1] -notmatch '^BLEPROFILE BEGIN version=([123]) count=([0-9]+) active=([0-9]+) save_delay_ms=[0-9]+$') {
+    if ($Lines.Count -lt 5 -or $Lines[1] -notmatch '^BLEPROFILE BEGIN version=([1234]) count=([0-9]+) active=([0-9]+) save_delay_ms=[0-9]+$') {
         throw 'Réponse incorrecte : firmware ble-trace avec contrôle des emplacements requis.'
     }
     $Version = [int]$Matches[1]
     $Expected = [int]$Matches[2]
     $Active = [int]$Matches[3]
-    $Extra = [int]($Version -eq 3)
+    $Extra = [int]($Version -ge 3) + [int]($Version -eq 4)
     if ($Expected -lt 1 -or $Expected -gt 10 -or $Active -ge $Expected -or $Lines.Count -ne $Expected + 4 + $Extra) {
         throw 'Réponse des emplacements tronquée ou incohérente.'
     }
@@ -124,7 +124,7 @@ function Test-BleProfile {
             throw 'Liste des emplacements incorrecte.'
         }
     }
-    if ($Version -eq 3) {
+    if ($Version -ge 3) {
         if ($Lines[$Expected + 2] -notmatch '^BLEPROFILE WINDOW ready=([01]) remaining_ms=([0-9]+) advertising=([01]) known=([0-9]+) connected=([0-9]+) error=-?[0-9]+$') {
             throw 'État de reconnexion absent ou incorrect.'
         }
@@ -138,6 +138,20 @@ function Test-BleProfile {
             ($Connected -band (-bnot $Known)) -ne 0 -or
             ($Ready -eq 0 -and ($Remaining -ne 0 -or $Advertising -ne 0 -or $Known -ne 0 -or $Connected -ne 0))) {
             throw 'État de reconnexion incohérent.'
+        }
+    }
+    if ($Version -eq 4) {
+        if ($Lines[$Expected + 3] -notmatch '^BLEPROFILE POLICY active=([01]) without_host=([01]) loaded=([01]) saved=([01]) remembered=(-1|[0-9]+) restoring=([01]) error=-?[0-9]+$') {
+            throw 'Politique de destination absente ou incorrecte.'
+        }
+        $Awake = [int]$Matches[1]
+        $Without = [int]$Matches[2]
+        $Loaded = [int]$Matches[3]
+        $Saved = [int]$Matches[4]
+        $Remembered = [int]$Matches[5]
+        if ($Remembered -ge $Expected -or ($Remembered -ge 0 -and ($Loaded -eq 0 -or $Saved -eq 0)) -or
+            ($Without -eq 1 -and ($Awake -eq 0 -or $Connected -ne 0))) {
+            throw 'Politique de destination incohérente.'
         }
     }
     if ($Lines[$Expected + 2 + $Extra] -notmatch '^BLEPROFILE RESULT command=([SF0-9]) status=(ok|busy|full|invalid|failed) selected=([0-9]+) changed=[01] error=-?[0-9]+$' -or

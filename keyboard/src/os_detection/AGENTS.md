@@ -591,11 +591,12 @@ son début. Aucun nouveau bond n’est admis si tous les slots sont occupés.
 La catégorie Gaming inclut ses deux couches, le passage interne Gaming → Gaming 2
 ne doit pas réouvrir les annonces. Ne pas appliquer une coupure de BLE hôte si
 l’USB n’offre pas de destination utilisable. Le bénéfice de latence reste à mesurer.
-Le retour au précédent reste non implémenté. La nouvelle demande remplace la grâce
-de cinq secondes par l’échéance de la fenêtre de démarrage de trente secondes.
+Le retour au précédent est implémenté dans le nouveau lot, à valider sur matériel.
+La grâce de cinq secondes est remplacée par la fenêtre de trente secondes ouverte
+à la première connexion du démarrage.
 Le premier hôte reste utilisable sans attendre et ne doit pas écraser la préférence
 durable pendant cette attente. Une recherche explicite annule ce retour.
-Aucune modification du firmware dans ce cadrage.
+Les détails de cette politique sont dans ../connections/AGENTS.md.
 
 Le raccourci devra prendre un instantané du nombre de destinations utilisables et
 distinctes au geste, pas du nombre de connexions BLE. Une destination : garder la
@@ -666,3 +667,22 @@ Les trois paires normal/debug/ble-trace compilent et passent les gardes UF2,
 SHA-256 et comparaison des couches, macros et comportements. La droite ble-trace
 reste identique à la précédente. Les conteneurs éphémères sont libérés et les
 services préexistants restent actifs. Pas de flash, lecture série ou changement de bond.
+
+## Préférence de destination et activité sans hôte
+
+La reprise du démarrage utilise une préférence propre, jamais ble/active_profile.
+Le worker résout l’empreinte vérifiée du bond par le backend de connections, puis
+host_session_target propose le premier disponible ou le préféré avant l’échéance.
+Une sélection explicite annule le rappel. Les callbacks natifs de connexion du
+profil déjà sélectionné ne sont pas des choix manuels : observed_profile permet
+cette distinction. internal_selection protège les mutations décidées par le worker.
+Une cible automatique acceptée avant l’échéance garde les mêmes gardes de release,
+HID vide et drainage que le raccourci, ainsi que son jeton d’identité. Les nouvelles
+frappes restent en RAM. La sauvegarde à la fermeture attend la fin de la transition.
+
+Les touches/sensors physiques comptent comme activité même avant une keymap valide,
+par appel du callback exporté zmk_listener_activity du socle figé. Aucun keycode,
+paquet radio ou lecture série ne passe par ce chemin. L’activité native ne fait
+qu’actualiser son horodatage et annoncer ACTIVE, sans exécuter de comportement.
+Recontrôler ce symbole et son contrat à chaque migration, sans patch de dépendance.
+Les durées 120/600 secondes et la garde de 750 ms ne changent pas.

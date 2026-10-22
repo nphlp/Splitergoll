@@ -321,8 +321,42 @@ static void exhaustive_topologies(void) {
     }
 }
 
-// Exécute le contrat de décision destiné au futur adaptateur ZMK.
+// Sans hôte, l’admission dépend de l’activité, jamais d’un réarmement périodique.
+static void discovery_activity_and_connections(void) {
+    struct host_discovery_policy p;
+    host_discovery_start(&p, 100);
+    assert(host_discovery_remaining(&p, 100) == HOST_WINDOW_DURATION_MS);
+    assert(host_discovery_remaining(&p, 120000) == HOST_WINDOW_DURATION_MS);
+    host_discovery_update(&p, 120001, 0, false);
+    assert(host_discovery_remaining(&p, 120001) == 0);
+    host_discovery_update(&p, 120010, 0, true);
+    assert(host_discovery_remaining(&p, 120010) == HOST_WINDOW_DURATION_MS);
+    uint32_t generation = p.generation;
+    host_discovery_update(&p, 120020, 2, true);
+    assert(p.generation != generation && p.opened_at_ms == 120020);
+    generation = p.generation;
+    host_discovery_update(&p, 120021, 3, true);
+    assert(p.generation == generation);
+    assert(host_discovery_remaining(&p, 120020 + HOST_WINDOW_DURATION_MS - 1) == 1);
+    assert(host_discovery_remaining(&p, 120020 + HOST_WINDOW_DURATION_MS) == 0);
+    host_discovery_update(&p, 160000, 1, true);
+    assert(p.generation == generation && !p.opened && host_discovery_remaining(&p, 160000) == 0);
+    host_discovery_update(&p, 160001, 0, true);
+    assert(host_discovery_remaining(&p, 160001) == HOST_WINDOW_DURATION_MS);
+    host_discovery_update(&p, 160002, 0, false);
+    host_discovery_open(&p, 160003);
+    assert(host_discovery_remaining(&p, 160003) == 0);
+    host_discovery_update(&p, 160004, 1, false);
+    assert(host_discovery_remaining(&p, 160004) == 0);
+    host_discovery_update(&p, 160005, 1, true);
+    assert(host_discovery_remaining(&p, 160005) == 0);
+    host_discovery_open(&p, UINT32_MAX - 5);
+    assert(host_discovery_remaining(&p, 0) == HOST_WINDOW_DURATION_MS - 6);
+}
+
+// Exécute le contrat de décision destiné à l’adaptateur ZMK.
 int main(void) {
+    discovery_activity_and_connections();
     startup_and_deadlines();
     search_once();
     late_arrivals_and_input_guard();

@@ -14,6 +14,9 @@
 #include <zephyr/logging/log.h>
 #include <zephyr/settings/settings.h>
 #include <zmk/ble.h>
+#include <zmk/activity.h>
+#include <zmk/event_manager.h>
+#include <zmk/events/activity_state_changed.h>
 
 LOG_MODULE_REGISTER(splitergoll_ble_reconnect, CONFIG_ZMK_LOG_LEVEL);
 BUILD_ASSERT(!IS_ENABLED(CONFIG_BT_EXT_ADV) && !IS_ENABLED(CONFIG_LTO));
@@ -40,7 +43,7 @@ struct native_advertisement {
 };
 
 static struct native_advertisement native;
-static struct host_window_policy window;
+static struct host_discovery_policy discovery;
 static struct ble_reconnect_status status;
 static struct k_spinlock control_lock;
 static uint32_t revision;
@@ -82,7 +85,7 @@ static void notify(void) { k_work_reschedule(&reconnect_work, K_NO_WAIT); }
 void splitergoll_ble_reconnect_open(void) {
     k_spinlock_key_t key = k_spin_lock(&control_lock);
     if (status.ready) {
-        host_window_start(&window, k_uptime_get_32());
+        host_discovery_open(&discovery, k_uptime_get_32());
         revision++;
     }
     k_spin_unlock(&control_lock, key);
@@ -93,7 +96,11 @@ void splitergoll_ble_reconnect_open(void) {
 struct ble_reconnect_status splitergoll_ble_reconnect_status(void) {
     k_spinlock_key_t key = k_spin_lock(&control_lock);
     struct ble_reconnect_status snapshot = status;
-    snapshot.remaining_ms = status.ready ? host_window_remaining(&window, k_uptime_get_32()) : 0;
+    snapshot.remaining_ms = status.ready ? host_discovery_remaining(&discovery, k_uptime_get_32()) : 0;
+    snapshot.generation = discovery.generation;
+    snapshot.opened_at_ms = discovery.opened_at_ms;
+    snapshot.active = discovery.awake;
+    snapshot.without_host = discovery.awake && discovery.connected == 0;
     snapshot.pairing_slot = pairing.conn != NULL ? pairing.policy.slot : -1;
     snapshot.pairing_remaining_ms = ble_pairing_remaining(&pairing.policy, k_uptime_get_32(), snapshot.remaining_ms);
     snapshot.accepting_new = snapshot.ready && snapshot.remaining_ms != 0 &&
@@ -137,7 +144,7 @@ int __wrap_bt_le_adv_start(const struct bt_le_adv_param *parameters,
     k_spinlock_key_t key = k_spin_lock(&control_lock);
     native = copy;
     if (!status.ready) {
-        host_window_start(&window, k_uptime_get_32());
+        host_discovery_start(&discovery, k_uptime_get_32());
         status.ready = true;
     }
     revision++;
@@ -192,7 +199,7 @@ static enum bt_security_err pairing_accept(struct bt_conn *conn,
         k_spinlock_key_t key = k_spin_lock(&control_lock);
         bool accepted = pairing.conn == conn && ble_pairing_begin(&pairing.policy,
             (uint32_t)bt_conn_index(conn) + 1, k_uptime_get_32(),
-            status.ready && host_window_remaining(&window, k_uptime_get_32()) != 0);
+            status.ready && host_discovery_remaining(&discovery, k_uptime_get_32()) != 0);
         if (accepted) revision++;
         k_spin_unlock(&control_lock, key);
         notify();
@@ -286,7 +293,7 @@ static void connected(struct bt_conn *conn, uint8_t error) {
         int profile = zmk_ble_profile_index(bt_conn_get_dst(conn));
         bool has_bond = bonded(bt_conn_get_dst(conn));
         k_spinlock_key_t key = k_spin_lock(&control_lock);
-        bool open = status.ready && host_window_remaining(&window, k_uptime_get_32()) != 0;
+        bool open = status.ready && host_discovery_remaining(&discovery, k_uptime_get_32()) != 0;
         bool allowed = ble_reconnect_accept(open, profile >= 0, has_bond);
         if (!allowed && profile < 0 && !has_bond && info_registered && open && pairing.conn == NULL) {
             int slot = ble_pairing_reserve(&pairing.policy, ZMK_BLE_PROFILE_COUNT,
@@ -310,7 +317,7 @@ static void connected(struct bt_conn *conn, uint8_t error) {
     notify();
 }
 
-// Une déconnexion ne réarme jamais dix secondes et ne supprime aucun appairage.
+// Une perte partielle ne rouvre pas la fenêtre, la perte du dernier hôte permet la recherche active.
 static void disconnected(struct bt_conn *conn, uint8_t reason) {
     ARG_UNUSED(reason);
     if (!is_host(conn)) return;
@@ -384,7 +391,7 @@ static uint32_t process_pairing(void) {
     bool gone = pairing.disconnected;
     bool created = pairing.created_bond;
     uint32_t now_ms = k_uptime_get_32();
-    uint32_t window_remaining = host_window_remaining(&window, now_ms);
+    uint32_t window_remaining = host_discovery_remaining(&discovery, now_ms);
     bool expired = ble_pairing_expired(&policy, now_ms, window_remaining);
     k_spin_unlock(&control_lock, key);
     if (conn == NULL) return 0;
@@ -474,7 +481,7 @@ static bool request_current(void *context) {
     struct radio_request *request = context;
     k_spinlock_key_t key = k_spin_lock(&control_lock);
     bool current = status.ready && revision == request->revision &&
-                   host_window_remaining(&window, k_uptime_get_32()) != 0;
+                   host_discovery_remaining(&discovery, k_uptime_get_32()) != 0;
     k_spin_unlock(&control_lock, key);
     return current;
 }
@@ -508,9 +515,11 @@ static void reconcile(struct k_work *work) {
         k_spin_unlock(&control_lock, key);
         return;
     }
+    host_discovery_update(&discovery, k_uptime_get_32(), status.connected,
+                           zmk_activity_get_state() == ZMK_ACTIVITY_ACTIVE);
     request.advertisement = native;
     request.revision = revision;
-    uint32_t remaining = host_window_remaining(&window, k_uptime_get_32());
+    uint32_t remaining = host_discovery_remaining(&discovery, k_uptime_get_32());
     k_spin_unlock(&control_lock, key);
 
     if (retry_revision == request.revision && radio_state.error != 0 &&
@@ -539,6 +548,16 @@ static void reconcile(struct k_work *work) {
     }
     splitergoll_ble_auto_unlock();
     key = k_spin_lock(&control_lock);
+    uint32_t previous_generation = discovery.generation;
+    host_discovery_update(&discovery, k_uptime_get_32(), view.connected,
+                           zmk_activity_get_state() == ZMK_ACTIVITY_ACTIVE);
+    if (discovery.generation != previous_generation) {
+        revision++;
+        request.revision = revision;
+        view.revision = revision;
+    }
+    remaining = host_discovery_remaining(&discovery, k_uptime_get_32());
+    view.window_open = remaining != 0;
     status.free_slots = free_slots;
     selected_profile = selected;
     view.pairing_open = free_slots != 0 && pairing.conn == NULL && info_registered;
@@ -553,9 +572,11 @@ static void reconcile(struct k_work *work) {
     status.known = view.known;
     status.connected = view.connected;
     status.error = error == -EAGAIN ? 0 : error;
-    remaining = host_window_remaining(&window, k_uptime_get_32());
+    remaining = host_discovery_remaining(&discovery, k_uptime_get_32());
     bool stale = revision != request.revision;
+    bool without_host = discovery.awake && discovery.connected == 0;
     k_spin_unlock(&control_lock, key);
+    splitergoll_ble_auto_notify();
     if (changed) LOG_INF("BLE reconnect: remaining_ms=%u advertising=%u known=%04x connected=%04x error=%d",
                          remaining, radio_state.advertising, view.known, view.connected, error);
     if (error != 0 && error != -EAGAIN) LOG_WRN("BLE reconnect radio failed: error=%d", error);
@@ -569,8 +590,22 @@ static void reconcile(struct k_work *work) {
         retry_at_ms = k_uptime_get_32() + RADIO_RETRY_MS;
         k_work_schedule(k_work_delayable_from_work(work), K_MSEC(RADIO_RETRY_MS));
     } else {
-        uint32_t delay = remaining;
+        uint32_t delay = without_host ? 0 : remaining;
         if (pairing_delay != 0 && (delay == 0 || pairing_delay < delay)) delay = pairing_delay;
         if (delay != 0) k_work_schedule(k_work_delayable_from_work(work), K_MSEC(delay));
     }
 }
+
+// Les états d’activité ferment l’admission sans générer de frappe ni retarder le sommeil.
+static int activity_changed(const zmk_event_t *event) {
+    const struct zmk_activity_state_changed *activity = as_zmk_activity_state_changed(event);
+    k_spinlock_key_t key = k_spin_lock(&control_lock);
+    host_discovery_update(&discovery, k_uptime_get_32(), status.connected,
+                           activity->state == ZMK_ACTIVITY_ACTIVE);
+    revision++;
+    k_spin_unlock(&control_lock, key);
+    notify();
+    return ZMK_EV_EVENT_BUBBLE;
+}
+ZMK_LISTENER(splitergoll_ble_discovery, activity_changed);
+ZMK_SUBSCRIPTION(splitergoll_ble_discovery, zmk_activity_state_changed);

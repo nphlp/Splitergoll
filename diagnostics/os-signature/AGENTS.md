@@ -1320,3 +1320,14 @@ la lecture est passive, mais le sélecteur auto agit indépendamment depuis la m
 Le lecteur WINDOW accepte maintenant jusqu’à 30000 ms, y compris les anciennes
 valeurs inférieures. AWK et PowerShell passent les mêmes 44 cas, dont 30000 admis
 et 30001 refusé, sans accès série. Le BOM UTF-8 du script autonome reste conservé.
+
+## État de préférence Bluetooth
+
+Le nouveau bluetooth auto ble-trace émet BLEPROFILE v4 : WINDOW reste inchangé,
+puis POLICY active/without_host/loaded/saved/remembered/restoring/error. remembered
+est le slot résolu par l’empreinte du bond vérifiée, jamais une identité exportée.
+-1 avec saved=1 signifie que le choix existe mais n’est pas encore résolu pour ce
+démarrage. Sans hôte, remaining_ms affiche la durée nominale et without_host=1,
+pas un compte à rebours. Les lecteurs AWK/PowerShell acceptent encore v1/v2/v3 et
+refusent POLICY manquant, doublé, hors ordre ou incohérent. Les lectures restent
+passives, seule une commande select explicite peut ouvrir une fenêtre de choix.

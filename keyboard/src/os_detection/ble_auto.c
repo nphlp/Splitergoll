@@ -6,6 +6,8 @@
 #include <splitergoll/ble_observer.h>
 #include <splitergoll/ble_reconnect.h>
 #include <splitergoll/host_window_policy.h>
+#include <splitergoll/host_preference.h>
+#include <splitergoll/host_preference_settings.h>
 #include "common/auto-layers.h"
 #include <zephyr/init.h>
 #include <zephyr/kernel.h>
@@ -33,6 +35,12 @@ static struct ble_auto_state state;
 static struct ble_device_request device_request;
 static struct host_window_policy device_window;
 static bool arrival_search;
+static struct host_session_policy session;
+static bool explicit_choice;
+static bool internal_selection;
+static int observed_profile;
+static int automatic_target = -1;
+static uint32_t automatic_identity;
 static struct ble_device_buffer input_buffer;
 static struct {
     bt_addr_le_t peer;
@@ -47,6 +55,9 @@ static bt_addr_le_t requested_peer;
 static bt_addr_le_t requested_source_peer;
 static atomic_t auto_ready;
 K_MUTEX_DEFINE(state_mutex);
+
+// Le listener ZMK figé compte aussi une touche physique retenue avant les comportements.
+extern const struct zmk_listener zmk_listener_activity;
 
 int __real_zmk_event_manager_raise(zmk_event_t *event);
 int __real_zmk_keymap_layer_to(zmk_keymap_layer_id_t layer, bool locking);
@@ -141,6 +152,9 @@ int splitergoll_ble_auto_next_device(void) {
     splitergoll_ble_auto_lock();
     if (input_buffer.active) ble_device_buffer_discard(&input_buffer);
     device_request.pending = false;
+    explicit_choice = true;
+    session.restoring = false;
+    automatic_target = -1;
     struct host_window_view view = host_view();
     host_window_shortcut(&device_window, &view, k_uptime_get_32());
     arrival_search = device_window.searching;
@@ -153,10 +167,26 @@ int splitergoll_ble_auto_next_device(void) {
 
 // Les frappes reçues pendant le drainage attendent la nouvelle keymap dans une file RAM bornée.
 static void select_requested_device(uint32_t now_ms) {
-    if (!device_window.searching && device_window.pending < 0 && !device_request.pending) return;
     struct host_window_view view = host_view();
     host_window_update(&device_window, &view, now_ms);
+    struct ble_reconnect_status radio = splitergoll_ble_reconnect_status();
+    struct host_preference_status preference = splitergoll_host_preference_status();
+    if (radio.ready && preference.loaded) {
+        host_session_update(&session, radio.generation, radio.remaining_ms, radio.without_host);
+        if (explicit_choice) session.restoring = false;
+    }
     bool explicit_target = device_window.pending >= 0;
+    bool requested = explicit_target || device_window.searching || device_request.pending;
+    if (requested) automatic_target = -1;
+    else if (session.initialized) {
+        if (automatic_target >= 0 && (!(view.ready & (UINT16_C(1) << automatic_target)) ||
+            view.identities[automatic_target] != automatic_identity)) automatic_target = -1;
+        int next = host_session_target(&session, &view, preference.profile);
+        if (next >= 0) {
+            automatic_target = next;
+            automatic_identity = view.identities[next];
+        }
+    }
     bool adoption = device_request.pending && !device_window.searching && !explicit_target;
     if (device_request.pending &&
         (bt_addr_le_cmp(&requested_peer, zmk_ble_profile_address(device_request.target)) != 0 ||
@@ -164,7 +194,7 @@ static void select_requested_device(uint32_t now_ms) {
         device_request.pending = false;
         adoption = false;
     }
-    if (explicit_target || (adoption && (view.ready & (UINT16_C(1) << device_request.target)))) {
+    if (automatic_target >= 0 || explicit_target || (adoption && (view.ready & (UINT16_C(1) << device_request.target)))) {
         ble_device_buffer_begin(&input_buffer);
     } else if (input_buffer.active) {
         ble_device_buffer_discard(&input_buffer);
@@ -180,12 +210,16 @@ static void select_requested_device(uint32_t now_ms) {
                                  (unsigned)view.selected, connected_hosts(),
                                  busy || !(view.ready & (UINT16_C(1) << device_request.target)));
     }
+    if (target < 0 && !busy) target = automatic_target;
     if (target < 0 || !ble_device_quiesce(&state.input, reports_busy, now_ms)) return;
     if (searched) arrival_search = false;
     device_request.pending = false;
     device_window.source = target;
     device_window.source_identity = view.identities[target];
+    automatic_target = -1;
+    internal_selection = true;
     int result = zmk_ble_prof_select(target);
+    internal_selection = false;
     if (result) {
         ble_device_buffer_discard(&input_buffer);
         LOG_WRN("BLE device selection failed: profile=%d error=%d", target, result);
@@ -226,6 +260,7 @@ int __wrap_zmk_event_manager_raise(zmk_event_t *event) {
     if (position == NULL && sensor == NULL && keycode == NULL) {
         return __real_zmk_event_manager_raise(event);
     }
+    if (position != NULL || sensor != NULL) zmk_listener_activity.callback(event);
     splitergoll_ble_auto_lock();
     uint32_t now_ms = k_uptime_get_32();
     ble_auto_sync(&state, current_target(), now_ms);
@@ -258,7 +293,7 @@ int __wrap_zmk_event_manager_raise(zmk_event_t *event) {
     }
     int result = forward ? __real_zmk_event_manager_raise(event) : 0;
     bool waiting = state.input.selected == USB_OS_UNKNOWN || device_request.pending ||
-                   device_window.pending >= 0 || device_window.searching;
+                   device_window.pending >= 0 || device_window.searching || automatic_target >= 0;
     splitergoll_ble_auto_unlock();
     if (waiting) splitergoll_ble_auto_notify();
     return result;
@@ -278,7 +313,7 @@ static void reconcile_selection(uint32_t now_ms) {
     select_requested_device(now_ms);
     struct ble_auto_target before = current_target();
     ble_auto_sync(&state, before, now_ms);
-    if (input_buffer.active && device_window.pending < 0 && !device_request.pending && !before.ready) {
+    if (input_buffer.active && device_window.pending < 0 && !device_request.pending && automatic_target < 0 && !before.ready) {
         ble_device_buffer_discard(&input_buffer);
     }
     if (ble_auto_can_select(&state, hid_busy(), now_ms)) {
@@ -292,7 +327,7 @@ static void reconcile_selection(uint32_t now_ms) {
             LOG_INF("BLE keymap selected: profile=%d os=%s", before.profile, ble_memory_os_name(before.os));
         }
     }
-    if (input_buffer.active && device_window.pending < 0 && !device_request.pending &&
+    if (input_buffer.active && device_window.pending < 0 && !device_request.pending && automatic_target < 0 &&
         state.input.selected != USB_OS_UNKNOWN) {
         if (input_buffer.overflow) {
             LOG_WRN("BLE switch input buffer full: discarded queued input");
@@ -318,14 +353,26 @@ static void select_os(struct k_work *work) {
     uint32_t now_ms = k_uptime_get_32();
     reconcile_selection(now_ms);
     uint32_t remaining = usb_auto_drain_remaining(&state.input, now_ms);
+    struct ble_reconnect_status radio = splitergoll_ble_reconnect_status();
+    if (session.checkpoint && radio.remaining_ms == 0 && !radio.without_host &&
+        device_window.pending < 0 && !device_request.pending && automatic_target < 0 && !input_buffer.active) {
+        struct ble_auto_target current = current_target();
+        if (current.ready && state.input.selected != USB_OS_UNKNOWN) {
+            splitergoll_host_preference_save((unsigned)current.profile);
+        }
+        session.checkpoint = false;
+    }
     bool waiting = state.input.selected == USB_OS_UNKNOWN && ble_auto_guess(state.target) != USB_OS_UNKNOWN;
-    if ((waiting || device_request.pending || device_window.pending >= 0) &&
+    if ((waiting || device_request.pending || device_window.pending >= 0 || automatic_target >= 0) &&
         state.input.held == 0 && remaining != 0) {
         k_work_schedule(k_work_delayable_from_work(work), K_MSEC(remaining));
     }
     uint32_t window_remaining = host_window_remaining(&device_window, now_ms);
     if (device_window.searching && window_remaining != 0) {
         k_work_schedule(k_work_delayable_from_work(work), K_MSEC(window_remaining));
+    }
+    if (session.checkpoint && radio.remaining_ms != 0 && !radio.without_host) {
+        k_work_schedule(k_work_delayable_from_work(work), K_MSEC(radio.remaining_ms));
     }
     splitergoll_ble_auto_unlock();
 }
@@ -339,6 +386,13 @@ void splitergoll_ble_auto_notify(void) {
 static int profile_changed(const zmk_event_t *event) {
     const struct zmk_ble_active_profile_changed *profile = as_zmk_ble_active_profile_changed(event);
     splitergoll_ble_auto_lock();
+    if (!internal_selection && session.initialized && observed_profile != (int)profile->index) {
+        explicit_choice = true;
+        session.restoring = false;
+        automatic_target = -1;
+        splitergoll_ble_reconnect_open();
+    }
+    observed_profile = profile->index;
     if (device_request.pending && profile->index != device_request.origin) device_request.pending = false;
     if ((int)profile->index != device_window.source) {
         host_window_cancel_selection(&device_window);
@@ -354,9 +408,21 @@ ZMK_SUBSCRIPTION(splitergoll_ble_auto, zmk_ble_active_profile_changed);
 
 // Attend l’initialisation du clavier avant de lire les états chargés par ZMK.
 static int auto_init(void) {
+    observed_profile = zmk_ble_active_profile_index();
     host_window_start(&device_window, k_uptime_get_32());
     atomic_set(&auto_ready, 1);
     splitergoll_ble_auto_notify();
     return 0;
 }
 SYS_INIT(auto_init, APPLICATION, CONFIG_APPLICATION_INIT_PRIORITY);
+
+// L’état public ne contient ni empreinte du bond ni événement de saisie.
+struct ble_auto_policy_status splitergoll_ble_auto_policy_status(void) {
+    splitergoll_ble_auto_lock();
+    struct host_preference_status preference = splitergoll_host_preference_status();
+    struct ble_auto_policy_status status = {.remembered = preference.profile,
+        .saved = preference.present, .loaded = preference.loaded,
+        .restoring = session.restoring, .save_error = preference.error};
+    splitergoll_ble_auto_unlock();
+    return status;
+}

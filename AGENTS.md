@@ -106,82 +106,103 @@ isolés. Cette autorisation ne déclenche aucun flash ni effacement d’appairag
 
 ## Étape active et validation
 
-Précision utilisateur avant le commit du lot validé : la préférence de destination
-doit utiliser notre mémoire propre, pas ble/active_profile natif. Sauvegarder à la
-fermeture de la fenêtre l’appareil sélectionné et connecté, pas le dernier arrivé.
-Sans cible utilisable garder l’ancienne préférence. Un reset avant l’échéance peut
-donc restaurer l’ancien choix durable. La préférence doit être liée à l’identité
-du bond, distincte de l’OS mémorisé, avec écriture dédupliquée et erreur visible.
-Le prochain lot est limité au Bluetooth : sélection générale, retour prioritaire,
-mémoire à l’échéance, recherche sans hôte jusqu’à IDLE et essais au délai privé de
-dix secondes. Une perte du dernier hôte déclenche la règle zéro hôte, une perte
-partielle ne rouvre pas la recherche. Au premier retour, ouvrir une fenêtre bornée
-pour les suivants. Ni mode mixte USB/BLE ni Gaming USB ni correction OS dans ce lot.
+Signal utilisateur à reconnaître lors d’un futur diagnostic : « je tape sur Mac et
+le clavier bascule tout seul vers Windows », surtout si le phénomène se répète.
+Examiner en priorité la chaîne perte de liaison active, repli automatique, sauvegarde
+immédiate puis exclusion de l’ancien hôte. Le repli provoque la bascule, l’exclusion
+empêche le retour spontané. Vérifier traces DISCONNECTED, sélection et masque
+d’exclusion avant de conclure à une cause radio. Ne pas confondre cette piste avec
+une preuve. Les coupures involontaires font partie du compromis accepté.
 
-Derniers essais V1 confirmés par l’utilisateur avec la gauche du diagnostic privé
-à dix secondes : allers-retours Mac/Windows, OS corrects, saisie immédiate retenue
-puis rejouée après transition. Shift maintenu bloque la bascule, son relâchement
-la permet. Le sort des frappes pendant le maintien est une impression utilisateur,
-pas une trace instrumentée, et il demande de conserver ce comportement.
-Les lectures initiales montrent Mac slot 0 et Windows slot 1, OS saved sans erreur,
-deux connexions et fenêtre fermée. Les masques known=3/connected=3 désignent les
-bits 0 et 1, pas trois ordinateurs. Après fermeture, Windows ne revient pas seul,
-puis un seul raccourci le reconnecte et le sélectionne. Sans connexion, Mac arrive
-en premier, Windows rejoint dans la fenêtre sans prendre la sélection. Reset simple
-fonctionnel. Pas de validation matérielle déduite pour nouveaux bonds ou cas limites.
-Le retour au build normal à trente secondes est annoncé, pas confirmé.
+Prochain lot validé, à réaliser après le commit de l’état actuel demandé :
+l’utilisateur valide le diagnostic v4, mémoire des deux OS sans erreur, bascules
+et Shift inchangés, préférence Mac puis rappel dans les deux ordres après mise hors
+tension. Le reset seul ne lui a pas suffi pour ce test, sans preuve de cause.
+Il corrige maintenant le moment d’écriture : choix manuel réellement appliqué,
+y compris hôte retrouvé ou nouvellement appairé, à sauvegarder immédiatement.
+Le repli après perte de la destination réellement utilisée avec un autre hôte
+restant doit aussi être sauvegardé immédiatement et annuler le rappel vers le perdu.
+La première arrivée provisoire au démarrage ne relève pas de ce repli. La perte
+totale sans reset doit réarmer la même politique de rappel qu’un démarrage.
+Une ancienne échéance ne doit pas écraser un choix sauvegardé immédiatement.
+Décisions acceptées : fenêtre réelle de 120 secondes (diagnostic dix),
+fin de cette fenêtre possible en IDLE sans report de SLEEP, et exclusion d’un
+hôte perdu tant qu’un autre reste jusqu’au prochain geste/redémarrage. Cette
+exclusion doit être déterministe pour toute cause de perte, car le motif HCI ne
+prouve pas l’intention de l’interface hôte. Le risque de bascule involontaire n’a
+pas été observé. Le signaler aussi près du code d’exclusion une fois implémenté.
+Les tests humains actuels restent ceux du firmware précédent. Le cas reset avant
+fin de fenêtre après geste devra être inversé après implémentation du choix immédiat.
 
-La règle de retour au dernier appareil reste à développer. La demande actuelle
-remplace la grâce de cinq secondes par l’échéance des trente secondes de recherche
-du démarrage. Le premier hôte disponible doit fonctionner sans attendre, la saisie
-sur lui n’annule pas le retour au précédent, une sélection manuelle l’annule.
-La sauvegarde ZMK native du slot attend 60000 ms, distincte de la mémoire d’OS,
-et ne garantit pas le dernier choix suivi d’un reset rapide. Il faudra préserver
-la préférence durable sans l’écraser par une sélection provisoire.
-Nouvelle règle cible sans hôte : recherche des connus et nouveaux tant qu’ACTIVE,
-arrêt sur IDLE après deux minutes, sommeil profond à dix minutes sans report par
-activité radio. Aucun raccord à activity_state_changed dans ble_reconnect.c à ce
-stade. La perte du dernier hôte et le passage à une fenêtre après la première
-connexion restent à préciser. Une perte partielle ne doit pas rouvrir les annonces.
-Cette mise à jour est documentaire, sans nouveau firmware, lecture série ou flash.
+Le commit 5745de5 est créé et publié sur origin/unified-firmware. Il conserve les
+corrections de tampon et de sélection sur une arrivée, validées par l’utilisateur
+sur V1 au délai privé de dix secondes : allers-retours Mac/Windows, OS corrects,
+saisie immédiate retenue puis rejouée, Shift maintenu qui bloque puis permet la
+bascule au relâchement. Le sort des frappes pendant Shift reste une impression
+utilisateur, pas une trace instrumentée. Il demande de garder ce comportement.
+Les lectures initiales donnent Mac 0 et Windows 1, OS saved, sans erreur ni perte,
+deux connexions et fenêtre fermée. known=3/connected=3 sont des masques, pas trois
+ordinateurs. Un raccourci retrouve et sélectionne Windows après fermeture. Mac
+arrivé en premier reste sélectionné quand Windows rejoint après une recherche
+explicite sans hôte. Reset simple fonctionnel. Nouveaux bonds et cas limites non
+validés par ces retours. Le retour annoncé au build normal n’est pas confirmé.
 
-Pour les prochains essais utilisateur, un diagnostic ponctuel rétablit une fenêtre
-de 10000 ms sans changer les sources ou commandes de build normales à 30000 ms.
-La copie privée du module sous .local/diagnostic/ble-window-10s diffère seulement
-par HOST_WINDOW_DURATION_MS dans le code compilé. Les deux UF2 sont exportés sous
-.local/flash/ble-window-10s/bluetooth-auto-ble-trace-2026-10-22-19-13-24.
-Les gardes de rôle/partition, SHA-256, chemin UF2 explicite et échéances natives
-à dix secondes passent. La droite reste identique au build normal précédent.
-Garder les deux appairages Mac/Windows, flasher uniquement la gauche par chemin
-explicite, puis suivre docs/tests-connexions-bluetooth.md. Aucun flash ni lecteur
-série exécuté par l’agent. Les builds usuels restent à trente secondes.
+Le nouveau lot reste non committé et limité au Bluetooth : sélection générale,
+retour prioritaire au précédent, préférence durable à la fermeture de la fenêtre,
+recherche sans hôte jusqu’à IDLE. host_preference.c garde les règles pures,
+host_preference_settings.c stocke splitergoll/host-choice/value : version + SHA-256
+opaque du bond déjà vérifié par la mémoire d’OS, sans adresse ni clé copiée.
+Cette mémoire est indépendante de ble/active_profile natif et ne modifie aucun
+appairage ni format de mémoire d’OS. Les écritures inchangées sont dédupliquées,
+une erreur conserve le choix durable et reste visible. Un reset avant l’échéance
+restaure le choix antérieur. Sans cible sélectionnée utilisable, ne rien remplacer.
+
+Sans hôte et en ACTIVE, la radio admet connus et nouveaux sans échéance bornée.
+La première connexion démarre trente secondes pour les suivants. Le premier hôte
+utilisable fonctionne immédiatement, le précédent peut reprendre la sélection
+avant la fermeture de cette fenêtre de démarrage, même après des frappes sur le
+premier. Une sélection explicite annule ce rappel et ouvre sa propre fenêtre.
+La préférence est sauvegardée à la fermeture, après une transition déjà en cours.
+Une perte partielle ne rouvre pas les annonces. La perte du dernier hôte applique
+la règle sans hôte. IDLE ferme l’admission, ACTIVE la réactive seulement sans hôte.
+ZMK conserve les délais 120/600 s et l’USB empêche toujours le sommeil profond.
+La radio ne génère pas d’activité. Les touches physiques retenues notifient le
+listener natif activity pour garder la sortie d’IDLE possible sans keymap utilisable.
+Ce symbole du socle figé doit être recontrôlé à chaque migration.
+
+BLEPROFILE v4 ajoute POLICY, état d’activité et préférence sans identité exportée.
+Les lecteurs AWK et PowerShell restent compatibles v1/v2/v3. Les preuves techniques
+sont dans les AGENTS de connections et os_detection. Les tests humains restent
+courts et séparés : docs/tests-connexions-bluetooth.md, tests-reprise-bluetooth.md,
+tests-recherche-bluetooth.md. Aucun firmware de reset ni effacement de bond implicite.
+Le diagnostic privé de dix secondes est construit depuis une copie du module dans
+.local/diagnostic/ble-window-10s, avec seulement HOST_WINDOW_DURATION_MS modifié.
+Le SMP conserve une limite de trente secondes depuis son début. La configuration
+publique reste à trente secondes. Vérifier latest-artifacts avant de donner le
+chemin de flash. Aucun flash, redémarrage, sélection ou lecteur série lancé par
+l’agent. Le nouveau lot attend ses essais matériels sur V1.
+Validation finale : douze suites existantes et host_preference_test passent en
+ASan/UBSan. Les harnais privés du vrai sélecteur, de la radio et du backend de
+préférence passent, dont arrivée avant/après échéance, frappe provisoire, garde
+Shift, annulation manuelle, namespace, déduplication, reset, identité remplacée et
+NVS refusée. Les 55 cas AWK/PowerShell passent, BOM conservé. Avertissements du
+socle uniquement : KSCAN, const tap-dance en compilation complète, moteur Docker
+insecure. Aucun nouveau warning dans notre C. Six UF2 contrôlés, les trois droits
+restent identiques au précédent ble-trace. Normal et ble-trace à trente secondes :
+dist/firmware/bluetooth-auto-2026-10-22-20-15-56 et
+bluetooth-auto-ble-trace-2026-10-22-20-15-56. Diagnostic à dix secondes :
+.local/flash/ble-window-10s/bluetooth-auto-ble-trace-2026-10-22-20-15-44.
+SHA-256, gardes UF2, rôles, délais de veille et chemin explicite de flash passent.
+La copie compilée du module ne diffère des sources publiques que par le header
+de durée. Les conteneurs éphémères sont libérés, les trois services préexistants
+restent présents. Aucun changement de dépendance, partition, variable d’environnement,
+Compose ou Dockerfile. Nouveau contrat NVS limité à notre préférence de destination.
+
+
 Le firmware actuel n’expose aucune commande USB bootloader et le CDC figé n’a
 pas de déclencheur 1200 bauds. L1 + L2 puis clic encodeur gauche invoque &bootloader,
-le double reset physique reste disponible. Une commande USB dédiée est au TODO,
-pas implémentée ni utilisée. Aucun redémarrage implicite pendant les vérifications.
-
-Les derniers essais utilisateur sur V1 à domicile confirment Mac et Windows appairés,
-bascule entre les deux connectés via L1 + clic droit, fermeture des annonces puis
-reconnexion du Windows après réouverture. La saisie immédiate repousse cependant la
-bascule, et une recherche avec une seule destination ne sélectionne pas l’arrivée.
-Le nouveau lot passe la fenêtre à 30000 ms et raccorde host_window_policy au sélecteur.
-Les nouvelles frappes pendant un changement attendent en RAM, les anciennes releases
-et macros finissent sur l’ancienne destination. Garde de 750 ms conservée, sans
-réarmement par la saisie retenue. File de 64 événements, abandon sur cible invalidée,
-commande remplacée ou dépassement. Aucun payload de cette file n’est journalisé.
-Le futur contrôleur nRF52840 relève d’un autre dépôt, hors du chantier actuel.
-Ne pas modifier ce dépôt externe ni maintenir ici sa feuille de route matérielle.
-Les variantes finales bluetooth auto normal, debug et ble-trace compilent. Les six
-UF2 passent leurs gardes et SHA-256. La droite ble-trace est identique au précédent
-fichier : seul le flash de gauche est nécessaire. Build de diagnostic préparé :
-bluetooth-auto-ble-trace-2026-10-22-18-48-12. Aucun flash ou accès série effectué.
-Les douze suites natives ASan/UBSan, le harnais du vrai sélecteur et les 44 cas
-AWK/PowerShell passent. Keymaps, macros et comportements compilés restent identiques
-aux références. Aucun changement de dépendance, de partition, de variable
-d’environnement, de Compose ou de Dockerfile. Conteneurs de build libérés, trois
-services préexistants préservés. Les avertissements KSCAN et const tap-dance restent
-ceux du socle. La validation matérielle des corrections reste à faire sur V1.
-
+le double reset physique reste disponible. La commande USB dédiée est au TODO.
+Le futur contrôleur nRF52840 relève d’un autre dépôt, hors de ce chantier.
 
 Matériel disponible : à domicile avec Mac, PC Windows, V1 et V2. Reprendre en
 priorité la validation des fenêtres Bluetooth sur V1, dont la nouvelle gauche

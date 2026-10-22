@@ -124,11 +124,37 @@ quand Windows rejoint. Une déconnexion partielle après fermeture ne rouvre pas
 annonces. La validation de nouveaux bonds reste séparée, le retour au build normal
 à trente secondes n’est pas confirmé. Aucun accès série réalisé pour ce relevé.
 
-Les prochains comportements restent au TODO : sélection générale selon connexions,
-retour prioritaire au dernier choix jusqu’à l’échéance des trente secondes du
-démarrage, et recherche sans hôte jusqu’à IDLE. Le délai proposé de cinq secondes
-est remplacé par cette demande. La radio n’écoute pas encore les états d’activité.
-Ne pas déduire de la sauvegarde native différée du slot une politique de restauration.
+Le nouveau lot implémente la sélection générale, la préférence et la recherche
+sans hôte. host_discovery_policy ouvre sans limite tant qu’ACTIVE et sans hôte,
+puis une fenêtre bornée au premier retour. Une perte partielle ne réarme rien.
+IDLE ferme l’admission, sans générer d’activité. Le worker radio notifie le sélecteur
+sur ses révisions et à l’échéance pour une sauvegarde unique par fenêtre.
+
+host_preference.c est pur : format versionné de 33 octets, déduplication, erreur
+d’écriture sans remplacement du choix durable, sélection du premier disponible
+puis du précédent pendant le démarrage. host_preference_settings.c restaure notre
+seul espace splitergoll/host-choice, après settings h_commit. Il réutilise l’empreinte
+opaque déjà vérifiée en mémoire d’OS, pas l’adresse, un index ou l’OS comme identité.
+Ni le format ble-os ni les clés natives ne changent. Aucun effacement automatique.
+La sauvegarde attend la fermeture et la fin d’une bascule en cours. Un reset avant
+la fermeture garde le choix antérieur. Ne rien écrire sans destination utilisable.
+Les nouvelles règles sont testées en logiciel, leurs essais matériels restent à faire.
+Le format v4 de profiles expose active/without_host et l’état public de préférence,
+sans adresse ni empreinte. remaining_ms vaut la durée nominale en recherche continue.
+La grâce de rappel finit à l’échéance de la fenêtre ouverte au premier retour de
+ce démarrage. Un nouveau geste l’annule, sans réarmer le droit de rappel.
+
+La suite host_preference_test vérifie formats, identité remplacée, erreur NVS,
+déduplication, deux ordres de reconnexion, arrivée tardive et priorité manuelle.
+Compiler host_preference.c avec keyboard/tests/host_preference_test.c en C11,
+-Wall -Wextra -Werror, ASan/UBSan. Le harnais privé du vrai backend teste son
+namespace, le reset, les identités et les erreurs sans NVS réelle. Le vrai adaptateur
+radio passe ACTIVE/IDLE/SLEEP, prolongation sans hôte, premier retour borné et perte
+partielle. Le vrai sélecteur conserve le tampon et le rappel malgré une saisie sur
+l’hôte provisoire. Les 55 cas de lecteurs AWK/PowerShell incluent la v4, les anciens
+formats et les états incohérents. Les builds normal, ble-trace et privé dix secondes
+passent les contrôles. Garder les validations matérielles distinctes.
+
 
 Un build privé de validation utilise dix secondes pour réduire l’attente des essais.
 Il provient d’une copie du module dans .local/diagnostic/ble-window-10s : seul

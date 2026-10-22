@@ -33,10 +33,12 @@ pas encore confirmé.
 
 Ordre des prochains lots :
 
-1. Compléter la sélection automatique et le retour prioritaire à l’appareil mémorisé
-   pendant la fenêtre de démarrage. Cadrer aussi la recherche sans hôte et son arrêt
-   en veille légère. Les bascules avec tampon et la recherche d’un connu sont validées
-   sur V1 avec le diagnostic court. Nouvel appairage et cas limites restent distincts.
+1. Tester le nouveau lot Bluetooth au délai privé de dix secondes : sélection
+   automatique, retour prioritaire au précédent, mémoire propre à la fermeture
+   de la fenêtre et recherche sans hôte jusqu’à IDLE. Voir les essais de
+   [reprise](tests-reprise-bluetooth.md) et de [recherche](tests-recherche-bluetooth.md).
+   Les bascules avec tampon sont déjà validées sur V1. Nouvel appairage et cas limites
+   restent distincts. Revenir à trente secondes après validation.
 2. Réunir USB et BLE autour des [destinations](destinations-saisie.md), en résolvant
    l’association entre l’hôte USB et son éventuel bond BLE. Puis intégrer Gaming USB.
 3. Ajouter la correction manuelle d’OS, optimiser le délai de bascule, puis traiter
@@ -190,29 +192,50 @@ de préparer la mémoire d’OS propre à V2, absente du profil macOS normal.
   Le protocole est dans [capture-bluetooth-mac.md](capture-bluetooth-mac.md).
 - [ ] Compléter les indices d’appairage si nécessaire : métadonnées SMP publiques
   strictement sélectionnées, sans clés, avant de conclure sur la détection initiale.
-- [ ] Implémenter la sélection de destination BLE : aucun hôte = attente, un hôte
+- [x] Implémenter la sélection de destination BLE : aucun hôte = attente, un hôte
   connu connecté = sélection automatique, plusieurs = maintien du choix courant et
   bascule explicite. Séparer les connexions hôtes de celle de la moitié droite.
-- [ ] Après redémarrage/veille profonde, sélectionner le premier hôte disponible
-  immédiatement et laisser au précédent jusqu’à la fin des trente secondes de
-  recherche du démarrage pour revenir. Cette règle remplace la grâce de cinq secondes
+- [x] Après redémarrage/veille profonde, sélectionner le premier hôte disponible
+  immédiatement et laisser au précédent jusqu’à la fin des trente secondes ouvertes
+  à la première connexion du démarrage pour revenir. Cette règle remplace la grâce de cinq secondes
   envisagée auparavant. S’il revient dans la fenêtre, le restaurer, sinon mémoriser
   le nouvel hôte. Ne pas écraser la préférence avec la sélection provisoire.
-  Une bascule manuelle
-  annule la fenêtre. Taper sur le premier hôte ne l’annule ni ne la prolonge, et
+  Une bascule manuelle annule le rappel. Taper sur le premier hôte ne l’annule ni ne le prolonge, et
   n’empêche pas le retour au précédent. Tester ces frappes, les limites et les
-  déconnexions, puis confirmer la durée sur matériel.
-- [ ] Ajouter notre propre mémoire de destination, indépendante de celle du slot ZMK.
+  déconnexions. Implémentation et tests logiciels réalisés, essais matériels à faire.
+- [x] Ajouter notre propre mémoire de destination, indépendante de celle du slot ZMK.
   À la fermeture de chaque fenêtre, enregistrer l’appareil sélectionné et connecté,
   sans écraser la préférence si aucun n’est utilisable. Avant cette fermeture, un
   reset conserve le choix précédemment enregistré. Vérifier l’identité du bond,
   traiter les erreurs d’écriture et éviter une écriture si le choix est inchangé.
-- [ ] Sans hôte connecté et en état actif, rechercher les connus et accueillir un
+- [x] Sans hôte connecté et en état actif, rechercher les connus et accueillir un
   nouveau sans échéance de trente secondes. Fermer à la veille légère après deux
   minutes, sans activité artificielle ni report du sommeil profond à dix minutes.
   Inclure la perte du dernier hôte dans cette règle. Au retour du premier, ouvrir
   une fenêtre ordinaire pour les suivants. Une perte partielle ne rouvre rien.
-  La radio ne suit pas encore l’état IDLE.
+  La radio suit maintenant l’état IDLE. Une touche physique retenue par le filtre
+  compte aussi comme activité, sans rendre les annonces elles-mêmes actives.
+- [ ] Valider sur V1 préférence durable, deux ordres de reprise, absence du précédent,
+  reset avant sauvegarde, choix manuel prioritaire et recherche jusqu’à IDLE.
+  Les validations automatiques ne remplacent pas les essais sur clavier.
+- [x] Confirmer sur V1 le diagnostic v4, les deux OS mémorisés sans erreur, les
+  bascules et Shift inchangés, la préférence Mac sauvegardée et le retour prioritaire
+  dans les deux sens après coupure d’alimentation. Le reset simple n’a pas suffi
+  dans cet essai utilisateur, sans cause instrumentée établie.
+- [ ] Modifier la sauvegarde selon l’origine : fin de fenêtre pour la sélection
+  provisoire au démarrage ou après perte totale, sauvegarde immédiate après bascule
+  manuelle réussie, y compris recherche/nouvel appairage, ou après perte de la
+  destination réellement utilisée avec repli réussi sur un hôte restant.
+  Les choix explicites et replis annulent le rappel initial. Une ancienne échéance
+  ne doit pas écraser leur sauvegarde, une demande sans résultat n’écrit rien.
+- [ ] Traiter la perte totale sans reset comme un nouveau démarrage pour le rappel
+  du précédent. Distinguer cette reprise de la simple perte d’un hôte avec un autre disponible.
+- [x] Retenir la fenêtre réelle de 120 secondes, terminable en IDLE sans report de
+  SLEEP, et l’exclusion d’un hôte perdu jusqu’à une nouvelle recherche explicite.
+  Les dix secondes restent réservées au diagnostic.
+- [ ] Implémenter ces deux décisions après le commit de l’état validé. Documenter
+  près du code le risque de bascule involontaire après coupure radio, non observé
+  pour le moment. Si signalé, examiner repli, sauvegarde et exclusion dans les traces.
 - [x] Développer et tester le moteur pur des fenêtres : ouverture trente secondes,
   recherche avec zéro/une destination, bascule avec plusieurs, transitions Gaming,
   tickets périmés, identités remplacées et attente des relâchements. Aucune API radio

@@ -20,10 +20,10 @@ et Zephyr 4.1. Les moitiés communiquent en BLE, la gauche envoie la saisie à l
 | `bluetooth auto` et L1 + clic encodeur droit | Bascule entre appareils connectés et bonnes keymaps confirmées sur V1 en `ble-trace` |
 | Reconnexion des connus et nouvel appairage sur trente secondes | Intégrés, connus validés sur V1 au délai de test de dix secondes, nouveaux bonds à tester |
 | Recherche avec sélection et tampon de saisie | Intégrés, essais Mac/Windows validés sur V1 au délai de test |
-| Recherche sans hôte jusqu’à la veille légère | Prévue, non implémentée |
+| Recherche sans hôte jusqu’à la veille légère | Implémentée, tests logiciels et compilation OK, essais V1 à faire |
 | Arrêt des annonces et déconnexion du Mac en Gaming USB | Spécifiés, non implémentés sur le clavier |
 | Destinations mixtes USB/BLE avec priorité USB par ordinateur | Spécifiées, association des identités USB/BLE à résoudre |
-| Retour à l’ancien appareil pendant la fenêtre de démarrage de trente secondes | Spécifié, non implémenté |
+| Préférence durable et retour à l’ancien appareil au démarrage | Implémentés, tests logiciels et compilation OK, essais V1 à faire |
 | Correction manuelle persistante d’un OS mal reconnu | Prévue, non implémentée |
 
 Les heuristiques d’OS sont expérimentales, elles ne sont pas validées sur tous
@@ -84,6 +84,8 @@ et `make bat avg` calcule une moyenne par moitié sur 30 secondes.
 - [Sélection de l’ordinateur](selection-appareil.md) : comportement Bluetooth prévu, bascule et reprise après veille.
 - [Connexions Bluetooth](reconnexion-bluetooth.md) : trente secondes pour les connus et nouveaux appareils, sans détourner la saisie.
 - [Essais de connexion Bluetooth](tests-connexions-bluetooth.md) : premier appairage, ajout, mémoire et reconnexions sur V1.
+- [Essais de reprise Bluetooth](tests-reprise-bluetooth.md) : préférence durable et ordre de retour Mac/Windows.
+- [Essais de recherche Bluetooth](tests-recherche-bluetooth.md) : absence d’hôte, première arrivée et arrêt en veille légère.
 - [Destinations de saisie](destinations-saisie.md) : futur choix USB/Bluetooth et priorité par ordinateur.
 - [Gestion de l’appairage](gestion-appairage.md) : définir l’ouverture aux nouveaux appareils et les reconnexions.
 - [Mémoire de l’OS](memoire-os.md) : acquisition initiale et sauvegarde expérimentale, correction manuelle prévue.
