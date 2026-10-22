@@ -16,23 +16,35 @@ enum MenuBarBadge {
 
     private static let contours = BatterySide.allCases.map { contour(for: $0) }
 
+    // Couche l’éclair sans le déformer pour utiliser la largeur disponible du pourcentage.
+    private static func drawChargingSymbol(_ symbol: NSImage, in rect: NSRect) {
+        NSGraphicsContext.saveGraphicsState()
+        let rotation = NSAffineTransform()
+        rotation.translateX(by: rect.maxX, yBy: rect.minY)
+        rotation.rotate(byDegrees: 90)
+        rotation.concat()
+        symbol.draw(in: NSRect(x: 0, y: 0, width: rect.height, height: rect.width))
+        NSGraphicsContext.restoreGraphicsState()
+    }
+
     // Les symboles sont dessinés comme images, avec un équivalent textuel séparé pour l’accessibilité.
     static func image(state: BatteryState, at now: Date) -> NSImage {
         let attributes: [NSAttributedString.Key: Any] = [
             .font: NSFont.monospacedDigitSystemFont(ofSize: 9, weight: .medium),
             .foregroundColor: NSColor.black,
         ]
-        let symbol = NSImage(systemSymbolName: "battery.100percent.bolt", accessibilityDescription: nil)?
-            .withSymbolConfiguration(.init(pointSize: 9, weight: .medium))
+        let symbol = NSImage(systemSymbolName: "bolt.fill", accessibilityDescription: nil)?
+            .withSymbolConfiguration(.init(pointSize: 12, weight: .medium))
         let indications = BatterySide.allCases.map { state.indication(for: $0, at: now) }
         let labels = indications.map { indication in
             let value = indication == .possibleCharge && symbol != nil ? "" : indication.menuValue
             return NSAttributedString(string: value, attributes: attributes)
         }
-        let symbolSize = BatterySymbolLayout.fittedSize(
-            symbol?.size ?? .zero, within: NSSize(width: 17, height: 9))
         let valueWidth = ceil(
-            max(NSAttributedString(string: "99 %", attributes: attributes).size().width, symbolSize.width))
+            NSAttributedString(string: "99 %", attributes: attributes).size().width)
+        let symbolSize = BatterySymbolLayout.fittedSize(
+            NSSize(width: symbol?.size.height ?? 0, height: symbol?.size.width ?? 0),
+            within: NSSize(width: valueWidth, height: 9))
         let contourSize = NSSize(width: 12, height: 10)
         let gap: CGFloat = 3
         let padding: CGFloat = 2
@@ -52,7 +64,7 @@ enum MenuBarBadge {
                 let valueX = isLeft ? contourX + contourSize.width + gap : contourX - gap - valueSize.width
                 let valueOrigin = NSPoint(x: valueX, y: rowBottom + (rowHeight - valueSize.height) / 2)
                 if indications[index] == .possibleCharge, let symbol {
-                    symbol.draw(in: NSRect(origin: valueOrigin, size: symbolSize))
+                    drawChargingSymbol(symbol, in: NSRect(origin: valueOrigin, size: symbolSize))
                 } else {
                     label.draw(at: valueOrigin)
                 }

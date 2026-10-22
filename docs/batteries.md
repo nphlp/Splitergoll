@@ -17,6 +17,11 @@ les niveaux relevés sur batterie passent de 53/57 % à 63/67 % : une progressio
 cohérente avec une recharge des deux moitiés, sans mesure du courant ni de la capacité.
 Le chargeur est intégré au contrôleur, voir la [documentation nice!nano](https://nicekeyboards.com/docs/nice-nano/faq/).
 
+Le câblage actuel est conservé. Il permet volontairement **USB + OFF** : le clavier fonctionne sous USB,
+avec sa batterie isolée du contrôleur et du chargeur. Ce choix convient à un usage
+prolongé sur USB. Charger en OFF tout en coupant le clavier demanderait de séparer
+le chemin de charge de celui d’alimentation, ce que ce montage ne fait pas.
+
 Un pourcentage lu sur OFF ne prouve pas le niveau de la batterie déconnectée.
 Sur V2, **USB branché, la mesure remonte vers 5 V et affiche 100 %**, même si les
 batteries ne sont pas pleines. Le pilote mesure l’alimentation VDDH du contrôleur,
@@ -45,6 +50,17 @@ puis, si nécessaire, d’ajouter une entrée analogique avec un pont diviseur a
 ou une jauge de batterie. ZMK décrit [ces possibilités de mesure](https://zmk.dev/docs/hardware-integration/battery).
 Le schéma du clavier ne décrit pas les composants internes des contrôleurs.
 
+Un pont diviseur relierait la tension de cellule à une entrée ADC libre : cela
+reste une estimation par tension, influencée par la charge. Une jauge dédiée,
+par exemple [MAX17048](https://www.analog.com/en/products/max17048.html), ajoute
+un circuit relié à la batterie et au contrôleur par I²C pour estimer son état de
+charge. Chaque moitié aurait besoin de sa mesure et d’une adaptation du firmware.
+Ce sont des pistes matérielles, aucun raccordement n’est décidé ici.
+
+Transmettre seulement la présence USB pourrait éviter de confondre une batterie
+pleine avec une alimentation USB. Cela ne mesurerait pas la charge effective,
+notamment avec une batterie isolée sur OFF. L’amélioration est au TODO.
+
 ## État actuel
 
 Chaque moitié possède son capteur et `CONFIG_ZMK_BATTERY_REPORTING=y`.
@@ -61,6 +77,12 @@ et des logs USB, séparément des builds normaux.
 mesure droite et son proxy vers l’hôte. La droite garde son rôle de périphérique.
 Le service principal annonce toujours la gauche, le service auxiliaire la droite.
 Il ne calcule ni moyenne ni somme des deux batteries.
+
+Dans le ZMK utilisé après migration, la perte de liaison droite produit un événement
+batterie à zéro, qui met aussi son cache à zéro. L’app affiche alors un tiret à la
+lecture suivante, après détection de la perte radio. Le getter lit bien un cache,
+mais celui-ci ne conserve pas systématiquement l’ancien niveau après déconnexion.
+Zéro ne distingue toutefois pas une déconnexion d’une batterie vide ou non encore lue.
 
 ## Configuration
 
@@ -133,3 +155,4 @@ signalant que les notifications batterie peuvent réveiller certains hôtes macO
 - [Configuration batterie et limites hôtes](https://github.com/zmkfirmware/zmk/blob/v0.3.0/docs/docs/config/battery.md).
 - [Options du split](https://github.com/zmkfirmware/zmk/blob/v0.3.0/app/src/split/bluetooth/Kconfig).
 - [Service auxiliaire exposé par la centrale](https://github.com/zmkfirmware/zmk/blob/v0.3.0/app/src/split/bluetooth/central_bas_proxy.c).
+- [Zéro envoyé à la déconnexion dans le socle migré](https://github.com/zmkfirmware/zmk/blob/4dd95d7840eb3d5a3f59bb29fbf1ab054715ef85/app/src/split/bluetooth/central.c#L951).

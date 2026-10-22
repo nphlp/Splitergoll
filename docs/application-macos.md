@@ -29,11 +29,16 @@ Le nom `Splitergoll` est reconnu, ainsi qu’un nom personnalisé commençant pa
 l’app ne choisit pas à ta place et laisse les niveaux indisponibles.
 Un niveau indisponible ou égal à **0 %** est remplacé par `-`, sans afficher d’ancienne valeur.
 Le zéro reste conservé dans la mesure brute : cette convention ne prouve pas une déconnexion.
-À 100 %, une **batterie avec éclair** remplace le pourcentage. Cette convention
+À 100 %, un **éclair** remplace le pourcentage, horizontal et agrandi dans la barre,
+vertical dans la fenêtre. Cette convention
 ne confirme pas la charge : une batterie pleine sans USB donne aussi 100 %.
 Le détail reste accessible en survolant l’icône.
-La déconnexion isolée de droite n’est pas encore signalée : le proxy peut garder
-son ancien niveau. Un retour d’état du firmware sera nécessaire pour ce cas.
+À la perte de la liaison droite, le ZMK utilisé envoie zéro : le tiret apparaît
+après détection radio et réception de cette valeur. Si la gauche se déconnecte du
+Mac, les deux niveaux sont masqués. Les lectures périmées sont également masquées.
+Le zéro peut aussi être une batterie vide : ce n’est pas un état de connexion distinct.
+Sur V2, les tirets à la déconnexion et les éclairs au branchement USB des deux
+moitiés ont été confirmés par l’utilisateur.
 
 ## Installer dans Applications
 
@@ -44,20 +49,21 @@ noir épais du PCB gauche, avec une ombre extérieure centrée sur un carré bla
 Le build convertit ce SVG en icône macOS. Les autres variantes restent dans
 `companion/macos/Assets/`.
 
-1. Quitter Splitergoll depuis la barre des menus.
-2. Compiler puis installer le bundle :
+1. Compiler puis installer le bundle :
 
    ```sh
    make app build
    make app install
    ```
 
-3. Ouvrir cette copie depuis Applications et autoriser le Bluetooth si demandé.
-4. Vérifier son entrée dans Réglages Système > Général > Ouverture de session.
+2. Autoriser le Bluetooth si macOS le demande au lancement de la copie installée.
+3. Vérifier son entrée dans Réglages Système > Général > Ouverture de session.
    Si l’entrée désigne encore la copie locale, la retirer et ajouter celle d’Applications.
 
-`install` copie le bundle déjà compilé, sans le reconstruire ni le lancer.
-Il vérifie sa signature et refuse une app ouverte ou une autre application au même nom.
+`install` vérifie et prépare le bundle déjà compilé, demande la fermeture normale
+des copies locale et installée, puis remplace et ouvre l’app installée. Il attend
+au plus dix secondes, sans fermeture forcée. Une autre copie ouverte ailleurs
+ou une application de mauvaise identité arrête l’installation.
 Une mise à jour remplace l’ancien bundle, sans conserver ses ressources périmées.
 En cas d’échec du déplacement, l’ancienne copie est restaurée.
 Le dossier Applications vient de macOS. Une destination explicite peut être fournie

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Compile l’app native et prépare son bundle local, ou exécute ses tests Swift.
-# start ouvre, build compile, install copie le bundle déjà compilé, test teste sans Bluetooth.
+# start ouvre, build compile, install met à jour puis ouvre, test teste sans Bluetooth.
 # Tous les caches restent dans .local/. L’app s’inscrit à l’ouverture de session lors de son lancement.
 
 set -euo pipefail

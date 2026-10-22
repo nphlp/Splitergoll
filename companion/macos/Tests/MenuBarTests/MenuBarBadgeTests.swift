@@ -53,6 +53,57 @@ final class MenuBarBadgeTests: XCTestCase {
         }
     }
 
+    // Cent pour cent occupe la colonne avec un éclair horizontal, sans étirement ni pourcentage.
+    @MainActor func testFullLevelUsesOnlyAHorizontalBoltOnBothSides() throws {
+        let now = Date(timeIntervalSince1970: 1_000)
+        let image = MenuBarBadge.image(state: try state(left: 100, right: 100, at: now), at: now)
+        let symbol = try XCTUnwrap(
+            NSImage(systemSymbolName: "bolt.fill", accessibilityDescription: nil)?
+                .withSymbolConfiguration(.init(pointSize: 12, weight: .medium)))
+        let rotatedSize = NSSize(width: symbol.size.height, height: symbol.size.width)
+        let symbolSize = BatterySymbolLayout.fittedSize(
+            rotatedSize, within: NSSize(width: image.size.width - 19, height: 9))
+        XCTAssertGreaterThan(symbolSize.width, symbolSize.height)
+        XCTAssertEqual(symbolSize.height, 9, accuracy: 0.001)
+        XCTAssertEqual(
+            symbolSize.width / symbolSize.height, symbol.size.height / symbol.size.width, accuracy: 0.001)
+
+        for side in BatterySide.allCases {
+            let valueSize = NSSize(width: image.size.width - 19, height: 11)
+            let source = NSRect(
+                x: side == .left ? 17 : 2, y: side == .left ? 11 : 0,
+                width: valueSize.width, height: valueSize.height)
+            let expectedImage = NSImage(size: valueSize, flipped: false) { _ in
+                NSGraphicsContext.saveGraphicsState()
+                let rotation = NSAffineTransform()
+                rotation.translateX(
+                    by: (side == .left ? 0 : valueSize.width - symbolSize.width) + symbolSize.width,
+                    yBy: (valueSize.height - symbolSize.height) / 2)
+                rotation.rotate(byDegrees: 90)
+                rotation.concat()
+                symbol.draw(
+                    in: NSRect(
+                        x: 0, y: 0, width: symbolSize.height, height: symbolSize.width))
+                NSGraphicsContext.restoreGraphicsState()
+                return true
+            }
+            let actual = try rasterize(image, size: valueSize, source: source)
+            let expected = try rasterize(expectedImage, size: valueSize)
+            var difference = 0.0
+            var visibleAlpha = 0.0
+            for y in 0..<actual.pixelsHigh {
+                for x in 0..<actual.pixelsWide {
+                    let alpha = try XCTUnwrap(actual.colorAt(x: x, y: y)).alphaComponent
+                    let expectedAlpha = try XCTUnwrap(expected.colorAt(x: x, y: y)).alphaComponent
+                    difference += abs(alpha - expectedAlpha)
+                    visibleAlpha += alpha
+                }
+            }
+            XCTAssertGreaterThan(visibleAlpha, 1)
+            XCTAssertLessThan(difference / Double(actual.pixelsWide * actual.pixelsHigh), 0.02)
+        }
+    }
+
     // Les variations de batterie ou de connexion ne déplacent pas les autres éléments de la barre.
     @MainActor func testMenuWidthRemainsStableWhenChargeOrConnectionChanges() throws {
         let now = Date(timeIntervalSince1970: 1_000)

@@ -51,7 +51,7 @@ struct BatteryDashboard: View {
             Text(side.name).font(.caption).foregroundStyle(.secondary)
             Group {
                 if indication == .possibleCharge {
-                    Image(systemName: "battery.100percent.bolt")
+                    Image(systemName: "bolt.fill")
                         .accessibilityLabel("Charge possible, niveau annoncé à 100 pour cent")
                 } else {
                     Text(indication.menuValue)

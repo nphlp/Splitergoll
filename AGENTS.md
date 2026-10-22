@@ -106,6 +106,18 @@ isolés. Cette autorisation ne déclenche aucun flash ni effacement d’appairag
 
 ## Étape active et validation
 
+Dernier lot app : éclair seul à 100 %, horizontal agrandi dans le menu et vertical
+dans la fenêtre, sans changer la mesure brute. make app install prépare la nouvelle copie, quitte normalement
+les copies concernées puis remplace et lance l’app installée. Les 30 tests, le format
+Swift, la syntaxe shell, le build et la signature passent. Installation réelle
+validée app fermée puis active, sans fermeture forcée. La copie d’Applications
+reste ouverte. Aucun firmware modifié, aucun flash ni changement d’appairage.
+La relecture du socle migré corrige l’ancienne conclusion sur droite : ZMK envoie
+déjà zéro à la déconnexion, l’app peut donc afficher son tiret sans nouveau protocole.
+L’utilisateur confirme sur V2 les tirets attendus à la déconnexion droite/gauche
+et les éclairs au branchement USB de chaque moitié. L’amélioration qui transmettrait
+la présence USB est au TODO, distincte d’une mesure effective du courant de charge.
+
 Contexte matériel courant : au bureau avec le Mac et V2, PC Windows et V1 absents.
 L’app avant correction affichait deux tirets. Le clavier connecté porte
 le nom personnalisé Splitergoll V2, alors que le filtre initial attend exactement
@@ -1146,9 +1158,11 @@ Le dernier ajustement fixe 320 × 174 points, avec seulement titre, connexion
 et deux batteries. Aucun bouton d’actualisation, cadence ou date dans la fenêtre.
 Le menu contient seulement connexion, Ouvrir l’app et Quitter l’app.
 Les niveaux indisponibles deviennent un tiret simple, sans ancienne valeur dans la fenêtre.
-La droite seule hors ligne n’est pas détectable avec le service BAS actuel : le
-getter central restitue sa dernière valeur en cache, sans état de liaison.
-Ne pas confondre stabilité du pourcentage et déconnexion. L’état individuel est au TODO.
+Le getter BAS lit un cache, mais le ZMK migré envoie déjà zéro lors de la perte
+de liaison droite, via split_central_disconnected puis le worker batterie. Le cache
+est donc normalement remis à zéro, contrairement à la conclusion précédente.
+Le tiret couvre ce cas, sans distinguer batterie vide, absence de mesure et perte
+de liaison. Une télémétrie dédiée ne se justifie que si cette distinction est utile.
 L’app démarre sans fenêtre ni Dock. Ouvrir la fenêtre la passe en politique regular
 et affiche le Dock. Fermer la fenêtre revient en accessory et garde le lecteur et
 la barre des menus. Une minimisation garde le Dock. Le premier lancement
@@ -1156,9 +1170,10 @@ réel demande l’inscription SMAppService à l’ouverture de session. Une appr
 requise est signalée, une désactivation ultérieure par macOS est respectée.
 Cette inscription et les préférences utilisateur ne sont jamais modifiées par
 le build ni les tests. Les sept scénarios de session utilisent des callbacks simulés.
-À 100 %, présenter une batterie avec éclair dans la fenêtre et la barre des menus.
+À 100 %, présenter un éclair seul, vertical dans la fenêtre et horizontal dans le menu.
 À zéro, présenter un tiret en conservant la donnée brute et l’état connecté.
-Le symbole du menu conserve les proportions natives dans un cadre de 17 × 9 points.
+Le symbole du menu conserve ses proportions après rotation de 90 degrés, dans la
+colonne du pourcentage et sur neuf points de hauteur.
 L’accessibilité et l’infobulle conservent l’information de charge possible : la batterie
 pleine sans USB produit aussi ce niveau. La donnée brute et les tests restent distincts
 de cette présentation. Les détails de taille et de cadence sont dans la spec de l’app.
@@ -1182,13 +1197,16 @@ La logique de l’app et le futur protocole firmware recevront les tests applica
 adaptés, avec reprise après veille, données périmées et préférences. Le premier lot
 teste le modèle GATT, l’identité, les valeurs et leur péremption sans accès Bluetooth.
 make app start compile puis ouvre le bundle, make app build compile seulement et
-make app install copie explicitement le bundle déjà compilé dans Applications,
+make app install met à jour puis lance le bundle déjà compilé dans Applications,
 make app test exécute ses tests. make app sans action ou avec une action incorrecte
 affiche l’aide, sans compilateur ni lancement. Le garde SCRIPT du Makefile évite
 de lancer aussi la cible firmware build quand ce mot est un argument de app.
 Le build garde son bundle signé ad hoc et ses caches dans .local, sans dépendance externe.
-L’installation ne lance pas l’app et vérifie identité, signature et fermeture avant
-remplacement. Le dossier cible vient de macOS ou de APP_INSTALL_DIRECTORY explicite.
+L’installation vérifie identité et signature puis prépare la copie avant toute
+fermeture. Elle demande la terminaison normale des copies source/destination,
+attend au plus dix secondes sans forcer, remplace puis ouvre la copie installée.
+Une autre copie ouverte ailleurs bloque cette opération. Le dossier cible vient
+de macOS ou de APP_INSTALL_DIRECTORY explicite.
 L’inscription à l’ouverture de session est demandée
 par l’app uniquement. Le bundle autonome inclut son ICNS généré depuis AppIcon.svg.
 Le SVG sélectionné représente le contour noir épais de gauche, aux angles adoucis,

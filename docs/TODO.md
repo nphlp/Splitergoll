@@ -339,8 +339,8 @@ de préparer la mémoire d’OS propre à V2, absente du profil macOS normal.
   Afficher le Dock à l’ouverture de la fenêtre et le masquer à sa fermeture.
 - [x] Retenir la silhouette noire de gauche sur carré blanc arrondi comme icône,
   en conservant la variante sur fond noir à côté.
-- [ ] Exposer l’état de liaison de droite pour masquer son niveau si elle se
-  déconnecte seule. Le proxy batterie actuel conserve sa dernière valeur.
+- [x] Valider sur V2 le tiret droit à la déconnexion de droite, les deux tirets
+  à la déconnexion de gauche et l’éclair lors du branchement USB de chaque moitié.
 - [x] Afficher 0 % comme un tiret dans l’app,
   par convention, en conservant la mesure brute. Le lecteur CLI garde sa valeur.
 - [x] Corriger le symbole de batterie avec éclair dans la barre des menus :
@@ -356,9 +356,15 @@ de préparer la mémoire d’OS propre à V2, absente du profil macOS normal.
 - [x] Accepter le nom personnalisé `Splitergoll V2` dans l’app et le lecteur CLI,
   sans choisir entre plusieurs correspondances. Deux niveaux lus sur V2 sans USB : 89/79 %.
 - [x] Confirmer l’affichage des batteries dans l’app installée après correction du nom sur V2.
-- [ ] Améliorer l’indication de charge dans la barre des menus. Proposition à valider :
-  garder `100 %` avec un petit éclair monochrome aligné sur le texte, sans élargissement
-  variable. Conserver la notion de charge possible dans l’infobulle.
+- [x] Remplacer le symbole de batterie en charge par un petit éclair seul à 100 %,
+  horizontal dans la barre et agrandi dans la colonne du pourcentage, sans déformation
+  ni changement de largeur du menu. Garder la charge possible en infobulle.
+- [ ] Amélioration : transmettre la présence USB par moitié pour distinguer USB
+  branché et batterie pleine, au lieu du raccourci 100 % = éclair. Utile notamment
+  avec une future mesure indépendante de la cellule. USB présent ne prouve pas
+  une charge effective : batterie déconnectée sur OFF ou déjà pleine.
+- [x] Faire évoluer `make app install` : préparer la copie, quitter normalement
+  les copies concernées, remplacer puis lancer l’app installée, sans fermeture forcée.
 - [ ] Valider le lecteur permanent : mises à jour, données indisponibles, déconnexions,
   autonomie, sommeil du Mac, ouverture de session et présentation honnête des mesures sous USB.
 - [ ] Ensuite, ajouter couche active et OS utilisé par la keymap dans l’app.

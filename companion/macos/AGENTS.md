@@ -40,12 +40,13 @@ Les évolutions sont suivies dans le [TODO](../../docs/TODO.md), sans liste dupl
   dans le SVG. Dix PNG sont assemblés en ICNS par iconutil. Cache sous .local, invalidé
   sur changement du SVG ou du convertisseur. Ressources embarquées avant signature.
 - `app.sh` : SwiftPM sans dépendance externe, bundle local et signature ad hoc. Aucun ajout à `/Applications`.
-- `install.sh` : copie explicite du bundle déjà compilé, sans ouverture ni inscription de session.
+- `install.sh` : préparation du bundle déjà compilé, fermeture normale des copies
+  source/destination, remplacement puis lancement de la copie installée.
   Le dossier Applications est lu par Foundation via JXA, sans chemin système inventé.
   APP_INSTALL_DIRECTORY peut le remplacer explicitement pour une validation isolée.
 
 Interface : make app affiche l’aide, make app start compile et ouvre, make app build
-compile seulement, make app install installe le bundle existant, make app test teste.
+compile seulement, make app install met à jour puis lance le bundle existant, make app test teste.
 Toute action erronée affiche l’aide avant
 contrôle des outils, création de cache ou accès Bluetooth. Pas d’alias à tirets.
 
@@ -72,15 +73,17 @@ batterie identifiée peut être présentée, l’autre reste inconnue.
 
 Ne conserver qu’une lecture par côté. La date représente sa réception par le Mac,
 jamais l’échantillonnage ADC. Ne pas déduire une charge certaine ou le niveau réel de 100 %.
-Une lecture actuelle de 100 % affiche le symbole battery.100percent.bolt, dans
-la fenêtre et la barre. Garder « charge possible » pour l’accessibilité et la limite en infobulle.
+Une lecture actuelle de 100 % affiche le symbole bolt.fill seul, vertical dans
+la fenêtre et tourné de 90 degrés dans la barre. Garder « charge possible » pour
+l’accessibilité et la limite en infobulle.
 La donnée brute reste 100. Une batterie pleine sans USB produit aussi ce résultat.
 Une lecture ancienne n’affiche jamais cette indication de charge possible.
 Une lecture actuelle à zéro affiche un tiret, par convention utilisateur. Le modèle
 conserve zéro et sa date, ainsi que l’état connecté. Un niveau de un redevient lisible.
 La même indication alimente la fenêtre, le menu et l’accessibilité, sans toucher au lecteur CLI.
-Le symbole de charge garde le rapport largeur/hauteur de l’image native, avec un
-facteur commun limité par un cadre de 17 × 9 points. Aucun étirement des axes.
+Le symbole de charge du menu conserve ses proportions après rotation, avec un
+facteur commun limité par la colonne « 99 % » et neuf points de hauteur. Aucun
+étirement des axes ni image intermédiaire qui dégraderait le rendu du symbole.
 Ne pas ajouter de panneau d’explication dans la fenêtre minimale.
 Les lectures ont lieu toutes les 5 secondes, sans chevauchement. Après 90 secondes
 sans lecture ou en perte de connexion, la barre affiche `-`. Les anciennes valeurs
@@ -114,7 +117,13 @@ Quitter avant copie ou remplacement et relancer depuis le chemin installé. Vér
 l’entrée d’ouverture de session si l’ancienne copie locale avait été enregistrée.
 make clear supprime seulement la copie locale et les caches, jamais l’app installée.
 make app install refuse les liens symboliques, un bundle de mauvaise identité ou
-signature et une copie source/destination ouverte. La source doit être déjà compilée.
+signature. La source doit être déjà compilée. Après préparation de la copie, demander
+la fermeture normale des seules copies source et destination via NSRunningApplication,
+avec attente maximale de dix secondes. Une autre copie du même bundle ouverte
+ailleurs ou un refus de fermeture bloque la mise à jour, sans forceTerminate ni kill.
+Revérifier la fermeture juste avant le remplacement, puis lancer la nouvelle copie
+avec open. L’app exécute alors son initialisation normale, dont l’ouverture de session.
+Le build et les tests n’effectuent toujours aucun lancement réel.
 Préparer et vérifier une copie temporaire sur le volume de destination avant tout
 remplacement. Garder l’ancienne app jusqu’à réussite du déplacement, la restaurer
 sur échec et nettoyer uniquement le dossier temporaire créé par cette installation.
@@ -122,14 +131,29 @@ Ne modifier aucune autre app, permission système ou préférence d’ouverture 
 Le profil Bluetooth mesure désormais toutes les 5 secondes pendant ACTIVE, après
 reflash des deux moitiés. IDLE/SLEEP arrêtent ce timer, sans forçage ADC par l’app.
 
-La perte isolée de droite n’est pas déductible d’un niveau inchangé. Le getter
-split/central.c restitue le cache sans état de lien et central_bas_proxy.c le sert
-toujours. Ne pas afficher arbitrairement hors ligne ou zéro parce que ce niveau
-est stable. Le tiret indique une donnée indisponible ou égale à zéro par convention,
-sans constituer un état individuel fiable de connexion.
-Le vrai état individuel demandera une télémétrie firmware séparée, notée au TODO.
+Le getter split/central.c restitue un cache, mais le callback BLE
+split_central_disconnected de central.c envoie BATTERY_EVENT avec level=0. Le worker
+met ce cache à zéro, puis le proxy BAS le restitue. L’ancienne conclusion disant
+que le cache garde systématiquement le dernier niveau après déconnexion était
+incomplète. Le tiret couvre déjà cette situation après détection radio et lecture.
+Zéro reste ambigu avec une batterie vide ou une première mesure absente. Une vraie
+télémétrie dédiée pourrait distinguer ces états, mais n’est pas nécessaire au rendu
+actuellement demandé. Un niveau inchangé ne prouve jamais une déconnexion.
 
 ## Validation
+
+Dernier contrôle : 30 tests passent, dont quatre tests AppKit du menu. Le cas
+100/100 vérifie l’éclair horizontal seul sur chaque ligne, neuf points de hauteur,
+plus large que haut, sans déformation ni pourcentage ajouté.
+Le format Swift, la syntaxe shell, le build et la signature passent. L’installation
+réelle est validée app fermée puis app ouverte, avec fermeture normale et relance
+depuis Applications. Une seule copie installée reste active, avec un nouveau PID.
+Pendant l’attente de fermeture, faire tourner NSRunLoop pour recevoir la notification
+NSRunningApplication, plutôt que bloquer son actualisation avec un sleep.
+Aucun firmware modifié ni flashé dans ce lot. L’utilisateur confirme sur V2 :
+droite déconnectée donne un tiret droit, gauche déconnectée donne deux tirets,
+branchement USB de chaque moitié donne son éclair. Cela valide ces indications,
+pas une mesure de capacité réelle ou une détection physique du courant de charge.
 
 `make app test` exécute les tests applicatifs sans Bluetooth. Couvrir décodage,
 réponses hors ordre, identités en doublon, valeurs invalides, lecture partielle,

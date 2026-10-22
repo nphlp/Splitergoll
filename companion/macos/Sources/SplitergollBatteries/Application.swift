@@ -109,7 +109,7 @@ final class ApplicationDelegate: NSObject, NSApplicationDelegate, NSWindowDelega
         statusItem.button?.imagePosition = .imageOnly
         let description = monitor.state.menuTitle(at: monitor.now)
         statusItem.button?.toolTip =
-            "Splitergoll\n\(description)\nBatterie avec éclair : 100 % annoncé, charge non confirmée."
+            "Splitergoll\n\(description)\nÉclair : 100 % annoncé, charge non confirmée."
         statusItem.button?.setAccessibilityLabel("Batteries Splitergoll\n\(description)")
         let menu = NSMenu()
         let status = NSMenuItem(title: monitor.state.connectionTitle, action: nil, keyEquivalent: "")

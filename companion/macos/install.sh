@@ -1,8 +1,8 @@
 #!/bin/bash
 
-# Installe le bundle déjà compilé, sans compilation, lancement ou inscription de session.
+# Prépare le bundle déjà compilé, quitte les copies concernées et ouvre la nouvelle installation.
 # Le dossier Applications est fourni par macOS. APP_INSTALL_DIRECTORY permet une destination explicite.
-# Une mise à jour remplace uniquement Splitergoll, après contrôle de son identité et de sa fermeture.
+# Une mise à jour remplace uniquement Splitergoll, après contrôle et fermeture normale, sans forcer.
 
 set -euo pipefail
 
@@ -24,7 +24,7 @@ command -v lsof >/dev/null || fail 'Prérequis absent : lsof'
 bundle_identifier=$(plutil -extract CFBundleIdentifier raw -o - "$APP_SOURCE/Info.plist")
 executable=$(plutil -extract CFBundleExecutable raw -o - "$APP_SOURCE/Info.plist")
 
-# Vérifie le bundle sans l’exécuter et refuse toute copie encore ouverte par l’utilisateur.
+# Vérifie le bundle sans l’exécuter, avant toute demande de fermeture.
 check_bundle() {
     local bundle=$1
     [ -d "$bundle" ] && [ ! -L "$bundle" ] || fail "Bundle inattendu : $bundle"
@@ -32,8 +32,38 @@ check_bundle() {
     identifier=$(plutil -extract CFBundleIdentifier raw -o - "$bundle/Contents/Info.plist")
     [ "$identifier" = "$bundle_identifier" ] || fail "Une autre application occupe $bundle"
     codesign --verify --strict "$bundle"
-    if lsof -t "$bundle/Contents/MacOS/$executable" >/dev/null 2>&1; then
-        fail 'Quitte Splitergoll depuis la barre des menus avant de l’installer'
+}
+
+# Attend une fermeture normale des seules copies source et destination, jamais un autre programme.
+quit_app() {
+    osascript -l JavaScript - "$bundle_identifier" "$APP_BUNDLE" "$installed_bundle" <<'JXA'
+// Demande une fermeture normale et borne l’attente sans utiliser de terminaison forcée.
+function run(args) {
+    ObjC.import('AppKit');
+    const copies = ObjC.unwrap($.NSWorkspace.sharedWorkspace.runningApplications).filter(function(app) {
+        if (ObjC.unwrap(app.bundleIdentifier) !== args[0]) return false;
+        const path = ObjC.unwrap(app.bundleURL.URLByResolvingSymlinksInPath.path);
+        if (path !== args[1] && path !== args[2]) {
+            throw new Error('Une autre copie de Splitergoll est ouverte. Quitte-la avant l’installation.');
+        }
+        return true;
+    });
+    copies.forEach(function(app) {
+        if (!app.terminate) throw new Error('Splitergoll a refusé la demande de fermeture.');
+    });
+    const deadline = Date.now() + 10000;
+    while (copies.some(function(app) { return !app.terminated; })) {
+        if (Date.now() >= deadline) throw new Error('Splitergoll reste ouvert. Installation annulée, aucune fermeture forcée.');
+        $.NSRunLoop.currentRunLoop.runUntilDate($.NSDate.dateWithTimeIntervalSinceNow(0.1));
+    }
+}
+JXA
+}
+
+# Une app rouverte pendant la préparation ne doit pas être remplacée pendant son exécution.
+check_closed() {
+    if lsof -t "$1/Contents/MacOS/$executable" >/dev/null 2>&1; then
+        fail 'Splitergoll a été rouvert pendant l’installation. Relance make app install'
     fi
 }
 
@@ -80,9 +110,16 @@ trap 'exit 143' TERM
 
 ditto --norsrc "$APP_BUNDLE" "$staged_bundle"
 check_bundle "$staged_bundle"
+printf '%s\n' 'Fermeture de Splitergoll si nécessaire…'
+quit_app
+check_closed "$APP_BUNDLE"
+if [ -d "$installed_bundle" ]; then
+    check_closed "$installed_bundle"
+fi
 if [ -d "$installed_bundle" ]; then
     mv "$installed_bundle" "$backup_bundle"
 fi
 mv "$staged_bundle" "$installed_bundle"
 printf 'Application installée : %s\n' "$installed_bundle"
-printf '%s\n' 'Ouvre cette copie depuis Applications. Vérifie ensuite son entrée d’ouverture de session.'
+open "$installed_bundle"
+printf '%s\n' 'Application lancée depuis sa copie installée.'
