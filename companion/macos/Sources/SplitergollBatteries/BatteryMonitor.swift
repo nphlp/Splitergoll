@@ -95,7 +95,7 @@ final class BatteryMonitor: NSObject, ObservableObject {
         }
     }
 
-    // Retrouve les périphériques déjà reliés au système, en refusant les noms identiques ambigus.
+    // Retrouve les périphériques déjà reliés au système, y compris renommés, sans résoudre une ambiguïté.
     private func findConnectedKeyboard() {
         guard let central, central.state == .poweredOn, device == nil,
             closingDevice == nil, now >= retryAfter

@@ -106,8 +106,21 @@ isolés. Cette autorisation ne déclenche aucun flash ni effacement d’appairag
 
 ## Étape active et validation
 
-Contexte matériel courant : au bureau avec le Mac et V2 seulement. Les essais des
-fenêtres de reconnexion Mac/Windows sur V1 sont différés. Pour remettre V2 à jour,
+Contexte matériel courant : au bureau avec le Mac et V2, PC Windows et V1 absents.
+L’app avant correction affichait deux tirets. Le clavier connecté porte
+le nom personnalisé Splitergoll V2, alors que le filtre initial attend exactement
+Splitergoll. Le lecteur appelé avec ce nom lit les deux niveaux à 100 %.
+Après débranchement des deux USB annoncé par l’utilisateur, make bat read corrigé
+lit gauche 89 %, droite 79 %, également confirmés par l’utilisateur. Aucun reflash
+ou effacement d’appairage n’a été fait pour ce diagnostic. Les 29 tests et le build
+signé corrigé passent. L’utilisateur a quitté l’app, puis la version corrigée a été
+installée dans Applications. Signature, exécutable, ICNS et SVG installés sont vérifiés.
+L’app n’est pas relancée par l’agent. Après réouverture, l’utilisateur confirme que
+l’affichage fonctionne sur V2. La reprise après sommeil du Mac, la reconnexion et
+l’ouverture de session restent à valider séparément.
+
+
+Les essais de reconnexion Mac/Windows sur V1 restent différés. Pour remettre V2 à jour,
 le profil retenu pour le flash guidé est bluetooth macos normal, sans contrôleur
 expérimental de reconnexion ni mémoire d’OS à initialiser. La paire existante
 bluetooth-macos-2026-10-20-18-11-31 passe SHA-256 et les gardes UF2. Elle conserve
@@ -518,7 +531,7 @@ Les arguments qui ne sont pas des commandes sont des cibles phony sans action,
 pour éviter le message up to date quand un port ou fichier existe.
 Garder cette protection commune, pas de ifeq pour chaque recette ni de dispatcher
 central de scripts. Chaque script vérifie ses actions avant toute opération.
-app accepte start/build/test, bat read/avg, usb capture et ble capture/memory/profiles/select/forget.
+app accepte start/build/install/test, bat read/avg, usb capture et ble capture/memory/profiles/select/forget.
 profiles lit les emplacements, select exige un index explicite. L’action free
 est retirée de la CLI Make, sans modification du protocole firmware ni de PowerShell.
 Sans action, ces familles affichent leur aide. Une action inconnue ou incomplète
@@ -1114,6 +1127,8 @@ requise est signalée, une désactivation ultérieure par macOS est respectée.
 Cette inscription et les préférences utilisateur ne sont jamais modifiées par
 le build ni les tests. Les sept scénarios de session utilisent des callbacks simulés.
 À 100 %, présenter une batterie avec éclair dans la fenêtre et la barre des menus.
+À zéro, présenter un tiret en conservant la donnée brute et l’état connecté.
+Le symbole du menu conserve les proportions natives dans un cadre de 17 × 9 points.
 L’accessibilité et l’infobulle conservent l’information de charge possible : la batterie
 pleine sans USB produit aussi ce niveau. La donnée brute et les tests restent distincts
 de cette présentation. Les détails de taille et de cadence sont dans la spec de l’app.
@@ -1137,16 +1152,21 @@ La logique de l’app et le futur protocole firmware recevront les tests applica
 adaptés, avec reprise après veille, données périmées et préférences. Le premier lot
 teste le modèle GATT, l’identité, les valeurs et leur péremption sans accès Bluetooth.
 make app start compile puis ouvre le bundle, make app build compile seulement et
+make app install copie explicitement le bundle déjà compilé dans Applications,
 make app test exécute ses tests. make app sans action ou avec une action incorrecte
 affiche l’aide, sans compilateur ni lancement. Le garde SCRIPT du Makefile évite
 de lancer aussi la cible firmware build quand ce mot est un argument de app.
-Le bundle signé ad hoc et ses caches restent dans .local, sans dépendance externe,
-installation dans Applications. L’inscription à l’ouverture de session est demandée
+Le build garde son bundle signé ad hoc et ses caches dans .local, sans dépendance externe.
+L’installation ne lance pas l’app et vérifie identité, signature et fermeture avant
+remplacement. Le dossier cible vient de macOS ou de APP_INSTALL_DIRECTORY explicite.
+L’inscription à l’ouverture de session est demandée
 par l’app uniquement. Le bundle autonome inclut son ICNS généré depuis AppIcon.svg.
-Le SVG sélectionné représente seulement la silhouette noire de gauche, aux angles
-adoucis, sur un carré blanc arrondi de style macOS. Les deux variantes sur fond noir
-et blanc restent côte à côte dans Assets. Le dessin Swift sert uniquement à
-rasteriser cette source. Le bundle peut être copié dans Applications
+Le SVG sélectionné représente le contour noir épais de gauche, aux angles adoucis,
+avec ombre extérieure centrée, sur un carré blanc arrondi de style macOS. Les anciennes
+silhouettes sur fond noir et blanc restent dans Assets. Le dessin Swift utilise les
+API natives AppKit/Core Image uniquement pour rasteriser cette source pendant le build.
+Les deux contours des menus sont embarqués dans le bundle de ressources SwiftPM.
+Le bundle peut être copié dans Applications
 par l’utilisateur, après avoir quitté
 l’app. Vérifier l’entrée d’ouverture de session après changement de chemin.
 make clear supprime la copie locale mais ne touche pas la copie installée.

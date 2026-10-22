@@ -75,6 +75,7 @@ show_app_help() {
     show_command 'make app' 'Afficher cette aide'
     show_command 'make app start' 'Compiler et démarrer l’app dans la barre des menus'
     show_command 'make app build' 'Compiler et signer le bundle sans le lancer'
+    show_command 'make app install' 'Copier le bundle déjà compilé dans Applications'
     show_command 'make app test' 'Tester la logique sans accès Bluetooth'
     printf '\n'
 }

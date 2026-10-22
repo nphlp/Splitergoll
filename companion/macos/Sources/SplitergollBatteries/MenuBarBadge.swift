@@ -1,9 +1,21 @@
-// Dessine les deux lignes et la batterie avec éclair dans une image adaptée à la barre des menus.
+// Dessine les contours des deux moitiés et leurs niveaux dans la barre des menus.
 import AppKit
 import BatteryCore
 
 @MainActor
 enum MenuBarBadge {
+    // Les SVG embarqués restent vectoriels, transparents et indépendants du dépôt installé.
+    static func contour(for side: BatterySide) -> NSImage {
+        guard
+            let url = Bundle.module.url(
+                forResource: "keyboard-\(side.rawValue)", withExtension: "svg", subdirectory: "Resources"),
+            let image = NSImage(contentsOf: url), image.isValid
+        else { preconditionFailure("Contour du clavier absent du bundle") }
+        return image
+    }
+
+    private static let contours = BatterySide.allCases.map { contour(for: $0) }
+
     // Les symboles sont dessinés comme images, avec un équivalent textuel séparé pour l’accessibilité.
     static func image(state: BatteryState, at now: Date) -> NSImage {
         let attributes: [NSAttributedString.Key: Any] = [
@@ -13,26 +25,36 @@ enum MenuBarBadge {
         let symbol = NSImage(systemSymbolName: "battery.100percent.bolt", accessibilityDescription: nil)?
             .withSymbolConfiguration(.init(pointSize: 9, weight: .medium))
         let indications = BatterySide.allCases.map { state.indication(for: $0, at: now) }
-        let labels = zip(BatterySide.allCases, indications).map { side, indication in
+        let labels = indications.map { indication in
             let value = indication == .possibleCharge && symbol != nil ? "" : indication.menuValue
-            return NSAttributedString(string: "\(side.shortName) \(value)", attributes: attributes)
+            return NSAttributedString(string: value, attributes: attributes)
         }
-        let symbolSize = NSSize(width: 17, height: 9)
-        let widths = labels.enumerated().map { index, label in
-            label.size().width
-                + (indications[index] == .possibleCharge && symbol != nil ? symbolSize.width : 0)
-        }
-        let width = ceil(widths.max() ?? 0) + 4
+        let symbolSize = BatterySymbolLayout.fittedSize(
+            symbol?.size ?? .zero, within: NSSize(width: 17, height: 9))
+        let valueWidth = ceil(
+            max(NSAttributedString(string: "99 %", attributes: attributes).size().width, symbolSize.width))
+        let contourSize = NSSize(width: 12, height: 10)
+        let gap: CGFloat = 3
+        let padding: CGFloat = 2
+        let width = padding * 2 + contourSize.width + gap + valueWidth
         let image = NSImage(size: NSSize(width: width, height: 22), flipped: false) { bounds in
             let rowHeight = bounds.height / CGFloat(labels.count)
             for (index, label) in labels.enumerated() {
-                let x = (bounds.width - widths[index]) / 2
+                let isLeft = BatterySide.allCases[index] == .left
                 let rowBottom = bounds.height - CGFloat(index + 1) * rowHeight
-                label.draw(at: NSPoint(x: x, y: rowBottom + (rowHeight - label.size().height) / 2))
+                let contourX = isLeft ? padding : bounds.width - padding - contourSize.width
+                let contourOrigin = NSPoint(
+                    x: contourX, y: rowBottom + (rowHeight - contourSize.height) / 2)
+                contours[index].draw(in: NSRect(origin: contourOrigin, size: contourSize))
+
+                let isCharge = indications[index] == .possibleCharge && symbol != nil
+                let valueSize = isCharge ? symbolSize : label.size()
+                let valueX = isLeft ? contourX + contourSize.width + gap : contourX - gap - valueSize.width
+                let valueOrigin = NSPoint(x: valueX, y: rowBottom + (rowHeight - valueSize.height) / 2)
                 if indications[index] == .possibleCharge, let symbol {
-                    let origin = NSPoint(
-                        x: x + label.size().width, y: rowBottom + (rowHeight - symbolSize.height) / 2)
-                    symbol.draw(in: NSRect(origin: origin, size: symbolSize))
+                    symbol.draw(in: NSRect(origin: valueOrigin, size: symbolSize))
+                } else {
+                    label.draw(at: valueOrigin)
                 }
             }
             return true

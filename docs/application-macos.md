@@ -17,13 +17,18 @@ L’app démarre dans la barre des menus, sans icône dans le Dock ni fenêtre o
 Le menu contient seulement **Connecté / Déconnecté**, **Ouvrir l’app** et **Quitter l’app**.
 La fenêtre fixe de 320 × 174 points montre le titre, la connexion et les batteries
 **Gauche** et **Droite**. Fermer la fenêtre laisse l’app fonctionner.
-Les deux lignes de la barre affichent gauche au-dessus de droite.
+Les deux lignes de la barre affichent le contour gauche suivi de son niveau en haut,
+puis le niveau et le contour droit en bas. Les contours suivent le thème clair ou sombre.
 Le Dock montre l’icône tant que la fenêtre est ouverte, y compris minimisée.
 Fermer la fenêtre la retire du Dock, sans quitter l’app ni retirer son menu.
 
 Autoriser le Bluetooth si macOS le demande. Le clavier doit déjà être connecté :
 l’app ne lance pas d’appairage et ne change pas l’ordinateur destinataire.
-Un niveau indisponible est remplacé par `-`, sans afficher d’ancienne valeur.
+Le nom `Splitergoll` est reconnu, ainsi qu’un nom personnalisé commençant par
+`Splitergoll `, comme `Splitergoll V1` ou `Splitergoll V2`. Si plusieurs correspondent,
+l’app ne choisit pas à ta place et laisse les niveaux indisponibles.
+Un niveau indisponible ou égal à **0 %** est remplacé par `-`, sans afficher d’ancienne valeur.
+Le zéro reste conservé dans la mesure brute : cette convention ne prouve pas une déconnexion.
 À 100 %, une **batterie avec éclair** remplace le pourcentage. Cette convention
 ne confirme pas la charge : une batterie pleine sans USB donne aussi 100 %.
 Le détail reste accessible en survolant l’icône.
@@ -34,19 +39,29 @@ son ancien niveau. Un retour d’état du firmware sera nécessaire pour ce cas.
 
 Le bundle `.local/apps/Splitergoll.app` contient l’exécutable et son icône.
 Il fonctionne sans le dépôt, Swift ou Docker une fois compilé.
-La source [AppIcon.svg](../companion/macos/Assets/AppIcon.svg) représente la silhouette
-noire du PCB gauche, aux angles adoucis, sur un carré blanc arrondi.
-Le build convertit ce SVG en icône macOS. La variante sur fond noir reste à côté
-dans `companion/macos/Assets/`.
+La source [AppIcon.svg](../companion/macos/Assets/AppIcon.svg) représente le contour
+noir épais du PCB gauche, avec une ombre extérieure centrée sur un carré blanc arrondi.
+Le build convertit ce SVG en icône macOS. Les autres variantes restent dans
+`companion/macos/Assets/`.
 
 1. Quitter Splitergoll depuis la barre des menus.
-2. Copier `.local/apps/Splitergoll.app` dans le dossier **Applications** du Mac.
+2. Compiler puis installer le bundle :
+
+   ```sh
+   make app build
+   make app install
+   ```
+
 3. Ouvrir cette copie depuis Applications et autoriser le Bluetooth si demandé.
 4. Vérifier son entrée dans Réglages Système > Général > Ouverture de session.
    Si l’entrée désigne encore la copie locale, la retirer et ajouter celle d’Applications.
 
-Les nouveaux builds restent dans `.local/apps/`. Pour mettre à jour la copie
-installée, quitter l’app, remplacer son bundle dans Applications, puis le rouvrir.
+`install` copie le bundle déjà compilé, sans le reconstruire ni le lancer.
+Il vérifie sa signature et refuse une app ouverte ou une autre application au même nom.
+Une mise à jour remplace l’ancien bundle, sans conserver ses ressources périmées.
+En cas d’échec du déplacement, l’ancienne copie est restaurée.
+Le dossier Applications vient de macOS. Une destination explicite peut être fournie
+par `APP_INSTALL_DIRECTORY`, notamment pour une validation isolée.
 
 ## Ouverture de session
 
@@ -57,7 +72,8 @@ Une désactivation ultérieure dans ces réglages est respectée.
 Le lancement à l’ouverture de session reste discret, sans fenêtre.
 
 `make clear` supprime le bundle local et ses caches, sans toucher à la copie
-installée dans Applications. Éviter d’utiliser les deux copies en parallèle.
+installée dans Applications. `make app start` ouvre toujours la copie locale de développement.
+Éviter d’utiliser les deux copies en parallèle.
 
 ## Actualisation
 
@@ -75,7 +91,8 @@ voir [batteries](batteries.md).
 ## Vérifier et faire évoluer
 
 `make app build` compile sans ouvrir l’app ni modifier les réglages système.
-`make app test` teste le modèle et l’inscription de session avec des services simulés.
+`make app test` teste le modèle, l’inscription de session avec des services simulés
+et le rendu des contours de la barre, sans accès Bluetooth.
 `make bat read` et `make bat avg` restent disponibles séparément.
 
 Essayer la fenêtre, sa fermeture, la réouverture et Quitter depuis la barre.

@@ -1,3 +1,4 @@
+import CoreGraphics
 import Foundation
 import XCTest
 
@@ -139,6 +140,59 @@ final class BatteryStateTests: XCTestCase {
         XCTAssertFalse(state.hasCurrentReading)
     }
 
+    // Zéro reste une lecture valide, mais le tiret le masque sans annoncer de déconnexion.
+    func testZeroLevelIsHiddenWithoutChangingTheReadingOrConnection() throws {
+        for side in BatterySide.allCases {
+            var state = try connectedState()
+            try state.identify(channel: 1, presentation: right)
+            try state.receive(channel: 1, data: Data([67]), at: now)
+            let channel = side == .left ? 0 : 1
+            let otherSide: BatterySide = side == .left ? .right : .left
+            let otherIndication = state.indication(for: otherSide, at: now)
+
+            try state.receive(channel: channel, data: Data([0]), at: now)
+            XCTAssertEqual(state.readings[side]?.level, 0)
+            XCTAssertTrue(state.isCurrent(side, at: now))
+            XCTAssertEqual(state.phase, .connected)
+            XCTAssertEqual(state.indication(for: side, at: now), .unavailable)
+            XCTAssertEqual(state.indication(for: otherSide, at: now), otherIndication)
+            XCTAssertTrue(state.menuLines(at: now).contains("\(side.shortName) -"))
+
+            try state.receive(channel: channel, data: Data([1]), at: now)
+            XCTAssertEqual(state.indication(for: side, at: now), .level(1))
+        }
+    }
+
+    // Les symboles larges et hauts restent entiers, avec leurs proportions d’origine.
+    func testChargeSymbolPreservesItsAspectRatioWithinOneRow() {
+        let bounds = CGSize(width: 17, height: 9)
+        for naturalSize in [
+            CGSize(width: 30, height: 20), CGSize(width: 8, height: 20),
+            CGSize(width: 40, height: 10),
+        ] {
+            let fitted = BatterySymbolLayout.fittedSize(naturalSize, within: bounds)
+            XCTAssertGreaterThan(fitted.width, 0)
+            XCTAssertGreaterThan(fitted.height, 0)
+            XCTAssertLessThanOrEqual(fitted.width, bounds.width)
+            XCTAssertLessThanOrEqual(fitted.height, bounds.height)
+            XCTAssertEqual(
+                fitted.width / fitted.height, naturalSize.width / naturalSize.height, accuracy: 0.000_001)
+            XCTAssertTrue(fitted.width == bounds.width || fitted.height == bounds.height)
+        }
+    }
+
+    // Une dimension invalide ne doit pas introduire de taille NaN ou infinie dans l’image du menu.
+    func testChargeSymbolRejectsInvalidDimensions() {
+        let valid = CGSize(width: 17, height: 9)
+        for invalid in [
+            CGSize.zero, CGSize(width: -1, height: 9),
+            CGSize(width: CGFloat.infinity, height: 9), CGSize(width: 17, height: CGFloat.nan),
+        ] {
+            XCTAssertEqual(BatterySymbolLayout.fittedSize(invalid, within: valid), .zero)
+            XCTAssertEqual(BatterySymbolLayout.fittedSize(valid, within: invalid), .zero)
+        }
+    }
+
     // Un niveau de cent pour cent devient une charge possible, sans altérer la donnée reçue.
     func testFullLevelIsOnlyAPossibleCharge() throws {
         var state = try connectedState()
@@ -175,7 +229,7 @@ final class BatteryStateTests: XCTestCase {
         XCTAssertEqual(state.menuLines(at: now), ["G -", "D -"])
     }
 
-    // Seuls les noms exacts sont retenus, et aucune ambiguïté n’est résolue par l’ordre des appareils.
+    // Le nom de base et ses libellés personnalisés retrouvent le clavier sans indice de position fixe.
     func testConnectedKeyboardSelection() {
         XCTAssertEqual(ConnectedKeyboardChoice.select(names: [nil, "Autre"], targetName: "Clavier"), .none)
         XCTAssertEqual(
@@ -183,6 +237,30 @@ final class BatteryStateTests: XCTestCase {
         XCTAssertEqual(
             ConnectedKeyboardChoice.select(names: ["Clavier", "Clavier"], targetName: "Clavier"), .ambiguous)
         XCTAssertEqual(ConnectedKeyboardChoice.select(names: ["Clavier_Left"], targetName: "Clavier"), .none)
+        for name in ["Clavier V1", "Clavier V2", "Clavier bureau"] {
+            XCTAssertEqual(
+                ConnectedKeyboardChoice.select(names: [nil, "Autre", name], targetName: "Clavier"), .single(2)
+            )
+        }
+    }
+
+    // Un préfixe ressemblant, un nom absent ou un suffixe vide ne reconnaît pas un autre périphérique.
+    func testConnectedKeyboardRejectsUnrelatedOrEmptyNames() {
+        XCTAssertEqual(
+            ConnectedKeyboardChoice.select(
+                names: [
+                    nil, "ClavierV2", "Clavier_Left", "Autre Clavier V2", "clavier V2", "Clavier ",
+                    "Clavier \t",
+                ],
+                targetName: "Clavier"), .none)
+        XCTAssertEqual(ConnectedKeyboardChoice.select(names: ["", " V2"], targetName: ""), .none)
+    }
+
+    // Deux versions connectées restent ambiguës, même si l’une garde le nom exact de la configuration.
+    func testConnectedKeyboardAliasesRemainAmbiguous() {
+        for names in [["Clavier V1", "Clavier V2"], ["Clavier", "Clavier V2"], ["Clavier V2", "Clavier"]] {
+            XCTAssertEqual(ConnectedKeyboardChoice.select(names: names, targetName: "Clavier"), .ambiguous)
+        }
     }
 
     // Prépare une seule moitié identifiée pour les scénarios de disponibilité et de reconnexion.

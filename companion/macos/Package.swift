@@ -8,7 +8,10 @@ let package = Package(
     products: [.executable(name: "SplitergollBatteries", targets: ["SplitergollBatteries"])],
     targets: [
         .target(name: "BatteryCore"),
-        .executableTarget(name: "SplitergollBatteries", dependencies: ["BatteryCore"]),
+        .executableTarget(
+            name: "SplitergollBatteries", dependencies: ["BatteryCore"],
+            resources: [.copy("Resources")]),
         .testTarget(name: "BatteryCoreTests", dependencies: ["BatteryCore"]),
+        .testTarget(name: "MenuBarTests", dependencies: ["SplitergollBatteries"]),
     ]
 )

@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024" role="img" aria-labelledby="title description">
+  <title id="title">Splitergoll, contour 24 px, ombre intérieure</title>
+  <desc id="description">Intérieure centrée : flou σ 20 px · noir 50 %. Flou SVG gaussien continu, canvas 1024 px, aucune image intégrée.</desc>
+  <defs>
+    <filter id="inner-regular" filterUnits="userSpaceOnUse" x="0" y="0" width="1024" height="1024" color-interpolation-filters="sRGB">
+      <feOffset in="SourceAlpha" dx="0" dy="0" result="inside-offset"/>
+      <feGaussianBlur in="inside-offset" stdDeviation="20" result="inside-blur"/>
+      <feComposite in="SourceAlpha" in2="inside-blur" operator="out" result="inside-mask"/>
+      <feFlood flood-color="#000000" flood-opacity="0.5" result="inside-ink"/>
+      <feComposite in="inside-ink" in2="inside-mask" operator="in" result="inside-shadow"/>
+      <feMerge><feMergeNode in="SourceGraphic"/><feMergeNode in="inside-shadow"/></feMerge>
+    </filter>
+  </defs>
+  <rect x="40" y="40" width="944" height="944" rx="210" fill="white"/>
+  <g filter="url(#inner-regular)">
+    <g transform="translate(512 512) scale(5.3) translate(-134.75 -139.05)">
+      <path fill="white" stroke="black" stroke-width="4.528302" stroke-linecap="round" stroke-linejoin="round" d="M 67.8000 118.0000         A 2.8000 2.8000 0 0 0 65.0000 120.8000         L 65.0000 154.2000         A 2.8000 2.8000 0 0 0 67.8000 157.0000         L 81.2000 157.0000         A 2.8000 2.8000 0 0 1 84.0000 159.8000         L 84.0000 164.2000         A 2.8000 2.8000 0 0 0 86.8000 167.0000         L 101.2000 167.0000         A 2.8000 2.8000 0 0 0 104.0000 164.2000         L 104.0000 153.8000         A 2.8000 2.8000 0 0 1 106.8000 151.0000         L 119.2000 151.0000         A 2.8000 2.8000 0 0 1 122.0000 153.8000         L 122.0000 171.2000         A 2.8000 2.8000 0 0 0 124.8000 174.0000         L 141.5091 174.0000         A 2.8000 2.8000 0 0 1 141.9873 174.0411         L 160.2519 177.2070         A 2.8000 2.8000 0 0 1 160.7365 177.3366         L 178.0118 183.6628         A 2.8000 2.8000 0 0 1 178.4686 183.8786         L 192.8038 192.3110         A 2.8000 2.8000 0 0 0 196.6558 191.2846         L 203.8155 178.7280         A 2.8000 2.8000 0 0 0 202.7745 174.9112         L 200.4087 173.5566         A 2.8000 2.8000 0 0 1 199.0000 171.1267         L 199.0000 105.8607         A 2.8000 2.8000 0 0 0 196.2000 103.0607         L 182.2773 103.0607         A 2.2773 2.2773 0 0 1 180.0000 100.7834         L 180.0000 100.2773         A 2.2773 2.2773 0 0 0 177.7227 98.0000         L 163.2500 98.0000         A 2.2500 2.2500 0 0 1 161.0000 95.7500         L 161.0000 95.2500         A 2.2500 2.2500 0 0 0 158.7500 93.0000         L 144.8000 93.0000         A 2.8000 2.8000 0 0 1 142.0000 90.2000         L 142.0000 87.8000         A 2.8000 2.8000 0 0 0 139.2000 85.0000         L 124.8000 85.0000         A 2.8000 2.8000 0 0 0 122.0000 87.8000         L 122.0000 90.2000         A 2.8000 2.8000 0 0 1 119.2000 93.0000         L 105.8000 93.0000         A 2.8000 2.8000 0 0 0 103.0000 95.8000         L 103.0000 106.2000         A 2.8000 2.8000 0 0 1 100.2000 109.0000         L 86.8000 109.0000         A 2.8000 2.8000 0 0 0 84.0000 111.8000         L 84.0000 115.2000         A 2.8000 2.8000 0 0 1 81.2000 118.0000         Z"/>
+    </g>
+  </g>
+</svg>

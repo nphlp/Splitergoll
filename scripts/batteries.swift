@@ -117,8 +117,13 @@ final class BatteryReader: NSObject, CBCentralManagerDelegate, CBPeripheralDeleg
         switch central.state {
         case .poweredOn:
             guard device == nil else { return }
+            let prefix = targetName + " "
             let candidates = central.retrieveConnectedPeripherals(withServices: [batteryService])
-                .filter { $0.name == targetName }
+                .filter { peripheral in
+                    guard !targetName.isEmpty, let name = peripheral.name else { return false }
+                    return name == targetName
+                        || (name.hasPrefix(prefix) && !name.dropFirst(prefix.count).allSatisfy(\.isWhitespace))
+                }
 
             guard candidates.count == 1, let peripheral = candidates.first else {
                 fail("Il faut un seul \(targetName) connecté et éveillé. Claviers trouvés : \(candidates.count).")

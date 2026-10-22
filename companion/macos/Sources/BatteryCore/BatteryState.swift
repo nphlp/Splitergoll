@@ -138,10 +138,14 @@ public struct BatteryState: Sendable {
         return age >= 0 && age < Self.staleAfter
     }
 
-    // Distingue niveau lisible et charge possible, sans transformer cent pour cent en charge certaine.
+    // Zéro est masqué par convention, cent pour cent indique seulement une charge possible.
     public func indication(for side: BatterySide, at now: Date) -> BatteryIndication {
         guard isCurrent(side, at: now), let reading = readings[side] else { return .unavailable }
-        return reading.level == 100 ? .possibleCharge : .level(reading.level)
+        switch reading.level {
+        case 0: return .unavailable
+        case 100: return .possibleCharge
+        default: return .level(reading.level)
+        }
     }
 
     // Les lignes gardent gauche au-dessus de droite, indépendamment de l’ordre des réponses GATT.
@@ -162,9 +166,15 @@ public enum ConnectedKeyboardChoice: Equatable {
     case single(Int)
     case ambiguous
 
-    // Refuse de choisir arbitrairement entre V1 et V2 s’ils annoncent le même nom.
+    // Accepte le nom configuré et ses libellés personnalisés, sans choisir entre deux claviers connectés.
     public static func select(names: [String?], targetName: String) -> Self {
-        let matches = names.indices.filter { names[$0] == targetName }
+        guard !targetName.isEmpty else { return .none }
+        let prefix = targetName + " "
+        let matches = names.indices.filter { index in
+            guard let name = names[index] else { return false }
+            return name == targetName
+                || (name.hasPrefix(prefix) && !name.dropFirst(prefix.count).allSatisfy(\.isWhitespace))
+        }
         if matches.count > 1 { return .ambiguous }
         return matches.first.map(Self.single) ?? .none
     }

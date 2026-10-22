@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Compile l’app native et prépare son bundle local, ou exécute ses tests Swift.
-# make app start ouvre le bundle. build compile, test teste sans Bluetooth. Sans action, affiche l’aide.
+# start ouvre, build compile, install copie le bundle déjà compilé, test teste sans Bluetooth.
 # Tous les caches restent dans .local/. L’app s’inscrit à l’ouverture de session lors de son lancement.
 
 set -euo pipefail
@@ -29,10 +29,13 @@ usage() {
 [ "$#" -gt 0 ] || usage
 [ "$#" -eq 1 ] || usage 1
 case "$1" in
-    start|build|test) action=$1 ;;
+    start|build|install|test) action=$1 ;;
     help) usage ;;
     *) usage 1 ;;
 esac
+if [ "$action" = install ]; then
+    exec bash "$APP_SOURCE/install.sh"
+fi
 [ "$(uname -s)" = Darwin ] || fail 'L’application nécessite macOS 13 ou plus récent'
 command -v swift >/dev/null || fail 'Installe les outils de ligne de commande Xcode pour Swift'
 mkdir -p "$APP_CACHE"
@@ -80,6 +83,8 @@ fi
 mkdir -p "$APP_BUNDLE/Contents/MacOS" "$APP_BUNDLE/Contents/Resources"
 cp "$binary_directory/SplitergollBatteries" "$APP_BUNDLE/Contents/MacOS/SplitergollBatteries"
 cp "$APP_ICON_CACHE/AppIcon.icns" "$APP_BUNDLE/Contents/Resources/AppIcon.icns"
+ditto --norsrc "$binary_directory/SplitergollBatteries_SplitergollBatteries.bundle" \
+    "$APP_BUNDLE/Contents/Resources/SplitergollBatteries_SplitergollBatteries.bundle"
 cp "$APP_SOURCE/Info.plist" "$APP_BUNDLE/Contents/Info.plist"
 plutil -insert SplitergollKeyboardName -string "$keyboard_name" "$APP_BUNDLE/Contents/Info.plist"
 codesign --force --sign - "$APP_BUNDLE"

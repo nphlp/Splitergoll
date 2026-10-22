@@ -17,9 +17,8 @@
 ## Étapes suivantes
 
 Le [tableau de planification](planification.md) distingue les sujets terminables avec
-Mac + V2 et ceux à valider lors d’une séance commune Mac/Windows. En attendant cette
-séance, compléter les essais d’alimentation de V2 après migration, sans ajouter
-de nouvelles règles de connexion avant les essais du lot déjà compilé.
+Mac + V2 et ceux à valider lors d’une séance commune Mac/Windows. Au bureau,
+priorité aux essais de l’app et des batteries. Les transitions Mac/Windows restent différées.
 
 Détection USB et BLE Mac/Windows, mémoire d’OS et bascule entre appareils sont
 validées sur V1 dans les conditions indiquées ci-dessous. Linux automatique reste à faire.
@@ -330,10 +329,24 @@ de préparer la mémoire d’OS propre à V2, absente du profil macOS normal.
   en conservant la variante sur fond noir à côté.
 - [ ] Exposer l’état de liaison de droite pour masquer son niveau si elle se
   déconnecte seule. Le proxy batterie actuel conserve sa dernière valeur.
-- [ ] Après le rangement du Makefile, afficher 0 % comme un tiret dans l’app,
+- [x] Afficher 0 % comme un tiret dans l’app,
   par convention, en conservant la mesure brute. Le lecteur CLI garde sa valeur.
-- [ ] Après le rangement du Makefile, corriger le symbole de batterie avec éclair
-  dans la barre des menus : il paraît écrasé verticalement, respecter ses proportions.
+- [x] Corriger le symbole de batterie avec éclair dans la barre des menus :
+  proportions natives conservées, validation du rendu hors écran.
+- [x] Ajouter `make app install` pour copier le bundle déjà compilé dans Applications,
+  avec contrôles d’identité, signature, fermeture et restauration sur échec.
+  Installation et mise à jour validées dans un dossier isolé du dépôt, puis installation
+  réelle autorisée et vérifiée dans Applications.
+- [x] Préparer des propositions SVG de contours pour l’app et les deux symboles
+  de menus. Corriger les ombres avec un flou SVG continu, sans image intégrée.
+- [x] Retenir le contour épais avec ombre extérieure centrée pour l’icône, puis intégrer
+  les contours gauche/droite validés dans les menus. Conversion ICNS native avec son ombre.
+- [x] Accepter le nom personnalisé `Splitergoll V2` dans l’app et le lecteur CLI,
+  sans choisir entre plusieurs correspondances. Deux niveaux lus sur V2 sans USB : 89/79 %.
+- [x] Confirmer l’affichage des batteries dans l’app installée après correction du nom sur V2.
+- [ ] Améliorer l’indication de charge dans la barre des menus. Proposition à valider :
+  garder `100 %` avec un petit éclair monochrome aligné sur le texte, sans élargissement
+  variable. Conserver la notion de charge possible dans l’infobulle.
 - [ ] Valider le lecteur permanent : mises à jour, données indisponibles, déconnexions,
   autonomie, sommeil du Mac, ouverture de session et présentation honnête des mesures sous USB.
 - [ ] Ensuite, ajouter couche active et OS utilisé par la keymap dans l’app.

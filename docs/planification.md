@@ -1,6 +1,7 @@
 # Planifier selon le matériel disponible
 
-Au bureau, nous avons le **Mac et V2**. Le suivi détaillé reste dans le
+Le matériel disponible est **Mac + V2 au bureau**, avec ses deux batteries.
+PC Windows et V1 restent à domicile. Le suivi détaillé reste dans le
 [TODO](TODO.md). Ce tableau sert à choisir un chantier que l’on peut réellement
 terminer, sans confondre développement et validation matérielle.
 
@@ -19,7 +20,7 @@ il n’est pas nécessaire d’avoir V1 et V2 ensemble.
 | Veille et réveil | Reprise courte et réveil par la gauche confirmés. Compléter première frappe, encodeurs et OS après réveil | La droite seule ne réveille pas la centrale en veille profonde. Essais sur batterie, sans USB |
 | Politique de veille et autonomie | Comparer veille profonde et centrale maintenue en inactivité, puis décider du compromis | Demande un firmware d’essai et des mesures sur une durée suffisante |
 | Keymap et matériel côté Mac | Compléter touches, accents, couches, encodeurs, bootloader et redémarrage | La validation Windows avec gaming reste indépendante |
-| [Application macOS](application-macos.md) | Premier lot implémenté : deux batteries dans une fenêtre et la barre des menus, à valider sur V2 | Modèle et inscription simulée testés. Vérifier lecture à 5 s, reprise, sommeil du Mac et ouverture de session. Couche, OS et réglages avancés reportés |
+| [Application macOS](application-macos.md) | Affichage des deux batteries confirmé sur V2 après correction du nom personnalisé | Modèle et inscription simulée testés. Compléter reprise, déconnexion/reconnexion, sommeil du Mac et ouverture de session. Couche, OS et réglages avancés reportés |
 | Correction manuelle de l’OS mémorisé | Développer et tester correction, sauvegarde, reconnexion et redémarrage sur Mac | Choisir d’abord le raccourci et préparer la mémoire d’OS de V2. Une vérification Windows restera nécessaire |
 
 Le profil courant retenu pour V2 est `bluetooth macos` normal : keymap fixe,
@@ -62,10 +63,11 @@ nécessaire pour les essais batterie et veille.
 
 ## Ordre conseillé
 
-1. Avec Mac + V2 : la lecture des deux batteries et les reprises principales sont
-   revalidées. Compléter première frappe, encodeurs et OS après réveil si nécessaire.
-2. À partir des résultats : décider de la politique de veille, puis mesurer l’autonomie.
-   L’affichage des batteries ou la correction d’OS sont des chantiers indépendants possibles.
+1. Avec V2 au bureau : valider l’app et ses deux batteries. Le nom personnalisé
+   `Splitergoll V2` est maintenant accepté par le lecteur, qui relève 89/79 % sans USB.
+   La correction est installée et l’affichage confirmé : compléter les déconnexions,
+   la reprise après sommeil du Mac et l’ouverture de session.
+2. Compléter première frappe, encodeurs et autonomie de V2 sur batterie.
 3. Dès que Mac + Windows sont disponibles : valider le lot de reconnexion déjà committé,
    avant d’ajouter l’accueil des nouveaux appareils et les destinations USB/BLE.
 

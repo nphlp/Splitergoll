@@ -110,6 +110,8 @@ Il se compile automatiquement au premier lancement, puis utilise son cache dans
 `.local/tools/batteries/`. Après `make clear`, il se recompile. Aucun `make setup`
 ni Docker n’est nécessaire. Autoriser l’accès Bluetooth si macOS le demande.
 Le nom du clavier est lu dans la configuration de la centrale.
+Le lecteur accepte aussi ce nom suivi d’un espace et d’un libellé personnalisé,
+comme `Splitergoll V2`. Plusieurs claviers correspondants connectés restent ambigus.
 
 Le diagnostic utilise des lectures répétées, sans abonnement aux notifications.
 Les notifications et l’affichage dans un lecteur permanent restent à tester.

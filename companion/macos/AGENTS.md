@@ -10,19 +10,43 @@ Les évolutions sont suivies dans le [TODO](../../docs/TODO.md), sans liste dupl
 ## Organisation
 
 - `BatteryCore` : décodage GATT, identité des côtés, dernières lectures et disponibilité.
+  BatterySymbolLayout conserve les proportions du symbole dans le cadre de chaque ligne.
 - `BatteryMonitor` : adaptateur CoreBluetooth, entièrement sur l’acteur principal.
 - `BatteriesView` : vue observée et tableau de données indépendant, utilisable pour contrôler le rendu sans Bluetooth.
 - `Application` : cycle AppKit, fenêtre SwiftUI fixe 320 × 174 points et NSStatusItem. Dock visible avec la fenêtre, caché lorsqu’elle est fermée. Démarrage discret sans fenêtre.
 - `LaunchAtLogin` : inscription via SMAppService au premier lancement réel. `LoginRegistration` teste sa politique sans toucher aux préférences système.
-- `MenuBarBadge` : image template de deux lignes, gauche en haut et droite en bas, avec texte équivalent pour l’accessibilité.
-- `Assets/AppIcon.svg` : icône sélectionnée, silhouette noire du PCB gauche sur carré blanc arrondi de style macOS. Les angles du contour sont adoucis, sans touches ni encodeur.
+- `MenuBarBadge` : image template de deux lignes, contour gauche puis valeur en haut,
+  valeur puis contour droit en bas. Largeur stable, symboles monochromes adaptés au
+  thème macOS et texte équivalent pour l’accessibilité.
+- `Assets/AppIcon.svg` : contour noir épais de 32 px du PCB gauche sur carré blanc
+  arrondi de style macOS. Ombre extérieure centrée, sigma 24 px, noir à 32 %.
+  Les angles sont adoucis, sans touches ni encodeur.
+- `Sources/SplitergollBatteries/Resources/keyboard-left.svg` et `keyboard-right.svg` :
+  contours transparents validés, chargés via Bundle.module et embarqués avec SwiftPM.
 - `Assets/pcb-left.svg` : dessin séparé de la moitié gauche, sur fond transparent. Non utilisé dans l’icône ni dans le build, à la demande de l’utilisateur.
-- `Assets/pcb-left-white-on-black.svg` et `pcb-left-black-on-white.svg` : variantes conservées côte à côte. Canvas 1024, coins extérieurs transparents. AppIcon.svg reprend la version sur fond blanc, garder cette copie cohérente en cas d’édition.
-- `Assets/RenderIcon.swift` : rasterise le SVG en dix PNG, assemblés en ICNS par iconutil. Cache sous .local, invalidé sur changement du SVG ou du convertisseur. Ressource embarquée avant signature.
+- `Assets/pcb-left-white-on-black.svg` et `pcb-left-black-on-white.svg` : anciennes
+  silhouettes conservées côte à côte. Canvas 1024, coins extérieurs transparents.
+- `Assets/proposals/` : propositions SVG conservées pour comparer les variantes.
+  Trois épaisseurs (16/24/32 px sur canvas 1024) et ombres intérieure/extérieure/relief.
+  Les ombres utilisent feGaussianBlur, sans image intégrée. La planche est un SVG autonome.
+  Elles sont centrées, offsets X/Y nuls : intérieure sigma 20 à 50 %, extérieure sigma
+  24 à 32 %, relief sigma 16/18 à 40/28 %. Aucun éclairage directionnel.
+  Les premiers essais de tracés superposés avaient des paliers et sont remplacés.
+  L’utilisateur retient app-outline-bold-outer.svg pour l’app et les deux contours
+  de menus. Leurs copies actives sont AppIcon.svg et Resources/keyboard-*.svg.
+- `Assets/RenderIcon.swift` : lit le filtre extérieur du SVG, sépare contour et fond,
+  puis reproduit son flou avec Core Image car CoreSVG/AppKit l’ignore. Ces API natives
+  ne sont utilisées que pendant le build, sans dépendance externe ni image embarquée
+  dans le SVG. Dix PNG sont assemblés en ICNS par iconutil. Cache sous .local, invalidé
+  sur changement du SVG ou du convertisseur. Ressources embarquées avant signature.
 - `app.sh` : SwiftPM sans dépendance externe, bundle local et signature ad hoc. Aucun ajout à `/Applications`.
+- `install.sh` : copie explicite du bundle déjà compilé, sans ouverture ni inscription de session.
+  Le dossier Applications est lu par Foundation via JXA, sans chemin système inventé.
+  APP_INSTALL_DIRECTORY peut le remplacer explicitement pour une validation isolée.
 
 Interface : make app affiche l’aide, make app start compile et ouvre, make app build
-compile seulement, make app test teste. Toute action erronée affiche l’aide avant
+compile seulement, make app install installe le bundle existant, make app test teste.
+Toute action erronée affiche l’aide avant
 contrôle des outils, création de cache ou accès Bluetooth. Pas d’alias à tirets.
 
 Le nom Bluetooth vient de `CONFIG_ZMK_KEYBOARD_NAME` dans la configuration de la
@@ -33,8 +57,12 @@ sous `.local/`, avec `CLANG_MODULE_CACHE_PATH` limité aux sous-processus du scr
 ## Invariants
 
 Pas de scan, de nouvel appairage, de sélection de destination ou d’accès HID.
-Retrouver uniquement un périphérique déjà connecté au système. Refuser de choisir
-arbitrairement entre plusieurs correspondances. La connexion cliente CoreBluetooth
+Retrouver uniquement un périphérique déjà connecté au système. Le nom configuré
+est accepté seul ou suivi d’un espace et d’un suffixe non blanc, pour les libellés
+personnalisés comme Splitergoll V1/V2. Garder la casse et la frontière du nom :
+ni SplitergollV2, ni Splitergoll_Left, ni un nom cible vide ne correspondent.
+Refuser de choisir arbitrairement entre plusieurs correspondances, même si l’une
+garde le nom exact. Le lecteur CLI suit la même règle. La connexion cliente CoreBluetooth
 est distincte de la connexion du clavier gérée par macOS.
 
 Lire `180F/2A19` et `2904`, sans écrire le CCC ni activer les notifications.
@@ -48,6 +76,11 @@ Une lecture actuelle de 100 % affiche le symbole battery.100percent.bolt, dans
 la fenêtre et la barre. Garder « charge possible » pour l’accessibilité et la limite en infobulle.
 La donnée brute reste 100. Une batterie pleine sans USB produit aussi ce résultat.
 Une lecture ancienne n’affiche jamais cette indication de charge possible.
+Une lecture actuelle à zéro affiche un tiret, par convention utilisateur. Le modèle
+conserve zéro et sa date, ainsi que l’état connecté. Un niveau de un redevient lisible.
+La même indication alimente la fenêtre, le menu et l’accessibilité, sans toucher au lecteur CLI.
+Le symbole de charge garde le rapport largeur/hauteur de l’image native, avec un
+facteur commun limité par un cadre de 17 × 9 points. Aucun étirement des axes.
 Ne pas ajouter de panneau d’explication dans la fenêtre minimale.
 Les lectures ont lieu toutes les 5 secondes, sans chevauchement. Après 90 secondes
 sans lecture ou en perte de connexion, la barre affiche `-`. Les anciennes valeurs
@@ -80,13 +113,20 @@ comme actif. Le bundle est autonome et copiable dans Applications par l’utilis
 Quitter avant copie ou remplacement et relancer depuis le chemin installé. Vérifier
 l’entrée d’ouverture de session si l’ancienne copie locale avait été enregistrée.
 make clear supprime seulement la copie locale et les caches, jamais l’app installée.
+make app install refuse les liens symboliques, un bundle de mauvaise identité ou
+signature et une copie source/destination ouverte. La source doit être déjà compilée.
+Préparer et vérifier une copie temporaire sur le volume de destination avant tout
+remplacement. Garder l’ancienne app jusqu’à réussite du déplacement, la restaurer
+sur échec et nettoyer uniquement le dossier temporaire créé par cette installation.
+Ne modifier aucune autre app, permission système ou préférence d’ouverture de session.
 Le profil Bluetooth mesure désormais toutes les 5 secondes pendant ACTIVE, après
 reflash des deux moitiés. IDLE/SLEEP arrêtent ce timer, sans forçage ADC par l’app.
 
 La perte isolée de droite n’est pas déductible d’un niveau inchangé. Le getter
 split/central.c restitue le cache sans état de lien et central_bas_proxy.c le sert
 toujours. Ne pas afficher arbitrairement hors ligne ou zéro parce que ce niveau
-est stable. Le tiret indique une donnée connue indisponible par le lecteur.
+est stable. Le tiret indique une donnée indisponible ou égale à zéro par convention,
+sans constituer un état individuel fiable de connexion.
 Le vrai état individuel demandera une télémétrie firmware séparée, notée au TODO.
 
 ## Validation
@@ -94,6 +134,8 @@ Le vrai état individuel demandera une télémétrie firmware séparée, notée 
 `make app test` exécute les tests applicatifs sans Bluetooth. Couvrir décodage,
 réponses hors ordre, identités en doublon, valeurs invalides, lecture partielle,
 péremption, horloge reculant et reconnexion sans reprise de canaux anciens.
+Les tests AppKit des menus vérifient les contours miroirs/transparents, leur placement
+avec charge/zéro, leur disponibilité depuis le bundle et la largeur stable des états.
 `make app build` compile avec les avertissements traités comme erreurs et vérifie
 la signature du bundle. `swift format lint --strict --recursive companion/macos/Sources companion/macos/Tests companion/macos/Package.swift`
 contrôle les sources avec `.swift-format`. Inclure aussi Assets dans ce contrôle.
@@ -104,7 +146,8 @@ démarre pas BatteryMonitor. Les essais Bluetooth réels et sommeil du Mac reste
 distincts des tests du modèle et nécessitent une séance avec l’utilisateur.
 Ne pas lancer l’app réelle en arrière-plan implicitement pendant un build ou un test.
 
-Vingt et un tests passent, dont l’indication incertaine à cent pour cent, sa disparition
+Vingt-quatre tests passent, dont zéro/tiret sans perte de mesure, les proportions
+du symbole, l’indication incertaine à cent pour cent, sa disparition
 sur lecture périmée, l’ordre vertical gauche/droite et les erreurs de l’inscription
 de session, sans ServiceManagement réel ni écriture de préférences. Les états connecté, charge
 possible, en attente et déconnecté
@@ -115,13 +158,45 @@ Le symbole avec éclair, le tiret et l’icône originale sont rendus hors écra
 Le bundle final intègre le fichier AppIcon.icns avant signature. Une copie dans
 un autre dossier privé du projet conserve exécutable, configuration et signature.
 Les dépendances dynamiques sont uniquement celles de macOS, aucun chemin du dépôt
-n’est nécessaire à l’exécution. La copie réelle vers Applications et sa relance
-restent à l’utilisateur, ainsi que la vérification de l’ouverture de session.
+n’est nécessaire à l’exécution. La copie vers Applications est maintenant effectuée
+sur demande explicite, sans lancement. La relance et l’ouverture de session restent
+à vérifier par l’utilisateur.
 La présence conditionnelle dans le Dock se valide manuellement : une simulation
 de booléens ne vérifierait pas le comportement AppKit réel. Les tests de modèle
 et la compilation ne lancent pas de fenêtre ni de lecture Bluetooth implicitement.
-L’icône SVG est validée XML, rendue par AppKit puis embarquée en ICNS. Un seul
+L’icône SVG est validée XML, rendue par AppKit/Core Image puis embarquée en ICNS. Un seul
 chemin fermé et un fond carré arrondi, sans touches ni encodeur. Le contour du PCB
 gauche est adouci pour cette silhouette graphique, pas une exportation de fabrication.
-Les deux variantes restent disponibles. Build signé et 21 tests de modèle passent.
+Les anciennes variantes restent disponibles. Les 24 tests du modèle et les trois
+tests de rendu des menus passent. Le bundle emporte les deux SVG, sans lecture du dépôt.
 Le Dock contextuel reste à essayer en ouvrant, minimisant et fermant la fenêtre réelle.
+
+Le rendu zéro/charge et la comparaison du symbole avant/après utilisent des données
+fictives, sans création de BatteryMonitor. Les artefacts sont dans
+.local/validation/macos-app-refresh. Le symbole natif de 16 × 11 points est ajusté
+à environ 13,09 × 9 points, sans déformation. Aucune app réelle n’est lancée.
+Sept validations d’installation isolées couvrent première copie, mise à jour sans
+ressource périmée, mauvaise identité, lien symbolique, app ouverte, bundle absent
+et restauration après échec du déplacement. Aucune copie vers Applications ni
+modification de préférences système pendant ces contrôles. Pas de suite d’outillage ajoutée.
+
+Le lot des contours passe les 27 tests, le format Swift et la syntaxe des scripts.
+L’icône aux dix tailles est produite avec son ombre centrée et contrôlée visuellement.
+Le rendu des menus utilise des valeurs fictives depuis un bundle autonome, sans
+lecteur Bluetooth ni fenêtre : niveaux, charge et zéro sont vérifiés.
+make app install a installé /Applications/Splitergoll.app sur demande explicite.
+Signature et égalité de l’exécutable, de l’ICNS et des deux SVG installés sont vérifiées.
+Aucune app réelle ni inscription de session n’a été lancée pendant cette installation.
+
+Sur V2 au bureau, l’app ouverte affiche deux tirets tandis que la saisie fonctionne.
+Le périphérique CoreBluetooth porte le libellé personnalisé Splitergoll V2 : le
+filtre exact initial ne trouvait aucune cible. Avec ce nom, le lecteur existant
+lit deux niveaux à 100 %. Après retrait des deux USB, le lecteur corrigé lancé
+par make bat read retrouve V2 et lit gauche 89 %, droite 79 %, également rapportés
+par l’utilisateur. Aucun reflash ou effacement d’appairage n’a été nécessaire.
+Les 29 tests passent, dont les suffixes, faux préfixes, noms vides et ambiguïtés
+entre V1/V2. Après fermeture confirmée par l’utilisateur, le build corrigé est
+installé dans Applications. Signature et égalité de l’exécutable, de l’ICNS et des
+deux SVG installés sont vérifiées. Aucun lancement réel par l’agent. Après réouverture,
+l’utilisateur confirme le fonctionnement de l’affichage sur V2. Cela ne valide pas
+encore les reprises après sommeil, les déconnexions ou l’ouverture de session.
