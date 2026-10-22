@@ -2,6 +2,7 @@
 #ifndef SPLITERGOLL_BLE_AUTO_H
 #define SPLITERGOLL_BLE_AUTO_H
 #include <stdbool.h>
+#include <stdint.h>
 
 // Partage la sérialisation des entrées avec les commandes USB optionnelles.
 void splitergoll_ble_auto_lock(void);
@@ -13,6 +14,6 @@ bool splitergoll_ble_auto_busy(void);
 // Demande le prochain hôte connecté, sans mutation tant qu’un appui reste actif.
 int splitergoll_ble_auto_next_device(void);
 
-// Rend utilisable un premier appairage si aucun autre hôte n’est connecté et le choix est inchangé.
-void splitergoll_ble_auto_adopt_device(unsigned target, unsigned origin);
+// Adopte un premier hôte ou l’appairage commencé pendant la recherche explicite encore courante.
+void splitergoll_ble_auto_adopt_device(unsigned target, unsigned origin, uint32_t started_at_ms);
 #endif

@@ -12,38 +12,30 @@ Ce guide décrit le Bluetooth actuel. Le futur choix USB + Bluetooth est cadré 
 
 ## Raccourci dans `bluetooth auto`
 
-Depuis la couche de base, maintenir **L1**, cliquer sur **l’encodeur droit**, puis tout relâcher sélectionne
-l’ordinateur connecté suivant. Le clavier attend la fin des appuis et des
-comportements différés avant de changer de destination, puis charge son OS mémorisé.
-Le clic simple sur l’encodeur continue d’afficher l’OS.
+Depuis la base, maintenir **L1**, cliquer sur **l’encodeur droit**, puis tout relâcher.
+Le clic simple continue d’afficher l’OS. Chaque destination utilise son OS mémorisé.
 
-Les emplacements vides ou déconnectés sont ignorés pour la sélection immédiate.
-Le geste ouvre aussi [dix secondes de reconnexion](reconnexion-bluetooth.md).
-Si le seul ordinateur connecté est déjà sélectionné, la destination reste inchangée.
-Le geste reste disponible quand l’OS sélectionné
-est inconnu. Il ne modifie ni les appairages ni l’OS enregistré. La bascule et
-l’association des keymaps sont confirmées sur V1 entre Mac et Windows en `ble-trace`.
+| Appareils prêts au geste | Résultat |
+| --- | --- |
+| Plusieurs | Passer au suivant déjà prêt, sans laisser une arrivée ultérieure reprendre la main |
+| Un seul | Ouvrir la recherche et passer au premier autre appareil prêt |
+| Aucun | Ouvrir la recherche et sélectionner le premier prêt |
 
-L’attente ressentie est d’environ deux secondes, sans mesure instrumentée. Le code
-prévoit une garde de 750 ms après la dernière activité admise pour laisser finir
-les comportements différés. Le délai complet reste à mesurer puis à optimiser.
+La [fenêtre de trente secondes](reconnexion-bluetooth.md) accepte les connus et
+les nouveaux appareils sur un slot libre. Le geste ne supprime aucun appairage.
+Une nouvelle association attend une connexion sécurisée et un OS reconnu avant la bascule.
 
-**ZMK standard** arrête ses annonces quand l’ordinateur sélectionné est connecté.
-Le nouveau contrôleur de `bluetooth auto` les permet pendant dix secondes pour les
-connus et les nouveaux appareils sur slot libre, sans déplacer la sélection pour
-réserver une place. Le seul nouvel hôte peut devenir la destination s’il n’y en a
-pas d’autre connecté. Ce lot reste à tester sur V1.
+Les anciens appuis et macros finissent sur leur ordinateur. Les nouvelles frappes
+pendant la transition attendent en RAM puis sont transmises avec la nouvelle keymap.
+Elles ne réarment plus la garde de 750 ms. Une cible perdue, une nouvelle commande
+ou une file pleine peut annuler ce lot, sans le transmettre à une autre destination.
 
-La proposition suivante ouvre les annonces pendant dix secondes au démarrage et
-au retour de Gaming USB vers Windows, ainsi qu’avec L1 + clic encodeur droit.
-Avec une seule destination, ce geste recherche et sélectionne le premier autre
-appareil prêt. Avec plusieurs destinations, il passe à la suivante et une arrivée
-ultérieure ne prend pas sa place. Les ouvertures sans ce geste ne font pas prendre
-la sélection au nouvel arrivant. Un nouvel appareil peut être ajouté sur un slot libre.
-Après fermeture, les connexions établies restent présentes. Les annonces sont
-arrêtées pendant Gaming USB, avec déconnexion du Mac et conservation de son appairage.
-Voir [la gestion de l’appairage](gestion-appairage.md) pour les règles encore à implémenter.
-L’ordinateur décide quand se connecter, le clavier se rend disponible.
+Les essais sur V1 avec la fenêtre temporaire de dix secondes confirment les
+allers-retours Mac/Windows, leurs bonnes keymaps et la saisie immédiate retenue
+pendant la transition. Shift maintenu retarde la bascule, qui reprend au relâchement.
+Le raccourci reconnecte et sélectionne Windows après fermeture de la fenêtre.
+Avec zéro connexion, Mac arrivé en premier reste sélectionné quand Windows rejoint.
+Les [destinations USB/BLE et Gaming USB](destinations-saisie.md) restent à développer.
 
 ## Sélection automatique prévue
 
@@ -51,31 +43,38 @@ Ces règles ne sont pas encore implémentées :
 
 | Situation | Comportement souhaité |
 | --- | --- |
-| Aucun ordinateur connecté | Attendre une connexion |
+| Aucun ordinateur connecté, clavier actif | Rechercher les connus et accepter un nouvel appairage jusqu’à l’inactivité |
 | Un seul ordinateur connecté | Le sélectionner automatiquement |
 | Un second ordinateur se connecte | Garder la destination actuelle |
 | La destination se déconnecte, un seul ordinateur reste | Sélectionner celui qui reste |
 
 Chaque destination utilise l’[OS mémorisé pour cet appareil](memoire-os.md).
+La recherche sans hôte et son arrêt en veille légère restent à développer, voir
+[la gestion de l’appairage](gestion-appairage.md).
 
 ## Après redémarrage ou veille profonde
 
-Le clavier conserve le dernier ordinateur sélectionné, par exemple **A**.
-Si **B** se reconnecte avant lui :
+**À développer.** Le clavier devra conserver le dernier ordinateur sélectionné,
+par exemple **A**, au-delà du reset ou de la veille profonde.
+Si **B** se reconnecte avant lui pendant la fenêtre de démarrage :
 
 1. B est sélectionné immédiatement, puisqu’il est seul.
-2. Une fenêtre de **5 secondes** commence à cette première reconnexion utilisable.
-3. Si A revient dans cette fenêtre, le clavier revient automatiquement sur A,
+2. La préférence pour A reste valable jusqu’à la fin des **30 secondes de recherche
+   du démarrage**, sans ajouter un autre délai après l’arrivée de B.
+3. Si A revient avant cette échéance, le clavier revient automatiquement sur A,
    même si des frappes ont déjà été envoyées à B.
 4. Sinon, B reste sélectionné et devient le nouvel ordinateur mémorisé.
 5. Si A revient plus tard, il ne reprend pas la sélection.
 
-Ces cinq secondes ne bloquent pas la saisie sur B. Taper sur B n’annule ni ne
+Cette attente ne bloque pas la saisie sur B. Taper sur B n’annule ni ne
 prolonge la fenêtre : les frappes déjà envoyées restent sur B, les suivantes
 partent vers A après la bascule. Une bascule manuelle d’appareil annule le retour
-automatique et mémorise le choix explicite. La durée sera à confirmer sur le matériel.
+automatique. Le choix explicite sera mémorisé à la fermeture de sa fenêtre.
 La recherche explicite déclenchée par L1 + clic droit doit aussi annuler ce retour
 automatique, pour ne pas être contredite par la reconnexion de l’ancien appareil.
 
-Deux connexions simultanées ont déjà été observées sur V1. L’arrivée et la sélection
-automatiques du second ordinateur restent à tester après adaptation des annonces.
+La future préférence utilise notre propre mémoire, distincte du slot mémorisé par
+ZMK et de la mémoire des OS. À la fermeture de la fenêtre, sauvegarder l’appareil
+**sélectionné et connecté**, pas le dernier à avoir établi sa liaison. Sans appareil
+sélectionné utilisable, garder la préférence précédente. Un reset avant cette
+sauvegarde réutilise le dernier choix déjà enregistré.

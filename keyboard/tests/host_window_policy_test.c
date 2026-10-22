@@ -16,19 +16,19 @@ static void startup_and_deadlines(void) {
     struct host_window_view v = view(5, 3, 0);
     host_window_start(&p, 20);
     assert(p.generation != 0 && p.pending == -1 && !p.searching);
-    assert(host_window_remaining(&p, 20) == 10000);
-    assert(host_window_pairing_allowed(&p, 10019, true));
-    assert(!host_window_pairing_allowed(&p, 10019, false));
-    host_window_update(&p, &v, 10019);
+    assert(host_window_remaining(&p, 20) == 30000);
+    assert(host_window_pairing_allowed(&p, 30019, true));
+    assert(!host_window_pairing_allowed(&p, 30019, false));
+    host_window_update(&p, &v, 30019);
     assert(p.active && p.pending == -1);
-    assert(!host_window_pairing_allowed(&p, 10020, true));
-    host_window_update(&p, &v, 10020);
+    assert(!host_window_pairing_allowed(&p, 30020, true));
+    host_window_update(&p, &v, 30020);
     assert(!p.active && p.pending == -1);
 
     host_window_start(&p, UINT32_MAX - 25);
-    assert(host_window_remaining(&p, 0) == 9974);
-    assert(host_window_remaining(&p, 9973) == 1);
-    assert(host_window_remaining(&p, 9974) == 0);
+    assert(host_window_remaining(&p, 0) == 29974);
+    assert(host_window_remaining(&p, 29973) == 1);
+    assert(host_window_remaining(&p, 29974) == 0);
 }
 
 // Une seule destination garde la saisie jusqu’au premier autre appareil utilisable.
@@ -64,27 +64,27 @@ static void late_arrivals_and_input_guard(void) {
     host_window_start(&p, 0);
     assert(host_window_shortcut(&p, &v, 0));
     v.ready = 3;
-    host_window_update(&p, &v, 9999);
-    assert(host_window_take(&p, &v, 9999, p.generation, true) == -1);
-    host_window_update(&p, &v, 10000);
+    host_window_update(&p, &v, 29999);
+    assert(host_window_take(&p, &v, 29999, p.generation, true) == -1);
+    host_window_update(&p, &v, 30000);
     assert(!p.active && !p.searching && p.pending == 1);
-    assert(host_window_take(&p, &v, 10750, p.generation, false) == 1);
+    assert(host_window_take(&p, &v, 30750, p.generation, false) == 1);
 
     v.ready = 1;
     host_window_shortcut(&p, &v, 20000);
     v.ready = 3;
-    host_window_update(&p, &v, 30000);
+    host_window_update(&p, &v, 50000);
     assert(!p.searching && p.pending == -1);
-    assert(host_window_take(&p, &v, 30001, p.generation, false) == -1);
+    assert(host_window_take(&p, &v, 50001, p.generation, false) == -1);
 
     v.ready = 1;
     host_window_shortcut(&p, &v, 40000);
     v.ready = 3;
-    host_window_update(&p, &v, 49999);
+    host_window_update(&p, &v, 69999);
     v.ready = 1;
-    host_window_update(&p, &v, 50000);
+    host_window_update(&p, &v, 70000);
     v.ready = 5;
-    assert(host_window_take(&p, &v, 50001, p.generation, false) == -1);
+    assert(host_window_take(&p, &v, 70001, p.generation, false) == -1);
 }
 
 // Plusieurs destinations donnent une bascule explicite, jamais une poursuite du nouvel arrivant.
@@ -109,7 +109,7 @@ static void multiple_hosts_and_repeated_gestures(void) {
     assert(p.pending == 1);
     host_window_shortcut(&p, &v, 200);
     assert(p.generation != first && p.pending == -1);
-    assert(host_window_remaining(&p, 200) == 10000);
+    assert(host_window_remaining(&p, 200) == 30000);
     assert(host_window_take(&p, &v, 201, first, false) == -1);
 
     host_window_shortcut(&p, &v, 300);
@@ -128,10 +128,10 @@ static void pending_manual_after_window(void) {
     host_window_start(&p, 0);
     host_window_shortcut(&p, &v, 0);
     uint32_t ticket = p.generation;
-    assert(host_window_take(&p, &v, 10000, ticket, true) == -1);
+    assert(host_window_take(&p, &v, 30000, ticket, true) == -1);
     assert(!p.active && p.pending == 1);
-    assert(host_window_take(&p, &v, 10001, ticket, false) == 1);
-    assert(host_window_take(&p, &v, 10002, ticket, false) == -1);
+    assert(host_window_take(&p, &v, 30001, ticket, false) == 1);
+    assert(host_window_take(&p, &v, 30002, ticket, false) == -1);
 
     v = view(5, 17, 0);
     host_window_shortcut(&p, &v, 20000);
@@ -188,7 +188,7 @@ static void invalidated_selections(void) {
     ticket = p.generation;
     host_window_cancel_selection(&p);
     assert(host_window_take(&p, &v, 31, ticket, false) == -1);
-    assert(host_window_remaining(&p, 31) == 9999);
+    assert(host_window_remaining(&p, 31) == 29999);
 }
 
 // Une disparition peut être suivie d’un autre candidat seulement pendant la recherche encore ouverte.
@@ -248,9 +248,9 @@ static void gaming_transitions(void) {
     assert(p.pending == -1 && !p.active);
 
     assert(host_window_leave_gaming(&p, 5));
-    assert(host_window_remaining(&p, 5) == 10000 && !p.searching);
+    assert(host_window_remaining(&p, 5) == 30000 && !p.searching);
     assert(!host_window_leave_gaming(&p, 6));
-    assert(host_window_remaining(&p, 6) == 9999);
+    assert(host_window_remaining(&p, 6) == 29999);
     host_window_update(&p, &v, 7);
     assert(p.pending == -1);
 

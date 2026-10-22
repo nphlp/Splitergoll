@@ -17,7 +17,7 @@ struct ble_reconnect_status {
     bool accepting_new;
 };
 
-// Réarme dix secondes depuis le raccourci, sans changer de slot ou effacer de bond.
+// Réarme trente secondes depuis le raccourci, sans changer de slot ou effacer de bond.
 void splitergoll_ble_reconnect_open(void);
 
 // Copie uniquement des compteurs et états, sans adresse Bluetooth ni donnée de frappe.

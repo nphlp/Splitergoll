@@ -68,9 +68,8 @@ vient de `stored=windows`, pas d’une nouvelle reconnaissance. Les essais avec
 touches maintenues, redémarrage et firmware normal complètent cette validation.
 V2 sur batterie, Linux et d’autres ordinateurs restent à tester.
 
-Lorsque le PC est disponible, vérifier le raccourci avec les deux hôtes connectés :
-maintenir L1, cliquer à droite, tout relâcher, puis contrôler l’OS au clic simple.
-Refaire le geste pour revenir au Mac. Avec le Mac seul connecté, le geste ne doit
-pas changer la destination, mais ouvre dix secondes. Si Windows revient pendant
-cette fenêtre, un nouveau geste permet ensuite de le sélectionner. Cette nouvelle
-gestion de reconnexion reste à valider sur V1.
+Pour les essais actuels, suivre [le protocole de connexion](tests-connexions-bluetooth.md).
+Il distingue bascule entre deux hôtes prêts, saisie immédiate, recherche d’un connu
+et nouvel appairage. Le diagnostic ponctuel a une fenêtre de dix secondes, les
+builds normaux trente secondes. Avec un seul hôte prêt, le raccourci sélectionne
+la première autre arrivée utilisable. Avec plusieurs, il choisit le suivant déjà prêt.

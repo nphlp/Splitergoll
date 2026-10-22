@@ -1,7 +1,8 @@
 # Planifier selon le matériel disponible
 
-Le matériel disponible est **Mac + V2 au bureau**, avec ses deux batteries.
-PC Windows et V1 restent à domicile. Le suivi détaillé reste dans le
+Le matériel disponible est **Mac + Windows + V1 + V2 à domicile**.
+V1 sert en priorité aux essais de connexion, V2 peut rester le clavier de saisie.
+Le suivi détaillé reste dans le
 [TODO](TODO.md). Ce tableau sert à choisir un chantier que l’on peut réellement
 terminer, sans confondre développement et validation matérielle.
 
@@ -16,11 +17,11 @@ il n’est pas nécessaire d’avoir V1 et V2 ensemble.
 
 | Sujet | Essais possibles maintenant | Limite ou préparation |
 | --- | --- | --- |
-| Deux batteries après migration | Lecture revalidée sur batterie : gauche 63 %, droite 67 % | Sous USB, le faux 100 % vient de la mesure de l’alimentation. L’affichage reste à traiter |
+| Deux batteries après migration | Lecture et affichage revalidés sur V2 | Éclairs sous USB et tirets à la déconnexion confirmés. La capacité réelle sous USB reste inaccessible |
 | Veille et réveil | Reprise courte et réveil par la gauche confirmés. Compléter première frappe, encodeurs et OS après réveil | La droite seule ne réveille pas la centrale en veille profonde. Essais sur batterie, sans USB |
 | Politique de veille et autonomie | Comparer veille profonde et centrale maintenue en inactivité, puis décider du compromis | Demande un firmware d’essai et des mesures sur une durée suffisante |
 | Keymap et matériel côté Mac | Compléter touches, accents, couches, encodeurs, bootloader et redémarrage | La validation Windows avec gaming reste indépendante |
-| [Application macOS](application-macos.md) | Affichage des deux batteries confirmé sur V2 après correction du nom personnalisé | Modèle et inscription simulée testés. Compléter reprise, déconnexion/reconnexion, sommeil du Mac et ouverture de session. Couche, OS et réglages avancés reportés |
+| [Application macOS](application-macos.md) | Affichage des niveaux, tirets à la déconnexion et éclairs sous USB confirmés sur V2 | Compléter reprise, sommeil du Mac et ouverture de session. Couche, OS et réglages avancés reportés |
 | Correction manuelle de l’OS mémorisé | Développer et tester correction, sauvegarde, reconnexion et redémarrage sur Mac | Choisir d’abord le raccourci et préparer la mémoire d’OS de V2. Une vérification Windows restera nécessaire |
 
 Le profil courant retenu pour V2 est `bluetooth macos` normal : keymap fixe,
@@ -34,8 +35,8 @@ grâce à ses USB d’alimentation. V2 peut fonctionner en USB avec le profil ad
 
 | Sujet | Matériel pour terminer | Ce qu’on peut préparer sans Windows |
 | --- | --- | --- |
-| Fenêtres de reconnexion de 10 secondes | Mac + Windows + un clavier, deux appairages avec OS mémorisés | Code compilé et contrôlé. Attendre les deux hôtes pour tester les deux ordres de retour, la fermeture et la réouverture |
-| Sélection automatique et retour au précédent sous 5 secondes | Mac + Windows + un clavier. V2 ajoute l’essai après vraie veille profonde | Logique et tests automatisés, puis essai groupé avec les deux ordres et des frappes pendant la fenêtre |
+| Fenêtres de reconnexion de 30 secondes | Mac + Windows + un clavier, deux appairages avec OS mémorisés | Code compilé et contrôlé. Attendre les deux hôtes pour tester les deux ordres de retour, la fermeture et la réouverture |
+| Sélection automatique et retour au précédent pendant les 30 secondes du démarrage | Mac + Windows + un clavier. V2 ajoute l’essai après vraie veille profonde | Logique et tests automatisés, puis essai groupé avec les deux ordres et des frappes pendant la fenêtre |
 | Accueil d’un nouvel appareil sans détourner la saisie | Mac + Windows + un clavier | Cadrage et tests des slots libres/pleins et des demandes concurrentes. Intégré et testé en logiciel. Valider ensemble appairage initial et reconnexion |
 | Réduire le délai de bascule | Mac + Windows + un clavier | Inspecter les gardes et préparer les mesures. Comparer les deux sens avec le même firmware |
 | Destinations USB/BLE et priorité USB | Mac + Windows + un clavier | Concevoir l’association des identités. Tester ensuite branchement, retrait, repli et absence de doublon. Deux PC Windows seraient utiles pour éprouver l’identité au-delà de l’OS |
@@ -63,14 +64,13 @@ directement. Les essais batterie et veille n’en ont pas besoin.
 
 ## Ordre conseillé
 
-1. Avec V2 au bureau : valider l’app et ses deux batteries. Le nom personnalisé
-   `Splitergoll V2` est maintenant accepté par le lecteur, qui relève 89/79 % sans USB.
-   La correction est installée et l’affichage confirmé : compléter les déconnexions,
-   la reprise après sommeil du Mac et l’ouverture de session.
-2. Compléter première frappe, encodeurs et autonomie de V2 sur batterie.
-3. Au retour à domicile : V1 a reçu la nouvelle gauche `bluetooth auto ble-trace`,
-   qui accueille les nouveaux appareils dans les dix secondes. Tester ensemble
-   appairage initial et reconnexion sur Mac/Windows, puis les destinations USB/BLE.
+1. Sur V1, vérifier les slots et la mémoire d’OS, puis tester la fenêtre commune
+   de trente secondes : accueil Mac/Windows, reconnexion dans les deux ordres,
+   fermeture et réouverture par raccourci. Garder V2 disponible pour la saisie.
+2. Après validation, développer les destinations USB/BLE puis Gaming USB,
+   avec les deux ordinateurs disponibles pour les transitions.
+3. Sur V2, compléter première frappe, encodeurs et autonomie sur batterie.
+4. Compléter la reprise de l’app après sommeil du Mac et l’ouverture de session.
 
 La documentation décrit les résultats observés, les essais encore partiels et les
 choix restant à faire. Un firmware compilé n’est pas une validation sur le clavier.

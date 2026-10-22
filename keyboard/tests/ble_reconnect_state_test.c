@@ -147,12 +147,12 @@ static void radio_errors(void) {
     }
 }
 
-// Les dix secondes ne sont ni réarmées par une connexion ni bloquantes pour la saisie.
+// Les trente secondes ne sont ni réarmées par une connexion ni bloquantes pour la saisie.
 static void deadlines_and_admission(void) {
     struct host_window_policy window;
     host_window_start(&window, UINT32_MAX - 5000);
-    assert(host_window_remaining(&window, 4998) == 1);
-    assert(host_window_remaining(&window, 4999) == 0);
+    assert(host_window_remaining(&window, 24998) == 1);
+    assert(host_window_remaining(&window, 24999) == 0);
     for (unsigned bits = 0; bits < 8; bits++) {
         assert(ble_reconnect_accept(bits & 1, bits & 2, bits & 4) == (bits == 7));
     }
@@ -162,8 +162,8 @@ static void deadlines_and_admission(void) {
     struct ble_reconnect_view view = {5, 3, 1, 1, true, false};
     assert(ble_reconnect_apply(&state, view, &ops) == 0);
     host_window_start(&window, 20000);
-    assert(host_window_remaining(&window, 29999) == 1);
-    view.window_open = host_window_remaining(&window, 30000) != 0;
+    assert(host_window_remaining(&window, 49999) == 1);
+    view.window_open = host_window_remaining(&window, 50000) != 0;
     assert(ble_reconnect_apply(&state, view, &ops) == 0 && !state.advertising);
     host_window_start(&window, 40000);
     view.window_open = host_window_remaining(&window, 40000) != 0;

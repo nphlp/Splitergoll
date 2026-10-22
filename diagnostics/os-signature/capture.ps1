@@ -134,7 +134,7 @@ function Test-BleProfile {
         $Known = [int]$Matches[4]
         $Connected = [int]$Matches[5]
         $Limit = 1 -shl $Expected
-        if ($Remaining -gt 10000 -or $Known -ge $Limit -or $Connected -ge $Limit -or
+        if ($Remaining -gt 30000 -or $Known -ge $Limit -or $Connected -ge $Limit -or
             ($Connected -band (-bnot $Known)) -ne 0 -or
             ($Ready -eq 0 -and ($Remaining -ne 0 -or $Advertising -ne 0 -or $Known -ne 0 -or $Connected -ne 0))) {
             throw 'État de reconnexion incohérent.'

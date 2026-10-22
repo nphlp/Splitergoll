@@ -20,7 +20,7 @@ int ble_pairing_reserve(struct ble_pairing_state *state, unsigned count, uint16_
     return slot;
 }
 
-// Un doublon SMP ne réarme ni les dix secondes ni les trente secondes.
+// Un doublon SMP ne réarme ni la fenêtre ni la durée de transaction.
 bool ble_pairing_begin(struct ble_pairing_state *state, uint32_t connection, uint32_t now_ms,
                        bool window_open) {
     if (!window_open || connection == 0 || state->connection != connection ||

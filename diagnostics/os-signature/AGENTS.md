@@ -1293,10 +1293,10 @@ Le nouveau contrôleur de reconnexion connue ajoute BLEPROFILE v3 dans bluetooth
 auto ble-trace. Une ligne WINDOW précède RESULT : ready, remaining_ms, advertising,
 known, connected et error. Aucun identifiant privé. Les lecteurs AWK et PowerShell
 acceptent v1/v2 sans ligne et v3 avec exactement une ligne, des masques bornés et
-un délai au plus 10000 ms. Une lecture S n’ouvre aucune fenêtre et ne mute aucun slot.
+un délai au plus 30000 ms pour la fenêtre désormais de trente secondes. Une lecture S n’ouvre aucune fenêtre et ne mute aucun slot.
 Le profil fixe ble-trace reste v2 et conserve l’appairage ZMK natif. Dans auto,
-sélectionner un slot libre ne permet pas encore un nouvel appairage, le contrôleur
-refuse les nouveaux bonds. Voir le contrat keyboard/src/connections/AGENTS.md.
+la fenêtre commune autorise aussi les nouveaux bonds sur un slot libre réservé,
+sans changer temporairement le slot de saisie. Voir le contrat keyboard/src/connections/AGENTS.md.
 Validation : 42 réponses positives/négatives communes AWK/PowerShell, syntaxe PS
 et BOM UTF-8 conservés. Le témoin bluetooth macos ble-trace v2 conserve exactement
 ses deux UF2. Le nouveau auto ble-trace v3 compile, sans essai matériel à ce stade.
@@ -1316,3 +1316,7 @@ la sélection/effacement pendant une saisie. Avec une keymap fixe, les gardes
 historiques du diagnostic restent actives. Les formats D/S/M et l’effacement ciblé
 ne changent pas. Les lecteurs ne doivent pas annoncer que toute keymap reste fixe :
 la lecture est passive, mais le sélecteur auto agit indépendamment depuis la mémoire.
+
+Le lecteur WINDOW accepte maintenant jusqu’à 30000 ms, y compris les anciennes
+valeurs inférieures. AWK et PowerShell passent les mêmes 44 cas, dont 30000 admis
+et 30001 refusé, sans accès série. Le BOM UTF-8 du script autonome reste conservé.

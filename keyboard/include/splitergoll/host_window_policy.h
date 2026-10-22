@@ -5,7 +5,7 @@
 #include <stdint.h>
 
 #define HOST_WINDOW_CAPACITY 16
-#define HOST_WINDOW_DURATION_MS UINT32_C(10000)
+#define HOST_WINDOW_DURATION_MS UINT32_C(30000)
 #define HOST_WINDOW_NO_TARGET (-1)
 
 struct host_window_view {
@@ -32,14 +32,14 @@ struct host_window_policy {
 // Ouvre la fenêtre de démarrage, sans demander de changement de destination.
 void host_window_start(struct host_window_policy *policy, uint32_t now_ms);
 
-// Réarme dix secondes et prépare une recherche ou une bascule selon l’instantané fourni.
+// Réarme trente secondes et prépare une recherche ou une bascule selon l’instantané fourni.
 bool host_window_shortcut(struct host_window_policy *policy, const struct host_window_view *view,
                           uint32_t now_ms);
 
 // Ferme les annonces et demandes, seulement si une vraie sortie Gaming USB est disponible.
 bool host_window_enter_gaming(struct host_window_policy *policy, bool usb_usable);
 
-// La sortie ordinaire de Gaming ouvre dix secondes sans recherche de nouvel appareil.
+// La sortie ordinaire de Gaming ouvre trente secondes sans recherche de nouvel appareil.
 bool host_window_leave_gaming(struct host_window_policy *policy, uint32_t now_ms);
 
 // Observe des destinations prêtes, sans sélectionner ni modifier un appareil.

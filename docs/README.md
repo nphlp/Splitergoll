@@ -18,11 +18,12 @@ et Zephyr 4.1. Les moitiés communiquent en BLE, la gauche envoie la saisie à l
 | Détection USB et keymap `wire auto` | Mac/Windows validés sur V1 en firmware normal |
 | Détection BLE initiale, mémoire et restauration par appareil | Mac/Windows validés sur V1, sans nouvelle détection aux reconnexions |
 | `bluetooth auto` et L1 + clic encodeur droit | Bascule entre appareils connectés et bonnes keymaps confirmées sur V1 en `ble-trace` |
-| Reconnexion des connus et nouvel appairage sur dix secondes | Intégrés au nouveau `bluetooth auto`, validation matérielle à faire |
-| Recherche avec bascule automatique et transitions Gaming | Moteur C développé et testé, intégration au firmware à faire |
+| Reconnexion des connus et nouvel appairage sur trente secondes | Intégrés, connus validés sur V1 au délai de test de dix secondes, nouveaux bonds à tester |
+| Recherche avec sélection et tampon de saisie | Intégrés, essais Mac/Windows validés sur V1 au délai de test |
+| Recherche sans hôte jusqu’à la veille légère | Prévue, non implémentée |
 | Arrêt des annonces et déconnexion du Mac en Gaming USB | Spécifiés, non implémentés sur le clavier |
 | Destinations mixtes USB/BLE avec priorité USB par ordinateur | Spécifiées, association des identités USB/BLE à résoudre |
-| Retour à l’ancien appareil dans les cinq secondes au réveil | Spécifié, non implémenté |
+| Retour à l’ancien appareil pendant la fenêtre de démarrage de trente secondes | Spécifié, non implémenté |
 | Correction manuelle persistante d’un OS mal reconnu | Prévue, non implémentée |
 
 Les heuristiques d’OS sont expérimentales, elles ne sont pas validées sur tous
@@ -81,7 +82,7 @@ et `make bat avg` calcule une moyenne par moitié sur 30 secondes.
 - [Détection d’OS](detection-os.md) : préparer et comparer les captures de connexion USB, puis BLE.
 - [Diagnostic Bluetooth](detection-os-bluetooth.md) : comparer Mac et Windows sans sélection automatique.
 - [Sélection de l’ordinateur](selection-appareil.md) : comportement Bluetooth prévu, bascule et reprise après veille.
-- [Connexions Bluetooth](reconnexion-bluetooth.md) : dix secondes pour les connus et nouveaux appareils, sans détourner la saisie.
+- [Connexions Bluetooth](reconnexion-bluetooth.md) : trente secondes pour les connus et nouveaux appareils, sans détourner la saisie.
 - [Essais de connexion Bluetooth](tests-connexions-bluetooth.md) : premier appairage, ajout, mémoire et reconnexions sur V1.
 - [Destinations de saisie](destinations-saisie.md) : futur choix USB/Bluetooth et priorité par ordinateur.
 - [Gestion de l’appairage](gestion-appairage.md) : définir l’ouverture aux nouveaux appareils et les reconnexions.

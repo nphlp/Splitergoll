@@ -19,7 +19,7 @@ struct ble_pairing_state {
 int ble_pairing_reserve(struct ble_pairing_state *state, unsigned count, uint16_t free_slots,
                         int selected, uint32_t connection, bool window_open);
 
-// Le début SMP doit encore appartenir aux dix secondes, sans repousser sa propre limite.
+// Le début SMP doit encore appartenir aux trente secondes, sans repousser sa propre limite.
 bool ble_pairing_begin(struct ble_pairing_state *state, uint32_t connection, uint32_t now_ms,
                        bool window_open);
 

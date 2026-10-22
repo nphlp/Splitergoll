@@ -68,6 +68,11 @@ Le contenu de `CURRENT.UF2` peut être comparé au build attendu dans le bootloa
 
 ## Touche bootloader
 
+Sur la keymap actuelle : maintenir **L1 + L2**, puis cliquer sur **l’encodeur gauche**
+pour passer la gauche en bootloader. Garder son USB branché pour afficher le disque.
+La console de diagnostic USB n’expose pas encore de commande bootloader. Le simple
+branchement USB et les lectures `make ble` ne redémarrent pas le contrôleur.
+
 L’option finale `usb-trace` sélectionne uniquement les builds de diagnostic USB,
 par exemple `make flash wire macos left usb-trace`. Elle ne se rabat pas sur un
 firmware normal ou `debug`. Voir [le diagnostic d’OS](detection-os.md).

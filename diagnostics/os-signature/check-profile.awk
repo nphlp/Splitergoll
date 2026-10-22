@@ -24,7 +24,7 @@ BEGIN { started = 0; count = 0; result = 0; ended = 0; invalid = 0; window = 0 }
     split($5, value, "="); advertising = value[2] + 0
     split($6, value, "="); known = value[2] + 0
     split($7, value, "="); connected = value[2] + 0
-    if (remaining > 10000 || known >= 2^expected || connected >= 2^expected ||
+    if (remaining > 30000 || known >= 2^expected || connected >= 2^expected ||
         (!ready && (remaining || advertising || known || connected))) invalid = 1
     for (bit = 1; bit < 2^expected; bit *= 2) {
         if (int(connected / bit) % 2 && !(int(known / bit) % 2)) invalid = 1

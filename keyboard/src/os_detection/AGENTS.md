@@ -538,7 +538,7 @@ CONFIG_BT_MAX_CONN vaut 6, MAX_PAIRED vaut 6, soit cinq profils hôtes et la dro
 Le défaut n’est donc pas le nombre de connexions. La documentation officielle
 Bluetooth Behavior confirme cette politique et les connexions simultanées.
 
-La politique future est maintenant cadrée par les fenêtres de dix secondes décrites
+La politique future est maintenant cadrée par les fenêtres de trente secondes décrites
 ci-dessous, plutôt que par des annonces infinies si un hôte reste absent. Préserver
 la sécurité native, le contrôle des nouvelles associations et les profils fixes,
 sans sélectionner celui qui arrive pendant l’usage, sauf recherche explicite armée
@@ -552,12 +552,12 @@ annonce ne garantit une reconnexion instantanée d’un ordinateur qui ne cherch
 
 ## Direction future USB + BLE
 
-Le lot courant ne réalise pas ce mode mixte. Il ouvre dix secondes de reconnexion
+Le lot courant ne réalise pas ce mode mixte. Il ouvre trente secondes de reconnexion
 et de nouvel appairage au démarrage et via le raccourci, dans bluetooth auto.
 Le contrat radio est dans ../connections/AGENTS.md. Le sélecteur conserve ses gardes,
 avec adoption possible du seul nouvel hôte si le choix courant n’a pas changé.
-Un autre hôte connecté interdit cette adoption. La recherche avec bascule sur une
-arrivée reste différée. Le format de mémoire d’OS et les identités restent inchangés.
+Un autre hôte connecté interdit cette adoption. La recherche avec bascule sur la première arrivée est raccordée. La décision utilise
+les hôtes sécurisés dont l’OS mémorisé est utilisable. Le format de mémoire d’OS et les identités restent inchangés.
 
 Le cadrage utilisateur passe du slot BLE à une destination regroupant appareil,
 liaisons disponibles et OS. Priorité USB au BLE pour un appareil associé, pas
@@ -578,7 +578,7 @@ annonces de reconnexion et acceptation d’appairage. Spécifications humaines e
 dans docs/gestion-appairage.md et docs/destinations-saisie.md.
 
 Le dernier cadrage utilisateur propose annonces et nouveaux appairages ouverts
-pendant dix secondes au démarrage/reset, au retour Gaming USB vers Windows et via
+pendant trente secondes au démarrage/reset, au retour Gaming USB vers Windows et via
 L1 + clic encodeur droit.
 À l’échéance, conserver les connexions et arrêter les annonces. Dans la fenêtre,
 accepter les nouveaux appareils seulement si un slot est libre, ne pas déduire
@@ -591,14 +591,17 @@ son début. Aucun nouveau bond n’est admis si tous les slots sont occupés.
 La catégorie Gaming inclut ses deux couches, le passage interne Gaming → Gaming 2
 ne doit pas réouvrir les annonces. Ne pas appliquer une coupure de BLE hôte si
 l’USB n’offre pas de destination utilisable. Le bénéfice de latence reste à mesurer.
-Ne pas confondre la fenêtre d’annonces de dix secondes et la grâce de cinq secondes
-pour restaurer l’ancien hôte au réveil. Aucune modification du firmware dans ce cadrage.
+Le retour au précédent reste non implémenté. La nouvelle demande remplace la grâce
+de cinq secondes par l’échéance de la fenêtre de démarrage de trente secondes.
+Le premier hôte reste utilisable sans attendre et ne doit pas écraser la préférence
+durable pendant cette attente. Une recherche explicite annule ce retour.
+Aucune modification du firmware dans ce cadrage.
 
 Le raccourci devra prendre un instantané du nombre de destinations utilisables et
 distinctes au geste, pas du nombre de connexions BLE. Une destination : garder la
 source jusqu’au premier autre appareil utilisable, puis consommer l’intention de
 bascule. Plusieurs : sélectionner la suivante avec les gardes existantes, rouvrir
-dix secondes mais ne pas armer de bascule sur les nouveaux arrivants. Proposition
+trente secondes mais ne pas armer de bascule sur les nouveaux arrivants. Proposition
 pour zéro : recherche et sélection du premier appareil prêt. Une seconde liaison
 USB/BLE du même appareil ne doit ni compter deux fois ni consommer cette recherche.
 Une nouvelle demande remplace l’ancienne, la recherche annule le rappel automatique
@@ -619,3 +622,47 @@ le firmware. Son test natif rejoint les neuf suites existantes, les dix passent
 en C11 strict avec ASan/UBSan. Ne pas lier les deux adaptateurs auto simultanément
 pour contourner l’absence actuelle de firmware mixte. L’intégration radio et
 l’attribution d’un bond neuf sans changement de destination sont le lot suivant.
+
+## Transition après raccourci et fenêtre de trente secondes
+
+Le sélecteur utilise maintenant host_window_policy pour le geste : au plus un hôte
+prêt arme une recherche, plusieurs choisissent le suivant déjà prêt. Les identités
+sont des jetons locaux qui changent si l’adresse native du slot ou son état vide
+change, sans journaliser cette adresse. L’acquisition réveille le worker lorsqu’un
+hôte devient sécurisé et que son OS mémorisé est utilisable. Aucun sondage périodique.
+La fenêtre d’annonces reste pilotée par le seul worker radio, avec la même durée.
+Une recherche ne sélectionne qu’une arrivée. Un appairage commencé dans sa fenêtre
+peut devenir sa cible après fermeture, une fois sauvegardé. Une nouvelle commande,
+une source remplacée ou une sélection externe interdit cette adoption tardive.
+
+Le problème rapporté venait du réarmement du drainage par toute nouvelle frappe.
+Pendant une cible en attente, ble_device_buffer retient les nouveaux événements de
+position en RAM avant les comportements ZMK, avec source, état et timestamp.
+Les positions initialement maintenues gardent leurs releases sur l’ancien hôte.
+L1 et le bouton du geste restent utilisables pour remplacer la demande.
+Les keycodes des anciens comportements continuent de repousser leur propre drainage,
+pas les positions retenues. Les rotations sont ignorées pendant la transition.
+Après sélection native et application vérifiée de la nouvelle keymap, les événements
+sont réémis dans l’ordre, sans passer par l’ancien groupe. Aucun de ces événements
+n’est ajouté aux traces, à NVS ou aux logs. La capacité est 64 événements.
+Un dépassement abandonne le lot entier, signale une erreur sans son contenu et absorbe
+les releases futures. Une cible perdue/remplacée ou une commande externe abandonne
+aussi le lot. Aucun rejeu vers une destination de remplacement arbitraire.
+La présence de cette file bloque les commandes USB mutantes pendant la transition.
+
+Douze suites natives ASan/UBSan couvrent les règles, la borne de trente secondes,
+l’ordre/source/timestamps du tampon, doublons, releases, abandon et dépassement.
+Le harnais du vrai ble_auto.c vérifie saisie immédiate, releases vers l’ancien hôte,
+recherche/reconnexion, absence de vol par une arrivée après un geste multi-hôte,
+expiration et fin d’appairage après fermeture. Preuves privées dans
+.local/validation/ble-switch. Les essais physiques du nouveau lot restent à faire.
+La sélection native reste exclusivement sur le worker système : le filtre des
+positions ne déclenche ni changement de profil ni rejeu, il retient les entrées
+et notifie ce worker. L’armement du tampon au geste précède les frappes suivantes.
+Le harnais vérifie aussi une touche retenue encore maintenue après sélection,
+les keycodes tardifs de l’ancienne macro et un échec de sélection native, sans
+transfert de release orpheline vers l’ancien appareil.
+Les trois paires normal/debug/ble-trace compilent et passent les gardes UF2,
+SHA-256 et comparaison des couches, macros et comportements. La droite ble-trace
+reste identique à la précédente. Les conteneurs éphémères sont libérés et les
+services préexistants restent actifs. Pas de flash, lecture série ou changement de bond.

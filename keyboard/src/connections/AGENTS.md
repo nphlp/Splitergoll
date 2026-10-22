@@ -5,7 +5,8 @@
 Séparer la politique de connexion des API radio et de la détection d’OS.
 Le moteur C pur et ses tests couvrent la politique cible. L’adaptateur relie les
 fenêtres de reconnexion et l’accueil d’un nouveau bond au firmware bluetooth auto.
-La recherche avec sélection sur une arrivée et Gaming USB restent séparés.
+La recherche avec sélection sur une arrivée est raccordée dans ble_auto.c.
+Gaming USB reste séparé.
 Les règles humaines sont dans docs/gestion-appairage.md et docs/destinations-saisie.md.
 
 ## Contrat
@@ -17,8 +18,8 @@ Chaque destination reçoit un jeton non nul qui change si son identité est remp
 Le masque ready ne contient que des appareils sécurisés avec une keymap utilisable.
 Un slot BLE inconnu, non chiffré ou dont l’OS n’est pas encore vérifié n’est pas prêt.
 
-Le démarrage et la sortie ordinaire de Gaming USB ouvrent dix secondes sans recherche
-de nouvelle destination. Le raccourci ouvre ou réarme dix secondes : zéro ou une
+Le démarrage et la sortie ordinaire de Gaming USB ouvrent trente secondes sans recherche
+de nouvelle destination. Le raccourci ouvre ou réarme trente secondes : zéro ou une
 destination arme une recherche, plusieurs demandent la suivante déjà prête.
 Le nombre est figé au geste. Une seule bascule de recherche est admise par demande.
 Les arrivées suivantes ne reprennent pas la sélection. La saisie n’est pas pilotée
@@ -66,7 +67,7 @@ ne pas ajouter un autre utilisateur sans revoir cette intégration.
 `ble_pairing_state.c` réserve une seule place libre, de préférence le slot actif
 s’il est vide. Une référence de connexion garde son identité pendant SMP et la
 résolution d’adresse privée. Une autre arrivée inconnue est refusée jusqu’à libération.
-Le début SMP doit appartenir aux dix secondes. Il dispose ensuite de 30000 ms,
+Le début SMP doit appartenir aux trente secondes. Il dispose ensuite de 30000 ms,
 indépendants des réouvertures et sans réarmer la fenêtre. Une réussite reçue avant
 cette borne peut attendre le worker, y compris après une déconnexion immédiate.
 Sans début SMP, la connexion candidate expire avec la fenêtre.
@@ -95,8 +96,11 @@ mémoire conserve ses événements ATT antérieurs, sa sécurité et ses gardes 
 Le seul nouvel hôte peut être adopté si la sélection est encore celle observée à
 l’accueil et qu’aucune demande explicite n’attend. Les mêmes gardes d’appuis, HID
 vide et drainage s’appliquent. Un autre hôte connecté interdit cette adoption.
-L’ajout pendant l’usage d’un connu ne détourne donc pas les frappes.
-La recherche avec bascule sur une arrivée et le retour au précédent restent séparés.
+L’ajout pendant l’usage d’un connu ne détourne donc pas les frappes, sauf recherche
+explicite courante à zéro ou une destination. Le début SMP est transmis au sélecteur
+pour reconnaître une association commencée dans cette recherche, même terminée
+après sa fermeture. Un nouveau geste ou une sélection externe invalide cette intention.
+Le retour au précédent reste séparé.
 
 Les callbacks ne prennent pas le mutex du sélecteur et n’écrivent pas NVS. Le worker
 borne les transactions, annule SMP puis déconnecte un candidat expiré, et conserve
@@ -112,6 +116,26 @@ La fonction est réservée à la gauche bluetooth auto. La droite et les profils
 conservent leur fonctionnement. USB/BLE mixtes et Gaming USB restent à développer.
 
 ## Validation
+
+L’utilisateur confirme sur V1 avec le diagnostic à dix secondes : bascules répétées
+Mac/Windows, tampon de saisie, garde Shift puis reprise, Windows retrouvé et
+sélectionné après un seul geste. Sans hôte, Mac arrivé en premier reste sélectionné
+quand Windows rejoint. Une déconnexion partielle après fermeture ne rouvre pas les
+annonces. La validation de nouveaux bonds reste séparée, le retour au build normal
+à trente secondes n’est pas confirmé. Aucun accès série réalisé pour ce relevé.
+
+Les prochains comportements restent au TODO : sélection générale selon connexions,
+retour prioritaire au dernier choix jusqu’à l’échéance des trente secondes du
+démarrage, et recherche sans hôte jusqu’à IDLE. Le délai proposé de cinq secondes
+est remplacé par cette demande. La radio n’écoute pas encore les états d’activité.
+Ne pas déduire de la sauvegarde native différée du slot une politique de restauration.
+
+Un build privé de validation utilise dix secondes pour réduire l’attente des essais.
+Il provient d’une copie du module dans .local/diagnostic/ble-window-10s : seul
+HOST_WINDOW_DURATION_MS diffère, sans modifier les dépendances ou la configuration
+publique. Le délai SMP reste trente secondes depuis son début. Les UF2 passent les
+gardes et SHA-256, les deux bords de l’échéance sont testés en natif. La droite est
+identique au build normal. Protocole humain : docs/tests-connexions-bluetooth.md.
 
 Compiler host_window_policy.c avec keyboard/tests/host_window_policy_test.c,
 -Ikeyboard/include, C11, -Wall -Wextra -Werror et ASan/UBSan. Tester les échéances

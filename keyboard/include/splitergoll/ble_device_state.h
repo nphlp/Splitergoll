@@ -9,6 +9,34 @@ struct ble_device_request {
     bool pending;
 };
 
+#define BLE_DEVICE_BUFFER_CAPACITY 64
+
+struct ble_device_position {
+    uint32_t position;
+    int64_t timestamp;
+    uint8_t source;
+    bool pressed;
+};
+
+struct ble_device_buffer {
+    struct ble_device_position events[BLE_DEVICE_BUFFER_CAPACITY];
+    uint64_t held;
+    uint64_t suppressed;
+    unsigned count;
+    bool active;
+    bool overflow;
+};
+
+// Retient les nouveaux appuis pendant une transition, sans prolonger le drainage précédent.
+void ble_device_buffer_begin(struct ble_device_buffer *buffer);
+
+// Retourne vrai seulement si l’événement peut encore être transmis à l’ancienne destination.
+bool ble_device_buffer_forward(struct ble_device_buffer *buffer, struct ble_device_position event,
+                                bool passthrough);
+
+// Abandonne un lot devenu invalide et absorbe ses relâchements futurs, sans frappe orpheline.
+void ble_device_buffer_discard(struct ble_device_buffer *buffer);
+
 // Parcourt les connexions en sautant les cases vides, sans cible implicite si aucune ne convient.
 bool ble_device_next(struct ble_device_request *request, unsigned count, unsigned active,
                       uint16_t connected);

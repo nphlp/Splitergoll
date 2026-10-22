@@ -338,7 +338,7 @@ struct radio_request {
 };
 
 // Persiste avant le helper ZMK void, sans remplacer une case qui aurait changé depuis sa réservation.
-static int assign_pairing(struct bt_conn *conn, int slot, int origin) {
+static int assign_pairing(struct bt_conn *conn, int slot, int origin, uint32_t started_at_ms) {
     const bt_addr_le_t *peer = bt_conn_get_dst(conn);
     splitergoll_ble_auto_lock();
     if (slot < 0 || slot >= ZMK_BLE_PROFILE_COUNT || !zmk_ble_profile_is_open(slot) ||
@@ -356,7 +356,7 @@ static int assign_pairing(struct bt_conn *conn, int slot, int origin) {
         // La seconde écriture identique du helper est dédupliquée par le backend NVS figé.
         set_profile_address(slot, peer);
         splitergoll_ble_acquisition_paired(conn, true);
-        splitergoll_ble_auto_adopt_device((unsigned)slot, (unsigned)origin);
+        splitergoll_ble_auto_adopt_device((unsigned)slot, (unsigned)origin, started_at_ms);
     }
     splitergoll_ble_auto_unlock();
     return error;
@@ -390,7 +390,7 @@ static uint32_t process_pairing(void) {
     if (conn == NULL) return 0;
 
     if (policy.phase == BLE_PAIRING_COMPLETE) {
-        int error = assign_pairing(conn, policy.slot, policy.origin);
+        int error = assign_pairing(conn, policy.slot, policy.origin, policy.started_at_ms);
         if (error == 0) {
             key = k_spin_lock(&control_lock);
             status.free_slots &= (uint16_t)~(UINT32_C(1) << policy.slot);

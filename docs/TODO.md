@@ -17,31 +17,39 @@
 ## Étapes suivantes
 
 Le [tableau de planification](planification.md) distingue les sujets terminables avec
-Mac + V2 et ceux à valider lors d’une séance commune Mac/Windows. Au bureau,
-priorité aux essais de l’app et des batteries. Les transitions Mac/Windows restent différées.
+Mac + V2 et ceux à valider lors d’une séance commune Mac/Windows. Le matériel
+disponible est maintenant Mac + Windows + V1 + V2 à domicile : reprendre les
+fenêtres Bluetooth sur V1. V2 peut rester utilisé pour la saisie sur le Mac.
 
 Détection USB et BLE Mac/Windows, mémoire d’OS et bascule entre appareils sont
 validées sur V1 dans les conditions indiquées ci-dessous. Linux automatique reste à faire.
-La fenêtre commune de dix secondes, avec reconnexion et nouvel appairage, est
-intégrée au firmware, à valider sur V1. Les destinations mixtes restent à faire.
+La fenêtre commune de trente secondes, avec reconnexion et nouvel appairage, est
+intégrée au firmware. Sur V1, les appairages Mac/Windows, la bascule entre deux
+hôtes connectés et la reconnexion après raccourci sont confirmés. Le diagnostic
+à dix secondes valide aussi la saisie immédiate retenue pendant la transition,
+Shift maintenu puis relâché et la sélection de Windows retrouvé. Les destinations
+mixtes restent à faire. Le retour au firmware normal de trente secondes est annoncé,
+pas encore confirmé.
 
 Ordre des prochains lots :
 
-1. Valider la fenêtre commune sur V1 : premier appairage Mac puis Windows,
-   mémoire d’OS, reconnexion des connus, fermeture et réouverture. Le nouveau firmware
-   réserve une place sans détourner la saisie et borne à 30 secondes un appairage
-   commencé dans la fenêtre. Aucun effacement supplémentaire n’est nécessaire.
+1. Compléter la sélection automatique et le retour prioritaire à l’appareil mémorisé
+   pendant la fenêtre de démarrage. Cadrer aussi la recherche sans hôte et son arrêt
+   en veille légère. Les bascules avec tampon et la recherche d’un connu sont validées
+   sur V1 avec le diagnostic court. Nouvel appairage et cas limites restent distincts.
 2. Réunir USB et BLE autour des [destinations](destinations-saisie.md), en résolvant
    l’association entre l’hôte USB et son éventuel bond BLE. Puis intégrer Gaming USB.
-3. Compléter le retour au précédent appareil au réveil, la correction manuelle d’OS,
-   l’optimisation du délai de bascule, puis Linux et le dongle.
+3. Ajouter la correction manuelle d’OS, optimiser le délai de bascule, puis traiter
+   Linux et le dongle.
 
-Le matériel courant est Mac + V2 au bureau. Les essais Mac/Windows sont en attente.
+Les essais Mac/Windows peuvent maintenant reprendre à domicile.
 Lors de la séance précédente à domicile, l’utilisateur
 confirme avoir flashé `bluetooth auto ble-trace`, puis effacé les deux slots hôtes
 et oublié l’entrée du Mac. Le lot précédemment flashé refuse les nouveaux
 appairages. La nouvelle gauche lève cette limitation et son flash est confirmé.
-La lecture des slots et le nouvel appairage restent à valider. V2 garde son usage Bluetooth macOS au bureau.
+Les lectures récentes confirment les slots Mac et Windows connectés et leurs OS
+sauvegardés. Le nouvel appairage avec la fenêtre commune reste à valider.
+V2 garde son usage Bluetooth macOS au bureau.
 Les essais courts sur
 batterie de V2 confirment la reprise après inactivité et le réveil par la gauche.
 La première frappe, toutes les touches et l’autonomie restent à vérifier. Aucun nouveau reset d’appairage,
@@ -171,7 +179,8 @@ de préparer la mémoire d’OS propre à V2, absente du profil macOS normal.
   avec les deux connexions présentes et sans générer de frappes.
 - [x] Confirmer la réception de frappes sur Windows avec la keymap macOS fixe,
   selon le retour utilisateur pendant le test d’appairage.
-- [ ] Vérifier le refus de bascule pendant un maintien et sa réussite après relâchement.
+- [x] Vérifier sur V1 que Shift maintenu retarde la bascule et que son relâchement
+  la permet, avec saisie immédiate retenue pendant la transition.
 - [x] Lire les traces Mac et Windows avec l’USB gauche conservé sur le Mac.
   Les deux ordinateurs restent appairés, il s’agit de reconnexions.
 - [x] Préparer l’effacement ciblé `ble forget` et le [protocole mémoire](tests-memoire-os.md),
@@ -185,12 +194,26 @@ de préparer la mémoire d’OS propre à V2, absente du profil macOS normal.
   connu connecté = sélection automatique, plusieurs = maintien du choix courant et
   bascule explicite. Séparer les connexions hôtes de celle de la moitié droite.
 - [ ] Après redémarrage/veille profonde, sélectionner le premier hôte disponible
-  immédiatement et laisser 5 secondes au précédent pour revenir. S’il revient dans
-  la fenêtre, le restaurer, sinon mémoriser le nouvel hôte. Une bascule manuelle
+  immédiatement et laisser au précédent jusqu’à la fin des trente secondes de
+  recherche du démarrage pour revenir. Cette règle remplace la grâce de cinq secondes
+  envisagée auparavant. S’il revient dans la fenêtre, le restaurer, sinon mémoriser
+  le nouvel hôte. Ne pas écraser la préférence avec la sélection provisoire.
+  Une bascule manuelle
   annule la fenêtre. Taper sur le premier hôte ne l’annule ni ne la prolonge, et
   n’empêche pas le retour au précédent. Tester ces frappes, les limites et les
   déconnexions, puis confirmer la durée sur matériel.
-- [x] Développer et tester le moteur pur des fenêtres : ouverture dix secondes,
+- [ ] Ajouter notre propre mémoire de destination, indépendante de celle du slot ZMK.
+  À la fermeture de chaque fenêtre, enregistrer l’appareil sélectionné et connecté,
+  sans écraser la préférence si aucun n’est utilisable. Avant cette fermeture, un
+  reset conserve le choix précédemment enregistré. Vérifier l’identité du bond,
+  traiter les erreurs d’écriture et éviter une écriture si le choix est inchangé.
+- [ ] Sans hôte connecté et en état actif, rechercher les connus et accueillir un
+  nouveau sans échéance de trente secondes. Fermer à la veille légère après deux
+  minutes, sans activité artificielle ni report du sommeil profond à dix minutes.
+  Inclure la perte du dernier hôte dans cette règle. Au retour du premier, ouvrir
+  une fenêtre ordinaire pour les suivants. Une perte partielle ne rouvre rien.
+  La radio ne suit pas encore l’état IDLE.
+- [x] Développer et tester le moteur pur des fenêtres : ouverture trente secondes,
   recherche avec zéro/une destination, bascule avec plusieurs, transitions Gaming,
   tickets périmés, identités remplacées et attente des relâchements. Aucune API radio
   ni intégration firmware dans ce premier lot.
@@ -200,37 +223,46 @@ de préparer la mémoire d’OS propre à V2, absente du profil macOS normal.
 - [x] Séparer la reconnexion connue du nouvel appairage dans le périmètre du développement.
   Un appareil connu garde son slot et ses clés. ZMK exige actuellement un slot actif
   vide pour un nouveau bond et refuse un slot occupé, sans remplacement automatique.
-- [x] Intégrer les annonces filtrées de reconnexion dans `bluetooth auto` : dix secondes
+- [x] Intégrer les annonces filtrées de reconnexion dans `bluetooth auto` : trente secondes
   au démarrage et avec L1 + clic droit, sans changement de slot à l’arrivée d’un hôte.
   Le premier lot n’admettait aucun nouvel appairage. Le suivant ajoute cet accueil
   sur une place libre, sans suppression de clé existante.
-- [ ] Valider sur V1 les deux ordres de retour Mac/Windows, la fermeture à dix secondes,
+- [ ] Valider sur V1 les deux ordres de retour Mac/Windows, la fermeture à trente secondes,
   la réouverture par raccourci et la saisie sur l’appareil resté sélectionné.
+- [x] Valider sur V1 avec le diagnostic de dix secondes : fermeture sans reconnexion
+  spontanée de Windows, puis reconnexion et sélection après un seul raccourci.
+  Sans connexion, Mac revenu en premier garde la sélection quand Windows rejoint.
 - [x] Séparer slot d’accueil et destination de saisie. Sérialiser les nouveaux
   appairages, garder les connus avec slots pleins et laisser finir SMP sous 30 secondes.
   Les réservations et erreurs sont testées, sans écrasement d’un slot occupé.
 - [ ] Valider les nouveaux appairages sur V1 avec Mac puis Windows : conservation
   de la saisie sur le premier hôte, OS initial sauvegardé, raccourci et retour après reset.
-- [ ] Gérer les annonces pour accueillir un second ordinateur pendant que le premier
-  est connecté. Les deux connexions simultanées sont observées sur V1, l’arrivée
-  contrôlée d’un second hôte pendant que le premier est déjà connecté reste à tester.
-  La proposition courante ouvre annonces et nouveaux appairages pendant dix secondes
-  au démarrage/reset, au retour Gaming USB → Windows et via L1 + clic encodeur droit.
-  Sans recherche explicite, l’arrivée d’un hôte ne change pas la sélection.
-  Tester les deux ordres de reconnexion sans sélection USB.
+- [x] Maintenir les annonces pour retrouver un second ordinateur alors que le premier
+  est connecté. Sur V1, Windows rejoint Mac pendant le diagnostic court, sans
+  reprendre la sélection après une recherche commencée avec zéro connexion.
+- [ ] Compléter l’essai dans l’ordre inverse, puis au délai normal de trente secondes.
+  Les nouveaux bonds et la sortie Gaming restent des validations distinctes.
 - [x] Ajouter un raccourci de sélection d’appareil connecté, sans commande USB,
   distinct du changement manuel d’OS : L1 + clic encodeur droit dans `bluetooth auto`.
   Les appareils déconnectés sont ignorés, le clic simple indique l’OS après la bascule.
-- [ ] Définir la [gestion de l’appairage](gestion-appairage.md) : états ouvert/fermé,
-  fenêtres de dix secondes, appairage en cours à l’échéance,
+- [x] Définir et implémenter la [gestion de l’appairage](gestion-appairage.md) : états ouvert/fermé,
+  fenêtres de trente secondes, appairage en cours à l’échéance,
   slot libre et refus sans effacement si plein. Garder les bonds existants.
-- [ ] Étendre L1 + clic encodeur droit pour rouvrir dix secondes : une destination
+  Les nouveaux bonds et les cas limites restent à valider sur matériel.
+- [x] Étendre L1 + clic encodeur droit pour rouvrir trente secondes : une destination
   disponible = bascule vers le premier autre appareil prêt, plusieurs = prochaine
   destination déjà disponible sans bascule sur une arrivée tardive. Compter les
   destinations distinctes au geste, pas les liaisons USB/BLE. Tester plusieurs arrivées,
   absence d’arrivée, nouveau geste qui remplace l’attente et absence de destination.
+  Moteur raccordé et testé en logiciel. Sélection d’un Windows connu retrouvé et
+  première arrivée Mac avec zéro connexion confirmées sur V1 au délai de dix secondes.
+- [x] Retenir les frappes pendant la bascule dans une file RAM de 64 événements,
+  puis les transmettre sur la nouvelle keymap sans repousser la garde de 750 ms.
+  Préserver les anciennes releases. Annuler le lot si la cible disparaît, change,
+  qu’une nouvelle commande le remplace ou si la file déborde. Les allers-retours avec
+  saisie immédiate sont confirmés sur V1. Les annulations restent testées en logiciel.
 - [ ] Définir puis implémenter Gaming USB : arrêt des annonces, nouveaux appairages
-  refusés et Mac BLE déconnecté. Le retour à Windows réouvre dix secondes sans
+  refusés et Mac BLE déconnecté. Le retour à Windows réouvre trente secondes sans
   bloquer sa saisie USB ni sélectionner le Mac à son arrivée. Décider du BLE Windows
   pendant Gaming. Ne pas couper la liaison entre moitiés ni la seule sortie BLE.
   Depuis Gaming, L1 + clic droit revient à Windows et déclenche explicitement la recherche,
@@ -312,6 +344,9 @@ de préparer la mémoire d’OS propre à V2, absente du profil macOS normal.
 - [x] Documenter le [flash](flash-firmware.md) et l’[appairage](appairage-bluetooth.md) des profils actuels.
 - [x] Ajouter `make flash` sur macOS : dernier build du profil et de la moitié, date complète et relative, confirmation unique avant copie.
 - [x] Valider le flash automatique sur les deux moitiés et leur fonctionnement avec `wire macos` sur le Mac.
+- [ ] Étudier une commande USB explicite d’entrée en bootloader sur un firmware
+  de diagnostic, avec contrôle de la cible et confirmation. La console actuelle
+  n’en possède pas. Le geste clavier et le double reset restent les accès disponibles.
 - [ ] Étendre la détection des bootloaders à Linux/Windows, tester le chemin UF2 explicite, debug et l’annulation sur matériel.
 - [x] Résoudre l’appairage de droite avec un reset vérifié des deux moitiés, documenter la procédure et le diagnostic.
 - [x] Revenir aux deux firmwares Bluetooth normaux sans logs et confirmer la saisie.

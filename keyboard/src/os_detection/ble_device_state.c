@@ -1,6 +1,47 @@
 // Les raccourcis changent de destination seulement après la fin des appuis et macros.
 #include <splitergoll/ble_device_state.h>
 
+// Une attente déjà armée conserve ses événements et sa borne mémoire.
+void ble_device_buffer_begin(struct ble_device_buffer *buffer) {
+    if (!buffer->active) {
+        buffer->active = true;
+        buffer->overflow = false;
+        buffer->count = 0;
+        buffer->held = 0;
+    }
+}
+
+// Un ancien appui garde sa release, les nouveaux ne produisent pas encore de comportement ZMK.
+bool ble_device_buffer_forward(struct ble_device_buffer *buffer, struct ble_device_position event,
+                                bool passthrough) {
+    if (event.position >= USB_AUTO_POSITION_COUNT) return false;
+    uint64_t bit = UINT64_C(1) << event.position;
+    if (buffer->suppressed & bit) {
+        if (!event.pressed) buffer->suppressed &= ~bit;
+        return false;
+    }
+    if (!buffer->active || passthrough) return true;
+    bool held = (buffer->held & bit) != 0;
+    if (event.pressed == held) return false;
+    if (event.pressed) buffer->held |= bit;
+    else buffer->held &= ~bit;
+    if (buffer->count == BLE_DEVICE_BUFFER_CAPACITY) {
+        buffer->overflow = true;
+        buffer->count = 0;
+    }
+    if (!buffer->overflow) buffer->events[buffer->count++] = event;
+    return false;
+}
+
+// Aucun lot incomplet n’est rejoué si sa cible disparaît ou si la capacité est dépassée.
+void ble_device_buffer_discard(struct ble_device_buffer *buffer) {
+    buffer->suppressed |= buffer->held;
+    buffer->held = 0;
+    buffer->count = 0;
+    buffer->active = false;
+    buffer->overflow = false;
+}
+
 // Les masques invalides sont refusés, pas tronqués en une autre sélection valide.
 static bool valid_mask(unsigned count, unsigned active, uint16_t connected) {
     return count > 0 && count <= 16 && active < count &&

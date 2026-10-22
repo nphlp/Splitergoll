@@ -130,6 +130,65 @@ static void initial_pairing(void) {
     assert(request.pending && request.target == 2);
 }
 
+// La saisie pendant le drainage conserve son ordre, sa source et ses timestamps sans attendre un silence.
+static void input_buffer(void) {
+    struct ble_device_buffer buffer = {0};
+    struct ble_device_position a = {.position = 1, .source = 0, .timestamp = 120, .pressed = true};
+    assert(ble_device_buffer_forward(&buffer, a, false));
+    ble_device_buffer_begin(&buffer);
+    assert(!ble_device_buffer_forward(&buffer, a, false));
+    assert(buffer.count == 1 && buffer.held == 2);
+    assert(!ble_device_buffer_forward(&buffer, a, false));
+    assert(buffer.count == 1);
+    assert(ble_device_buffer_forward(&buffer, (struct ble_device_position){.position = 40}, true));
+    assert(buffer.count == 1);
+    a.timestamp = 145;
+    a.pressed = false;
+    assert(!ble_device_buffer_forward(&buffer, a, false));
+    assert(buffer.count == 2 && buffer.held == 0);
+    assert(buffer.events[0].pressed && !buffer.events[1].pressed);
+    assert(buffer.events[0].timestamp == 120 && buffer.events[1].timestamp == 145);
+    assert(buffer.events[0].source == 0 && buffer.events[1].position == 1);
+    ble_device_buffer_begin(&buffer);
+    assert(buffer.count == 2);
+    a.position = 44;
+    assert(!ble_device_buffer_forward(&buffer, a, true));
+    assert(buffer.count == 2);
+}
+
+// Un abandon absorbe les relâchements du lot, sans laisser une release se promener vers un autre hôte.
+static void cancelled_buffer(void) {
+    struct ble_device_buffer buffer = {0};
+    struct ble_device_position a = {.position = 1, .pressed = true};
+    ble_device_buffer_begin(&buffer);
+    assert(!ble_device_buffer_forward(&buffer, a, false));
+    ble_device_buffer_discard(&buffer);
+    assert(!buffer.active && buffer.count == 0 && buffer.suppressed == 2);
+    assert(!ble_device_buffer_forward(&buffer, a, false));
+    a.pressed = false;
+    assert(!ble_device_buffer_forward(&buffer, a, false));
+    assert(buffer.suppressed == 0);
+    a.pressed = true;
+    assert(ble_device_buffer_forward(&buffer, a, false));
+}
+
+// Un dépassement abandonne tout le lot, jamais une pression isolée dont la release aurait disparu.
+static void bounded_buffer(void) {
+    struct ble_device_buffer buffer = {0};
+    ble_device_buffer_begin(&buffer);
+    for (unsigned i = 0; i < BLE_DEVICE_BUFFER_CAPACITY; i++) {
+        assert(!ble_device_buffer_forward(&buffer,
+            (struct ble_device_position){.position = 1, .pressed = (i % 2 == 0)}, false));
+    }
+    assert(buffer.count == BLE_DEVICE_BUFFER_CAPACITY && !buffer.overflow);
+    assert(!ble_device_buffer_forward(&buffer,
+        (struct ble_device_position){.position = 2, .pressed = true}, false));
+    assert(buffer.overflow && buffer.count == 0 && buffer.held == 4);
+    ble_device_buffer_discard(&buffer);
+    assert(!ble_device_buffer_forward(&buffer, (struct ble_device_position){.position = 2}, false));
+    assert(!buffer.overflow && !buffer.suppressed);
+}
+
 // Exécute la politique utilisée par le comportement ZMK et le chemin de secours.
 int main(void) {
     connected_only();
@@ -138,6 +197,9 @@ int main(void) {
     unavailable_keymap();
     complete_drain();
     initial_pairing();
+    input_buffer();
+    cancelled_buffer();
+    bounded_buffer();
     puts("ble_device_state: ok");
     return 0;
 }
