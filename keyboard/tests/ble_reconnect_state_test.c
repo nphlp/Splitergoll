@@ -147,12 +147,12 @@ static void radio_errors(void) {
     }
 }
 
-// Les trente secondes ne sont ni réarmées par une connexion ni bloquantes pour la saisie.
+// Les deux minutes ne sont ni réarmées par une connexion ni bloquantes pour la saisie.
 static void deadlines_and_admission(void) {
     struct host_window_policy window;
     host_window_start(&window, UINT32_MAX - 5000);
-    assert(host_window_remaining(&window, 24998) == 1);
-    assert(host_window_remaining(&window, 24999) == 0);
+    assert(host_window_remaining(&window, HOST_WINDOW_DURATION_MS - 5002) == 1);
+    assert(host_window_remaining(&window, HOST_WINDOW_DURATION_MS - 5001) == 0);
     for (unsigned bits = 0; bits < 8; bits++) {
         assert(ble_reconnect_accept(bits & 1, bits & 2, bits & 4) == (bits == 7));
     }
@@ -162,8 +162,8 @@ static void deadlines_and_admission(void) {
     struct ble_reconnect_view view = {5, 3, 1, 1, true, false};
     assert(ble_reconnect_apply(&state, view, &ops) == 0);
     host_window_start(&window, 20000);
-    assert(host_window_remaining(&window, 49999) == 1);
-    view.window_open = host_window_remaining(&window, 50000) != 0;
+    assert(host_window_remaining(&window, 20000 + HOST_WINDOW_DURATION_MS - 1) == 1);
+    view.window_open = host_window_remaining(&window, 20000 + HOST_WINDOW_DURATION_MS) != 0;
     assert(ble_reconnect_apply(&state, view, &ops) == 0 && !state.advertising);
     host_window_start(&window, 40000);
     view.window_open = host_window_remaining(&window, 40000) != 0;
@@ -198,8 +198,30 @@ static void open_pairing(void) {
     assert(ble_reconnect_apply(&state, view, &ops) == -EIO && !state.advertising);
 }
 
+// La fenêtre seule autorise un connu absent, même s’il a perdu sa connexion auparavant.
+static void reconnect_during_window(void) {
+    struct radio radio = {.current = true};
+    struct ble_reconnect_ops ops = operations(&radio);
+    struct ble_reconnect_state state = {0};
+    struct ble_reconnect_view view = {5, 3, 3, 1, true, false};
+    assert(ble_reconnect_apply(&state, view, &ops) == 0 && !state.advertising);
+    view.connected = 1;
+    view.revision++;
+    assert(ble_reconnect_apply(&state, view, &ops) == 0 && radio.allowed == 2);
+    view.window_open = false;
+    assert(ble_reconnect_apply(&state, view, &ops) == 0 && !state.advertising);
+    view.connected = 0;
+    view.window_open = true;
+    view.revision++;
+    assert(ble_reconnect_apply(&state, view, &ops) == 0 && radio.allowed == 3);
+    view.connected = 2;
+    view.revision++;
+    assert(ble_reconnect_apply(&state, view, &ops) == 0 && radio.allowed == 1);
+}
+
 // Exécute les scénarios utilisés par le contrôleur réel, sans matériel ni appairage.
 int main(void) {
+    reconnect_during_window();
     known_hosts();
     open_pairing();
     all_topologies();

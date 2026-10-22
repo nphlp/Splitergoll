@@ -7,8 +7,8 @@ Une lecture USB ne compte pas comme une frappe.
 
 ## 1. Chercher au-delà de dix secondes
 
-1. Avec les deux hôtes connectés, sélectionner le Mac et attendre douze secondes
-   pour mémoriser ce choix, puis couper les Bluetooth des deux ordinateurs.
+1. Avec les deux hôtes connectés, sélectionner le Mac et vérifier `remembered=<slot Mac>`
+   après la bascule, puis couper les Bluetooth des deux ordinateurs.
 2. Faire un reset simple de gauche et démarrer un chrono, sans toucher V1.
 3. Après quinze secondes, lire `make ble profiles <port>` : attendre
    `POLICY active=1 without_host=1` et `WINDOW advertising=1 error=0`.
@@ -32,7 +32,9 @@ restantes avant fermeture. La première connexion démarre le compte à rebours.
 
 Connecter les deux hôtes, attendre la fermeture, puis couper seulement le Bluetooth
 de celui qui n’est pas sélectionné. Le réactiver : il ne doit pas revenir tout seul.
-Un seul raccourci doit le reconnecter et le sélectionner. Rejouer en inversant les OS.
+Un seul raccourci doit rouvrir la fenêtre, le reconnecter et le sélectionner.
+Pendant une fenêtre encore ouverte, son retour est autorisé. Il n’y a pas de liste
+d’exclusion par appareil. Rejouer en inversant les OS si nécessaire.
 
 Le sommeil profond reste empêché par les USB de V1. Sa reprise se vérifiera
 séparément sur V2, sur batterie. Ne pas assimiler l’essai de veille légère à ce test.

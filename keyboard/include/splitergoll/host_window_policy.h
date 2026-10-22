@@ -5,7 +5,7 @@
 #include <stdint.h>
 
 #define HOST_WINDOW_CAPACITY 16
-#define HOST_WINDOW_DURATION_MS UINT32_C(30000)
+#define HOST_WINDOW_DURATION_MS UINT32_C(120000)
 #define HOST_WINDOW_NO_TARGET (-1)
 
 struct host_window_view {
@@ -18,7 +18,7 @@ struct host_window_view {
 struct host_window_policy {
     uint32_t opened_at_ms;
     uint32_t generation;
-    uint16_t excluded;
+    uint16_t initial_ready;
     int source;
     uint32_t source_identity;
     int pending;
@@ -32,14 +32,14 @@ struct host_window_policy {
 // Ouvre la fenêtre de démarrage, sans demander de changement de destination.
 void host_window_start(struct host_window_policy *policy, uint32_t now_ms);
 
-// Réarme trente secondes et prépare une recherche ou une bascule selon l’instantané fourni.
+// Réarme deux minutes et prépare une recherche ou une bascule selon l’instantané fourni.
 bool host_window_shortcut(struct host_window_policy *policy, const struct host_window_view *view,
                           uint32_t now_ms);
 
 // Ferme les annonces et demandes, seulement si une vraie sortie Gaming USB est disponible.
 bool host_window_enter_gaming(struct host_window_policy *policy, bool usb_usable);
 
-// La sortie ordinaire de Gaming ouvre trente secondes sans recherche de nouvel appareil.
+// La sortie ordinaire de Gaming ouvre deux minutes sans recherche de nouvel appareil.
 bool host_window_leave_gaming(struct host_window_policy *policy, uint32_t now_ms);
 
 // Observe des destinations prêtes, sans sélectionner ni modifier un appareil.
@@ -63,8 +63,10 @@ void host_window_cancel_selection(struct host_window_policy *policy);
 struct host_discovery_policy {
     uint32_t opened_at_ms;
     uint32_t generation;
+    uint32_t recovery;
     uint16_t connected;
     bool awake;
+    bool sleeping;
     bool opened;
 };
 
@@ -76,7 +78,7 @@ void host_discovery_open(struct host_discovery_policy *policy, uint32_t now_ms);
 
 // Le premier retour ouvre une fenêtre bornée, une perte partielle ne la réarme pas.
 void host_discovery_update(struct host_discovery_policy *policy, uint32_t now_ms,
-                           uint16_t connected, bool awake);
+                           uint16_t connected, bool awake, bool sleeping);
 
 // Sans hôte actif, retourne la durée nominale pour indiquer une admission continue.
 uint32_t host_discovery_remaining(const struct host_discovery_policy *policy, uint32_t now_ms);

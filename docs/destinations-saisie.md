@@ -17,7 +17,7 @@ Bluetooth au PC Windows et au Mac. L1 + clic encodeur droit doit parcourir :
 Windows Bluetooth reste une liaison connue, mais ne constitue pas une troisième
 destination lorsque Windows USB est utilisable. La connexion BLE peut rester présente.
 Une exception est envisagée pour le Gaming USB : déconnecter le Mac et arrêter les
-annonces pendant le jeu, puis rouvrir trente secondes au retour à Windows.
+annonces pendant le jeu, puis rouvrir deux minutes au retour à Windows.
 Voir [la gestion de l’appairage](gestion-appairage.md).
 
 ## Priorité par ordinateur
@@ -25,7 +25,7 @@ Voir [la gestion de l’appairage](gestion-appairage.md).
 L’USB est prioritaire sur le Bluetooth **pour le même ordinateur**. Sa présence
 n’empêche pas de sélectionner un autre ordinateur en Bluetooth. Une seule destination
 reçoit les frappes à la fois, sa liaison et sa keymap doivent changer ensemble.
-Le raccourci ouvrira aussi trente secondes de recherche : avec une seule destination,
+Le raccourci ouvrira aussi deux minutes de recherche : avec une seule destination,
 le premier autre appareil prêt prend la sélection. Avec plusieurs, le geste passe
 à la suivante et les nouveaux arrivants ne la changent pas.
 

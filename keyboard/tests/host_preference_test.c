@@ -56,26 +56,26 @@ static void reconnect_orders(void) {
         int other = 1 - preferred;
         struct host_session_policy p = {0};
         struct host_window_view v = {.count = 2, .selected = preferred, .identities = {1, 2}};
-        host_session_update(&p, 1, HOST_WINDOW_DURATION_MS, true);
+        host_session_update(&p, 1, HOST_WINDOW_DURATION_MS, true, 1);
         assert(p.restoring && p.checkpoint && host_session_target(&p, &v, preferred) == -1);
         v.ready = (uint16_t)(UINT16_C(1) << other);
-        host_session_update(&p, 2, HOST_WINDOW_DURATION_MS, false);
+        host_session_update(&p, 2, HOST_WINDOW_DURATION_MS, false, 1);
         assert(host_session_target(&p, &v, preferred) == other);
         v.selected = other;
         assert(host_session_target(&p, &v, preferred) == -1);
         v.ready = 3;
         assert(host_session_target(&p, &v, preferred) == preferred);
-        host_session_update(&p, 2, 0, false);
+        host_session_update(&p, 2, 0, false, 1);
         assert(!p.restoring && host_session_target(&p, &v, preferred) == -1);
         v.ready = (uint16_t)(UINT16_C(1) << preferred);
         assert(host_session_target(&p, &v, preferred) == preferred);
         v.selected = preferred;
         assert(host_session_target(&p, &v, preferred) == -1);
         p.checkpoint = false;
-        host_session_update(&p, 2, 0, false);
+        host_session_update(&p, 2, 0, false, 1);
         assert(!p.checkpoint);
-        host_session_update(&p, 3, HOST_WINDOW_DURATION_MS, false);
-        assert(!p.restoring && p.checkpoint);
+        host_session_update(&p, 3, HOST_WINDOW_DURATION_MS, false, 1);
+        assert(!p.restoring && !p.checkpoint);
     }
 }
 
@@ -83,8 +83,8 @@ static void reconnect_orders(void) {
 static void manual_choice_and_invalid_views(void) {
     struct host_session_policy p = {0};
     struct host_window_view v = {.count = 2, .selected = 1, .ready = 3, .identities = {1, 2}};
-    host_session_update(&p, 1, 100, false);
-    p.restoring = false;
+    host_session_update(&p, 1, 100, false, 1);
+    host_session_manual(&p);
     assert(host_session_target(&p, &v, 0) == -1);
     v.ready = 1;
     assert(host_session_target(&p, &v, 0) == 0);
@@ -99,8 +99,53 @@ static void manual_choice_and_invalid_views(void) {
     assert(host_session_target(&p, &v, 0) == -1);
 }
 
+// Une fenêtre explicite ne réarme pas la sauvegarde différée et un vrai rétablissement le fait.
+static void manual_and_recovery(void) {
+    struct host_session_policy p = {0};
+    host_session_manual(&p);
+    host_session_update(&p, 1, 100, true, 1);
+    assert(p.manual && !p.restoring && !p.checkpoint);
+    host_session_update(&p, 2, 100, false, 1);
+    host_session_update(&p, 2, 0, false, 1);
+    assert(!p.restoring && !p.checkpoint);
+    host_session_update(&p, 2, 100, true, 2);
+    host_session_update(&p, 2, 0, true, 2);
+    assert(p.restoring && p.checkpoint);
+    assert(!p.manual && p.restoring && p.checkpoint && p.used == -1);
+    host_session_manual(&p);
+    host_session_update(&p, 3, 100, false, 2);
+    assert(!p.restoring && !p.checkpoint);
+}
+
+// Seule la perte d’un hôte réellement utilisé transforme la sélection en repli durable.
+static void partial_loss_and_identity(void) {
+    struct host_session_policy p = {0};
+    struct host_window_view v = {.count = 2, .selected = 0, .ready = 2, .identities = {1, 2}};
+    host_session_update(&p, 1, 100, false, 1);
+    host_session_observe_loss(&p, &v, 2);
+    assert(!p.failover && p.restoring && p.checkpoint);
+    v.selected = 1;
+    host_session_used(&p, &v);
+    host_session_observe_loss(&p, &v, 0);
+    assert(!p.failover);
+    host_session_observe_loss(&p, &v, 1);
+    assert(p.failover && !p.restoring && !p.checkpoint);
+    host_session_update(&p, 2, 100, false, 2);
+    assert(!p.failover && p.restoring && p.used == -1);
+    host_session_used(&p, &v);
+    v.identities[1]++;
+    host_session_observe_loss(&p, &v, 1);
+    assert(!p.failover && p.used == -1);
+    v.count = 17;
+    host_session_used(&p, &v);
+    host_session_observe_loss(&p, &v, 1);
+    assert(p.used == -1);
+}
+
 // Exécute les règles sans radio, minuterie réelle ou accès à la mémoire du clavier.
 int main(void) {
+    manual_and_recovery();
+    partial_loss_and_identity();
     persistence_and_errors();
     malformed_records();
     reconnect_orders();

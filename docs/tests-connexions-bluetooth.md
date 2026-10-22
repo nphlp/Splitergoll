@@ -5,7 +5,7 @@ Mac pour le diagnostic. V2 ou le clavier intégré du Mac sert à échanger ici.
 Ouvrir un document texte vide sur chaque ordinateur. Conserver les deux appairages :
 aucun « Oublier », `ble forget` ou `settings_reset` pendant cette série.
 
-Le diagnostic ponctuel utilise **10 secondes**, les builds normaux **30 secondes**.
+Le diagnostic ponctuel utilise **10 secondes**, les builds normaux **120 secondes**.
 Il est dans `.local/flash/ble-window-10s/`, sans nouveau profil public. Le flasher
 par son chemin UF2 explicite, uniquement sur la gauche. La droite reste identique.
 La limite de fin d’un appairage commencé reste 30 secondes depuis son début.
@@ -30,9 +30,10 @@ frappes retenues pendant la transition, attente du relâchement de Shift,
 reconnexion puis sélection de Windows après un seul geste, et Mac arrivé en premier
 qui garde la sélection quand Windows rejoint. Le reset simple fonctionne.
 Les lectures initiales confirment les deux OS sauvegardés et les deux connexions,
-sans erreur. Le retour au build normal de trente secondes reste à confirmer.
+sans erreur. Le retour au build normal de deux minutes reste à confirmer.
 Les nouveaux appairages et les cas limites du dernier paragraphe restent séparés.
-Le nouveau lot ajoute la préférence durable et la recherche sans hôte. Ces fonctions
+Le nouveau lot ajoute la mémorisation immédiate des choix manuels et replis,
+la reprise sans reset. Le correctif courant retire l’exclusion individuelle. Ces fonctions
 ne sont pas déduites de ces résultats : elles ont leurs essais ci-dessous.
 
 Faire les cas dans cet ordre. Si un cas échoue, noter le résultat avant de passer
@@ -80,7 +81,7 @@ plus repousser indéfiniment la bascule. La phrase exerce les deux moitiés.
 
 Les douze secondes servent seulement à assurer la fermeture du diagnostic de dix
 secondes. Si `WINDOW` indique déjà `remaining_ms=0 advertising=0`, inutile de les
-attendre. Pour le build normal, attendre plus de trente secondes depuis l’ouverture.
+attendre. Pour le build normal, attendre plus de deux minutes depuis l’ouverture.
 Une fenêtre s’ouvre au démarrage, au premier retour après zéro connexion ou au
 raccourci, jamais à la dernière frappe. Sans hôte actif, la recherche est continue.
 
@@ -123,5 +124,5 @@ et panne de sauvegarde sont contrôlés en logiciel. Ils ne sont pas déduits de
 essais précédents et ne demandent aucune manipulation destructive improvisée.
 Gaming USB et destinations mixtes ne font pas encore partie de ce firmware.
 
-Après validation, remettre le build normal à 30 secondes. Noter pour chaque cas :
+Après validation, remettre le build normal à 120 secondes. Noter pour chaque cas :
 OK/KO, destination réelle, première lettre reçue et délai approximatif ressenti.

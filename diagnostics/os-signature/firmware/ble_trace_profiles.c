@@ -20,7 +20,7 @@
 #endif
 
 #if defined(CONFIG_SPLITERGOLL_BLE_RECONNECT)
-#define BLE_PROFILE_VERSION "4"
+#define BLE_PROFILE_VERSION "6"
 #else
 #define BLE_PROFILE_VERSION "2"
 #endif

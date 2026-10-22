@@ -18,27 +18,28 @@
 
 Le [tableau de planification](planification.md) distingue les sujets terminables avec
 Mac + V2 et ceux à valider lors d’une séance commune Mac/Windows. Le matériel
-disponible est maintenant Mac + Windows + V1 + V2 à domicile : reprendre les
-fenêtres Bluetooth sur V1. V2 peut rester utilisé pour la saisie sur le Mac.
+disponible est maintenant Mac + Windows + V1 + V2 à domicile. Les comportements
+Bluetooth principaux sont validés sur V1 au délai court. La séance se termine avec
+un retour prévu à `wire windows` pour jouer. Reprendre le développement ensuite.
 
 Détection USB et BLE Mac/Windows, mémoire d’OS et bascule entre appareils sont
 validées sur V1 dans les conditions indiquées ci-dessous. Linux automatique reste à faire.
-La fenêtre commune de trente secondes, avec reconnexion et nouvel appairage, est
+La fenêtre commune de deux minutes, avec reconnexion et nouvel appairage, est
 intégrée au firmware. Sur V1, les appairages Mac/Windows, la bascule entre deux
 hôtes connectés et la reconnexion après raccourci sont confirmés. Le diagnostic
 à dix secondes valide aussi la saisie immédiate retenue pendant la transition,
 Shift maintenu puis relâché et la sélection de Windows retrouvé. Les destinations
-mixtes restent à faire. Le retour au firmware normal de trente secondes est annoncé,
-pas encore confirmé.
+mixtes restent à faire. La fin de séance prévoit `wire windows` normal pour jouer,
+avec flash utilisateur encore à confirmer. Le Bluetooth normal à deux minutes sera
+validé lors de la reprise, sans effacer les appairages.
 
 Ordre des prochains lots :
 
-1. Tester le nouveau lot Bluetooth au délai privé de dix secondes : sélection
-   automatique, retour prioritaire au précédent, mémoire propre à la fermeture
-   de la fenêtre et recherche sans hôte jusqu’à IDLE. Voir les essais de
-   [reprise](tests-reprise-bluetooth.md) et de [recherche](tests-recherche-bluetooth.md).
-   Les bascules avec tampon sont déjà validées sur V1. Nouvel appairage et cas limites
-   restent distincts. Revenir à trente secondes après validation.
+1. Les comportements principaux du lot Bluetooth sont validés sur V1 au délai de
+   dix secondes : sauvegarde immédiate, persistance, rappel du précédent, repli,
+   recherche sans résultat et perte totale sans boucle. Confirmer ultérieurement
+   le délai normal de deux minutes. IDLE, nouveaux bonds et cas limites restent
+   distincts, sans refaire toute la série déjà validée.
 2. Réunir USB et BLE autour des [destinations](destinations-saisie.md), en résolvant
    l’association entre l’hôte USB et son éventuel bond BLE. Puis intégrer Gaming USB.
 3. Ajouter la correction manuelle d’OS, optimiser le délai de bascule, puis traiter
@@ -196,47 +197,73 @@ de préparer la mémoire d’OS propre à V2, absente du profil macOS normal.
   connu connecté = sélection automatique, plusieurs = maintien du choix courant et
   bascule explicite. Séparer les connexions hôtes de celle de la moitié droite.
 - [x] Après redémarrage/veille profonde, sélectionner le premier hôte disponible
-  immédiatement et laisser au précédent jusqu’à la fin des trente secondes ouvertes
+  immédiatement et laisser au précédent jusqu’à la fin des deux minutes ouvertes
   à la première connexion du démarrage pour revenir. Cette règle remplace la grâce de cinq secondes
   envisagée auparavant. S’il revient dans la fenêtre, le restaurer, sinon mémoriser
   le nouvel hôte. Ne pas écraser la préférence avec la sélection provisoire.
   Une bascule manuelle annule le rappel. Taper sur le premier hôte ne l’annule ni ne le prolonge, et
   n’empêche pas le retour au précédent. Tester ces frappes, les limites et les
-  déconnexions. Implémentation et tests logiciels réalisés, essais matériels à faire.
+  déconnexions. Implémentation testée en logiciel, comportements principaux
+  confirmés sur V1 au délai court. Délai normal et cas limites restent distincts.
 - [x] Ajouter notre propre mémoire de destination, indépendante de celle du slot ZMK.
-  À la fermeture de chaque fenêtre, enregistrer l’appareil sélectionné et connecté,
+  À la fermeture de la fenêtre de reprise, enregistrer l’appareil sélectionné et connecté,
   sans écraser la préférence si aucun n’est utilisable. Avant cette fermeture, un
   reset conserve le choix précédemment enregistré. Vérifier l’identité du bond,
   traiter les erreurs d’écriture et éviter une écriture si le choix est inchangé.
 - [x] Sans hôte connecté et en état actif, rechercher les connus et accueillir un
-  nouveau sans échéance de trente secondes. Fermer à la veille légère après deux
+  nouveau sans échéance de deux minutes. Fermer à la veille légère après deux
   minutes, sans activité artificielle ni report du sommeil profond à dix minutes.
   Inclure la perte du dernier hôte dans cette règle. Au retour du premier, ouvrir
   une fenêtre ordinaire pour les suivants. Une perte partielle ne rouvre rien.
   La radio suit maintenant l’état IDLE. Une touche physique retenue par le filtre
   compte aussi comme activité, sans rendre les annonces elles-mêmes actives.
-- [ ] Valider sur V1 préférence durable, deux ordres de reprise, absence du précédent,
-  reset avant sauvegarde, choix manuel prioritaire et recherche jusqu’à IDLE.
-  Les validations automatiques ne remplacent pas les essais sur clavier.
+- [x] Valider sur V1 préférence durable après coupure, absence du précédent et
+  sauvegarde manuelle avant fermeture. Les retours détaillés suivent ci-dessous.
+- [ ] Compléter la recherche jusqu’à IDLE et la reprise après veille profonde sur
+  batterie. Les validations automatiques ne remplacent pas ces essais sur clavier.
 - [x] Confirmer sur V1 le diagnostic v4, les deux OS mémorisés sans erreur, les
   bascules et Shift inchangés, la préférence Mac sauvegardée et le retour prioritaire
   dans les deux sens après coupure d’alimentation. Le reset simple n’a pas suffi
   dans cet essai utilisateur, sans cause instrumentée établie.
-- [ ] Modifier la sauvegarde selon l’origine : fin de fenêtre pour la sélection
+- [x] Modifier la sauvegarde selon l’origine : fin de fenêtre pour la sélection
   provisoire au démarrage ou après perte totale, sauvegarde immédiate après bascule
   manuelle réussie, y compris recherche/nouvel appairage, ou après perte de la
   destination réellement utilisée avec repli réussi sur un hôte restant.
   Les choix explicites et replis annulent le rappel initial. Une ancienne échéance
   ne doit pas écraser leur sauvegarde, une demande sans résultat n’écrit rien.
-- [ ] Traiter la perte totale sans reset comme un nouveau démarrage pour le rappel
+- [x] Traiter la perte totale sans reset comme un nouveau démarrage pour le rappel
   du précédent. Distinguer cette reprise de la simple perte d’un hôte avec un autre disponible.
+- [x] Valider sur V1 v5 la sauvegarde manuelle avant échéance dans les deux sens,
+  sa persistance après coupure immédiate et Mac provisoire puis rappel Windows.
+- [x] Valider le repli Windows vers Mac, sa préférence sauvegardée, l’exclusion de
+  Windows puis sa réadmission/sélection/mémorisation par un seul raccourci.
+- [x] Confirmer le remplacement du préféré absent : Windows mémorisé ne revient
+  pas au démarrage, Mac reste seul et devient mémorisé à l’expiration de la fenêtre.
+- [x] Retirer l’exclusion individuelle après le bug de perte totale : Mac choisi,
+  couper Windows puis Mac et réactiver Windows provoquait une boucle. Pendant la
+  recherche, tous les connus sont désormais admis. La fenêtre fermée suffit à
+  empêcher le retour si un autre hôte reste connecté. Tests logiciels positifs.
+- [x] Confirmer sur V1 qu’une recherche sans résultat conserve Mac sélectionné et
+  mémorisé après fermeture, sans erreur.
+- [x] Confirmer sur V1 v6 la perte totale sans reset : Windows perdu avant Mac
+  revient seul sans boucle et reste utilisable. Vérifications confirmées par
+  l’utilisateur, sans nouvelle capture transmise.
+- [x] Confirmer sur V1 v6 la fermeture avec Windows restant puis la réouverture par
+  raccourci : Mac ne revient pas tout seul, un geste le reconnecte et le sélectionne.
+  La reproduction exacte de l’ancienne boucle est également positive, sans reset.
+- [ ] Compléter les cas distincts du [protocole court](tests-reprise-bluetooth.md) :
+  geste annulant le rappel, reconnexion pendant une fenêtre encore ouverte et IDLE.
+  Les coupures radio involontaires ne sont pas observées.
+- [ ] Revenir au firmware normal à 120 secondes et confirmer son usage Mac/Windows.
+  La série v5 à dix secondes ne valide pas à elle seule ce délai ni les nouveaux bonds.
 - [x] Retenir la fenêtre réelle de 120 secondes, terminable en IDLE sans report de
-  SLEEP, et l’exclusion d’un hôte perdu jusqu’à une nouvelle recherche explicite.
-  Les dix secondes restent réservées au diagnostic.
-- [ ] Implémenter ces deux décisions après le commit de l’état validé. Documenter
-  près du code le risque de bascule involontaire après coupure radio, non observé
-  pour le moment. Si signalé, examiner repli, sauvegarde et exclusion dans les traces.
-- [x] Développer et tester le moteur pur des fenêtres : ouverture trente secondes,
+  SLEEP, avec dix secondes pour le diagnostic. La fenêtre autorise tous les connus.
+  L’exclusion individuelle envisagée auparavant est abandonnée.
+- [x] Implémenter ces deux décisions après le commit de l’état validé. Documenter
+  le repli et sa sauvegarde après coupure. L’exclusion ajoutée dans ce lot a ensuite
+  été retirée. Si la saisie change involontairement d’ordinateur, examiner les pertes
+  de liaison et les sélections, sans présumer une cause radio.
+- [x] Développer et tester le moteur pur des fenêtres : ouverture deux minutes,
   recherche avec zéro/une destination, bascule avec plusieurs, transitions Gaming,
   tickets périmés, identités remplacées et attente des relâchements. Aucune API radio
   ni intégration firmware dans ce premier lot.
@@ -246,11 +273,11 @@ de préparer la mémoire d’OS propre à V2, absente du profil macOS normal.
 - [x] Séparer la reconnexion connue du nouvel appairage dans le périmètre du développement.
   Un appareil connu garde son slot et ses clés. ZMK exige actuellement un slot actif
   vide pour un nouveau bond et refuse un slot occupé, sans remplacement automatique.
-- [x] Intégrer les annonces filtrées de reconnexion dans `bluetooth auto` : trente secondes
+- [x] Intégrer les annonces filtrées de reconnexion dans `bluetooth auto` : deux minutes
   au démarrage et avec L1 + clic droit, sans changement de slot à l’arrivée d’un hôte.
   Le premier lot n’admettait aucun nouvel appairage. Le suivant ajoute cet accueil
   sur une place libre, sans suppression de clé existante.
-- [ ] Valider sur V1 les deux ordres de retour Mac/Windows, la fermeture à trente secondes,
+- [ ] Valider sur V1 les deux ordres de retour Mac/Windows, la fermeture à deux minutes,
   la réouverture par raccourci et la saisie sur l’appareil resté sélectionné.
 - [x] Valider sur V1 avec le diagnostic de dix secondes : fermeture sans reconnexion
   spontanée de Windows, puis reconnexion et sélection après un seul raccourci.
@@ -263,16 +290,16 @@ de préparer la mémoire d’OS propre à V2, absente du profil macOS normal.
 - [x] Maintenir les annonces pour retrouver un second ordinateur alors que le premier
   est connecté. Sur V1, Windows rejoint Mac pendant le diagnostic court, sans
   reprendre la sélection après une recherche commencée avec zéro connexion.
-- [ ] Compléter l’essai dans l’ordre inverse, puis au délai normal de trente secondes.
+- [ ] Compléter l’essai dans l’ordre inverse, puis au délai normal de deux minutes.
   Les nouveaux bonds et la sortie Gaming restent des validations distinctes.
 - [x] Ajouter un raccourci de sélection d’appareil connecté, sans commande USB,
   distinct du changement manuel d’OS : L1 + clic encodeur droit dans `bluetooth auto`.
   Les appareils déconnectés sont ignorés, le clic simple indique l’OS après la bascule.
 - [x] Définir et implémenter la [gestion de l’appairage](gestion-appairage.md) : états ouvert/fermé,
-  fenêtres de trente secondes, appairage en cours à l’échéance,
+  fenêtres de deux minutes, appairage en cours à l’échéance,
   slot libre et refus sans effacement si plein. Garder les bonds existants.
   Les nouveaux bonds et les cas limites restent à valider sur matériel.
-- [x] Étendre L1 + clic encodeur droit pour rouvrir trente secondes : une destination
+- [x] Étendre L1 + clic encodeur droit pour rouvrir deux minutes : une destination
   disponible = bascule vers le premier autre appareil prêt, plusieurs = prochaine
   destination déjà disponible sans bascule sur une arrivée tardive. Compter les
   destinations distinctes au geste, pas les liaisons USB/BLE. Tester plusieurs arrivées,
@@ -285,7 +312,7 @@ de préparer la mémoire d’OS propre à V2, absente du profil macOS normal.
   qu’une nouvelle commande le remplace ou si la file déborde. Les allers-retours avec
   saisie immédiate sont confirmés sur V1. Les annulations restent testées en logiciel.
 - [ ] Définir puis implémenter Gaming USB : arrêt des annonces, nouveaux appairages
-  refusés et Mac BLE déconnecté. Le retour à Windows réouvre trente secondes sans
+  refusés et Mac BLE déconnecté. Le retour à Windows réouvre deux minutes sans
   bloquer sa saisie USB ni sélectionner le Mac à son arrivée. Décider du BLE Windows
   pendant Gaming. Ne pas couper la liaison entre moitiés ni la seule sortie BLE.
   Depuis Gaming, L1 + clic droit revient à Windows et déclenche explicitement la recherche,

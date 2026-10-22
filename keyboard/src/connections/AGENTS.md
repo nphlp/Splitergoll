@@ -18,8 +18,8 @@ Chaque destination reçoit un jeton non nul qui change si son identité est remp
 Le masque ready ne contient que des appareils sécurisés avec une keymap utilisable.
 Un slot BLE inconnu, non chiffré ou dont l’OS n’est pas encore vérifié n’est pas prêt.
 
-Le démarrage et la sortie ordinaire de Gaming USB ouvrent trente secondes sans recherche
-de nouvelle destination. Le raccourci ouvre ou réarme trente secondes : zéro ou une
+Le démarrage et la sortie ordinaire de Gaming USB ouvrent deux minutes sans recherche
+de nouvelle destination. Le raccourci ouvre ou réarme deux minutes : zéro ou une
 destination arme une recherche, plusieurs demandent la suivante déjà prête.
 Le nombre est figé au geste. Une seule bascule de recherche est admise par demande.
 Les arrivées suivantes ne reprennent pas la sélection. La saisie n’est pas pilotée
@@ -67,7 +67,7 @@ ne pas ajouter un autre utilisateur sans revoir cette intégration.
 `ble_pairing_state.c` réserve une seule place libre, de préférence le slot actif
 s’il est vide. Une référence de connexion garde son identité pendant SMP et la
 résolution d’adresse privée. Une autre arrivée inconnue est refusée jusqu’à libération.
-Le début SMP doit appartenir aux trente secondes. Il dispose ensuite de 30000 ms,
+Le début SMP doit appartenir à la fenêtre de deux minutes. Il dispose ensuite de 30000 ms,
 indépendants des réouvertures et sans réarmer la fenêtre. Une réussite reçue avant
 cette borne peut attendre le worker, y compris après une déconnexion immédiate.
 Sans début SMP, la connexion candidate expire avec la fenêtre.
@@ -122,13 +122,14 @@ Mac/Windows, tampon de saisie, garde Shift puis reprise, Windows retrouvé et
 sélectionné après un seul geste. Sans hôte, Mac arrivé en premier reste sélectionné
 quand Windows rejoint. Une déconnexion partielle après fermeture ne rouvre pas les
 annonces. La validation de nouveaux bonds reste séparée, le retour au build normal
-à trente secondes n’est pas confirmé. Aucun accès série réalisé pour ce relevé.
+à deux minutes n’est pas confirmé. Aucun accès série réalisé pour ce relevé.
 
 Le nouveau lot implémente la sélection générale, la préférence et la recherche
 sans hôte. host_discovery_policy ouvre sans limite tant qu’ACTIVE et sans hôte,
 puis une fenêtre bornée au premier retour. Une perte partielle ne réarme rien.
-IDLE ferme l’admission, sans générer d’activité. Le worker radio notifie le sélecteur
-sur ses révisions et à l’échéance pour une sauvegarde unique par fenêtre.
+IDLE ferme la recherche continue sans hôte, mais laisse finir une fenêtre
+explicitement bornée. SLEEP ferme toujours, sans générer d’activité. Le worker radio notifie le sélecteur
+sur ses révisions et à l’échéance pour la sauvegarde différée de reprise.
 
 host_preference.c est pur : format versionné de 33 octets, déduplication, erreur
 d’écriture sans remplacement du choix durable, sélection du premier disponible
@@ -136,13 +137,30 @@ puis du précédent pendant le démarrage. host_preference_settings.c restaure n
 seul espace splitergoll/host-choice, après settings h_commit. Il réutilise l’empreinte
 opaque déjà vérifiée en mémoire d’OS, pas l’adresse, un index ou l’OS comme identité.
 Ni le format ble-os ni les clés natives ne changent. Aucun effacement automatique.
-La sauvegarde attend la fermeture et la fin d’une bascule en cours. Un reset avant
-la fermeture garde le choix antérieur. Ne rien écrire sans destination utilisable.
+La sauvegarde provisoire attend la fermeture et la fin d’une bascule en cours.
+Un choix manuel réussi ou un repli après perte de l’hôte utilisé est sauvegardé
+dès que cible et keymap sont appliquées, avant le rejeu du tampon. Ces choix
+annulent le rappel et le checkpoint différé, jamais réarmés par une simple fenêtre. Ne rien écrire sans destination utilisable.
 Les nouvelles règles sont testées en logiciel, leurs essais matériels restent à faire.
-Le format v4 de profiles expose active/without_host et l’état public de préférence,
+Le format v6 de profiles expose active/without_host et l’état public de préférence,
 sans adresse ni empreinte. remaining_ms vaut la durée nominale en recherche continue.
 La grâce de rappel finit à l’échéance de la fenêtre ouverte au premier retour de
 ce démarrage. Un nouveau geste l’annule, sans réarmer le droit de rappel.
+
+Les callbacks de connexion suivent les transitions de masque immédiatement sous
+control_lock : un bref passage à zéro incrémente recovery même avant le worker.
+Une perte partielle ne rouvre pas la fenêtre. Aucun masque d’exclusion radio n’est
+conservé : tous les connus absents sont admissibles pendant la recherche. Sans
+hôte, ACTIVE reprend la recherche, IDLE la ferme sauf fenêtre réelle encore ouverte.
+Cette simplification corrige la boucle observée sur V1 v5 : Windows perdu avant Mac
+restait exclu après perte totale, alors que les annonces ouvertes l’attiraient.
+Le vrai adaptateur teste la séquence dans les deux ordres, sans reset, et vérifie
+qu’aucun connu admis n’est déconnecté par notre code. Un retour en fenêtre ouverte
+ne la prolonge pas. Après fermeture avec un autre restant, il est refusé jusqu’au geste.
+Le moteur de sélection garde initial_ready au geste, uniquement pour distinguer
+les nouvelles destinations de celles déjà disponibles, sans filtrer la radio.
+Un repli après coupure radio peut toujours changer l’ordinateur utilisé et sa
+mémoire, même sans exclusion. Examiner les transitions si l’utilisateur le signale.
 
 La suite host_preference_test vérifie formats, identité remplacée, erreur NVS,
 déduplication, deux ordres de reconnexion, arrivée tardive et priorité manuelle.
@@ -151,7 +169,7 @@ Compiler host_preference.c avec keyboard/tests/host_preference_test.c en C11,
 namespace, le reset, les identités et les erreurs sans NVS réelle. Le vrai adaptateur
 radio passe ACTIVE/IDLE/SLEEP, prolongation sans hôte, premier retour borné et perte
 partielle. Le vrai sélecteur conserve le tampon et le rappel malgré une saisie sur
-l’hôte provisoire. Les 55 cas de lecteurs AWK/PowerShell incluent la v4, les anciens
+l’hôte provisoire. Les 70 cas de lecteurs AWK/PowerShell incluent la v6, les anciens
 formats et les états incohérents. Les builds normal, ble-trace et privé dix secondes
 passent les contrôles. Garder les validations matérielles distinctes.
 
@@ -218,3 +236,48 @@ expiration à la borne, panne NVS, slot modifié pendant SMP et nettoyage du seu
 neuf. Les références sont libérées et aucun callback ne sauvegarde dans ce harnais.
 Les tests ne simulent pas le contrôleur radio réel ni une coupure de courant pendant NVS.
 Preuves dans .local/validation/ble-pairing, sans accès USB ou modification des bonds réels.
+
+Validation du contrat courant : treize suites natives ASan/UBSan, quatre harnais
+privés du vrai sélecteur/radio/appairage/backend et 70 réponses AWK/PowerShell.
+Le sélecteur vérifie sauvegarde après application de keymap, échec de cette
+application, geste remplacé, erreur native, recherche sans résultat, repli,
+reprise totale et absence d’écriture à l’ancienne échéance. La radio vérifie la
+fenêtre en IDLE, SLEEP, refus d’exclu même en annonces ouvertes, réadmission par geste
+et identité de slot remplacée. Le backend conserve ses cas d’erreur et déduplication.
+Les quatre paires normales/debug/ble-trace et privées dix secondes compilent.
+Les huit UF2 passent SHA-256 et gardes de partition. Les huit arbres gardent keymap,
+behaviors, macros et conditional_layers identiques au diagnostic matériel précédent.
+La droite ble-trace est inchangée et ne demande pas de flash. Les warnings restent
+ceux du socle KSCAN/const tap-dance et Docker insecure, aucun nouveau dans notre C.
+Aucun essai matériel, effacement ou accès série de l’agent ne valide ce lot.
+
+Essais utilisateur V1 du diagnostic v5 : sauvegarde manuelle Mac/Windows avant
+expiration (6934/7241 ms restants), persistance Windows après coupure immédiate,
+Mac provisoire puis rappel Windows avant échéance. Perte Windows avec Mac restant :
+Mac utilisé et mémorisé, excluded=2 empêche le retour spontané. Un raccourci lève
+l’exclusion et sélectionne/mémorise Windows, les deux connexions restent présentes.
+Le rappel inverse n’est pas répété à la demande de l’utilisateur. Aucun nouveau
+bond, perte totale sans reset, IDLE ou délai 120 secondes validé dans cette série.
+Les preuves détaillées restent dans l’AGENTS racine, le guide humain garde le résumé.
+
+Correctif suivant les essais v5 : suppression complète de l’exclusion individuelle,
+protocole v6 sans excluded, lecteurs historiques conservés. Les tests purs et le
+vrai adaptateur couvrent les deux ordres de perte partielle puis totale, retour du
+premier perdu, reconnexion pendant admission, refus après fermeture avec hôte
+restant et réouverture par geste. Le sélecteur garde la destination du repli quand
+l’ancien revient, sauf nouvelle demande explicite. Les essais physiques sont à
+reprendre sur ces deux scénarios ciblés, pas sur toute la série précédente.
+
+Validation du correctif sans exclusion : treize suites ASan/UBSan, analyse statique
+des moteurs purs, quatre harnais du vrai code et 70 réponses des lecteurs passent.
+Les variantes normale/debug/ble-trace à 120 s et privée ble-trace à 10 s compilent.
+Les huit UF2 passent leurs gardes et SHA-256, la droite ble-trace reste identique.
+Les sous-arbres keymap/macros/behaviors/conditional_layers restent à la référence v5.
+Aucune nouvelle dépendance, partition, variable d’environnement, Compose ou Dockerfile.
+Aucun accès série, flash ou effacement de bond par l’agent. L’utilisateur confirme
+ensuite le flash de gauche et la réussite de la régression sur V1 v6 : Windows
+revient seul après perte Windows puis Mac, sans reset ni boucle. Il a vérifié les
+statuts, sans joindre de capture. Il répète ensuite l’ancien scénario sans boucle
+et confirme fermeture/réouverture : Mac ne revient pas après échéance avec Windows
+restant, un geste reconnecte et sélectionne Mac. Validation physique principale
+à dix secondes terminée, délai normal et cas limites restent distincts.

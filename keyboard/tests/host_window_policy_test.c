@@ -16,19 +16,19 @@ static void startup_and_deadlines(void) {
     struct host_window_view v = view(5, 3, 0);
     host_window_start(&p, 20);
     assert(p.generation != 0 && p.pending == -1 && !p.searching);
-    assert(host_window_remaining(&p, 20) == 30000);
-    assert(host_window_pairing_allowed(&p, 30019, true));
-    assert(!host_window_pairing_allowed(&p, 30019, false));
-    host_window_update(&p, &v, 30019);
+    assert(host_window_remaining(&p, 20) == HOST_WINDOW_DURATION_MS);
+    assert(host_window_pairing_allowed(&p, HOST_WINDOW_DURATION_MS + 19, true));
+    assert(!host_window_pairing_allowed(&p, HOST_WINDOW_DURATION_MS + 19, false));
+    host_window_update(&p, &v, HOST_WINDOW_DURATION_MS + 19);
     assert(p.active && p.pending == -1);
-    assert(!host_window_pairing_allowed(&p, 30020, true));
-    host_window_update(&p, &v, 30020);
+    assert(!host_window_pairing_allowed(&p, HOST_WINDOW_DURATION_MS + 20, true));
+    host_window_update(&p, &v, HOST_WINDOW_DURATION_MS + 20);
     assert(!p.active && p.pending == -1);
 
     host_window_start(&p, UINT32_MAX - 25);
-    assert(host_window_remaining(&p, 0) == 29974);
-    assert(host_window_remaining(&p, 29973) == 1);
-    assert(host_window_remaining(&p, 29974) == 0);
+    assert(host_window_remaining(&p, 0) == HOST_WINDOW_DURATION_MS - 26);
+    assert(host_window_remaining(&p, HOST_WINDOW_DURATION_MS - 27) == 1);
+    assert(host_window_remaining(&p, HOST_WINDOW_DURATION_MS - 26) == 0);
 }
 
 // Une seule destination garde la saisie jusqu’au premier autre appareil utilisable.
@@ -38,7 +38,7 @@ static void search_once(void) {
     host_window_start(&p, 0);
     assert(host_window_shortcut(&p, &v, 100));
     uint32_t ticket = p.generation;
-    assert(p.searching && p.pending == -1 && p.excluded == 1);
+    assert(p.searching && p.pending == -1 && p.initial_ready == 1);
     host_window_update(&p, &v, 101);
     assert(host_window_take(&p, &v, 101, ticket, false) == -1);
     v.ready = 9;
@@ -64,27 +64,27 @@ static void late_arrivals_and_input_guard(void) {
     host_window_start(&p, 0);
     assert(host_window_shortcut(&p, &v, 0));
     v.ready = 3;
-    host_window_update(&p, &v, 29999);
-    assert(host_window_take(&p, &v, 29999, p.generation, true) == -1);
-    host_window_update(&p, &v, 30000);
+    host_window_update(&p, &v, HOST_WINDOW_DURATION_MS - 1);
+    assert(host_window_take(&p, &v, HOST_WINDOW_DURATION_MS - 1, p.generation, true) == -1);
+    host_window_update(&p, &v, HOST_WINDOW_DURATION_MS);
     assert(!p.active && !p.searching && p.pending == 1);
-    assert(host_window_take(&p, &v, 30750, p.generation, false) == 1);
+    assert(host_window_take(&p, &v, HOST_WINDOW_DURATION_MS + 750, p.generation, false) == 1);
 
     v.ready = 1;
     host_window_shortcut(&p, &v, 20000);
     v.ready = 3;
-    host_window_update(&p, &v, 50000);
+    host_window_update(&p, &v, 20000 + HOST_WINDOW_DURATION_MS);
     assert(!p.searching && p.pending == -1);
-    assert(host_window_take(&p, &v, 50001, p.generation, false) == -1);
+    assert(host_window_take(&p, &v, 20001 + HOST_WINDOW_DURATION_MS, p.generation, false) == -1);
 
     v.ready = 1;
     host_window_shortcut(&p, &v, 40000);
     v.ready = 3;
-    host_window_update(&p, &v, 69999);
+    host_window_update(&p, &v, 40000 + HOST_WINDOW_DURATION_MS - 1);
     v.ready = 1;
-    host_window_update(&p, &v, 70000);
+    host_window_update(&p, &v, 40000 + HOST_WINDOW_DURATION_MS);
     v.ready = 5;
-    assert(host_window_take(&p, &v, 70001, p.generation, false) == -1);
+    assert(host_window_take(&p, &v, 40001 + HOST_WINDOW_DURATION_MS, p.generation, false) == -1);
 }
 
 // Plusieurs destinations donnent une bascule explicite, jamais une poursuite du nouvel arrivant.
@@ -109,7 +109,7 @@ static void multiple_hosts_and_repeated_gestures(void) {
     assert(p.pending == 1);
     host_window_shortcut(&p, &v, 200);
     assert(p.generation != first && p.pending == -1);
-    assert(host_window_remaining(&p, 200) == 30000);
+    assert(host_window_remaining(&p, 200) == HOST_WINDOW_DURATION_MS);
     assert(host_window_take(&p, &v, 201, first, false) == -1);
 
     host_window_shortcut(&p, &v, 300);
@@ -128,10 +128,10 @@ static void pending_manual_after_window(void) {
     host_window_start(&p, 0);
     host_window_shortcut(&p, &v, 0);
     uint32_t ticket = p.generation;
-    assert(host_window_take(&p, &v, 30000, ticket, true) == -1);
+    assert(host_window_take(&p, &v, HOST_WINDOW_DURATION_MS, ticket, true) == -1);
     assert(!p.active && p.pending == 1);
-    assert(host_window_take(&p, &v, 30001, ticket, false) == 1);
-    assert(host_window_take(&p, &v, 30002, ticket, false) == -1);
+    assert(host_window_take(&p, &v, HOST_WINDOW_DURATION_MS + 1, ticket, false) == 1);
+    assert(host_window_take(&p, &v, HOST_WINDOW_DURATION_MS + 2, ticket, false) == -1);
 
     v = view(5, 17, 0);
     host_window_shortcut(&p, &v, 20000);
@@ -188,7 +188,7 @@ static void invalidated_selections(void) {
     ticket = p.generation;
     host_window_cancel_selection(&p);
     assert(host_window_take(&p, &v, 31, ticket, false) == -1);
-    assert(host_window_remaining(&p, 31) == 29999);
+    assert(host_window_remaining(&p, 31) == HOST_WINDOW_DURATION_MS - 1);
 }
 
 // Une disparition peut être suivie d’un autre candidat seulement pendant la recherche encore ouverte.
@@ -248,9 +248,9 @@ static void gaming_transitions(void) {
     assert(p.pending == -1 && !p.active);
 
     assert(host_window_leave_gaming(&p, 5));
-    assert(host_window_remaining(&p, 5) == 30000 && !p.searching);
+    assert(host_window_remaining(&p, 5) == HOST_WINDOW_DURATION_MS && !p.searching);
     assert(!host_window_leave_gaming(&p, 6));
-    assert(host_window_remaining(&p, 6) == 29999);
+    assert(host_window_remaining(&p, 6) == HOST_WINDOW_DURATION_MS - 1);
     host_window_update(&p, &v, 7);
     assert(p.pending == -1);
 
@@ -321,41 +321,59 @@ static void exhaustive_topologies(void) {
     }
 }
 
-// Sans hôte, l’admission dépend de l’activité, jamais d’un réarmement périodique.
+// Une fenêtre réelle traverse IDLE, une recherche continue seule s’y arrête.
 static void discovery_activity_and_connections(void) {
     struct host_discovery_policy p;
-    host_discovery_start(&p, 100);
-    assert(host_discovery_remaining(&p, 100) == HOST_WINDOW_DURATION_MS);
-    assert(host_discovery_remaining(&p, 120000) == HOST_WINDOW_DURATION_MS);
-    host_discovery_update(&p, 120001, 0, false);
-    assert(host_discovery_remaining(&p, 120001) == 0);
-    host_discovery_update(&p, 120010, 0, true);
-    assert(host_discovery_remaining(&p, 120010) == HOST_WINDOW_DURATION_MS);
-    uint32_t generation = p.generation;
-    host_discovery_update(&p, 120020, 2, true);
-    assert(p.generation != generation && p.opened_at_ms == 120020);
-    generation = p.generation;
-    host_discovery_update(&p, 120021, 3, true);
+    host_discovery_start(&p, 0);
+    assert(host_discovery_remaining(&p, 0) == HOST_WINDOW_DURATION_MS);
+    host_discovery_update(&p, HOST_WINDOW_DURATION_MS, 0, false, false);
+    assert(!host_discovery_remaining(&p, HOST_WINDOW_DURATION_MS));
+    host_discovery_update(&p, HOST_WINDOW_DURATION_MS + 1, 0, true, false);
+    assert(host_discovery_remaining(&p, HOST_WINDOW_DURATION_MS + 1) == HOST_WINDOW_DURATION_MS);
+    host_discovery_update(&p, HOST_WINDOW_DURATION_MS + 2, 1, true, false);
+    uint32_t opened = p.opened_at_ms, generation = p.generation;
+    host_discovery_update(&p, opened + 1, 3, false, false);
+    assert(p.generation == generation && host_discovery_remaining(&p, opened + 1) == HOST_WINDOW_DURATION_MS - 1);
+    host_discovery_update(&p, opened + 2, 2, false, false);
     assert(p.generation == generation);
-    assert(host_discovery_remaining(&p, 120020 + HOST_WINDOW_DURATION_MS - 1) == 1);
-    assert(host_discovery_remaining(&p, 120020 + HOST_WINDOW_DURATION_MS) == 0);
-    host_discovery_update(&p, 160000, 1, true);
-    assert(p.generation == generation && !p.opened && host_discovery_remaining(&p, 160000) == 0);
-    host_discovery_update(&p, 160001, 0, true);
-    assert(host_discovery_remaining(&p, 160001) == HOST_WINDOW_DURATION_MS);
-    host_discovery_update(&p, 160002, 0, false);
-    host_discovery_open(&p, 160003);
-    assert(host_discovery_remaining(&p, 160003) == 0);
-    host_discovery_update(&p, 160004, 1, false);
-    assert(host_discovery_remaining(&p, 160004) == 0);
-    host_discovery_update(&p, 160005, 1, true);
-    assert(host_discovery_remaining(&p, 160005) == 0);
+    host_discovery_update(&p, opened + HOST_WINDOW_DURATION_MS, 2, false, false);
+    assert(!p.opened && !host_discovery_remaining(&p, opened + HOST_WINDOW_DURATION_MS));
+    uint32_t recovery = p.recovery;
+    host_discovery_update(&p, opened + HOST_WINDOW_DURATION_MS + 1, 0, true, false);
+    assert(p.recovery != recovery);
+    host_discovery_update(&p, opened + HOST_WINDOW_DURATION_MS + 2, 2, true, false);
+    host_discovery_open(&p, opened + HOST_WINDOW_DURATION_MS + 3);
+    host_discovery_update(&p, opened + HOST_WINDOW_DURATION_MS + 4, 2, false, true);
+    assert(!host_discovery_remaining(&p, opened + HOST_WINDOW_DURATION_MS + 4));
+    host_discovery_update(&p, opened + HOST_WINDOW_DURATION_MS + 5, 2, true, false);
+    assert(!host_discovery_remaining(&p, opened + HOST_WINDOW_DURATION_MS + 5));
     host_discovery_open(&p, UINT32_MAX - 5);
     assert(host_discovery_remaining(&p, 0) == HOST_WINDOW_DURATION_MS - 6);
 }
 
+// Tous les connus peuvent revenir après une perte totale, quel que soit l’ordre de départ.
+static void full_loss_after_partial_loss(void) {
+    for (unsigned first = 0; first < 2; first++) {
+        struct host_discovery_policy p;
+        host_discovery_start(&p, 0);
+        host_discovery_update(&p, 1, 3, true, false);
+        uint32_t generation = p.generation, recovery = p.recovery;
+        uint16_t remaining = (uint16_t)(1u << first);
+        host_discovery_update(&p, 2, remaining, true, false);
+        assert(p.generation == generation && p.recovery == recovery);
+        host_discovery_update(&p, 3, 0, true, false);
+        assert(p.recovery != recovery);
+        assert(host_discovery_remaining(&p, 3) == HOST_WINDOW_DURATION_MS);
+        host_discovery_update(&p, 4, (uint16_t)(3 ^ remaining), true, false);
+        assert(p.generation != generation && p.opened_at_ms == 4);
+        host_discovery_update(&p, 5, 3, true, false);
+        assert(p.opened_at_ms == 4);
+    }
+}
+
 // Exécute le contrat de décision destiné à l’adaptateur ZMK.
 int main(void) {
+    full_loss_after_partial_loss();
     discovery_activity_and_connections();
     startup_and_deadlines();
     search_once();

@@ -39,17 +39,53 @@ void host_preference_saved(struct host_preference *preference,
 
 // L’admission continue sans hôte ne déclenche pas de sauvegarde à une fausse échéance.
 void host_session_update(struct host_session_policy *policy, uint32_t generation,
-                         uint32_t remaining_ms, bool without_host) {
+                         uint32_t remaining_ms, bool without_host, uint32_t recovery) {
     if (!generation) return;
-    if (!policy->initialized) {
+    if (!policy->initialized || policy->recovery != recovery) {
+        bool manual = !policy->initialized && policy->manual;
         policy->initialized = true;
-        policy->restoring = true;
+        policy->recovery = recovery;
+        policy->manual = manual;
+        policy->restoring = !manual;
+        policy->checkpoint = !manual;
+        policy->failover = false;
+        policy->used = -1;
     }
     if (policy->generation != generation) {
         policy->generation = generation;
-        policy->checkpoint = true;
     }
     if (remaining_ms == 0 && !without_host) policy->restoring = false;
+}
+
+// Un geste sans résultat ne remplace jamais la préférence durable à l’échéance.
+void host_session_manual(struct host_session_policy *policy) {
+    policy->manual = true;
+    policy->restoring = false;
+    policy->checkpoint = false;
+    policy->failover = false;
+}
+
+// Une perte partielle déclenche un repli, une perte totale est traitée par recovery.
+void host_session_observe_loss(struct host_session_policy *policy,
+                               const struct host_window_view *view, uint16_t connected) {
+    if (view->count > HOST_WINDOW_CAPACITY || policy->used < 0 || policy->used >= (int)view->count) return;
+    if (view->identities[policy->used] != policy->used_identity) {
+        policy->used = -1;
+        return;
+    }
+    if (connected != 0 && !(connected & (UINT16_C(1) << policy->used))) {
+        policy->failover = true;
+        policy->restoring = false;
+        policy->checkpoint = false;
+    }
+}
+
+// La première sélection au démarrage devient utilisée sans devenir durable immédiatement.
+void host_session_used(struct host_session_policy *policy, const struct host_window_view *view) {
+    if (view->count > HOST_WINDOW_CAPACITY || view->selected < 0 || view->selected >= (int)view->count ||
+        !(view->ready & (UINT16_C(1) << view->selected))) return;
+    policy->used = view->selected;
+    policy->used_identity = view->identities[view->selected];
 }
 
 // Un OS absent ou une topologie invalide ne crée aucune destination implicite.

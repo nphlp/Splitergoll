@@ -651,7 +651,7 @@ les releases futures. Une cible perdue/remplacée ou une commande externe abando
 aussi le lot. Aucun rejeu vers une destination de remplacement arbitraire.
 La présence de cette file bloque les commandes USB mutantes pendant la transition.
 
-Douze suites natives ASan/UBSan couvrent les règles, la borne de trente secondes,
+Douze suites natives ASan/UBSan couvrent les règles, la borne de deux minutes,
 l’ordre/source/timestamps du tampon, doublons, releases, abandon et dépassement.
 Le harnais du vrai ble_auto.c vérifie saisie immédiate, releases vers l’ancien hôte,
 recherche/reconnexion, absence de vol par une arrivée après un geste multi-hôte,
@@ -686,3 +686,16 @@ paquet radio ou lecture série ne passe par ce chemin. L’activité native ne f
 qu’actualiser son horodatage et annoncer ACTIVE, sans exécuter de comportement.
 Recontrôler ce symbole et son contrat à chaque migration, sans patch de dépendance.
 Les durées 120/600 secondes et la garde de 750 ms ne changent pas.
+
+La mémorisation distingue désormais le provisoire de reprise, le geste manuel et le
+repli sur perte de l’hôte réellement utilisé. host_session_update suit recovery et
+le délai radio, host_session_manual annule rappel/checkpoint. Le profil utilisé est
+noté seulement avec connexion et keymap prêtes. Une demande réussie prépare un jeton
+save_candidate, vérifié après application effective des couches et avant rejeu.
+Les erreurs natives, demandes remplacées et identités modifiées ne sauvegardent
+pas de cible périmée. Une expiration de fenêtre explicite ne réarme pas checkpoint.
+La perte totale annule les anciennes demandes et réarme le rappel au précédent,
+sans refuser un connu à cause d’une ancienne perte. L’admission suit la fenêtre
+radio, le sélecteur n’ajoute aucun masque de refus individuel.
+Une sélection USB explicite change réellement le profil puis utilise le même flux.
+La nouvelle politique reste à valider sur matériel, sans modifier les keymaps.

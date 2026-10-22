@@ -1,11 +1,11 @@
-# Connecter les ordinateurs en trente secondes
+# Connecter les ordinateurs en deux minutes
 
-Dans `bluetooth auto`, la gauche ouvre **30 secondes** au démarrage, après reset
+Dans `bluetooth auto`, la gauche ouvre **120 secondes** au démarrage, après reset
 et avec **L1 + clic encodeur droit**. Sans hôte, la recherche reste ouverte tant
-que le clavier est actif. La première connexion ouvre trente secondes pour les
+que le clavier est actif. La première connexion ouvre deux minutes pour les
 suivants. Un réveil de veille profonde recommence le démarrage. Les essais V1 avec la fenêtre temporaire de dix secondes confirment les
 bascules, la saisie retenue et la reconnexion Windows sur demande. Le retour au
-build normal de trente secondes est prévu, pas encore confirmé.
+build normal de deux minutes est prévu, pas encore confirmé.
 
 ## Reconnexion et nouvel appareil
 
@@ -16,7 +16,7 @@ build normal de trente secondes est prévu, pas encore confirmé.
   pendant la fenêtre. Les connus peuvent revenir pendant ce temps.
 - Si tous les connus sont revenus, l’accueil reste ouvert jusqu’à l’échéance
   tant qu’une place est disponible. Si les slots sont pleins, aucun n’est effacé.
-- À trente secondes, les nouvelles demandes se ferment. Un appairage déjà commencé
+- À deux minutes, les nouvelles demandes se ferment. Un appairage déjà commencé
   peut finir, au plus tard **30 secondes après son début**. Les connexions établies restent actives.
 
 Le premier nouvel appareil devient utilisable s’il est seul connecté et si la
@@ -26,7 +26,7 @@ avec au plus un appareil prêt. Les touches attendent une connexion sécurisée 
 
 ## Changer d’ordinateur
 
-**L1 + clic encodeur droit**, puis relâchement, ouvre de nouveau trente secondes :
+**L1 + clic encodeur droit**, puis relâchement, ouvre de nouveau deux minutes :
 
 - Un seul ordinateur prêt : continuer à l’utiliser, puis basculer sur le premier
   autre appareil prêt, qu’il soit déjà appairé ou nouveau.
@@ -42,7 +42,7 @@ orpheline. Les rotations pendant cette courte transition sont ignorées.
 Les allers-retours et la saisie immédiate sont confirmés sur V1, ainsi que le blocage
 par Shift maintenu puis la reprise après relâchement.
 Le [retour au précédent appareil](selection-appareil.md) et sa préférence durable
-sont implémentés dans le nouveau lot, à valider sur matériel.
+sont confirmés sur V1 au délai court. Le délai normal et les nouveaux bonds restent distincts.
 Le raccourci reste accessible même si aucune keymap d’OS n’est encore utilisable.
 
 Pas besoin d’effacer les slots pour reconnecter les connus ou ajouter un appareil.
@@ -65,11 +65,13 @@ pas la marge de fin d’appairage. La mémoire confirme l’OS et sa sauvegarde.
 Ces lectures n’ouvrent aucune fenêtre et ne changent aucun appairage ni sélection.
 La [gestion d’appairage](gestion-appairage.md) distingue ce lot des prochaines étapes.
 
-Le nouveau diagnostic `BLEPROFILE` v4 ajoute `POLICY` : `active` indique l’activité,
+Le diagnostic `BLEPROFILE` v6 expose `POLICY` : `active` indique l’activité,
 `without_host=1` une recherche continue sans hôte, `remembered` le slot dont le bond
 vérifié correspond à la préférence, et `saved` sa présence en mémoire.
 `remembered=-1` peut simplement signifier que le bond n’est pas encore vérifié
 pour ce démarrage. `restoring` indique le retour prioritaire encore autorisé.
 `POLICY error` concerne la sauvegarde de préférence, `WINDOW error` la radio/appairage.
 Sans hôte, `remaining_ms` reste à la durée nominale, ce n’est pas un compte à rebours.
+La v6 retire le champ historique `excluded` : seule la fenêtre décide des retours,
+voir [les règles de déconnexion](selection-appareil.md#déconnexion-et-recherche).
 Les lecteurs restent compatibles avec les anciens diagnostics.

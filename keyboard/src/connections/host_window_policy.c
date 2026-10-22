@@ -37,7 +37,7 @@ static void open_window(struct host_window_policy *policy, uint32_t now_ms) {
     host_window_cancel_selection(policy);
     policy->opened_at_ms = now_ms;
     policy->active = true;
-    policy->excluded = 0;
+    policy->initial_ready = 0;
     policy->source = HOST_WINDOW_NO_TARGET;
     policy->source_identity = 0;
 }
@@ -114,7 +114,7 @@ bool host_window_shortcut(struct host_window_policy *policy, const struct host_w
     open_window(policy, now_ms);
     policy->source = view->selected;
     policy->source_identity = view->selected >= 0 ? view->identities[view->selected] : 0;
-    policy->excluded = view->ready;
+    policy->initial_ready = view->ready;
     unsigned count = ready_count(view->ready);
     policy->searching = count <= 1;
     if (count > 1) {
@@ -171,7 +171,7 @@ void host_window_update(struct host_window_policy *policy, const struct host_win
         clear_pending(policy);
     }
     if (policy->searching && policy->active) {
-        uint16_t candidates = view->ready & (uint16_t)~policy->excluded;
+        uint16_t candidates = view->ready & (uint16_t)~policy->initial_ready;
         int target = next_ready(view, view->selected, candidates);
         if (target >= 0) set_pending(policy, view, target, true);
     }
@@ -192,35 +192,47 @@ int host_window_take(struct host_window_policy *policy, const struct host_window
     return target;
 }
 
-// Toute nouvelle fenêtre invalide une échéance copiée par le travail radio.
-void host_discovery_open(struct host_discovery_policy *policy, uint32_t now_ms) {
+// Ouvre un délai commun à tous les appareils, sans changer la destination.
+static void discovery_window(struct host_discovery_policy *policy, uint32_t now_ms) {
     policy->opened = true;
     policy->opened_at_ms = now_ms;
     if (++policy->generation == 0) policy->generation = 1;
 }
 
+// Une recherche explicite ouvre la même fenêtre pour tous les appareils connus ou nouveaux.
+void host_discovery_open(struct host_discovery_policy *policy, uint32_t now_ms) {
+    discovery_window(policy, now_ms);
+}
+
 // Le démarrage ne présume aucune connexion et ne modifie aucune sélection native.
 void host_discovery_start(struct host_discovery_policy *policy, uint32_t now_ms) {
-    *policy = (struct host_discovery_policy){.awake = true};
+    *policy = (struct host_discovery_policy){.awake = true, .recovery = 1};
     host_discovery_open(policy, now_ms);
 }
 
-// IDLE ferme l’admission, le retour ACTIVE seul ne rouvre que s’il n’y a aucun hôte.
+// Une fenêtre réelle peut finir en IDLE, SLEEP ferme toujours l’admission.
 void host_discovery_update(struct host_discovery_policy *policy, uint32_t now_ms,
-                           uint16_t connected, bool awake) {
+                           uint16_t connected, bool awake, bool sleeping) {
     if (policy->opened && (uint32_t)(now_ms - policy->opened_at_ms) >= HOST_WINDOW_DURATION_MS) {
         policy->opened = false;
     }
-    if (awake && policy->connected == 0 && connected != 0) host_discovery_open(policy, now_ms);
-    if (!awake) policy->opened = false;
+    if (connected != 0) {
+        // Une perte partielle ne ferme pas une recherche en cours et ne la rouvre pas.
+        // Aucun refus individuel ne doit survivre à la perte de tous les hôtes.
+        if (!sleeping && policy->connected == 0) discovery_window(policy, now_ms);
+    } else if (policy->connected != 0) {
+        if (++policy->recovery == 0) policy->recovery = 1;
+    }
+    if (sleeping) policy->opened = false;
     policy->connected = connected;
     policy->awake = awake;
+    policy->sleeping = sleeping;
 }
 
 // La radio sans hôte reste ouverte sans devoir relancer un minuteur ou l’activité ZMK.
 uint32_t host_discovery_remaining(const struct host_discovery_policy *policy, uint32_t now_ms) {
-    if (!policy->awake) return 0;
-    if (policy->connected == 0) return HOST_WINDOW_DURATION_MS;
+    if (policy->sleeping) return 0;
+    if (policy->awake && policy->connected == 0) return HOST_WINDOW_DURATION_MS;
     uint32_t elapsed = now_ms - policy->opened_at_ms;
     if (!policy->opened || elapsed >= HOST_WINDOW_DURATION_MS) return 0;
     return HOST_WINDOW_DURATION_MS - elapsed;

@@ -1,4 +1,4 @@
-// Sauvegarde à l’échéance une empreinte opaque, sans adresse, clé ou historique de frappe.
+// Sauvegarde sur décision du sélecteur une empreinte opaque, sans adresse, clé ou historique de frappe.
 #include <splitergoll/host_preference.h>
 #include <splitergoll/host_preference_settings.h>
 #include <splitergoll/ble_os_settings.h>

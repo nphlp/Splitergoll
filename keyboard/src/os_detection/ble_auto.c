@@ -36,7 +36,8 @@ static struct ble_device_request device_request;
 static struct host_window_policy device_window;
 static bool arrival_search;
 static struct host_session_policy session;
-static bool explicit_choice;
+static bool requested_manual;
+static struct {int profile; uint32_t identity;} save_candidate = {.profile = -1};
 static bool internal_selection;
 static int observed_profile;
 static int automatic_target = -1;
@@ -121,6 +122,7 @@ void splitergoll_ble_auto_adopt_device(unsigned target, unsigned origin, uint32_
     } else pending = ble_device_adopt(&device_request, ZMK_BLE_PROFILE_COUNT,
                                        zmk_ble_active_profile_index(), connected_hosts(), target, origin);
     if (pending) {
+        requested_manual = search_pairing;
         bt_addr_le_copy(&requested_peer, zmk_ble_profile_address(target));
         bt_addr_le_copy(&requested_source_peer, zmk_ble_profile_address(origin));
     }
@@ -152,8 +154,8 @@ int splitergoll_ble_auto_next_device(void) {
     splitergoll_ble_auto_lock();
     if (input_buffer.active) ble_device_buffer_discard(&input_buffer);
     device_request.pending = false;
-    explicit_choice = true;
-    session.restoring = false;
+    host_session_manual(&session);
+    save_candidate.profile = -1;
     automatic_target = -1;
     struct host_window_view view = host_view();
     host_window_shortcut(&device_window, &view, k_uptime_get_32());
@@ -168,13 +170,21 @@ int splitergoll_ble_auto_next_device(void) {
 // Les frappes reçues pendant le drainage attendent la nouvelle keymap dans une file RAM bornée.
 static void select_requested_device(uint32_t now_ms) {
     struct host_window_view view = host_view();
-    host_window_update(&device_window, &view, now_ms);
     struct ble_reconnect_status radio = splitergoll_ble_reconnect_status();
     struct host_preference_status preference = splitergoll_host_preference_status();
     if (radio.ready && preference.loaded) {
-        host_session_update(&session, radio.generation, radio.remaining_ms, radio.without_host);
-        if (explicit_choice) session.restoring = false;
+        if (session.initialized && session.recovery != radio.recovery) {
+            host_window_start(&device_window, now_ms);
+            device_request.pending = false;
+            arrival_search = false;
+            automatic_target = -1;
+            save_candidate.profile = -1;
+            if (input_buffer.active) ble_device_buffer_discard(&input_buffer);
+        }
+        host_session_update(&session, radio.generation, radio.remaining_ms, radio.connected == 0, radio.recovery);
+        host_session_observe_loss(&session, &view, radio.connected);
     }
+    host_window_update(&device_window, &view, now_ms);
     bool explicit_target = device_window.pending >= 0;
     bool requested = explicit_target || device_window.searching || device_request.pending;
     if (requested) automatic_target = -1;
@@ -203,6 +213,7 @@ static void select_requested_device(uint32_t now_ms) {
     bool busy = state.input.held || state.input.admitted || reports_busy ||
                 usb_auto_drain_remaining(&state.input, now_ms);
     bool searched = device_window.pending_search;
+    bool save_immediately = explicit_target || (adoption && requested_manual) || session.failover;
     int target = host_window_take(&device_window, &view, now_ms, device_window.generation, busy);
     if (target < 0 && adoption) {
         searched = true;
@@ -221,9 +232,18 @@ static void select_requested_device(uint32_t now_ms) {
     int result = zmk_ble_prof_select(target);
     internal_selection = false;
     if (result) {
+        save_candidate.profile = -1;
         ble_device_buffer_discard(&input_buffer);
         LOG_WRN("BLE device selection failed: profile=%d error=%d", target, result);
-    } else LOG_INF("BLE device selected: profile=%d", target);
+    } else {
+        if (save_immediately) {
+            session.restoring = false;
+            session.checkpoint = false;
+            save_candidate.profile = target;
+            save_candidate.identity = view.identities[target];
+        }
+        LOG_INF("BLE device selected: profile=%d", target);
+    }
 }
 
 // L’USB d’alimentation n’intervient jamais dans l’OS ou la disponibilité de l’hôte BLE.
@@ -327,6 +347,22 @@ static void reconcile_selection(uint32_t now_ms) {
             LOG_INF("BLE keymap selected: profile=%d os=%s", before.profile, ble_memory_os_name(before.os));
         }
     }
+    struct host_window_view view = host_view();
+    if (before.ready && state.input.selected != USB_OS_UNKNOWN) {
+        if (save_candidate.profile >= 0) {
+            if (save_candidate.profile == before.profile &&
+                save_candidate.identity == view.identities[before.profile]) {
+                splitergoll_host_preference_save((unsigned)before.profile);
+            }
+            save_candidate.profile = -1;
+        }
+        host_session_used(&session, &view);
+        session.failover = false;
+    } else if (save_candidate.profile >= 0 &&
+               (view.selected != save_candidate.profile ||
+                view.identities[save_candidate.profile] != save_candidate.identity)) {
+        save_candidate.profile = -1;
+    }
     if (input_buffer.active && device_window.pending < 0 && !device_request.pending && automatic_target < 0 &&
         state.input.selected != USB_OS_UNKNOWN) {
         if (input_buffer.overflow) {
@@ -354,7 +390,7 @@ static void select_os(struct k_work *work) {
     reconcile_selection(now_ms);
     uint32_t remaining = usb_auto_drain_remaining(&state.input, now_ms);
     struct ble_reconnect_status radio = splitergoll_ble_reconnect_status();
-    if (session.checkpoint && radio.remaining_ms == 0 && !radio.without_host &&
+    if (session.checkpoint && radio.remaining_ms == 0 && radio.connected != 0 &&
         device_window.pending < 0 && !device_request.pending && automatic_target < 0 && !input_buffer.active) {
         struct ble_auto_target current = current_target();
         if (current.ready && state.input.selected != USB_OS_UNKNOWN) {
@@ -387,9 +423,11 @@ static int profile_changed(const zmk_event_t *event) {
     const struct zmk_ble_active_profile_changed *profile = as_zmk_ble_active_profile_changed(event);
     splitergoll_ble_auto_lock();
     if (!internal_selection && session.initialized && observed_profile != (int)profile->index) {
-        explicit_choice = true;
-        session.restoring = false;
+        host_session_manual(&session);
         automatic_target = -1;
+        struct host_window_view view = host_view();
+        save_candidate.profile = profile->index;
+        save_candidate.identity = view.identities[profile->index];
         splitergoll_ble_reconnect_open();
     }
     observed_profile = profile->index;

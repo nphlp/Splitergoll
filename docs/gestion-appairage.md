@@ -3,13 +3,13 @@
 **Règles cibles, partiellement implémentées.** L’appairage crée une nouvelle
 association. La reconnexion réutilise une association existante, sans la refaire.
 Le firmware traite les [reconnexions et nouveaux appairages](reconnexion-bluetooth.md)
-pendant trente secondes, au démarrage et avec le raccourci. La recherche avec bascule
+pendant deux minutes, au démarrage et avec le raccourci. La recherche avec bascule
 sur une arrivée est confirmée sur V1 pour la reconnexion Windows, avec le diagnostic
 à dix secondes. Gaming USB reste à développer.
 
-## Fenêtres de trente secondes
+## Fenêtres de deux minutes
 
-Trois événements ouvrent les annonces et l’appairage pendant **30 secondes** :
+Trois événements ouvrent les annonces et l’appairage pendant **120 secondes** :
 
 1. Le démarrage du clavier, y compris après reset.
 2. Le retour du Gaming USB à la base Windows.
@@ -22,26 +22,29 @@ pas une fermeture anticipée si un nouvel appareil peut encore être ajouté.
 Après la fenêtre, les annonces et les nouveaux appairages se ferment, les connexions
 établies restent présentes. Le même raccourci peut rouvrir la fenêtre plus tard.
 La saisie ne prolonge pas la fenêtre. Si un appareil se déconnecte alors qu’un autre
-reste connecté, cela ne rouvre pas la recherche.
+reste connecté, cela ne rouvre pas la recherche. Pendant une fenêtre encore
+ouverte, son retour reste autorisé, y compris après une déconnexion volontaire.
+Aucune exclusion individuelle ne survit à la perte de toutes les connexions.
 
 ## Sans ordinateur connecté
 
 Tant que le clavier est actif et sans hôte connecté, rechercher les connus et
-accueillir de nouveaux appairages sans limite de trente secondes. À l’inactivité
+accueillir de nouveaux appairages sans limite de deux minutes. À l’inactivité
 après deux minutes, fermer cette recherche. Elle ne doit pas retarder la veille
 profonde à dix minutes, qui reste empêchée par l’alimentation USB.
 
-Le nouveau lot raccorde explicitement la politique radio à la veille légère.
+Une fenêtre explicite déjà ouverte peut se terminer en veille légère. Le sommeil
+profond ferme la radio, sans que les annonces repoussent son échéance.
 Il est testé en logiciel, sa validation matérielle reste à faire.
 Cette règle inclut la perte du dernier hôte : tant qu’aucun ne reste connecté, la
 recherche reprend si le clavier est actif. Au retour du premier, une fenêtre
-ordinaire de trente secondes laisse rejoindre les suivants. Une perte partielle ne
+ordinaire de deux minutes laisse rejoindre les suivants. Une perte partielle ne
 la rouvre pas. Une touche réactive la recherche après la veille légère, même sans
 OS encore utilisable. Voir [les essais de recherche](tests-recherche-bluetooth.md).
 
 ## Terminer un appairage
 
-Un appairage commencé pendant ces trente secondes pourra se terminer ensuite, dans
+Un appairage commencé pendant ces deux minutes pourra se terminer ensuite, dans
 la limite de **30 secondes depuis son début**. Cette marge ne rouvre pas l’accueil
 aux autres appareils. Plusieurs appairages peuvent se succéder si leur démarrage
 reste dans la fenêtre. Cette extension est implémentée, sa validation matérielle reste à faire.
@@ -58,7 +61,7 @@ enregistré ne sera effacé automatiquement pour faire de la place.
 
 Le nombre de destinations disponibles **au moment du geste** détermine son effet :
 
-| Destinations | Action immédiate | Si un autre appareil devient prêt pendant les 30 secondes |
+| Destinations | Action immédiate | Si un autre appareil devient prêt pendant les 120 secondes |
 | --- | --- | --- |
 | Une | Continuer à l’utiliser et ouvrir la recherche | Basculer sur le premier autre appareil prêt |
 | Plusieurs | Sélectionner la suivante et ouvrir la fenêtre | Garder le choix qui vient d’être fait |
@@ -70,7 +73,7 @@ sans nouvel appairage, un nouveau doit finir son association et avoir une keymap
 
 Pour éviter les bascules successives, la recherche doit sélectionner au plus un nouvel
 appareil. Sans arrivée utilisable, le choix reste inchangé. Chaque nouveau geste
-relance trente secondes et remplace l’intention précédente, sans suspendre la saisie.
+relance deux minutes et remplace l’intention précédente, sans suspendre la saisie.
 Une cible prête retenue avant l’échéance peut attendre le relâchement des touches
 après celle-ci. Les nouvelles arrivées sont alors refusées, les connexions conservées.
 
@@ -80,7 +83,7 @@ L’entrée en Gaming USB ferme la fenêtre en cours, arrête les annonces vers 
 ordinateurs et déconnecte le Mac en BLE. Les appairages et OS mémorisés sont conservés.
 La liaison BLE entre les deux moitiés reste nécessaire.
 
-Au retour à Windows USB, la nouvelle fenêtre de 30 secondes laisse revenir le Mac.
+Au retour à Windows USB, la nouvelle fenêtre de 120 secondes laisse revenir le Mac.
 Windows reste utilisable en USB et sélectionné, la reconnexion du Mac ne prend pas
 la destination. Le raccourci permet ensuite de le sélectionner. Si le retour vient
 de L1 + clic encodeur droit, il porte au contraire la demande explicite de recherche
@@ -92,12 +95,6 @@ mixte avec Gaming USB, pas une coupure de la seule sortie d’un clavier en Blue
 
 ## Décisions restantes
 
-- Implémenter la fenêtre réelle acceptée de 120 secondes, dix secondes en test.
-  Cette fenêtre pourrait finir en veille légère sans repousser la veille profonde.
-  La recherche continue sans hôte, hors fenêtre explicite, resterait limitée à ACTIVE.
-- Implémenter l’exclusion acceptée d’un hôte perdu alors qu’un autre reste connecté, jusqu’au
-  prochain raccourci ou redémarrage. Elle éviterait son retour après une déconnexion
-  volontaire, mais s’appliquerait aussi aux coupures radio, faute d’intention fiable.
 - Rendre visible le manque de place lorsque tous les slots sont occupés.
 - Préciser si Gaming USB déconnecte aussi Windows BLE, en plus du Mac.
 

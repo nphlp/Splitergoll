@@ -109,13 +109,13 @@ function Test-BleCapture {
 function Test-BleProfile {
     param([System.Collections.Generic.List[string]]$Lines, [string]$Command)
 
-    if ($Lines.Count -lt 5 -or $Lines[1] -notmatch '^BLEPROFILE BEGIN version=([1234]) count=([0-9]+) active=([0-9]+) save_delay_ms=[0-9]+$') {
+    if ($Lines.Count -lt 5 -or $Lines[1] -notmatch '^BLEPROFILE BEGIN version=([123456]) count=([0-9]+) active=([0-9]+) save_delay_ms=[0-9]+$') {
         throw 'Réponse incorrecte : firmware ble-trace avec contrôle des emplacements requis.'
     }
     $Version = [int]$Matches[1]
     $Expected = [int]$Matches[2]
     $Active = [int]$Matches[3]
-    $Extra = [int]($Version -ge 3) + [int]($Version -eq 4)
+    $Extra = [int]($Version -ge 3) + [int]($Version -ge 4)
     if ($Expected -lt 1 -or $Expected -gt 10 -or $Active -ge $Expected -or $Lines.Count -ne $Expected + 4 + $Extra) {
         throw 'Réponse des emplacements tronquée ou incohérente.'
     }
@@ -134,22 +134,26 @@ function Test-BleProfile {
         $Known = [int]$Matches[4]
         $Connected = [int]$Matches[5]
         $Limit = 1 -shl $Expected
-        if ($Remaining -gt 30000 -or $Known -ge $Limit -or $Connected -ge $Limit -or
+        $Maximum = if ($Version -ge 5) { 120000 } else { 30000 }
+        if ($Remaining -gt $Maximum -or $Known -ge $Limit -or $Connected -ge $Limit -or
             ($Connected -band (-bnot $Known)) -ne 0 -or
             ($Ready -eq 0 -and ($Remaining -ne 0 -or $Advertising -ne 0 -or $Known -ne 0 -or $Connected -ne 0))) {
             throw 'État de reconnexion incohérent.'
         }
     }
-    if ($Version -eq 4) {
-        if ($Lines[$Expected + 3] -notmatch '^BLEPROFILE POLICY active=([01]) without_host=([01]) loaded=([01]) saved=([01]) remembered=(-1|[0-9]+) restoring=([01]) error=-?[0-9]+$') {
+    if ($Version -ge 4) {
+        if ($Lines[$Expected + 3] -notmatch '^BLEPROFILE POLICY active=([01]) without_host=([01]) loaded=([01]) saved=([01]) remembered=(-1|[0-9]+) restoring=([01]) error=-?[0-9]+( excluded=([0-9]+))?$') {
             throw 'Politique de destination absente ou incorrecte.'
         }
+        $Excluded = [int]$Matches[8]
+        $HasExcluded = $Matches.ContainsKey(8)
         $Awake = [int]$Matches[1]
         $Without = [int]$Matches[2]
         $Loaded = [int]$Matches[3]
         $Saved = [int]$Matches[4]
         $Remembered = [int]$Matches[5]
-        if ($Remembered -ge $Expected -or ($Remembered -ge 0 -and ($Loaded -eq 0 -or $Saved -eq 0)) -or
+        if ((($Version -eq 5) -ne $HasExcluded) -or $Excluded -ge $Limit -or
+            ($Excluded -band (-bnot $Known)) -ne 0 -or $Remembered -ge $Expected -or ($Remembered -ge 0 -and ($Loaded -eq 0 -or $Saved -eq 0)) -or
             ($Without -eq 1 -and ($Awake -eq 0 -or $Connected -ne 0))) {
             throw 'Politique de destination incohérente.'
         }

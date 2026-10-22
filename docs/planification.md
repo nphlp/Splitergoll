@@ -35,8 +35,8 @@ grâce à ses USB d’alimentation. V2 peut fonctionner en USB avec le profil ad
 
 | Sujet | Matériel pour terminer | Ce qu’on peut préparer sans Windows |
 | --- | --- | --- |
-| Fenêtres de reconnexion de 30 secondes | Mac + Windows + un clavier, deux appairages avec OS mémorisés | Code compilé et contrôlé. Attendre les deux hôtes pour tester les deux ordres de retour, la fermeture et la réouverture |
-| Sélection automatique et retour au précédent pendant les 30 secondes du démarrage | Mac + Windows + un clavier. V2 ajoute l’essai après vraie veille profonde | Logique et tests automatisés, puis essai groupé avec les deux ordres et des frappes pendant la fenêtre |
+| Fenêtres de reconnexion de deux minutes | Mac + Windows + un clavier, deux appairages avec OS mémorisés | Comportements principaux validés sur V1 au délai de dix secondes. Confirmer le délai normal et les nouveaux bonds |
+| Sélection automatique et retour au précédent pendant la fenêtre de démarrage | Mac + Windows + un clavier. V2 ajoute l’essai après vraie veille profonde | Sauvegarde immédiate, persistance et retour Windows après Mac confirmés. Vraie veille profonde et délai normal restent distincts |
 | Accueil d’un nouvel appareil sans détourner la saisie | Mac + Windows + un clavier | Cadrage et tests des slots libres/pleins et des demandes concurrentes. Intégré et testé en logiciel. Valider ensemble appairage initial et reconnexion |
 | Réduire le délai de bascule | Mac + Windows + un clavier | Inspecter les gardes et préparer les mesures. Comparer les deux sens avec le même firmware |
 | Destinations USB/BLE et priorité USB | Mac + Windows + un clavier | Concevoir l’association des identités. Tester ensuite branchement, retrait, repli et absence de doublon. Deux PC Windows seraient utiles pour éprouver l’identité au-delà de l’OS |
@@ -64,10 +64,10 @@ directement. Les essais batterie et veille n’en ont pas besoin.
 
 ## Ordre conseillé
 
-1. Sur V1, vérifier les slots et la mémoire d’OS, puis tester la fenêtre commune
-   de trente secondes : accueil Mac/Windows, reconnexion dans les deux ordres,
-   fermeture et réouverture par raccourci. Garder V2 disponible pour la saisie.
-2. Après validation, développer les destinations USB/BLE puis Gaming USB,
+1. Le lot Bluetooth principal est validé sur V1 au délai court. Pour la reprise,
+   confirmer le délai normal de deux minutes, puis compléter nouveaux appairages
+   et IDLE si nécessaire. Ne pas refaire toutes les bascules déjà validées.
+2. Développer ensuite les destinations USB/BLE puis Gaming USB,
    avec les deux ordinateurs disponibles pour les transitions.
 3. Sur V2, compléter première frappe, encodeurs et autonomie sur batterie.
 4. Compléter la reprise de l’app après sommeil du Mac et l’ouverture de session.

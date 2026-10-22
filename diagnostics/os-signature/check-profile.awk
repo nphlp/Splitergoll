@@ -2,7 +2,7 @@
 BEGIN { started = 0; count = 0; result = 0; ended = 0; invalid = 0; window = 0; policy = 0 }
 { sub(/\r$/, "") }
 /^#/ { next }
-/^BLEPROFILE BEGIN version=[1234] count=[0-9]+ active=[0-9]+ save_delay_ms=[0-9]+$/ {
+/^BLEPROFILE BEGIN version=[123456] count=[0-9]+ active=[0-9]+ save_delay_ms=[0-9]+$/ {
     if (started || ended) invalid = 1
     started = 1
     split($3, value, "="); version = value[2] + 0
@@ -24,7 +24,7 @@ BEGIN { started = 0; count = 0; result = 0; ended = 0; invalid = 0; window = 0; 
     split($5, value, "="); advertising = value[2] + 0
     split($6, value, "="); known = value[2] + 0
     split($7, value, "="); connected = value[2] + 0
-    if (remaining > 30000 || known >= 2^expected || connected >= 2^expected ||
+    if (remaining > (version >= 5 ? 120000 : 30000) || known >= 2^expected || connected >= 2^expected ||
         (!ready && (remaining || advertising || known || connected))) invalid = 1
     for (bit = 1; bit < 2^expected; bit *= 2) {
         if (int(connected / bit) % 2 && !(int(known / bit) % 2)) invalid = 1
@@ -32,8 +32,8 @@ BEGIN { started = 0; count = 0; result = 0; ended = 0; invalid = 0; window = 0; 
     window = 1
     next
 }
-/^BLEPROFILE POLICY active=[01] without_host=[01] loaded=[01] saved=[01] remembered=(-1|[0-9]+) restoring=[01] error=-?[0-9]+$/ {
-    if (!started || version != 4 || !window || policy || result || ended) invalid = 1
+/^BLEPROFILE POLICY active=[01] without_host=[01] loaded=[01] saved=[01] remembered=(-1|[0-9]+) restoring=[01] error=-?[0-9]+( excluded=[0-9]+)?$/ {
+    if (!started || version < 4 || (version != 5 && NF != 9) || (version == 5 && NF != 10) || !window || policy || result || ended) invalid = 1
     split($3, value, "="); awake = value[2] + 0
     split($4, value, "="); without = value[2] + 0
     split($5, value, "="); loaded = value[2] + 0
@@ -41,11 +41,16 @@ BEGIN { started = 0; count = 0; result = 0; ended = 0; invalid = 0; window = 0; 
     split($7, value, "="); remembered = value[2] + 0
     if (remembered >= expected || (remembered >= 0 && (!loaded || !saved)) ||
         (without && (!awake || connected != 0))) invalid = 1
+    split($10, value, "="); excluded = value[2] + 0
+    if (excluded >= 2^expected) invalid = 1
+    for (bit = 1; bit < 2^expected; bit *= 2) {
+        if (int(excluded / bit) % 2 && !(int(known / bit) % 2)) invalid = 1
+    }
     policy = 1
     next
 }
 /^BLEPROFILE RESULT command=[SF0-9] status=(ok|busy|full|invalid|failed) selected=[0-9]+ changed=[01] error=-?[0-9]+$/ {
-    if (!started || result || ended || count != expected || (version >= 3 && !window) || (version == 4 && !policy)) invalid = 1
+    if (!started || result || ended || count != expected || (version >= 3 && !window) || (version >= 4 && !policy)) invalid = 1
     split($3, value, "="); if (value[2] != command) invalid = 1
     split($5, value, "="); if (value[2] + 0 != active) invalid = 1
     result = 1

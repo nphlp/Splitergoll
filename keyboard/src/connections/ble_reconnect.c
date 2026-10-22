@@ -81,6 +81,13 @@ void set_profile_address(uint8_t index, const bt_addr_le_t *address);
 // Réveille un seul travail sans faire de commande HCI depuis un callback Bluetooth.
 static void notify(void) { k_work_reschedule(&reconnect_work, K_NO_WAIT); }
 
+// Appel sous control_lock : IDLE conserve le délai explicite, SLEEP ferme la radio.
+static void update_discovery(uint16_t connected_hosts) {
+    enum zmk_activity_state activity = zmk_activity_get_state();
+    host_discovery_update(&discovery, k_uptime_get_32(), connected_hosts,
+                           activity == ZMK_ACTIVITY_ACTIVE, activity == ZMK_ACTIVITY_SLEEP);
+}
+
 // Le slot sélectionné ne sert jamais de variable temporaire pour rechercher un autre hôte.
 void splitergoll_ble_reconnect_open(void) {
     k_spinlock_key_t key = k_spin_lock(&control_lock);
@@ -98,6 +105,8 @@ struct ble_reconnect_status splitergoll_ble_reconnect_status(void) {
     struct ble_reconnect_status snapshot = status;
     snapshot.remaining_ms = status.ready ? host_discovery_remaining(&discovery, k_uptime_get_32()) : 0;
     snapshot.generation = discovery.generation;
+    snapshot.recovery = discovery.recovery;
+    snapshot.connected = discovery.connected & status.known;
     snapshot.opened_at_ms = discovery.opened_at_ms;
     snapshot.active = discovery.awake;
     snapshot.without_host = discovery.awake && discovery.connected == 0;
@@ -295,6 +304,7 @@ static void connected(struct bt_conn *conn, uint8_t error) {
         k_spinlock_key_t key = k_spin_lock(&control_lock);
         bool open = status.ready && host_discovery_remaining(&discovery, k_uptime_get_32()) != 0;
         bool allowed = ble_reconnect_accept(open, profile >= 0, has_bond);
+        if (allowed) update_discovery(discovery.connected | (UINT16_C(1) << profile));
         if (!allowed && profile < 0 && !has_bond && info_registered && open && pairing.conn == NULL) {
             int slot = ble_pairing_reserve(&pairing.policy, ZMK_BLE_PROFILE_COUNT,
                 status.free_slots, selected_profile, (uint32_t)bt_conn_index(conn) + 1, open);
@@ -321,7 +331,9 @@ static void connected(struct bt_conn *conn, uint8_t error) {
 static void disconnected(struct bt_conn *conn, uint8_t reason) {
     ARG_UNUSED(reason);
     if (!is_host(conn)) return;
+    int profile = zmk_ble_profile_index(bt_conn_get_dst(conn));
     k_spinlock_key_t key = k_spin_lock(&control_lock);
+    if (profile >= 0) update_discovery(discovery.connected & (uint16_t)~(UINT16_C(1) << profile));
     if (pairing.conn == conn) pairing.disconnected = true;
     revision++;
     k_spin_unlock(&control_lock, key);
@@ -515,8 +527,7 @@ static void reconcile(struct k_work *work) {
         k_spin_unlock(&control_lock, key);
         return;
     }
-    host_discovery_update(&discovery, k_uptime_get_32(), status.connected,
-                           zmk_activity_get_state() == ZMK_ACTIVITY_ACTIVE);
+    update_discovery(discovery.connected);
     request.advertisement = native;
     request.revision = revision;
     uint32_t remaining = host_discovery_remaining(&discovery, k_uptime_get_32());
@@ -548,9 +559,13 @@ static void reconcile(struct k_work *work) {
     }
     splitergoll_ble_auto_unlock();
     key = k_spin_lock(&control_lock);
+    if (revision != request.revision) {
+        k_spin_unlock(&control_lock, key);
+        notify();
+        return;
+    }
     uint32_t previous_generation = discovery.generation;
-    host_discovery_update(&discovery, k_uptime_get_32(), view.connected,
-                           zmk_activity_get_state() == ZMK_ACTIVITY_ACTIVE);
+    update_discovery(view.connected);
     if (discovery.generation != previous_generation) {
         revision++;
         request.revision = revision;
@@ -600,8 +615,8 @@ static void reconcile(struct k_work *work) {
 static int activity_changed(const zmk_event_t *event) {
     const struct zmk_activity_state_changed *activity = as_zmk_activity_state_changed(event);
     k_spinlock_key_t key = k_spin_lock(&control_lock);
-    host_discovery_update(&discovery, k_uptime_get_32(), status.connected,
-                           activity->state == ZMK_ACTIVITY_ACTIVE);
+    host_discovery_update(&discovery, k_uptime_get_32(), discovery.connected,
+                           activity->state == ZMK_ACTIVITY_ACTIVE, activity->state == ZMK_ACTIVITY_SLEEP);
     revision++;
     k_spin_unlock(&control_lock, key);
     notify();

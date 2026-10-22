@@ -1317,17 +1317,18 @@ historiques du diagnostic restent actives. Les formats D/S/M et l’effacement c
 ne changent pas. Les lecteurs ne doivent pas annoncer que toute keymap reste fixe :
 la lecture est passive, mais le sélecteur auto agit indépendamment depuis la mémoire.
 
-Le lecteur WINDOW accepte maintenant jusqu’à 30000 ms, y compris les anciennes
-valeurs inférieures. AWK et PowerShell passent les mêmes 44 cas, dont 30000 admis
-et 30001 refusé, sans accès série. Le BOM UTF-8 du script autonome reste conservé.
-
 ## État de préférence Bluetooth
 
-Le nouveau bluetooth auto ble-trace émet BLEPROFILE v4 : WINDOW reste inchangé,
-puis POLICY active/without_host/loaded/saved/remembered/restoring/error. remembered
-est le slot résolu par l’empreinte du bond vérifiée, jamais une identité exportée.
--1 avec saved=1 signifie que le choix existe mais n’est pas encore résolu pour ce
-démarrage. Sans hôte, remaining_ms affiche la durée nominale et without_host=1,
-pas un compte à rebours. Les lecteurs AWK/PowerShell acceptent encore v1/v2/v3 et
-refusent POLICY manquant, doublé, hors ordre ou incohérent. Les lectures restent
-passives, seule une commande select explicite peut ouvrir une fenêtre de choix.
+bluetooth auto ble-trace émet BLEPROFILE v6 : WINDOW conserve ses champs, POLICY
+expose active/without_host/loaded/saved/remembered/restoring/error sans excluded.
+La liste individuelle retirée du firmware pouvait empêcher le retour d’un connu
+après perte totale. Le champ excluded reste accepté seulement pour les captures v5.
+remembered est le slot résolu par l’empreinte vérifiée, pas l’identité exportée.
+-1 avec saved=1 signifie que le choix existe sans résolution vérifiée pour ce boot.
+Without_host=1 indique une recherche continue ACTIVE sans hôte, remaining_ms vaut
+alors la durée nominale. Une vraie fenêtre peut aussi finir en IDLE.
+Les lecteurs AWK/PowerShell acceptent v1 à v6. v3/v4 restent bornés à 30000 ms,
+v5/v6 à 120000 ms. POLICY est requis à partir de v4, excluded seulement en v5.
+Contrôler masques, champs manquants/doublés/hors ordre et incompatibilités de version.
+Les 70 cas privés comparent les deux lecteurs sans accès série. Le BOM UTF-8 de
+capture.ps1 reste conservé. Les lectures sont passives, select explicitement mutant.

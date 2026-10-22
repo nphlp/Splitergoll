@@ -21,7 +21,7 @@ Le clic simple continue d’afficher l’OS. Chaque destination utilise son OS m
 | Un seul | Ouvrir la recherche et passer au premier autre appareil prêt |
 | Aucun | Ouvrir la recherche et sélectionner le premier prêt |
 
-La [fenêtre de trente secondes](reconnexion-bluetooth.md) accepte les connus et
+La [fenêtre de deux minutes](reconnexion-bluetooth.md) accepte les connus et
 les nouveaux appareils sur un slot libre. Le geste ne supprime aucun appairage.
 Une nouvelle association attend une connexion sécurisée et un OS reconnu avant la bascule.
 
@@ -37,78 +37,67 @@ Le raccourci reconnecte et sélectionne Windows après fermeture de la fenêtre.
 Avec zéro connexion, Mac arrivé en premier reste sélectionné quand Windows rejoint.
 Les [destinations USB/BLE et Gaming USB](destinations-saisie.md) restent à développer.
 
-## Sélection automatique
+## Quand mémoriser le choix
 
-Implémentée dans le nouveau lot, testée en logiciel et à valider sur le clavier :
+Les comportements principaux sont validés sur V1 avec
+[le diagnostic de dix secondes](tests-reprise-bluetooth.md). Le délai normal et
+les nouveaux appairages restent des essais distincts.
 
-| Situation | Comportement souhaité |
+| Origine du choix | Sauvegarde |
 | --- | --- |
-| Aucun ordinateur connecté, clavier actif | Rechercher les connus et accepter un nouvel appairage jusqu’à l’inactivité |
-| Un seul ordinateur connecté | Le sélectionner automatiquement |
-| Un second ordinateur se connecte | Garder la destination actuelle |
-| La destination se déconnecte, un seul ordinateur reste | Sélectionner celui qui reste |
+| Premier hôte après démarrage, réveil profond ou perte de tous les hôtes | À la fin de la fenêtre de 120 secondes |
+| Raccourci vers un hôte connecté | Dès la réussite de la bascule et de sa keymap |
+| Raccourci qui retrouve ou appaire un hôte | Dès qu’il est utilisable et sélectionné |
+| Perte de l’hôte utilisé, avec un autre disponible | Dès la réussite du repli sur celui qui reste |
 
-Chaque destination utilise l’[OS mémorisé pour cet appareil](memoire-os.md).
-La recherche sans hôte suit maintenant l’activité du clavier, voir
-[la gestion de l’appairage](gestion-appairage.md).
+Une recherche sans résultat n’écrit rien. Un geste annule le retour automatique
+au précédent, même s’il ne trouve personne. Une ancienne échéance ne remplace
+jamais une bascule déjà mémorisée. Une demande remplacée ou échouée n’est pas un choix réussi.
 
-## Après redémarrage ou veille profonde
+La préférence est liée à l’identité vérifiée de l’appareil, indépendamment du
+numéro de slot ZMK et de la mémoire de son OS. Un choix inchangé ne réécrit pas
+la flash. Une erreur de sauvegarde garde l’ancien choix durable et apparaît dans
+`POLICY error` : la saisie reste sur la destination courante.
 
-**Implémenté, essais matériels à faire.** Le clavier conserve le dernier ordinateur sélectionné,
-par exemple **A**, au-delà du reset ou de la veille profonde.
-Si **B** se reconnecte avant lui pendant la fenêtre de démarrage :
+## Retrouver le précédent
 
-1. B est sélectionné immédiatement, puisqu’il est seul.
-2. La préférence pour A reste valable jusqu’à la fin des **30 secondes de recherche
-   ouverte à la première connexion du démarrage**. Sans hôte, la recherche restait
-   ouverte jusqu’à l’inactivité.
-3. Si A revient avant cette échéance, le clavier revient automatiquement sur A,
-   même si des frappes ont déjà été envoyées à B.
-4. Sinon, B reste sélectionné et devient le nouvel ordinateur mémorisé.
-5. Si A revient plus tard, il ne reprend pas la sélection.
+Au démarrage ou après perte de tous les hôtes, le premier disponible **B** devient
+utilisable sans attendre le préféré **A** :
 
-Cette attente ne bloque pas la saisie sur B. Taper sur B n’annule ni ne
-prolonge la fenêtre : les frappes déjà envoyées restent sur B, les suivantes
-partent vers A après la bascule. Une bascule manuelle d’appareil annule le retour
-automatique. Le choix explicite sera mémorisé à la fermeture de sa fenêtre.
-La recherche explicite déclenchée par L1 + clic droit doit aussi annuler ce retour
-automatique, pour ne pas être contredite par la reconnexion de l’ancien appareil.
+1. Le retour de B ouvre la fenêtre de **120 secondes**, dix dans le diagnostic.
+2. Si A revient avant l’échéance, il reprend la sélection, même si l’on a tapé sur B.
+3. Sinon, B reste sélectionné et devient le nouveau choix mémorisé à la fermeture.
+4. Un raccourci manuel annule ce rappel et mémorise sa nouvelle destination dès
+   la bascule réussie. Sans cible, il conserve l’ancienne préférence durable.
 
-La préférence utilise notre propre mémoire, distincte du slot mémorisé par
-ZMK et de la mémoire des OS. À la fermeture de la fenêtre, sauvegarder l’appareil
-**sélectionné et connecté**, pas le dernier à avoir établi sa liaison. Sans appareil
-sélectionné utilisable, garder la préférence précédente. Un reset avant cette
-sauvegarde réutilise le dernier choix déjà enregistré.
+La sélection attend toujours les relâchements et la fin des anciens comportements.
+Taper ne prolonge pas la fenêtre. Sans hôte, la recherche suit
+[les règles d’activité et d’appairage](gestion-appairage.md).
 
-La préférence est liée au bond vérifié, pas au numéro de slot ou au nom de l’OS.
-Le même choix ne réécrit pas la flash. Une erreur de sauvegarde conserve l’ancien
-choix et apparaît dans `POLICY error`. Si une transition est encore en cours à
-l’échéance, la sauvegarde attend sa fin. Voir [les essais de reprise](tests-reprise-bluetooth.md).
+Le rappel dans les deux ordres après coupure d’alimentation est confirmé sur V1
+avec le lot précédent. La nouvelle sauvegarde immédiate et la reprise sans reset
+sont confirmées au délai court, voir [les résultats](tests-reprise-bluetooth.md).
 
-## Prochaine règle de mémorisation
+## Déconnexion et recherche
 
-Le firmware essayé sauvegarde encore tous les choix à la fermeture. Les évolutions
-suivantes sont retenues pour le prochain lot, pas encore codées :
+La fenêtre de recherche décide des retours, sans exclusion individuelle :
 
-| Origine du choix | Quand le rendre durable |
+| Situation | Reconnexion |
 | --- | --- |
-| Premier appareil au démarrage ou après perte de tous les hôtes | À la fin de la fenêtre, pour laisser revenir le précédent |
-| Raccourci vers un hôte déjà prêt | Dès la réussite de la bascule |
-| Raccourci qui retrouve ou appaire un hôte | Dès la réussite de la bascule vers cet hôte utilisable |
-| Perte de la destination utilisée, avec un autre hôte restant | Dès la réussite du repli, en annulant le rappel vers l’hôte perdu |
+| Fenêtre ouverte | Tous les appareils connus peuvent revenir |
+| Fenêtre fermée, un autre ordinateur reste connecté | Pas de reconnexion spontanée |
+| Plus aucun ordinateur connecté, clavier actif | Recherche continue jusqu’à l’inactivité |
 
-La première arrivée provisoire au démarrage n’est pas une perte de destination :
-elle ne doit pas écraser immédiatement la préférence. Une demande sans résultat
-n’écrit rien. Une demande remplacée ne vaut pas une bascule réussie. Après un choix
-immédiatement sauvegardé, une ancienne échéance ne doit pas rétablir un ancien choix.
+Une déconnexion partielle ne rouvre ni ne prolonge la fenêtre. Le raccourci peut
+la rouvrir. Une reconnexion ne reprend pas la sélection à elle seule, sauf rappel
+du préféré pendant la reprise ou recherche explicite d’une autre destination.
+Le compromis est volontaire : pendant la fenêtre ouverte, un appareil déconnecté
+manuellement peut revenir. Après sa fermeture, il reste absent si un autre est connecté.
 
-La fenêtre réelle de deux minutes et l’exclusion d’un hôte perdu jusqu’à une nouvelle
-recherche explicite sont acceptées pour le prochain lot. Le diagnostic restera à dix
-secondes. Le retour prioritaire au démarrage disposera aussi de cette fenêtre.
-
-**Compromis à surveiller :** une coupure radio involontaire peut déclencher le repli
-sur l’autre ordinateur, sa mémorisation et l’exclusion de l’ancien. Le clavier peut
-alors sembler changer d’ordinateur tout seul et ne pas revenir. Ce phénomène n’a
-pas été observé. S’il apparaît, examiner en priorité cette politique avec les traces
-de déconnexion et le masque d’exclusion, avant de conclure à une cause. Une nouvelle
-recherche explicite doit permettre de réadmettre les appareils exclus.
+L’ancienne exclusion individuelle est retirée : elle pouvait survivre à la perte
+de tous les hôtes et provoquer une boucle connexion/déconnexion du premier revenu.
+Le correctif passe les tests logiciels et le scénario qui bouclait est confirmé
+fonctionnel sur V1 par l’utilisateur.
+Une coupure radio du destinataire peut toujours provoquer le repli sur l’autre
+ordinateur et sa mémorisation. Si la saisie change involontairement d’ordinateur,
+examiner les déconnexions et les sélections, sans conclure automatiquement à une cause.
