@@ -1,5 +1,8 @@
 // Transport série partagé des diagnostics, indépendant des consoles et des logs ZMK.
 #include "trace_console.h"
+#if defined(CONFIG_SPLITERGOLL_POWER_TRACE)
+#include <splitergoll/power_trace.h>
+#endif
 #if defined(CONFIG_SPLITERGOLL_BLE_TRACE)
 #include "ble_trace_memory.h"
 #include "ble_profile_control.h"
@@ -97,6 +100,11 @@ static void trace_console(void *unused1, void *unused2, void *unused3) {
             if (command == 'D') {
                 splitergoll_trace_dump(uart);
             }
+#if defined(CONFIG_SPLITERGOLL_POWER_TRACE)
+            else if (command == 'P') {
+                splitergoll_power_dump(uart);
+            }
+#endif
 #if defined(CONFIG_SPLITERGOLL_BLE_TRACE)
             else if (command == 'M') {
                 ble_trace_memory_dump(uart);

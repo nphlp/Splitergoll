@@ -9,6 +9,9 @@
 #include <zephyr/settings/settings.h>
 #include <zephyr/sys/atomic.h>
 #include <zmk/ble.h>
+#if defined(CONFIG_SPLITERGOLL_POWER_TRACE)
+#include <splitergoll/power_trace.h>
+#endif
 
 LOG_MODULE_REGISTER(splitergoll_host_preference, CONFIG_ZMK_LOG_LEVEL);
 BUILD_ASSERT(HOST_PREFERENCE_ID_SIZE == BLE_OS_MEMORY_ID_SIZE);
@@ -66,6 +69,9 @@ void splitergoll_host_preference_save(unsigned profile) {
     if (!host_preference_prepare(&preference, identity, bytes)) return;
     int error = settings_save_one("splitergoll/host-choice/value", bytes, sizeof(bytes));
     host_preference_saved(&preference, bytes, error);
+#if defined(CONFIG_SPLITERGOLL_POWER_TRACE)
+    splitergoll_power_saved(profile, error);
+#endif
     if (error) LOG_WRN("BLE destination save failed: error=%d", error);
     else LOG_INF("BLE destination saved: profile=%u", profile);
 }

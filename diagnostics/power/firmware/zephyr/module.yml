@@ -1,0 +1,4 @@
+name: splitergoll_power_trace
+build:
+  cmake: .
+  kconfig: Kconfig

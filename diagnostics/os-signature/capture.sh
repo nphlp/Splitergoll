@@ -12,7 +12,14 @@ protocol=USBTRACE
 command_name='usb capture'
 validator="$DIAGNOSTIC_DIRECTORY/check.awk"
 serial_command=D
-if [ "${1-}" = --ble ]; then
+if [ "${1-}" = --power ]; then
+    shift
+    TRACE_ROOT="$REPOSITORY/.local/power-traces"
+    protocol=POWERTRACE
+    command_name='ble power'
+    validator="$DIAGNOSTIC_DIRECTORY/../power/check.awk"
+    serial_command=P
+elif [ "${1-}" = --ble ]; then
     shift
     TRACE_ROOT="$REPOSITORY/.local/ble-traces"
     protocol=BLETRACE
@@ -129,6 +136,8 @@ elif [ "$protocol" = BLETRACE ]; then
     printf '%s\n' 'Les connexions Bluetooth depuis le démarrage sont conservées. Aucune frappe à effectuer.'
 elif [ "$protocol" = BLEMEM ]; then
     printf '%s\n' 'Lecture de la mémoire d’OS. Aucun changement de keymap, de sélection ou d’appairage.'
+elif [ "$protocol" = POWERTRACE ]; then
+    printf '%s\n' 'Historique RAM d’activité et de sauvegarde. Aucun reset ni changement de destination.'
 else
     printf '%s\n' 'Les requêtes du démarrage sont conservées, aucune frappe à effectuer.'
 fi
@@ -148,6 +157,7 @@ while [ "$SECONDS" -lt "$deadline" ]; do
            { [ "$protocol" = BLETRACE ] && [[ "$line" == 'BLETRACE END attrs='* ]]; } ||
            { [ "$protocol" = BLEMEM ] && [ "$line" = 'BLEMEM END' ]; } ||
            { [ "$protocol" = BLEFORGET ] && [ "$line" = 'BLEFORGET END' ]; } ||
+           { [ "$protocol" = POWERTRACE ] && [ "$line" = 'POWERTRACE END' ]; } ||
            { [ "$protocol" = BLEPROFILE ] && [ "$line" = 'BLEPROFILE END' ]; }; then
             finished=true
             break
@@ -161,6 +171,12 @@ done
 awk -v command="$serial_command" -f "$validator" "$capture" ||
     fail "Capture refusée (pertes ou format incorrect). Données conservées : $capture"
 printf 'Capture complète : %s\n' "$capture"
+if [ "$protocol" = POWERTRACE ]; then
+    cat "$capture"
+    printf '%s\n' 'activity : 0 actif, 1 inactif, 2 sommeil. usb : 0 absent, 1 alimentation, 2 énuméré.'
+    printf '%s\n' 'BOOT identifie ce démarrage. Le journal RAM disparaît après reset ou sommeil profond.'
+    exit 0
+fi
 if [ "$protocol" = BLEFORGET ]; then
     cat "$capture"
     grep -q ' status=ok ' "$capture" || fail 'Effacement refusé ou échoué. Aucun nouvel essai automatique.'

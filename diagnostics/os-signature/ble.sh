@@ -17,9 +17,13 @@ usage() {
 [ "$#" -gt 0 ] || usage
 case "$1" in
     help) [ "$#" -eq 1 ] && usage; usage 1 ;;
-    capture|memory)
+    capture|memory|power)
         [ "$#" -eq 2 ] || usage 1
-        if [ "$1" = capture ]; then option=--ble; else option=--memory; fi
+        case "$1" in
+            capture) option=--ble ;;
+            memory) option=--memory ;;
+            power) option=--power ;;
+        esac
         ;;
     profiles)
         [ "$#" -eq 2 ] || usage 1

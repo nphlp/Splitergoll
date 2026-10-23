@@ -5,6 +5,18 @@ Utiliser le diagnostic à **10 secondes** et les
 la profonde à dix minutes. Garder les USB pour ces essais sur V1.
 Une lecture USB ne compte pas comme une frappe.
 
+Pour vérifier spécifiquement la rencontre entre fermeture et inactivité, le
+diagnostic privé `idle-window-10s` ramène aussi IDLE à dix secondes. Il est distinct
+du diagnostic ci-dessous, qui garde IDLE à deux minutes. Le sommeil profond reste
+à dix minutes dans les deux cas. Voir [la reprise](reprise.md).
+
+Sur V1, ce diagnostic court confirme que les lectures USB laissent IDLE stable,
+que la fermeture de recherche ne relance pas l’activité et qu’une préférence de
+reprise est sauvegardée à la rencontre avec IDLE. Une coupure confirme sa
+persistance avant l’échéance suivante. Les lectures espacées d’une seconde ne
+donnent pas l’ordre exact des événements. Les deux minutes normales et le sommeil
+profond sur batterie restent des essais distincts.
+
 ## 1. Chercher au-delà de dix secondes
 
 1. Avec les deux hôtes connectés, sélectionner le Mac et vérifier `remembered=<slot Mac>`

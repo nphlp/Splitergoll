@@ -110,6 +110,7 @@ show_ble_help() {
     show_command 'make ble' 'Afficher cette aide'
     show_command 'make ble capture <port>' 'Lire les échanges Bluetooth de la centrale ble-trace'
     show_command 'make ble memory <port>' 'Lire l’OS mémorisé et l’état de sauvegarde'
+    show_command 'make ble power <port>' 'Lire le journal RAM du diagnostic d’activité dédié'
     show_command 'make ble profiles <port>' 'Afficher les emplacements appairés'
     show_command 'make ble select <port> <index>' 'Sélectionner un emplacement'
     show_command 'make ble forget <port> <index>' 'Effacer un appairage après confirmation'

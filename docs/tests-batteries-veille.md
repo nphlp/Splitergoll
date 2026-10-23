@@ -1,6 +1,11 @@
 # Tester batteries et veille sur V2
 
-Diagnostic ponctuel sur le Mac, avec la keymap macOS fixe. Les fichiers temporaires
+Pour le complément recherche/IDLE actuel, utiliser le [journal RAM](diagnostic-activite.md)
+avec `bluetooth auto` : délais recherche/IDLE dix secondes, SLEEP dix minutes.
+Vérifier la mémoire d’OS propre à V2 avant l’essai. Le parcours ci-dessous est le
+protocole distinct déjà utilisé pour batteries et sommeil profond à soixante secondes.
+
+Diagnostic batteries/veille sur le Mac, avec la keymap macOS fixe. Les fichiers temporaires
 restent dans `.local/flash/`, les sources et logs dans `.local/diagnostic/power-test/`.
 Les commandes de build habituelles et leurs délais restent inchangés.
 Pendant les attentes, utiliser le clavier intégré du Mac pour échanger : taper
@@ -11,7 +16,7 @@ avant de commencer les gestes destinés aux logs.
 | --- | --- | --- |
 | Inactivité | 10 secondes | 2 minutes |
 | Veille profonde | 60 secondes | 10 minutes |
-| Mesure batterie pendant l’activité | 5 secondes | 60 secondes |
+| Mesure batterie pendant l’activité | 5 secondes | 5 secondes |
 | Logs USB | Oui, chaque moitié | Non |
 
 Flasher la droite puis la gauche avec les deux UF2 du diagnostic, sans firmware

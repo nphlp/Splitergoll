@@ -17,6 +17,9 @@
 #include <zmk/activity.h>
 #include <zmk/event_manager.h>
 #include <zmk/events/activity_state_changed.h>
+#if defined(CONFIG_SPLITERGOLL_POWER_TRACE)
+#include <splitergoll/power_trace.h>
+#endif
 
 LOG_MODULE_REGISTER(splitergoll_ble_reconnect, CONFIG_ZMK_LOG_LEVEL);
 BUILD_ASSERT(!IS_ENABLED(CONFIG_BT_EXT_ADV) && !IS_ENABLED(CONFIG_LTO));
@@ -590,6 +593,9 @@ static void reconcile(struct k_work *work) {
     remaining = host_discovery_remaining(&discovery, k_uptime_get_32());
     bool stale = revision != request.revision;
     bool without_host = discovery.awake && discovery.connected == 0;
+#if defined(CONFIG_SPLITERGOLL_POWER_TRACE)
+    splitergoll_power_window(remaining, status.advertising);
+#endif
     k_spin_unlock(&control_lock, key);
     splitergoll_ble_auto_notify();
     if (changed) LOG_INF("BLE reconnect: remaining_ms=%u advertising=%u known=%04x connected=%04x error=%d",

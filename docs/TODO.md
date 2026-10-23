@@ -6,6 +6,10 @@
 - [x] Récupérer le README et les fichiers de conception de `main`.
 - [x] Garder la keymap complète de `dongle`, les helpers et les GPIO.
 - [x] Configurer la gauche centrale USB et la droite périphérique BLE.
+- [ ] Restreindre `wire` à l’USB vers l’ordinateur : le build actuel garde
+  `ZMK_BLE=y` et peut rester connecté aux hôtes en BLE. Conserver le transport
+  split, vérifier les raccourcis Bluetooth, les profils/keymaps et les compilations.
+  Ce correctif est distinct de la future priorité USB/BLE.
 - [x] Figer ZMK 0.3.0, les dépendances et l’image Docker.
 - [x] Préparer un Makefile avec `make setup` et `make build`.
 - [x] Compiler les deux moitiés et vérifier les UF2, leurs empreintes et les rôles.
@@ -15,6 +19,14 @@
 - [x] Réaliser le diagnostic court de latence sur V1 et le Mac. Aucun écart gauche/droite significatif reproduit, effet des lecteurs incertain, aucune mesure totale ni cause établie. Voir [le résultat et le protocole](latence.md).
 
 ## Étapes suivantes
+
+Gaming persistant : comparer plus tard un profil de keymap distinct et un mode
+du groupe Windows. La mémorisation n’impose pas à elle seule un découpage.
+
+Prochain lot recommandé après le commit des tests et du journal : rendre `wire`
+strictement USB vers l’ordinateur, en conservant le BLE entre moitiés. La sélection
+V1/V2 de l’app vient ensuite, avec essai des deux claviers sur le Mac. Puis cadrer
+l’identité et la priorité des destinations USB/BLE avant d’implémenter le mode mixte.
 
 Le [tableau de planification](planification.md) distingue les sujets terminables avec
 Mac + V2 et ceux à valider lors d’une séance commune Mac/Windows. Le matériel
@@ -31,17 +43,17 @@ hôtes connectés et la reconnexion après raccourci sont confirmés. Le diagnos
 à dix secondes valide aussi la saisie immédiate retenue pendant la transition,
 Shift maintenu puis relâché et la sélection de Windows retrouvé. Les destinations
 mixtes restent à faire. Les deux moitiés de V1 sont maintenant flashées en
-`wire windows` normal selon l’utilisateur. Le Bluetooth normal à deux minutes sera
-validé lors de la reprise, sans effacer les appairages.
+`wire windows` normal selon l’utilisateur. La répétition des essais à deux minutes
+n’est pas demandée. Le complément sur batterie de V2 reste distinct.
 
 Ordre des prochains lots :
 
 1. Les comportements principaux du lot Bluetooth sont validés sur V1 au délai de
    dix secondes : sauvegarde immédiate, persistance, rappel du précédent, repli,
-   recherche sans résultat et perte totale sans boucle. Confirmer ultérieurement
-   le délai normal de deux minutes et sa rencontre avec IDLE à deux minutes : la
-   sauvegarde doit aboutir sans réveil artificiel ou report du sommeil profond.
-   Nouveaux bonds et cas limites restent distincts, sans refaire la série validée.
+   recherche sans résultat et perte totale sans boucle. La rencontre avec IDLE et
+   la sauvegarde sont validées au délai court sur V1, puis couvertes par les tests
+   natifs et Zephyr. Le complément sur batterie de V2 est positif. Revenir au
+   firmware normal, sans refaire la série ni imposer une attente de deux minutes.
 2. Réunir USB et BLE autour des [destinations](destinations-saisie.md), en résolvant
    l’association entre l’hôte USB et son éventuel bond BLE. Puis intégrer Gaming USB.
 3. Ajouter la correction manuelle d’OS, optimiser le délai de bascule, puis traiter
@@ -256,12 +268,40 @@ de préparer la mémoire d’OS propre à V2, absente du profil macOS normal.
 - [ ] Compléter les cas distincts du [protocole court](tests-reprise-bluetooth.md) :
   geste annulant le rappel, reconnexion pendant une fenêtre encore ouverte et IDLE.
   Les coupures radio involontaires ne sont pas observées.
-- [ ] Vérifier la rencontre des deux chronos à 120 secondes : fermeture/sauvegarde
+- [x] Vérifier la logique de rencontre des chronos avec délais courts : fermeture/sauvegarde
   de reprise juste avant, au même moment et juste après IDLE. IDLE ne doit ni bloquer
-  la sauvegarde ni relancer l’activité. La recherche ne doit pas repousser SLEEP.
-  Couvrir les ordres avec horloge contrôlée, puis vérifier sur V1 et V2 selon l’état.
-- [ ] Revenir au firmware normal à 120 secondes et confirmer son usage Mac/Windows.
-  La série v5 à dix secondes ne valide pas à elle seule ce délai ni les nouveaux bonds.
+  la sauvegarde ni relancer l’activité. Ordres couverts avec horloge contrôlée,
+  puis observation sur V1 sous USB. L’absence de report de SLEEP relève de
+  l’essai batterie séparé, pas de cette case cochée.
+  Les trois ordres passent dans le harnais du vrai sélecteur. Le diagnostic privé
+  recherche/IDLE à dix secondes confirme sur V1 fermeture puis IDLE sans réarmement.
+  Le checkpoint de reprise et IDLE sont ensuite observés dans le même intervalle
+  d’une seconde, Windows sauvegardé sans blocage ni réarmement. La nouvelle
+  préférence est relue avant l’échéance après coupure. L’utilisateur renonce à une
+  répétition dédiée à 120 secondes. L’ordre exact matériel et SLEEP restent distincts.
+- [ ] Revenir au firmware normal à 120 secondes pour l’usage Mac/Windows, sans
+  refaire la série. Le délai normal n’est pas mesuré dans ce lot, les nouveaux
+  bonds et SLEEP ne sont pas validés par les essais V1 sous USB.
+- [x] Vérifier sur V2 la recherche/IDLE à dix secondes sur batterie : même
+  démarrage, fermeture puis IDLE, retour USB sans réveil artificiel, Mac toujours
+  connecté et mémorisé, aucune perte ni erreur. Le journal observe la gauche,
+  pas l’état de la droite. La préférence identique ne déclenche pas de nouvelle
+  écriture NVS. SLEEP et consommation restent des validations séparées.
+- [x] Ajouter le journal RAM optionnel, borné et sans frappes ni identités,
+  avec lecture `make ble power <port>`, validation des pertes et tests natifs.
+- [x] Rendre les 23 suites C reproductibles avec `bash scripts/test.sh`, dont les
+  vrais adaptateurs USB, BLE, radio, acquisition, NVS et journal. ASan/UBSan passent.
+- [x] Versionner les doubles et scénarios d’intégration, sans dépendre des anciens
+  harnais privés. Couvrir aussi rapports HID occupés et instrumentation des écritures.
+- [x] Tester les validateurs avec 112 cas synthétiques AWK, dont 81 également sous
+  PowerShell, sans port série ni ETW.
+- [x] Ajouter six tests QEMU avec le vrai noyau Zephyr et `activity.c` : IDLE sous
+  USB, SLEEP sur batterie, erreur de suspension, activité physique, checkpoint
+  différé et timer périodique. La radio, NVS et le réveil GPIO restent matériels.
+- [x] Retenir les tests systématiques de chaque nouvel algorithme dans le même lot.
+  Voir [la couverture et les limites](tests-automatises.md).
+- [ ] Évaluer l’idée de désactiver IDLE en Gaming après mesure d’un éventuel effet,
+  sans confondre IDLE avec sommeil profond ou réduction de fréquence CPU.
 - [x] Retenir la fenêtre réelle de 120 secondes, terminable en IDLE sans report de
   SLEEP, avec dix secondes pour le diagnostic. La fenêtre autorise tous les connus.
   L’exclusion individuelle envisagée auparavant est abandonnée.
@@ -452,6 +492,11 @@ de préparer la mémoire d’OS propre à V2, absente du profil macOS normal.
 - [x] Accepter le nom personnalisé `Splitergoll V2` dans l’app et le lecteur CLI,
   sans choisir entre plusieurs correspondances. Deux niveaux lus sur V2 sans USB : 89/79 %.
 - [x] Confirmer l’affichage des batteries dans l’app installée après correction du nom sur V2.
+- [ ] Ajouter une [sélection du clavier suivi](selection-clavier-app.md) dans le menu
+  de l’app : liste V1/V2, choix mémorisé par identifiant, nom visible, aucune valeur
+  reprise de l’autre clavier et tests des réponses tardives. Fonctionnalité retenue,
+  sans changement de destination des frappes ni nouvel appairage. Valider avec
+  V1 et V2 connectés au Mac en Bluetooth, dans des profils exposant leurs batteries.
 - [x] Remplacer le symbole de batterie en charge par un petit éclair seul à 100 %,
   horizontal dans la barre et agrandi dans la colonne du pourcentage, sans déformation
   ni changement de largeur du menu. Garder la charge possible en infobulle.

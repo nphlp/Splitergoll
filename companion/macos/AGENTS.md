@@ -224,3 +224,26 @@ installé dans Applications. Signature et égalité de l’exécutable, de l’I
 deux SVG installés sont vérifiées. Aucun lancement réel par l’agent. Après réouverture,
 l’utilisateur confirme le fonctionnement de l’affichage sur V2. Cela ne valide pas
 encore les reprises après sommeil, les déconnexions ou l’ouverture de session.
+
+## Sélection du clavier suivi retenue pour le prochain lot
+
+L’utilisateur valide le développement du choix V1/V2 dans le menu. Spécification dans
+docs/selection-clavier-app.md, tâches dans docs/TODO.md. Aucun code de cette
+fonctionnalité n’est encore implémenté et les invariants de sélection actuels restent
+applicables jusqu’à ce lot. Cible retenue : noms de périphériques comme libellés, identifiant
+CoreBluetooth local comme clé du choix, persistance et absence de bascule silencieuse
+si le clavier préféré disparaît. Vider les mesures au changement, rejeter les
+callbacks tardifs, tester les noms identiques, renommages et reconnexions.
+Ce choix concerne le clavier physique lu par l’app, jamais le slot hôte du firmware.
+Le firmware wire n’expose pas BAS dans le build contrôlé, mais conserve ZMK_BLE=y.
+Ne pas déduire de la présence Bluetooth de V1 que l’app lisait forcément ses batteries.
+Retour utilisateur : avec V1 désactivé et l’app redémarrée, V2 s’actualise à cinq
+secondes. Cause de l’anomalie antérieure non établie, sans capture des mesures ADC
+ou des lectures GATT pendant l’incident. Ne pas la présenter comme un mélange prouvé.
+
+Ordre de développement validé : commit tests/journal, correction wire, sélecteur
+app puis destinations USB/BLE et Gaming. L’essai du sélecteur doit utiliser V1 et
+V2 connectés simultanément au Mac, avec les services batterie requis. V1 wire
+strict ne répond pas à cette condition : préparer le profil BLE avec l’utilisateur,
+sans flash, sélection hôte ou effacement implicite. Le découpage futur de Gaming
+reste ouvert, la mémoire d’un mode ne nécessite pas forcément une keymap séparée.

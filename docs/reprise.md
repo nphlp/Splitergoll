@@ -9,30 +9,50 @@ repli, recherche sans résultat et reconnexion après perte totale sans boucle.
 L’exclusion individuelle est retirée. Ne pas refaire toute cette série.
 
 L’utilisateur confirme ensuite le flash des deux moitiés de V1 en **wire windows
-normal**, gaming inclus, pour jouer. V2 conserve son dernier firmware connu.
+normal**, gaming inclus, pour jouer. Après le diagnostic `power-journal`,
+l’utilisateur annonce le retour de V2 au firmware de base.
 À la reprise, vérifier quel matériel est disponible avant toute manipulation.
 
-## 1. Vérifier les deux minutes et l’inactivité
+## 1. Automatisation terminée, complément V2
 
-**Premier chantier conseillé, sans changer les durées.** La fenêtre normale et
-l’inactivité valent toutes deux 120 secondes, mais ne démarrent pas forcément ensemble.
-IDLE laisse fonctionner les tâches différées, contrairement au sommeil profond.
-Le code prévoit la fin de la fenêtre et sa sauvegarde même en IDLE, sans générer d’activité.
-La vérification réelle de cette rencontre reste à faire.
+Les essais courts de V1 sont positifs : sauvegarde manuelle, checkpoint de reprise
+au voisinage d’IDLE et persistance après coupure. **IDLE fonctionne sous USB, seul
+SLEEP est bloqué.** Ces essais sont utiles, sans prouver le comportement sur batterie.
+La répétition dédiée à deux minutes est abandonnée à la demande de l’utilisateur.
 
-Avec `bluetooth auto ble-trace` normal à 120 secondes :
+La [suite automatisée](tests-automatises.md) est renforcée : 23 suites C natives,
+112 cas de protocole, six tests Zephyr/QEMU et les 30 tests de l’app passent.
+Les différents ordres de checkpoint/IDLE ne demandent plus une répétition manuelle.
+Cela ne simule ni le câblage, ni la radio du vrai V2, ni son réveil GPIO.
 
-- Vérifier la sauvegarde de reprise quand le préféré ne revient pas, puis sa
-  persistance après redémarrage. Les choix manuels restent sauvegardés immédiatement.
-- Faire terminer la fenêtre avant, pendant et après le passage en IDLE : pas de
-  sauvegarde perdue, de réouverture, de bascule parasite ou de fausse activité.
-- Distinguer la recherche continue sans hôte, qui s’arrête en IDLE, d’une fenêtre
-  bornée déjà ouverte, qui peut y finir. Les lectures USB ne réveillent pas le clavier.
-- Sur V2 uniquement, compléter la reprise après sommeil profond sur batterie,
-  sans USB. Garder l’échéance de dix minutes, sans prolongation par les annonces.
+**Le complément sur batterie de V2 est positif.** Après le nouvel appairage
+réalisé par l’utilisateur, le Mac est seul au slot 0, son OS et sa préférence
+sont sauvegardés sans erreur. Le journal lu après l’essai conserve le même
+identifiant de démarrage et ne présente aucune perte.
 
-Voir [la reprise Bluetooth](tests-reprise-bluetooth.md),
-[la recherche](tests-recherche-bluetooth.md) et [la veille](veille.md).
+Sur batterie, la fenêtre se ferme après dix secondes, puis la gauche passe en
+IDLE environ 0,6 seconde plus tard. Le rebranchement USB ne provoque pas de retour
+à ACTIVE. Le Mac reste connecté et mémorisé. La préférence étant déjà identique,
+aucune nouvelle écriture NVS n’était attendue. Ce test ne mesure pas la consommation,
+le sommeil profond ou l’état IDLE de la droite, qui n’a pas son propre journal.
+
+Le diagnostic reste à dix secondes pour recherche/IDLE, dix minutes pour SLEEP.
+La paire `bluetooth auto` normale est compilée et contrôlée. L’utilisateur annonce
+avoir reflashé le firmware de base. Après redémarrage de l’app et retrait de V1,
+il constate une actualisation des batteries de V2 à cinq secondes. La cause de
+l’ancien affichage n’est pas établie. Aucune nouvelle série d’attentes n’est demandée.
+
+**Prochaine étape : commit du lot validé.** Ensuite, corriger le profil `wire` :
+son build conserve actuellement le Bluetooth vers les ordinateurs. Garder le BLE
+entre moitiés, vérifier les raccourcis concernés et les compilations. Puis développer
+le [sélecteur V1/V2 de l’app](selection-clavier-app.md), avec essai réel des deux
+claviers sur le Mac. La fonctionnalité est retenue mais pas encore implémentée.
+Le cadrage USB/BLE puis Gaming viendront après, sans modifier l’app dans le lot présent.
+
+USB + OFF et USB + ON alimentent tous deux le contrôleur, seul ON permet la charge
+avec le câblage actuel. Ce réglage reste déclaré par l’utilisateur, aucun GPIO ne
+le détecte. Le sommeil profond court reste facultatif, pour une question de réveil
+précise. Voir [le journal](diagnostic-activite.md) et [les essais batteries/veille](tests-batteries-veille.md).
 
 ## 2. Réunir USB et Bluetooth par ordinateur
 
@@ -76,5 +96,5 @@ Les cas sans USB et la sortie volontaire restent à préciser dans
 | Dépôt | Finaliser le README, préparer la purge historique des anciennes photos avec métadonnées |
 
 Le [TODO](TODO.md) conserve le détail complet et les validations. La prochaine
-séance commence au point 1, puis passe au cadrage des destinations. Aucun flash,
+étape est le commit, puis la restriction wire, le sélecteur de l’app et les destinations. Aucun flash,
 reset d’appairage ou service n’est lancé automatiquement à la reprise.

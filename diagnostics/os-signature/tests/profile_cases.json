@@ -1,0 +1,492 @@
+[
+  {
+    "name": "profile-0-v1",
+    "protocol": "profile",
+    "command": "1",
+    "accepted": true,
+    "text": "# host=test\nBLEPROFILE BEGIN version=1 count=5 active=1 save_delay_ms=60000\nBLEPROFILE SLOT index=0 paired=1 connected=1\nBLEPROFILE SLOT index=1 paired=1 connected=1\nBLEPROFILE SLOT index=2 paired=0 connected=0\nBLEPROFILE SLOT index=3 paired=0 connected=0\nBLEPROFILE SLOT index=4 paired=0 connected=0\nBLEPROFILE RESULT command=1 status=ok selected=1 changed=1 error=0\nBLEPROFILE END\n"
+  },
+  {
+    "name": "profile-0-v2",
+    "protocol": "profile",
+    "command": "1",
+    "accepted": true,
+    "text": "# host=test\nBLEPROFILE BEGIN version=2 count=5 active=1 save_delay_ms=60000\nBLEPROFILE SLOT index=0 paired=1 connected=1\nBLEPROFILE SLOT index=1 paired=1 connected=1\nBLEPROFILE SLOT index=2 paired=0 connected=0\nBLEPROFILE SLOT index=3 paired=0 connected=0\nBLEPROFILE SLOT index=4 paired=0 connected=0\nBLEPROFILE RESULT command=1 status=ok selected=1 changed=1 error=0\nBLEPROFILE END\n"
+  },
+  {
+    "name": "profile-1-v1",
+    "protocol": "profile",
+    "command": "0",
+    "accepted": true,
+    "text": "# host=test\nBLEPROFILE BEGIN version=1 count=5 active=1 save_delay_ms=60000\nBLEPROFILE SLOT index=0 paired=1 connected=1\nBLEPROFILE SLOT index=1 paired=1 connected=1\nBLEPROFILE SLOT index=2 paired=0 connected=0\nBLEPROFILE SLOT index=3 paired=0 connected=0\nBLEPROFILE SLOT index=4 paired=0 connected=0\nBLEPROFILE RESULT command=0 status=busy selected=1 changed=0 error=0\nBLEPROFILE END\n"
+  },
+  {
+    "name": "profile-1-v2",
+    "protocol": "profile",
+    "command": "0",
+    "accepted": true,
+    "text": "# host=test\nBLEPROFILE BEGIN version=2 count=5 active=1 save_delay_ms=60000\nBLEPROFILE SLOT index=0 paired=1 connected=1\nBLEPROFILE SLOT index=1 paired=1 connected=1\nBLEPROFILE SLOT index=2 paired=0 connected=0\nBLEPROFILE SLOT index=3 paired=0 connected=0\nBLEPROFILE SLOT index=4 paired=0 connected=0\nBLEPROFILE RESULT command=0 status=busy selected=1 changed=0 error=0\nBLEPROFILE END\n"
+  },
+  {
+    "name": "profile-10-v1",
+    "protocol": "profile",
+    "command": "9",
+    "accepted": true,
+    "text": "# host=test\nBLEPROFILE BEGIN version=1 count=5 active=1 save_delay_ms=60000\nBLEPROFILE SLOT index=0 paired=1 connected=1\nBLEPROFILE SLOT index=1 paired=1 connected=1\nBLEPROFILE SLOT index=2 paired=0 connected=0\nBLEPROFILE SLOT index=3 paired=0 connected=0\nBLEPROFILE SLOT index=4 paired=0 connected=0\nBLEPROFILE RESULT command=9 status=invalid selected=1 changed=0 error=0\nBLEPROFILE END\n"
+  },
+  {
+    "name": "profile-10-v2",
+    "protocol": "profile",
+    "command": "9",
+    "accepted": true,
+    "text": "# host=test\nBLEPROFILE BEGIN version=2 count=5 active=1 save_delay_ms=60000\nBLEPROFILE SLOT index=0 paired=1 connected=1\nBLEPROFILE SLOT index=1 paired=1 connected=1\nBLEPROFILE SLOT index=2 paired=0 connected=0\nBLEPROFILE SLOT index=3 paired=0 connected=0\nBLEPROFILE SLOT index=4 paired=0 connected=0\nBLEPROFILE RESULT command=9 status=invalid selected=1 changed=0 error=0\nBLEPROFILE END\n"
+  },
+  {
+    "name": "profile-2-v1",
+    "protocol": "profile",
+    "command": "S",
+    "accepted": true,
+    "text": "# host=test\nBLEPROFILE BEGIN version=1 count=5 active=1 save_delay_ms=60000\nBLEPROFILE SLOT index=0 paired=1 connected=1\nBLEPROFILE SLOT index=1 paired=1 connected=1\nBLEPROFILE SLOT index=2 paired=0 connected=0\nBLEPROFILE SLOT index=3 paired=0 connected=0\nBLEPROFILE SLOT index=4 paired=0 connected=0\nBLEPROFILE RESULT command=S status=ok selected=1 changed=0 error=0\nBLEPROFILE END\n"
+  },
+  {
+    "name": "profile-2-v2",
+    "protocol": "profile",
+    "command": "S",
+    "accepted": true,
+    "text": "# host=test\nBLEPROFILE BEGIN version=2 count=5 active=1 save_delay_ms=60000\nBLEPROFILE SLOT index=0 paired=1 connected=1\nBLEPROFILE SLOT index=1 paired=1 connected=1\nBLEPROFILE SLOT index=2 paired=0 connected=0\nBLEPROFILE SLOT index=3 paired=0 connected=0\nBLEPROFILE SLOT index=4 paired=0 connected=0\nBLEPROFILE RESULT command=S status=ok selected=1 changed=0 error=0\nBLEPROFILE END\n"
+  },
+  {
+    "name": "profile-3-v1",
+    "protocol": "profile",
+    "command": "0",
+    "accepted": true,
+    "text": "# host=test\nBLEPROFILE BEGIN version=1 count=5 active=1 save_delay_ms=60000\nBLEPROFILE SLOT index=0 paired=1 connected=1\nBLEPROFILE SLOT index=1 paired=1 connected=1\nBLEPROFILE SLOT index=2 paired=0 connected=0\nBLEPROFILE SLOT index=3 paired=0 connected=0\nBLEPROFILE SLOT index=4 paired=0 connected=0\nBLEPROFILE RESULT command=0 status=busy selected=1 changed=0 error=0\nBLEPROFILE END\n"
+  },
+  {
+    "name": "profile-3-v2",
+    "protocol": "profile",
+    "command": "0",
+    "accepted": true,
+    "text": "# host=test\nBLEPROFILE BEGIN version=2 count=5 active=1 save_delay_ms=60000\nBLEPROFILE SLOT index=0 paired=1 connected=1\nBLEPROFILE SLOT index=1 paired=1 connected=1\nBLEPROFILE SLOT index=2 paired=0 connected=0\nBLEPROFILE SLOT index=3 paired=0 connected=0\nBLEPROFILE SLOT index=4 paired=0 connected=0\nBLEPROFILE RESULT command=0 status=busy selected=1 changed=0 error=0\nBLEPROFILE END\n"
+  },
+  {
+    "name": "profile-4-v1",
+    "protocol": "profile",
+    "command": "0",
+    "accepted": true,
+    "text": "# host=test\nBLEPROFILE BEGIN version=1 count=5 active=0 save_delay_ms=60000\nBLEPROFILE SLOT index=0 paired=1 connected=1\nBLEPROFILE SLOT index=1 paired=1 connected=1\nBLEPROFILE SLOT index=2 paired=0 connected=0\nBLEPROFILE SLOT index=3 paired=0 connected=0\nBLEPROFILE SLOT index=4 paired=0 connected=0\nBLEPROFILE RESULT command=0 status=ok selected=0 changed=1 error=0\nBLEPROFILE END\n"
+  },
+  {
+    "name": "profile-4-v2",
+    "protocol": "profile",
+    "command": "0",
+    "accepted": true,
+    "text": "# host=test\nBLEPROFILE BEGIN version=2 count=5 active=0 save_delay_ms=60000\nBLEPROFILE SLOT index=0 paired=1 connected=1\nBLEPROFILE SLOT index=1 paired=1 connected=1\nBLEPROFILE SLOT index=2 paired=0 connected=0\nBLEPROFILE SLOT index=3 paired=0 connected=0\nBLEPROFILE SLOT index=4 paired=0 connected=0\nBLEPROFILE RESULT command=0 status=ok selected=0 changed=1 error=0\nBLEPROFILE END\n"
+  },
+  {
+    "name": "profile-5-v1",
+    "protocol": "profile",
+    "command": "1",
+    "accepted": true,
+    "text": "# host=test\nBLEPROFILE BEGIN version=1 count=5 active=0 save_delay_ms=60000\nBLEPROFILE SLOT index=0 paired=1 connected=1\nBLEPROFILE SLOT index=1 paired=1 connected=1\nBLEPROFILE SLOT index=2 paired=0 connected=0\nBLEPROFILE SLOT index=3 paired=0 connected=0\nBLEPROFILE SLOT index=4 paired=0 connected=0\nBLEPROFILE RESULT command=1 status=busy selected=0 changed=0 error=0\nBLEPROFILE END\n"
+  },
+  {
+    "name": "profile-5-v2",
+    "protocol": "profile",
+    "command": "1",
+    "accepted": true,
+    "text": "# host=test\nBLEPROFILE BEGIN version=2 count=5 active=0 save_delay_ms=60000\nBLEPROFILE SLOT index=0 paired=1 connected=1\nBLEPROFILE SLOT index=1 paired=1 connected=1\nBLEPROFILE SLOT index=2 paired=0 connected=0\nBLEPROFILE SLOT index=3 paired=0 connected=0\nBLEPROFILE SLOT index=4 paired=0 connected=0\nBLEPROFILE RESULT command=1 status=busy selected=0 changed=0 error=0\nBLEPROFILE END\n"
+  },
+  {
+    "name": "profile-6-v1",
+    "protocol": "profile",
+    "command": "1",
+    "accepted": true,
+    "text": "# host=test\nBLEPROFILE BEGIN version=1 count=5 active=0 save_delay_ms=60000\nBLEPROFILE SLOT index=0 paired=1 connected=1\nBLEPROFILE SLOT index=1 paired=1 connected=1\nBLEPROFILE SLOT index=2 paired=0 connected=0\nBLEPROFILE SLOT index=3 paired=0 connected=0\nBLEPROFILE SLOT index=4 paired=0 connected=0\nBLEPROFILE RESULT command=1 status=busy selected=0 changed=0 error=0\nBLEPROFILE END\n"
+  },
+  {
+    "name": "profile-6-v2",
+    "protocol": "profile",
+    "command": "1",
+    "accepted": true,
+    "text": "# host=test\nBLEPROFILE BEGIN version=2 count=5 active=0 save_delay_ms=60000\nBLEPROFILE SLOT index=0 paired=1 connected=1\nBLEPROFILE SLOT index=1 paired=1 connected=1\nBLEPROFILE SLOT index=2 paired=0 connected=0\nBLEPROFILE SLOT index=3 paired=0 connected=0\nBLEPROFILE SLOT index=4 paired=0 connected=0\nBLEPROFILE RESULT command=1 status=busy selected=0 changed=0 error=0\nBLEPROFILE END\n"
+  },
+  {
+    "name": "profile-7-v1",
+    "protocol": "profile",
+    "command": "1",
+    "accepted": true,
+    "text": "# host=test\nBLEPROFILE BEGIN version=1 count=5 active=0 save_delay_ms=60000\nBLEPROFILE SLOT index=0 paired=1 connected=1\nBLEPROFILE SLOT index=1 paired=1 connected=1\nBLEPROFILE SLOT index=2 paired=0 connected=0\nBLEPROFILE SLOT index=3 paired=0 connected=0\nBLEPROFILE SLOT index=4 paired=0 connected=0\nBLEPROFILE RESULT command=1 status=busy selected=0 changed=0 error=0\nBLEPROFILE END\n"
+  },
+  {
+    "name": "profile-7-v2",
+    "protocol": "profile",
+    "command": "1",
+    "accepted": true,
+    "text": "# host=test\nBLEPROFILE BEGIN version=2 count=5 active=0 save_delay_ms=60000\nBLEPROFILE SLOT index=0 paired=1 connected=1\nBLEPROFILE SLOT index=1 paired=1 connected=1\nBLEPROFILE SLOT index=2 paired=0 connected=0\nBLEPROFILE SLOT index=3 paired=0 connected=0\nBLEPROFILE SLOT index=4 paired=0 connected=0\nBLEPROFILE RESULT command=1 status=busy selected=0 changed=0 error=0\nBLEPROFILE END\n"
+  },
+  {
+    "name": "profile-8-v1",
+    "protocol": "profile",
+    "command": "1",
+    "accepted": true,
+    "text": "# host=test\nBLEPROFILE BEGIN version=1 count=5 active=1 save_delay_ms=60000\nBLEPROFILE SLOT index=0 paired=1 connected=1\nBLEPROFILE SLOT index=1 paired=1 connected=1\nBLEPROFILE SLOT index=2 paired=0 connected=0\nBLEPROFILE SLOT index=3 paired=0 connected=0\nBLEPROFILE SLOT index=4 paired=0 connected=0\nBLEPROFILE RESULT command=1 status=ok selected=1 changed=1 error=0\nBLEPROFILE END\n"
+  },
+  {
+    "name": "profile-8-v2",
+    "protocol": "profile",
+    "command": "1",
+    "accepted": true,
+    "text": "# host=test\nBLEPROFILE BEGIN version=2 count=5 active=1 save_delay_ms=60000\nBLEPROFILE SLOT index=0 paired=1 connected=1\nBLEPROFILE SLOT index=1 paired=1 connected=1\nBLEPROFILE SLOT index=2 paired=0 connected=0\nBLEPROFILE SLOT index=3 paired=0 connected=0\nBLEPROFILE SLOT index=4 paired=0 connected=0\nBLEPROFILE RESULT command=1 status=ok selected=1 changed=1 error=0\nBLEPROFILE END\n"
+  },
+  {
+    "name": "profile-9-v1",
+    "protocol": "profile",
+    "command": "0",
+    "accepted": true,
+    "text": "# host=test\nBLEPROFILE BEGIN version=1 count=5 active=1 save_delay_ms=60000\nBLEPROFILE SLOT index=0 paired=1 connected=1\nBLEPROFILE SLOT index=1 paired=1 connected=1\nBLEPROFILE SLOT index=2 paired=0 connected=0\nBLEPROFILE SLOT index=3 paired=0 connected=0\nBLEPROFILE SLOT index=4 paired=0 connected=0\nBLEPROFILE RESULT command=0 status=failed selected=1 changed=0 error=-5\nBLEPROFILE END\n"
+  },
+  {
+    "name": "profile-9-v2",
+    "protocol": "profile",
+    "command": "0",
+    "accepted": true,
+    "text": "# host=test\nBLEPROFILE BEGIN version=2 count=5 active=1 save_delay_ms=60000\nBLEPROFILE SLOT index=0 paired=1 connected=1\nBLEPROFILE SLOT index=1 paired=1 connected=1\nBLEPROFILE SLOT index=2 paired=0 connected=0\nBLEPROFILE SLOT index=3 paired=0 connected=0\nBLEPROFILE SLOT index=4 paired=0 connected=0\nBLEPROFILE RESULT command=0 status=failed selected=1 changed=0 error=-5\nBLEPROFILE END\n"
+  },
+  {
+    "name": "profile-invalid-bad-header",
+    "protocol": "profile",
+    "command": "1",
+    "accepted": false,
+    "text": "# host=test\nBLEPROFILE BEGIN version=1 count=4 active=1 save_delay_ms=60000\nBLEPROFILE SLOT index=0 paired=1 connected=1\nBLEPROFILE SLOT index=1 paired=1 connected=1\nBLEPROFILE SLOT index=2 paired=0 connected=0\nBLEPROFILE SLOT index=3 paired=0 connected=0\nBLEPROFILE SLOT index=4 paired=0 connected=0\nBLEPROFILE RESULT command=1 status=ok selected=1 changed=1 error=0\nBLEPROFILE END\n"
+  },
+  {
+    "name": "profile-invalid-duplicate-slot",
+    "protocol": "profile",
+    "command": "1",
+    "accepted": false,
+    "text": "# host=test\nBLEPROFILE BEGIN version=1 count=5 active=1 save_delay_ms=60000\nBLEPROFILE SLOT index=0 paired=1 connected=1\nBLEPROFILE SLOT index=0 paired=1 connected=1\nBLEPROFILE SLOT index=2 paired=0 connected=0\nBLEPROFILE SLOT index=3 paired=0 connected=0\nBLEPROFILE SLOT index=4 paired=0 connected=0\nBLEPROFILE RESULT command=1 status=ok selected=1 changed=1 error=0\nBLEPROFILE END\n"
+  },
+  {
+    "name": "profile-invalid-truncated",
+    "protocol": "profile",
+    "command": "1",
+    "accepted": false,
+    "text": "# host=test\nBLEPROFILE BEGIN version=1 count=5 active=1 save_delay_ms=60000\nBLEPROFILE SLOT index=0 paired=1 connected=1\nBLEPROFILE SLOT index=1 paired=1 connected=1\nBLEPROFILE SLOT index=2 paired=0 connected=0\nBLEPROFILE SLOT index=3 paired=0 connected=0\nBLEPROFILE SLOT index=4 paired=0 connected=0\nBLEPROFILE RESULT command=1 status=ok selected=1 changed=1 error=0\n\n"
+  },
+  {
+    "name": "profile-invalid-bad-active",
+    "protocol": "profile",
+    "command": "1",
+    "accepted": false,
+    "text": "# host=test\nBLEPROFILE BEGIN version=1 count=5 active=9 save_delay_ms=60000\nBLEPROFILE SLOT index=0 paired=1 connected=1\nBLEPROFILE SLOT index=1 paired=1 connected=1\nBLEPROFILE SLOT index=2 paired=0 connected=0\nBLEPROFILE SLOT index=3 paired=0 connected=0\nBLEPROFILE SLOT index=4 paired=0 connected=0\nBLEPROFILE RESULT command=1 status=ok selected=1 changed=1 error=0\nBLEPROFILE END\n"
+  },
+  {
+    "name": "profile-invalid-bad-command",
+    "protocol": "profile",
+    "command": "1",
+    "accepted": false,
+    "text": "# host=test\nBLEPROFILE BEGIN version=1 count=5 active=1 save_delay_ms=60000\nBLEPROFILE SLOT index=0 paired=1 connected=1\nBLEPROFILE SLOT index=1 paired=1 connected=1\nBLEPROFILE SLOT index=2 paired=0 connected=0\nBLEPROFILE SLOT index=3 paired=0 connected=0\nBLEPROFILE SLOT index=4 paired=0 connected=0\nBLEPROFILE RESULT command=0 status=ok selected=1 changed=1 error=0\nBLEPROFILE END\n"
+  },
+  {
+    "name": "v3-open",
+    "protocol": "profile",
+    "command": "S",
+    "accepted": true,
+    "text": "# host=test\nBLEPROFILE BEGIN version=3 count=2 active=0 save_delay_ms=60000\nBLEPROFILE SLOT index=0 paired=1 connected=1\nBLEPROFILE SLOT index=1 paired=1 connected=0\nBLEPROFILE WINDOW ready=1 remaining_ms=9999 advertising=1 known=3 connected=1 error=0\nBLEPROFILE RESULT command=S status=ok selected=0 changed=0 error=0\nBLEPROFILE END\n"
+  },
+  {
+    "name": "v3-closed",
+    "protocol": "profile",
+    "command": "S",
+    "accepted": true,
+    "text": "# host=test\nBLEPROFILE BEGIN version=3 count=2 active=0 save_delay_ms=60000\nBLEPROFILE SLOT index=0 paired=1 connected=1\nBLEPROFILE SLOT index=1 paired=1 connected=0\nBLEPROFILE WINDOW ready=1 remaining_ms=0 advertising=0 known=3 connected=1 error=0\nBLEPROFILE RESULT command=S status=ok selected=0 changed=0 error=0\nBLEPROFILE END\n"
+  },
+  {
+    "name": "v3-initializing",
+    "protocol": "profile",
+    "command": "S",
+    "accepted": true,
+    "text": "# host=test\nBLEPROFILE BEGIN version=3 count=2 active=0 save_delay_ms=60000\nBLEPROFILE SLOT index=0 paired=1 connected=1\nBLEPROFILE SLOT index=1 paired=1 connected=0\nBLEPROFILE WINDOW ready=0 remaining_ms=0 advertising=0 known=0 connected=0 error=0\nBLEPROFILE RESULT command=S status=ok selected=0 changed=0 error=0\nBLEPROFILE END\n"
+  },
+  {
+    "name": "v3-radio-error",
+    "protocol": "profile",
+    "command": "S",
+    "accepted": true,
+    "text": "# host=test\nBLEPROFILE BEGIN version=3 count=2 active=0 save_delay_ms=60000\nBLEPROFILE SLOT index=0 paired=1 connected=1\nBLEPROFILE SLOT index=1 paired=1 connected=0\nBLEPROFILE WINDOW ready=1 remaining_ms=9999 advertising=1 known=3 connected=1 error=-5\nBLEPROFILE RESULT command=S status=ok selected=0 changed=0 error=0\nBLEPROFILE END\n"
+  },
+  {
+    "name": "v3-invalid-time",
+    "protocol": "profile",
+    "command": "S",
+    "accepted": false,
+    "text": "# host=test\nBLEPROFILE BEGIN version=3 count=2 active=0 save_delay_ms=60000\nBLEPROFILE SLOT index=0 paired=1 connected=1\nBLEPROFILE SLOT index=1 paired=1 connected=0\nBLEPROFILE WINDOW ready=1 remaining_ms=30001 advertising=1 known=3 connected=1 error=0\nBLEPROFILE RESULT command=S status=ok selected=0 changed=0 error=0\nBLEPROFILE END\n"
+  },
+  {
+    "name": "v3-invalid-known",
+    "protocol": "profile",
+    "command": "S",
+    "accepted": false,
+    "text": "# host=test\nBLEPROFILE BEGIN version=3 count=2 active=0 save_delay_ms=60000\nBLEPROFILE SLOT index=0 paired=1 connected=1\nBLEPROFILE SLOT index=1 paired=1 connected=0\nBLEPROFILE WINDOW ready=1 remaining_ms=9999 advertising=1 known=4 connected=1 error=0\nBLEPROFILE RESULT command=S status=ok selected=0 changed=0 error=0\nBLEPROFILE END\n"
+  },
+  {
+    "name": "v3-invalid-connected",
+    "protocol": "profile",
+    "command": "S",
+    "accepted": false,
+    "text": "# host=test\nBLEPROFILE BEGIN version=3 count=2 active=0 save_delay_ms=60000\nBLEPROFILE SLOT index=0 paired=1 connected=1\nBLEPROFILE SLOT index=1 paired=1 connected=0\nBLEPROFILE WINDOW ready=1 remaining_ms=9999 advertising=1 known=3 connected=4 error=0\nBLEPROFILE RESULT command=S status=ok selected=0 changed=0 error=0\nBLEPROFILE END\n"
+  },
+  {
+    "name": "v3-invalid-not-subset",
+    "protocol": "profile",
+    "command": "S",
+    "accepted": false,
+    "text": "# host=test\nBLEPROFILE BEGIN version=3 count=2 active=0 save_delay_ms=60000\nBLEPROFILE SLOT index=0 paired=1 connected=1\nBLEPROFILE SLOT index=1 paired=1 connected=0\nBLEPROFILE WINDOW ready=1 remaining_ms=9999 advertising=1 known=2 connected=1 error=0\nBLEPROFILE RESULT command=S status=ok selected=0 changed=0 error=0\nBLEPROFILE END\n"
+  },
+  {
+    "name": "v3-invalid-not-ready",
+    "protocol": "profile",
+    "command": "S",
+    "accepted": false,
+    "text": "# host=test\nBLEPROFILE BEGIN version=3 count=2 active=0 save_delay_ms=60000\nBLEPROFILE SLOT index=0 paired=1 connected=1\nBLEPROFILE SLOT index=1 paired=1 connected=0\nBLEPROFILE WINDOW ready=0 remaining_ms=9999 advertising=1 known=3 connected=1 error=0\nBLEPROFILE RESULT command=S status=ok selected=0 changed=0 error=0\nBLEPROFILE END\n"
+  },
+  {
+    "name": "v3-invalid-unexpected",
+    "protocol": "profile",
+    "command": "S",
+    "accepted": false,
+    "text": "# host=test\nBLEPROFILE BEGIN version=3 count=2 active=0 save_delay_ms=60000\nBLEPROFILE SLOT index=0 paired=1 connected=1\nBLEPROFILE SLOT index=1 paired=1 connected=0\nBLEPROFILE WINDOW ready=1 remaining_ms=9999 advertising=1 address=private connected=1 error=0\nBLEPROFILE RESULT command=S status=ok selected=0 changed=0 error=0\nBLEPROFILE END\n"
+  },
+  {
+    "name": "v3-invalid-bad-boolean",
+    "protocol": "profile",
+    "command": "S",
+    "accepted": false,
+    "text": "# host=test\nBLEPROFILE BEGIN version=3 count=2 active=0 save_delay_ms=60000\nBLEPROFILE SLOT index=0 paired=1 connected=1\nBLEPROFILE SLOT index=1 paired=1 connected=0\nBLEPROFILE WINDOW ready=1 remaining_ms=9999 advertising=2 known=3 connected=1 error=0\nBLEPROFILE RESULT command=S status=ok selected=0 changed=0 error=0\nBLEPROFILE END\n"
+  },
+  {
+    "name": "v3-missing",
+    "protocol": "profile",
+    "command": "S",
+    "accepted": false,
+    "text": "# host=test\nBLEPROFILE BEGIN version=3 count=2 active=0 save_delay_ms=60000\nBLEPROFILE SLOT index=0 paired=1 connected=1\nBLEPROFILE SLOT index=1 paired=1 connected=0\nBLEPROFILE RESULT command=S status=ok selected=0 changed=0 error=0\nBLEPROFILE END\n"
+  },
+  {
+    "name": "v3-duplicate",
+    "protocol": "profile",
+    "command": "S",
+    "accepted": false,
+    "text": "# host=test\nBLEPROFILE BEGIN version=3 count=2 active=0 save_delay_ms=60000\nBLEPROFILE SLOT index=0 paired=1 connected=1\nBLEPROFILE SLOT index=1 paired=1 connected=0\nBLEPROFILE WINDOW ready=1 remaining_ms=9999 advertising=1 known=3 connected=1 error=0\nBLEPROFILE WINDOW ready=1 remaining_ms=9999 advertising=1 known=3 connected=1 error=0\nBLEPROFILE RESULT command=S status=ok selected=0 changed=0 error=0\nBLEPROFILE END\n"
+  },
+  {
+    "name": "v2-window",
+    "protocol": "profile",
+    "command": "S",
+    "accepted": false,
+    "text": "# host=test\nBLEPROFILE BEGIN version=2 count=2 active=0 save_delay_ms=60000\nBLEPROFILE SLOT index=0 paired=1 connected=1\nBLEPROFILE SLOT index=1 paired=1 connected=0\nBLEPROFILE WINDOW ready=1 remaining_ms=9999 advertising=1 known=3 connected=1 error=0\nBLEPROFILE RESULT command=S status=ok selected=0 changed=0 error=0\nBLEPROFILE END\n"
+  },
+  {
+    "name": "v3-late-window",
+    "protocol": "profile",
+    "command": "S",
+    "accepted": false,
+    "text": "# host=test\nBLEPROFILE BEGIN version=3 count=2 active=0 save_delay_ms=60000\nBLEPROFILE SLOT index=0 paired=1 connected=1\nBLEPROFILE SLOT index=1 paired=1 connected=0\nBLEPROFILE RESULT command=S status=ok selected=0 changed=0 error=0\nBLEPROFILE WINDOW ready=1 remaining_ms=9999 advertising=1 known=3 connected=1 error=0\nBLEPROFILE END\n"
+  },
+  {
+    "name": "v3-max-window",
+    "protocol": "profile",
+    "command": "S",
+    "accepted": true,
+    "text": "# host=test\nBLEPROFILE BEGIN version=3 count=2 active=0 save_delay_ms=60000\nBLEPROFILE SLOT index=0 paired=1 connected=1\nBLEPROFILE SLOT index=1 paired=1 connected=0\nBLEPROFILE WINDOW ready=1 remaining_ms=30000 advertising=1 known=3 connected=1 error=0\nBLEPROFILE RESULT command=S status=ok selected=0 changed=0 error=0\nBLEPROFILE END\n"
+  },
+  {
+    "name": "v3-above-old-window",
+    "protocol": "profile",
+    "command": "S",
+    "accepted": true,
+    "text": "# host=test\nBLEPROFILE BEGIN version=3 count=2 active=0 save_delay_ms=60000\nBLEPROFILE SLOT index=0 paired=1 connected=1\nBLEPROFILE SLOT index=1 paired=1 connected=0\nBLEPROFILE WINDOW ready=1 remaining_ms=10001 advertising=1 known=3 connected=1 error=0\nBLEPROFILE RESULT command=S status=ok selected=0 changed=0 error=0\nBLEPROFILE END\n"
+  },
+  {
+    "name": "v4-valid",
+    "protocol": "profile",
+    "command": "S",
+    "accepted": true,
+    "text": "# host=test\nBLEPROFILE BEGIN version=4 count=2 active=0 save_delay_ms=60000\nBLEPROFILE SLOT index=0 paired=1 connected=1\nBLEPROFILE SLOT index=1 paired=1 connected=0\nBLEPROFILE WINDOW ready=1 remaining_ms=9999 advertising=1 known=3 connected=1 error=0\nBLEPROFILE POLICY active=1 without_host=0 loaded=1 saved=1 remembered=0 restoring=0 error=0\nBLEPROFILE RESULT command=S status=ok selected=0 changed=0 error=0\nBLEPROFILE END\n"
+  },
+  {
+    "name": "v4-save-error",
+    "protocol": "profile",
+    "command": "S",
+    "accepted": true,
+    "text": "# host=test\nBLEPROFILE BEGIN version=4 count=2 active=0 save_delay_ms=60000\nBLEPROFILE SLOT index=0 paired=1 connected=1\nBLEPROFILE SLOT index=1 paired=1 connected=0\nBLEPROFILE WINDOW ready=1 remaining_ms=9999 advertising=1 known=3 connected=1 error=0\nBLEPROFILE POLICY active=1 without_host=0 loaded=1 saved=1 remembered=0 restoring=0 error=-28\nBLEPROFILE RESULT command=S status=ok selected=0 changed=0 error=0\nBLEPROFILE END\n"
+  },
+  {
+    "name": "v4-empty",
+    "protocol": "profile",
+    "command": "S",
+    "accepted": true,
+    "text": "# host=test\nBLEPROFILE BEGIN version=4 count=2 active=0 save_delay_ms=60000\nBLEPROFILE SLOT index=0 paired=1 connected=1\nBLEPROFILE SLOT index=1 paired=1 connected=0\nBLEPROFILE WINDOW ready=1 remaining_ms=9999 advertising=1 known=3 connected=1 error=0\nBLEPROFILE POLICY active=1 without_host=0 loaded=1 saved=0 remembered=-1 restoring=0 error=0\nBLEPROFILE RESULT command=S status=ok selected=0 changed=0 error=0\nBLEPROFILE END\n"
+  },
+  {
+    "name": "v4-without-host",
+    "protocol": "profile",
+    "command": "S",
+    "accepted": true,
+    "text": "# host=test\nBLEPROFILE BEGIN version=4 count=2 active=0 save_delay_ms=60000\nBLEPROFILE SLOT index=0 paired=1 connected=1\nBLEPROFILE SLOT index=1 paired=1 connected=0\nBLEPROFILE WINDOW ready=1 remaining_ms=9999 advertising=1 known=3 connected=0 error=0\nBLEPROFILE POLICY active=1 without_host=1 loaded=1 saved=1 remembered=0 restoring=0 error=0\nBLEPROFILE RESULT command=S status=ok selected=0 changed=0 error=0\nBLEPROFILE END\n"
+  },
+  {
+    "name": "v4-missing",
+    "protocol": "profile",
+    "command": "S",
+    "accepted": false,
+    "text": "# host=test\nBLEPROFILE BEGIN version=4 count=2 active=0 save_delay_ms=60000\nBLEPROFILE SLOT index=0 paired=1 connected=1\nBLEPROFILE SLOT index=1 paired=1 connected=0\nBLEPROFILE WINDOW ready=1 remaining_ms=9999 advertising=1 known=3 connected=1 error=0\nBLEPROFILE RESULT command=S status=ok selected=0 changed=0 error=0\nBLEPROFILE END\n"
+  },
+  {
+    "name": "v4-duplicate",
+    "protocol": "profile",
+    "command": "S",
+    "accepted": false,
+    "text": "# host=test\nBLEPROFILE BEGIN version=4 count=2 active=0 save_delay_ms=60000\nBLEPROFILE SLOT index=0 paired=1 connected=1\nBLEPROFILE SLOT index=1 paired=1 connected=0\nBLEPROFILE WINDOW ready=1 remaining_ms=9999 advertising=1 known=3 connected=1 error=0\nBLEPROFILE POLICY active=1 without_host=0 loaded=1 saved=1 remembered=0 restoring=0 error=0\nBLEPROFILE POLICY active=1 without_host=0 loaded=1 saved=1 remembered=0 restoring=0 error=0\nBLEPROFILE RESULT command=S status=ok selected=0 changed=0 error=0\nBLEPROFILE END\n"
+  },
+  {
+    "name": "v4-bad-slot",
+    "protocol": "profile",
+    "command": "S",
+    "accepted": false,
+    "text": "# host=test\nBLEPROFILE BEGIN version=4 count=2 active=0 save_delay_ms=60000\nBLEPROFILE SLOT index=0 paired=1 connected=1\nBLEPROFILE SLOT index=1 paired=1 connected=0\nBLEPROFILE WINDOW ready=1 remaining_ms=9999 advertising=1 known=3 connected=1 error=0\nBLEPROFILE POLICY active=1 without_host=0 loaded=1 saved=1 remembered=2 restoring=0 error=0\nBLEPROFILE RESULT command=S status=ok selected=0 changed=0 error=0\nBLEPROFILE END\n"
+  },
+  {
+    "name": "v4-unloaded",
+    "protocol": "profile",
+    "command": "S",
+    "accepted": false,
+    "text": "# host=test\nBLEPROFILE BEGIN version=4 count=2 active=0 save_delay_ms=60000\nBLEPROFILE SLOT index=0 paired=1 connected=1\nBLEPROFILE SLOT index=1 paired=1 connected=0\nBLEPROFILE WINDOW ready=1 remaining_ms=9999 advertising=1 known=3 connected=1 error=0\nBLEPROFILE POLICY active=1 without_host=0 loaded=0 saved=1 remembered=0 restoring=0 error=0\nBLEPROFILE RESULT command=S status=ok selected=0 changed=0 error=0\nBLEPROFILE END\n"
+  },
+  {
+    "name": "v4-unsaved",
+    "protocol": "profile",
+    "command": "S",
+    "accepted": false,
+    "text": "# host=test\nBLEPROFILE BEGIN version=4 count=2 active=0 save_delay_ms=60000\nBLEPROFILE SLOT index=0 paired=1 connected=1\nBLEPROFILE SLOT index=1 paired=1 connected=0\nBLEPROFILE WINDOW ready=1 remaining_ms=9999 advertising=1 known=3 connected=1 error=0\nBLEPROFILE POLICY active=1 without_host=0 loaded=1 saved=0 remembered=0 restoring=0 error=0\nBLEPROFILE RESULT command=S status=ok selected=0 changed=0 error=0\nBLEPROFILE END\n"
+  },
+  {
+    "name": "v4-connected-without",
+    "protocol": "profile",
+    "command": "S",
+    "accepted": false,
+    "text": "# host=test\nBLEPROFILE BEGIN version=4 count=2 active=0 save_delay_ms=60000\nBLEPROFILE SLOT index=0 paired=1 connected=1\nBLEPROFILE SLOT index=1 paired=1 connected=0\nBLEPROFILE WINDOW ready=1 remaining_ms=9999 advertising=1 known=3 connected=1 error=0\nBLEPROFILE POLICY active=1 without_host=1 loaded=1 saved=1 remembered=0 restoring=0 error=0\nBLEPROFILE RESULT command=S status=ok selected=0 changed=0 error=0\nBLEPROFILE END\n"
+  },
+  {
+    "name": "v3-unexpected-policy",
+    "protocol": "profile",
+    "command": "S",
+    "accepted": false,
+    "text": "# host=test\nBLEPROFILE BEGIN version=3 count=2 active=0 save_delay_ms=60000\nBLEPROFILE SLOT index=0 paired=1 connected=1\nBLEPROFILE SLOT index=1 paired=1 connected=0\nBLEPROFILE WINDOW ready=1 remaining_ms=9999 advertising=1 known=3 connected=1 error=0\nBLEPROFILE POLICY active=1 without_host=0 loaded=1 saved=1 remembered=0 restoring=0 error=0\nBLEPROFILE RESULT command=S status=ok selected=0 changed=0 error=0\nBLEPROFILE END\n"
+  },
+  {
+    "name": "v5-valid",
+    "protocol": "profile",
+    "command": "S",
+    "accepted": true,
+    "text": "# host=test\nBLEPROFILE BEGIN version=5 count=2 active=0 save_delay_ms=60000\nBLEPROFILE SLOT index=0 paired=1 connected=1\nBLEPROFILE SLOT index=1 paired=1 connected=0\nBLEPROFILE WINDOW ready=1 remaining_ms=9999 advertising=1 known=3 connected=1 error=0\nBLEPROFILE POLICY active=1 without_host=0 loaded=1 saved=1 remembered=0 restoring=0 error=0 excluded=2\nBLEPROFILE RESULT command=S status=ok selected=0 changed=0 error=0\nBLEPROFILE END\n"
+  },
+  {
+    "name": "v5-max-window",
+    "protocol": "profile",
+    "command": "S",
+    "accepted": true,
+    "text": "# host=test\nBLEPROFILE BEGIN version=5 count=2 active=0 save_delay_ms=60000\nBLEPROFILE SLOT index=0 paired=1 connected=1\nBLEPROFILE SLOT index=1 paired=1 connected=0\nBLEPROFILE WINDOW ready=1 remaining_ms=120000 advertising=1 known=3 connected=1 error=0\nBLEPROFILE POLICY active=1 without_host=0 loaded=1 saved=1 remembered=0 restoring=0 error=0 excluded=2\nBLEPROFILE RESULT command=S status=ok selected=0 changed=0 error=0\nBLEPROFILE END\n"
+  },
+  {
+    "name": "v5-time-overflow",
+    "protocol": "profile",
+    "command": "S",
+    "accepted": false,
+    "text": "# host=test\nBLEPROFILE BEGIN version=5 count=2 active=0 save_delay_ms=60000\nBLEPROFILE SLOT index=0 paired=1 connected=1\nBLEPROFILE SLOT index=1 paired=1 connected=0\nBLEPROFILE WINDOW ready=1 remaining_ms=120001 advertising=1 known=3 connected=1 error=0\nBLEPROFILE POLICY active=1 without_host=0 loaded=1 saved=1 remembered=0 restoring=0 error=0 excluded=2\nBLEPROFILE RESULT command=S status=ok selected=0 changed=0 error=0\nBLEPROFILE END\n"
+  },
+  {
+    "name": "v5-excluded-overflow",
+    "protocol": "profile",
+    "command": "S",
+    "accepted": false,
+    "text": "# host=test\nBLEPROFILE BEGIN version=5 count=2 active=0 save_delay_ms=60000\nBLEPROFILE SLOT index=0 paired=1 connected=1\nBLEPROFILE SLOT index=1 paired=1 connected=0\nBLEPROFILE WINDOW ready=1 remaining_ms=9999 advertising=1 known=3 connected=1 error=0\nBLEPROFILE POLICY active=1 without_host=0 loaded=1 saved=1 remembered=0 restoring=0 error=0 excluded=4\nBLEPROFILE RESULT command=S status=ok selected=0 changed=0 error=0\nBLEPROFILE END\n"
+  },
+  {
+    "name": "v5-excluded-unknown",
+    "protocol": "profile",
+    "command": "S",
+    "accepted": false,
+    "text": "# host=test\nBLEPROFILE BEGIN version=5 count=2 active=0 save_delay_ms=60000\nBLEPROFILE SLOT index=0 paired=1 connected=1\nBLEPROFILE SLOT index=1 paired=1 connected=0\nBLEPROFILE WINDOW ready=1 remaining_ms=9999 advertising=1 known=1 connected=1 error=0\nBLEPROFILE POLICY active=1 without_host=0 loaded=1 saved=1 remembered=0 restoring=0 error=0 excluded=2\nBLEPROFILE RESULT command=S status=ok selected=0 changed=0 error=0\nBLEPROFILE END\n"
+  },
+  {
+    "name": "v5-missing-excluded",
+    "protocol": "profile",
+    "command": "S",
+    "accepted": false,
+    "text": "# host=test\nBLEPROFILE BEGIN version=5 count=2 active=0 save_delay_ms=60000\nBLEPROFILE SLOT index=0 paired=1 connected=1\nBLEPROFILE SLOT index=1 paired=1 connected=0\nBLEPROFILE WINDOW ready=1 remaining_ms=9999 advertising=1 known=3 connected=1 error=0\nBLEPROFILE POLICY active=1 without_host=0 loaded=1 saved=1 remembered=0 restoring=0 error=0\nBLEPROFILE RESULT command=S status=ok selected=0 changed=0 error=0\nBLEPROFILE END\n"
+  },
+  {
+    "name": "v4-unexpected-excluded",
+    "protocol": "profile",
+    "command": "S",
+    "accepted": false,
+    "text": "# host=test\nBLEPROFILE BEGIN version=4 count=2 active=0 save_delay_ms=60000\nBLEPROFILE SLOT index=0 paired=1 connected=1\nBLEPROFILE SLOT index=1 paired=1 connected=0\nBLEPROFILE WINDOW ready=1 remaining_ms=9999 advertising=1 known=3 connected=1 error=0\nBLEPROFILE POLICY active=1 without_host=0 loaded=1 saved=1 remembered=0 restoring=0 error=0 excluded=2\nBLEPROFILE RESULT command=S status=ok selected=0 changed=0 error=0\nBLEPROFILE END\n"
+  },
+  {
+    "name": "v4-too-long",
+    "protocol": "profile",
+    "command": "S",
+    "accepted": false,
+    "text": "# host=test\nBLEPROFILE BEGIN version=4 count=2 active=0 save_delay_ms=60000\nBLEPROFILE SLOT index=0 paired=1 connected=1\nBLEPROFILE SLOT index=1 paired=1 connected=0\nBLEPROFILE WINDOW ready=1 remaining_ms=120000 advertising=1 known=3 connected=1 error=0\nBLEPROFILE POLICY active=1 without_host=0 loaded=1 saved=1 remembered=0 restoring=0 error=0\nBLEPROFILE RESULT command=S status=ok selected=0 changed=0 error=0\nBLEPROFILE END\n"
+  },
+  {
+    "name": "v5-no-exclusions",
+    "protocol": "profile",
+    "command": "S",
+    "accepted": true,
+    "text": "# host=test\nBLEPROFILE BEGIN version=5 count=2 active=0 save_delay_ms=60000\nBLEPROFILE SLOT index=0 paired=1 connected=1\nBLEPROFILE SLOT index=1 paired=1 connected=0\nBLEPROFILE WINDOW ready=1 remaining_ms=9999 advertising=1 known=3 connected=1 error=0\nBLEPROFILE POLICY active=1 without_host=0 loaded=1 saved=1 remembered=0 restoring=0 error=0 excluded=0\nBLEPROFILE RESULT command=S status=ok selected=0 changed=0 error=0\nBLEPROFILE END\n"
+  },
+  {
+    "name": "v6-valid",
+    "protocol": "profile",
+    "command": "S",
+    "accepted": true,
+    "text": "# host=test\nBLEPROFILE BEGIN version=6 count=2 active=0 save_delay_ms=60000\nBLEPROFILE SLOT index=0 paired=1 connected=1\nBLEPROFILE SLOT index=1 paired=1 connected=0\nBLEPROFILE WINDOW ready=1 remaining_ms=9999 advertising=1 known=3 connected=1 error=0\nBLEPROFILE POLICY active=1 without_host=0 loaded=1 saved=1 remembered=0 restoring=0 error=0\nBLEPROFILE RESULT command=S status=ok selected=0 changed=0 error=0\nBLEPROFILE END\n"
+  },
+  {
+    "name": "v6-max-window",
+    "protocol": "profile",
+    "command": "S",
+    "accepted": true,
+    "text": "# host=test\nBLEPROFILE BEGIN version=6 count=2 active=0 save_delay_ms=60000\nBLEPROFILE SLOT index=0 paired=1 connected=1\nBLEPROFILE SLOT index=1 paired=1 connected=0\nBLEPROFILE WINDOW ready=1 remaining_ms=120000 advertising=1 known=3 connected=1 error=0\nBLEPROFILE POLICY active=1 without_host=0 loaded=1 saved=1 remembered=0 restoring=0 error=0\nBLEPROFILE RESULT command=S status=ok selected=0 changed=0 error=0\nBLEPROFILE END\n"
+  },
+  {
+    "name": "v6-overflow",
+    "protocol": "profile",
+    "command": "S",
+    "accepted": false,
+    "text": "# host=test\nBLEPROFILE BEGIN version=6 count=2 active=0 save_delay_ms=60000\nBLEPROFILE SLOT index=0 paired=1 connected=1\nBLEPROFILE SLOT index=1 paired=1 connected=0\nBLEPROFILE WINDOW ready=1 remaining_ms=120001 advertising=1 known=3 connected=1 error=0\nBLEPROFILE POLICY active=1 without_host=0 loaded=1 saved=1 remembered=0 restoring=0 error=0\nBLEPROFILE RESULT command=S status=ok selected=0 changed=0 error=0\nBLEPROFILE END\n"
+  },
+  {
+    "name": "v6-no-excluded",
+    "protocol": "profile",
+    "command": "S",
+    "accepted": false,
+    "text": "# host=test\nBLEPROFILE BEGIN version=6 count=2 active=0 save_delay_ms=60000\nBLEPROFILE SLOT index=0 paired=1 connected=1\nBLEPROFILE SLOT index=1 paired=1 connected=0\nBLEPROFILE WINDOW ready=1 remaining_ms=9999 advertising=1 known=3 connected=1 error=0\nBLEPROFILE POLICY active=1 without_host=0 loaded=1 saved=1 remembered=0 restoring=0 error=0 excluded=0\nBLEPROFILE RESULT command=S status=ok selected=0 changed=0 error=0\nBLEPROFILE END\n"
+  },
+  {
+    "name": "v6-policy-required",
+    "protocol": "profile",
+    "command": "S",
+    "accepted": false,
+    "text": "# host=test\nBLEPROFILE BEGIN version=6 count=2 active=0 save_delay_ms=60000\nBLEPROFILE SLOT index=0 paired=1 connected=1\nBLEPROFILE SLOT index=1 paired=1 connected=0\nBLEPROFILE WINDOW ready=1 remaining_ms=9999 advertising=1 known=3 connected=1 error=0\nBLEPROFILE RESULT command=S status=ok selected=0 changed=0 error=0\nBLEPROFILE END\n"
+  },
+  {
+    "name": "v6-unknown-field",
+    "protocol": "profile",
+    "command": "S",
+    "accepted": false,
+    "text": "# host=test\nBLEPROFILE BEGIN version=6 count=2 active=0 save_delay_ms=60000\nBLEPROFILE SLOT index=0 paired=1 connected=1\nBLEPROFILE SLOT index=1 paired=1 connected=0\nBLEPROFILE WINDOW ready=1 remaining_ms=9999 advertising=1 known=3 connected=1 error=0\nBLEPROFILE POLICY active=1 without_host=0 loaded=1 saved=1 remembered=0 restoring=0 error=0 blocked=0\nBLEPROFILE RESULT command=S status=ok selected=0 changed=0 error=0\nBLEPROFILE END\n"
+  }
+]

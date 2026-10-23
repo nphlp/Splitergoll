@@ -1,0 +1,6 @@
+# Journal RAM réservé au diagnostic explicite, sans activation par défaut.
+config SPLITERGOLL_POWER_TRACE
+    bool "Record activity and preference writes in RAM"
+    depends on SPLITERGOLL_BLE_TRACE && SPLITERGOLL_BLE_AUTO
+    depends on USB_DEVICE_STACK && ZMK_SPLIT_ROLE_CENTRAL
+    default n

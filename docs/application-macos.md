@@ -26,7 +26,9 @@ Autoriser le Bluetooth si macOS le demande. Le clavier doit déjà être connect
 l’app ne lance pas d’appairage et ne change pas l’ordinateur destinataire.
 Le nom `Splitergoll` est reconnu, ainsi qu’un nom personnalisé commençant par
 `Splitergoll `, comme `Splitergoll V1` ou `Splitergoll V2`. Si plusieurs correspondent,
-l’app ne choisit pas à ta place et laisse les niveaux indisponibles.
+l’app ne choisit pas à ta place au démarrage et laisse les niveaux indisponibles.
+Si elle suit déjà un clavier, elle continue à le lire quand un second apparaît.
+Un [sélecteur V1/V2 dans le menu](selection-clavier-app.md) est retenu pour le prochain lot app, pas encore développé.
 Un niveau indisponible ou égal à **0 %** est remplacé par `-`, sans afficher d’ancienne valeur.
 Le zéro reste conservé dans la mesure brute : cette convention ne prouve pas une déconnexion.
 À 100 %, un **éclair** remplace le pourcentage, horizontal et agrandi dans la barre,

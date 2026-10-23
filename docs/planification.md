@@ -1,8 +1,10 @@
 # Planifier selon le matériel disponible
 
 Le matériel disponible est **Mac + Windows + V1 + V2 à domicile**.
-V1 est revenu en `wire windows` normal pour jouer. Les prochains essais de
-connexion seront préparés à la reprise, V2 peut rester le clavier de saisie.
+La série courte de recherche/inactivité est terminée sur V1. L’utilisateur confirme
+son retour en `wire windows` normal et son branchement au PC fixe.
+Les tests automatisés sont renforcés. Le complément V2 recherche/IDLE sur batterie
+est positif avec le journal de la gauche et des délais courts. Le sommeil profond reste facultatif. Voir [la reprise](reprise.md).
 Le suivi détaillé reste dans le
 [TODO](TODO.md). Ce tableau sert à choisir un chantier que l’on peut réellement
 terminer, sans confondre développement et validation matérielle.
@@ -36,7 +38,7 @@ grâce à ses USB d’alimentation. V2 peut fonctionner en USB avec le profil ad
 
 | Sujet | Matériel pour terminer | Ce qu’on peut préparer sans Windows |
 | --- | --- | --- |
-| Fenêtres de reconnexion de deux minutes | Mac + Windows + un clavier, deux appairages avec OS mémorisés | Comportements principaux validés sur V1 au délai de dix secondes. Vérifier les 120 secondes face à IDLE, puis les nouveaux bonds |
+| Fenêtres de reconnexion | Mac + Windows + un clavier, deux appairages avec OS mémorisés | Rencontre recherche/IDLE et sauvegarde validées au délai court. Répétition à 120 secondes abandonnée par choix utilisateur. Nouveaux bonds à compléter |
 | Sélection automatique et retour au précédent pendant la fenêtre de démarrage | Mac + Windows + un clavier. V2 ajoute l’essai après vraie veille profonde | Sauvegarde immédiate, persistance et retour Windows après Mac confirmés. Vraie veille profonde et délai normal restent distincts |
 | Accueil d’un nouvel appareil sans détourner la saisie | Mac + Windows + un clavier | Cadrage et tests des slots libres/pleins et des demandes concurrentes. Intégré et testé en logiciel. Valider ensemble appairage initial et reconnexion |
 | Réduire le délai de bascule | Mac + Windows + un clavier | Inspecter les gardes et préparer les mesures. Comparer les deux sens avec le même firmware |
@@ -65,14 +67,21 @@ directement. Les essais batterie et veille n’en ont pas besoin.
 
 ## Ordre conseillé
 
-1. Lire [le point de reprise](reprise.md), vérifier le matériel disponible, puis
-   tester le délai normal de deux minutes face à IDLE et à la sauvegarde. Compléter
-   les nouveaux appairages séparément, sans refaire les bascules déjà validées.
-2. Concevoir l’identité commune des destinations USB/BLE, puis développer Gaming USB
-   avec mémoire du mode. Clarifier les cas de retrait USB et de sortie volontaire
-   avant le code, avec les deux ordinateurs pour les transitions.
-3. Sur V2, compléter première frappe, encodeurs et autonomie sur batterie.
-4. Compléter la reprise de l’app après sommeil du Mac et l’ouverture de session.
+1. Committer les tests, le journal et les résultats V1/V2 validés. Le retour de V2
+   au firmware de base est annoncé, sans nouvelle série chronométrée à imposer.
+2. Corriger `wire` pour conserver le BLE split et supprimer le BLE vers les hôtes.
+   Vérifier les bindings Bluetooth et les builds avant le flash de V1.
+3. Développer la [sélection V1/V2 dans l’app](selection-clavier-app.md), avec tests
+   de sélection, persistance et isolation des mesures. Faire ensuite l’essai réel
+   avec V1 et V2 connectés en Bluetooth au Mac, dans des profils exposant leurs
+   services batterie. Ne pas remettre V1 en BLE à l’insu de l’utilisateur.
+4. Concevoir l’identité commune USB/BLE, puis le choix de liaison, le branchement
+   et le retrait du câble. Mac + Windows et un clavier pour les transitions,
+   V2 pour distinguer charge et fonctionnement sur batterie.
+5. Traiter Gaming et sa mémoire après les destinations. Un profil de keymap séparé
+   ou un mode du groupe Windows restent des options à comparer, sans choix technique acté.
+
+Les autres essais de réveil, autonomie et reprise de l’app restent dans le TODO.
 
 La documentation décrit les résultats observés, les essais encore partiels et les
 choix restant à faire. Un firmware compilé n’est pas une validation sur le clavier.

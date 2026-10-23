@@ -10,6 +10,12 @@ protocole ni changement des gardes série ou de la confirmation d’effacement.
 Action absente : aide et succès. Action erronée ou incomplète : aide et échec.
 Les anciens alias à tirets sont retirés. Le script PowerShell autonome ne change pas.
 
+make ble power délègue la lecture P au module distinct diagnostics/power/firmware.
+La commande est disponible seulement dans un diagnostic explicitement compilé
+avec SPLITERGOLL_POWER_TRACE. Le transport existant garde les mêmes gardes série.
+Les protocoles BLETRACE, BLEPROFILE, BLEMEM et USBTRACE ne changent pas.
+L’option absente élimine la branche P et son en-tête à la compilation.
+
 ## Diagnostic Bluetooth
 
 `make build bluetooth <keymap> ble-trace` ajoute uniquement sur la gauche le
@@ -1332,3 +1338,14 @@ v5/v6 à 120000 ms. POLICY est requis à partir de v4, excluded seulement en v5.
 Contrôler masques, champs manquants/doublés/hors ordre et incompatibilités de version.
 Les 70 cas privés comparent les deux lecteurs sans accès série. Le BOM UTF-8 de
 capture.ps1 reste conservé. Les lectures sont passives, select explicitement mutant.
+
+## Tests des protocoles sans périphérique
+
+Les fixtures profile_cases.json sont synthétiques et anonymes, indépendantes de
+.local/validation. protocol_test.py ajoute les altérations USB/BLE/mémoire/forget
+et journal POWERTRACE : 112 cas AWK, dont 81 pour les deux validateurs PowerShell.
+protocol_test.ps1 extrait uniquement ces fonctions par AST, sans exécuter le reste
+du lecteur. Pas de SerialPort, ETW ou accès Bluetooth pendant ces tests.
+Le lanceur scripts/test.sh fournit un dossier temporaire et signale explicitement
+l’absence de pwsh. POWERSHELL peut désigner un runtime existant, sans installation
+implicite. Les captures utilisateur restent privées et exclues des fixtures.

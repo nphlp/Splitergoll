@@ -106,11 +106,71 @@ isolés. Cette autorisation ne déclenche aucun flash ni effacement d’appairag
 
 ## Étape active et validation
 
-Point de reprise de fin de séance : lot Bluetooth publié dans bd22c0e. L’utilisateur
-confirme le flash des deux moitiés de V1 en wire windows normal pour jouer et arrête
-pour aujourd’hui. Ne plus supposer que V1 utilise le diagnostic Bluetooth.
-La prochaine séance commence par docs/reprise.md, sans nouvelle manipulation ce soir.
-Vérifier le matériel et les firmwares avant tout essai, conserver les appairages.
+Reprise : lot Bluetooth publié dans bd22c0e, documentation dans 795c7d7, poussés sur
+origin/unified-firmware. Mac, Windows, V1 et V2 sont disponibles selon l’utilisateur.
+V1 était flashé en wire windows normal pour jouer. Ne pas le supposer déjà en
+diagnostic Bluetooth. Conserver les appairages, aucun accès série avant sa disponibilité.
+
+V2 est maintenant flashé des deux moitiés avec le diagnostic power-journal,
+selon l’utilisateur, USB branchés et interrupteurs ON. La première lecture
+trouvait le Mac connecté mais sans OS mémorisé. L’utilisateur a ensuite lui-même
+effacé les slots hôtes, oublié le clavier sur le Mac et refait son appairage.
+Les nouvelles lectures autorisées sur /dev/cu.usbmodem1101 confirment v6, seul
+slot 0 paired=connected=1, autres slots vides, préférence saved=1 remembered=0,
+erreurs nulles. BLEMEM slot 0 measured=stored=macos, origin=initial state=saved,
+evidence=0003, dropped=0. Pas d’apprentissage déduit des anciennes captures.
+Le journal de référence .local/power-traces/macos-2026-10-23-13-00-16-fYJWCk
+porte boot=6d8ddf3d, 11 événements sans perte ni rejet : SAVE slot 0 result=0 à
+16175 ms, fermeture à 16176 ms et IDLE à 22332 ms, encore sous USB. Cela confirme
+l’écriture signalée et la collecte, pas une nouvelle preuve de persistance après
+coupure ni de rencontre exacte avec IDLE. Le nouveau boot diffère du précédent,
+cohérent avec le redémarrage effectué par l’utilisateur.
+Le complément batterie de V2 est maintenant positif : l’utilisateur confirme le
+protocole raccourci, relâchement, retrait des deux USB en ON, attente puis retour
+USB gauche sans reset. Lecture .local/power-traces/macos-2026-10-23-13-03-15-bsNZCb,
+boot inchangé 6d8ddf3d, 26 événements, dropped=rejected=0. Fenêtre ouverte à
+236748 ms (9999 ms restants), USB absent à 238629 ms, fermeture à 246747 ms,
+IDLE à 247332 ms, USB revenu à 252904 ms en restant IDLE. Intervalle sans USB
+mesuré par le journal : 14275 ms, pas une mesure de consommation. Aucune nouvelle
+ACTIVITY ACTIVE après le retour USB. Pas de nouvelle écriture SAVE, la préférence
+Mac identique est dédupliquée. Statut final : Mac seul connecté, active=remembered=0,
+saved=1, POLICY.active=0, remaining_ms=0, advertising=0, erreurs nulles.
+Preuve centrée sur la gauche, le journal ne capture pas IDLE de la droite. Pas de
+test SLEEP ni de nouvelle preuve d’écriture NVS pendant IDLE sur batterie dans ce
+scénario. Aucun besoin de refaire la série V1 ou d’attendre 120 secondes.
+Retour normal préparé dans dist/firmware/bluetooth-auto-2026-10-23-15-04-30,
+paire compilée en onze secondes, gardes UF2 et SHA-256 positifs. Les deux .config
+confirment IDLE=120000, SLEEP=600000 et SLEEP=y, sans CDC/ble-trace/journal activé.
+Le conteneur éphémère est libéré, les trois services partagés préservés. Les
+warnings KSCAN et Docker insecure restent ceux du socle, pas d’échec nouveau.
+Aucun flash de ce retour normal encore confirmé. Donner deux blocs indépendants :
+make flash bluetooth auto right, puis make flash bluetooth auto left, sans reset
+réglages ni effacement d’appairage. Les modifications restent non stagées.
+
+Aucune sélection, aucun effacement, reset ou flash exécuté par l’agent.
+
+Dernier cadrage : l’utilisateur annonce le retour de V2 au firmware de base puis
+le redémarrage de l’app avec V1 désactivé. Il retrouve une actualisation à cinq
+secondes. Ce résultat ne prouve pas la cause de l’ancien affichage. Le diagnostic
+et le normal gardent BATTERY_REPORT_INTERVAL=5 et le même pilote VDDH. Le diagnostic
+entre en IDLE à dix secondes au lieu de deux minutes, ce qui arrête les mesures.
+Le journal confirme un rebranchement USB resté IDLE : une valeur conservée est
+une explication étayée, sans trace ADC/GATT de l’incident. Pas de bug radio ou de
+mélange de batteries déclaré confirmé sur ce seul retour.
+Le build wire windows contrôlé garde ZMK_BLE=y et ZMK_SPLIT_BLE=y avec USB=y,
+BATTERY_REPORTING=n et BT_BAS désactivé. La restriction du BLE hôte manque. Ne pas
+couper le BLE split ni supposer la présence de BAS sur V1 wire. La prochaine
+correction proposée devra contrôler les bindings &bt et les builds, sans l’inclure
+implicitement dans le lot présent. Code laissé intact sur demande de check seul.
+Sélecteur V1/V2 de l’app proposé dans docs/selection-clavier-app.md, à développer
+dans un lot séparé après validation du comportement, avec tests de sélection et
+isolation des lectures. Le mode mixte USB/BLE garde sa propre phase de conception.
+L’utilisateur donne son go au commit test(firmware): couvrir les connexions et
+ajouter le journal d’activité, avec push selon les règles globales. Ordre validé
+pour la suite : correction wire, développement du sélecteur app avec essai V1/V2
+sur le Mac, identité des destinations USB/BLE, puis Gaming et sa mémorisation.
+Le sélecteur est retenu mais non implémenté. L’idée d’une keymap Gaming séparée
+reste à étudier, pas une obligation ni un changement autorisé dans ce commit.
 
 Nouvelle priorité explicitement demandée : fenêtre normale 120 s et IDLE 120 s
 peuvent coïncider. Leurs origines diffèrent, fenêtre au premier retour/raccourci,
@@ -119,7 +179,140 @@ workers en IDLE, sys_poweroff ne se produit qu’en SLEEP après dix minutes san
 Le sélecteur programme son checkpoint, la radio notifie la fermeture, sans appeler
 note_activity. Ce contrôle du code ne prouve pas tous les ordres d’exécution : tester
 avant/à/après IDLE, sauvegarde durable et absence de report d’activité ou de SLEEP.
-Aucune modification des délais ni firmware dans le chantier de documentation.
+À la demande de l’utilisateur, diagnostic privé compilé dans
+.local/flash/idle-window-10s/bluetooth-auto-ble-trace-2026-10-23-08-44-07.
+La copie .local/diagnostic/idle-window-10s/keyboard ne diffère du module public
+que par HOST_WINDOW_DURATION_MS=10000 et CONFIG_ZMK_IDLE_TIMEOUT=10000.
+SLEEP reste à 600000, les délais normaux publics restent inchangés.
+Les deux UF2 passent les gardes du build et SHA-256. Le harnais privé du vrai
+sélecteur couvre checkpoint avant/pendant/après IDLE : une sauvegarde, aucune
+activité physique ajoutée et aucune nouvelle génération de fenêtre. ASan/UBSan passent.
+Le lecteur privé watch.py envoie seulement S et libère le même port nommé.
+Il attend au plus 600 secondes une ouverture de fenêtre, puis capture vingt secondes
+avec --after-window 20. Une capture arrivée à expiration sans geste ne valide
+pas une transition. Ses horodatages sont ceux de réception sur le Mac,
+pas une mesure précise de l’ordre des callbacks firmware. L’utilisateur confirme
+le flash des deux moitiés de V1 et la gauche en USB au Mac. Première lecture
+autorisée : 24 statuts valides sur 25 secondes, Mac slot 0 connecté, Windows
+slot 1 appairé mais déconnecté. POLICY active=0, remembered=0, saved=1,
+remaining_ms=0 et advertising=0 restent stables, erreurs nulles. Le lecteur
+ne sort donc pas V1 d’IDLE dans cet essai. Aucun flash par l’agent.
+Après le premier geste rapporté par l’utilisateur, une nouvelle lecture confirme
+Windows selected=remembered=1, saved=1, les deux hôtes connectés, IDLE et fenêtre
+fermée sans erreur. Le geste a eu lieu après la capture précédente : ne pas
+en déduire le déroulé précis ni le délai de fermeture. Le prochain lecteur attend
+la nouvelle fenêtre au lieu de dépendre d’une réponse dans les deux minutes.
+Capture suivante .local/logs/idle-window-20261023T071450Z-ljoacu63 : ouverture
+observée à 231,740 s, 9954 ms restants, ACTIVE. À 232,787 s Mac sélectionné et
+sauvegardé, 8907 ms restants. À 242,208 s recherche fermée, puis IDLE observé
+à 243,255 s, sans réouverture ni erreur jusqu’à 251,569 s. Ce sont des temps de
+réception à environ une seconde d’intervalle, pas des mesures de latence firmware.
+La fermeture n’ajoute pas dix secondes d’activité dans cet essai. La préférence
+manuelle est sauvegardée avant fermeture. Le lecteur est terminé et le port libéré.
+Capture de reprise .local/logs/idle-window-20261023T071949Z-l6cevsh1 : gauche
+coupée avant désactivation du Bluetooth Mac, Windows seul revient, sans geste.
+À 105,026 s, Windows sélectionné, rappel actif et 354 ms restants. À 106,074 s,
+fenêtre fermée, IDLE, Windows remembered=1 saved=1 et aucune erreur. Ces états
+restent stables jusqu’à 119,622 s. Le checkpoint et IDLE sont observés dans le
+même intervalle d’une seconde : ne pas affirmer lequel précède l’autre. La
+sauvegarde n’est pas bloquée et la fermeture ne réarme pas l’activité.
+Capture de persistance .local/logs/idle-window-20261023T072239Z-e1fqi1g_ :
+nouvelle coupure de gauche, Mac toujours hors Bluetooth. Windows redevient
+remembered=1 saved=1 loaded=1 à 104,175 s, avec 9092 ms restants, sans geste.
+La préférence est donc retrouvée avant le checkpoint suivant. IDLE et fenêtre
+fermée sont observés à 113,536 s et restent stables sans erreur jusqu’à 127,045 s.
+La préférence différée survit à la coupure dans cet essai. Le lecteur est terminé,
+port libéré. La série courte est positive, le délai normal 120 s et SLEEP sur
+V2 restent distincts et non validés par ces captures.
+Décision utilisateur suivante : ne pas répéter les essais à 120 secondes.
+Accepter les contrôles logiciels et matériels courts pour la logique IDLE/fenêtre,
+sans prétendre avoir mesuré le délai normal. Ne plus conditionner la suite à cette
+répétition ni demander d’attendre deux minutes. Le sommeil profond sur batterie
+est un autre cas, proposé ensuite avec V2 et délais courts. Aucun flash normal
+depuis cette décision n’est confirmé, V1 reste au dernier diagnostic connu.
+L’utilisateur demande maintenant de remettre V1 en wire windows normal pour le
+PC fixe pendant les essais V2. La paire dist/firmware/wire-windows-2026-10-22-22-30-51
+est recontrôlée (métadonnées, SHA-256 et blocs UF2). L’utilisateur confirme ensuite
+le flash des deux moitiés et le branchement au PC Windows. V1 est donc revenu
+en wire windows normal, aucun flash par l’agent. Le complément sur batterie
+concerne maintenant V2, dont le firmware et la mémoire d’OS restent à vérifier.
+L’utilisateur conteste ensuite le plan centré sur SLEEP et demande de revoir les
+états d’alimentation. Relecture du socle réel : activity.c lignes 74-93 applique
+le test !is_usb_power_present seulement à SLEEP. IDLE reste possible sous USB,
+indépendamment de CONFIG_ZMK_SLEEP. Le diagnostic V1 compilait SLEEP=y et CDC,
+IDLE=10000, SLEEP=600000. POLICY.active provient bien de zmk_activity_get_state.
+Les essais V1 n’étaient donc pas fictifs. Distinguer le diagnostic Bluetooth de
+V1 de son profil wire actuel SLEEP=n. Sur V2, SW1/SW2 ne font que couper le positif
+de batterie, pas de GPIO d’état : ON/OFF ne se déduit pas de la seule présence USB,
+ni du pourcentage VDDH sous USB. L’utilisateur valide le complément
+IDLE/fenêtre dix secondes sur batterie avec historique RAM diagnostique borné,
+lu après rebranchement sans reset avant SLEEP. Cet historique d’activité et de
+sauvegarde est désormais implémenté dans diagnostics/power, activé seulement
+dans un module de diagnostic ajouté explicitement au build. Ne pas observer le passé
+avec les seuls statuts S après branchement. SLEEP court est un essai distinct
+optionnel, pas une nouvelle preuve nécessaire de durabilité NVS. Premier appui
+non prioritaire selon l’utilisateur.
+
+Journal POWERTRACE v1 : 128 événements append-only, spinlock court et aucun timer,
+aucune frappe ni identité, perte/rejet saturants et visibles. BOOT possède un jeton
+aléatoire de démarrage, pas une identité de contrôleur. ACTIVITY/USB/WINDOW/SAVE
+proviennent des événements et opérations existants. SAVE suit host_preference_saved
+et porte le résultat natif, sans écriture supplémentaire ni fausse trace de déduplication.
+La commande P est exposée par make ble power, avec validation de protocole stricte,
+seulement avec SPLITERGOLL_POWER_TRACE. Le module est séparé du code d’OS.
+Le journal est perdu après reset/SLEEP. Comparer boot avant/après, pas seulement
+le statut courant. USB=2 indique l’énumération du diagnostic, pas une sortie HID clavier.
+
+Couverture durable renforcée : scripts/test.sh lance 23 suites C ASan/UBSan.
+Les harnais du vrai sélecteur, radio, appairage, mémoire et journal sont désormais
+versionnés dans keyboard/tests/integration et diagnostics/power/tests/integration,
+avec doubles locaux aux domaines, sans dépendance aux anciens harnais privés.
+L’observateur BLE vérifie séparation host/split, délégation unique du tampon intact,
+générations et absence de payload privé. USB relie le vrai observateur au sélecteur :
+HID, cycle, erreurs natives et appuis ignorés. Le sélecteur BLE garde aussi les
+rapports clavier/média et les modificateurs comme gardes de bascule.
+Le backend est testé avec et sans instrumentation : observation après écriture,
+erreur NVS et déduplication sans écriture supplémentaire. Le pairing versionné
+couvre nouveaux bonds, délai SMP et fenêtre explicite conservée en IDLE. Ne pas
+réutiliser l’ancien pairing-adapter privé obsolète à la place de cette suite.
+112 cas synthétiques contrôlent les vrais validateurs AWK, dont 81 passent aussi
+les validateurs PowerShell extraits par AST sans exécution série/ETW. Aucun log
+matériel privé n’est copié dans les fixtures. PowerShell est testé si pwsh est
+sur PATH ou si POWERSHELL le désigne explicitement, sinon skip explicite.
+
+scripts/test-zephyr.sh utilise l’image et les sources figées du workspace, sans
+réseau ni périphérique, QEMU ARM qemu_cortex_m3. native_sim du Zephyr figé impose
+m32/m64, inadapté au compilateur ARM64 de l’image actuelle. Twister n’est pas le
+lanceur retenu, ses dépendances Python supplémentaires ne sont pas installées.
+Six Ztests exécutent activity.c réel et le vrai noyau : USB autorise IDLE mais
+bloque SLEEP, batterie demande poweroff, échec de suspension restaure, activité
+physique réarme le délai, checkpoint avant/à/après IDLE et timer périodique.
+Les seuils de test sont de 10/60 ms. Le checkpoint utilise le moteur de préférence
+réel et un succès de stockage simulé, pas la NVS nRF. Le bus ZMK, l’alimentation
+et la frontière sys_poweroff sont doublés. Aucun réveil GPIO réel n’est prouvé.
+Le lanceur Python attend un verdict Ztest complet, borne la durée et arrête seulement
+le groupe de processus créé par le test, car Cortex-M3 reste inactif après verdict.
+Les six cas passent, le conteneur éphémère disparaît. Les 30 tests Swift passent
+séparément, sans ouverture de l’app, Bluetooth ni inscription à la session.
+Toute future modification d’algorithme complète la suite correspondante dans le
+même lot. docs/tests-automatises.md distingue couverture et limites matérielles.
+
+Diagnostic privé compilé :
+.local/flash/power-journal/bluetooth-auto-ble-trace-2026-10-23-11-48-56.
+Fenêtre/IDLE dix secondes, SLEEP 600000 inchangé, journal seulement à gauche.
+Les deux UF2 passent les gardes du build. Le ble-trace usuel recompilé dans
+dist/firmware/bluetooth-auto-ble-trace-2026-10-23-11-44-33 est identique octet par
+octet à celui du 22-18-17 sur les deux moitiés. Les conteneurs éphémères sont libérés,
+les trois services partagés conservés. Aucun flash, accès série ou modification
+de bond dans ce lot. Aucun changement d’environnement, Compose, Dockerfile ou dépendance.
+IDLE ne réduit pas explicitement la fréquence CPU. Sans écran/LED externe,
+aucune mesure ne prouve une consommation divisée par deux. Désactiver IDLE en
+Gaming reste une idée à évaluer, sans modifier sa politique maintenant.
+Pour les prochaines instructions de flash, fournir une commande autonome par
+moitié dans deux blocs séparés, sans variable shell préalable, à la demande de l’utilisateur.
+Les conteneurs de compilation sont libérés, les trois services partagés préservés.
+Une préférence déjà identique ne prouve pas une nouvelle écriture NVS : prévoir
+un préféré absent, puis le retour du seul autre hôte, sans raccourci manuel.
 
 Suite produit à cadrer : vraie identité commune USB/BLE, pas simple égalité d’OS.
 Windows USB et Windows BLE doivent former une destination, Mac BLE une autre.

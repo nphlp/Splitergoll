@@ -43,3 +43,15 @@ Sans association fiable, ne pas retirer arbitrairement une destination de la lis
 
 Les slots Bluetooth conservent leurs appairages. Une destination est le choix proposé
 à l’utilisateur, elle pourra regrouper plusieurs liaisons vers un même appareil.
+
+## Arbitrages avant développement
+
+Le branchement USB doit permettre d’utiliser le câble pour l’ordinateur associé,
+mais ne suffit pas à décider de déconnecter tous les hôtes Bluetooth : le Mac doit
+rester accessible pendant l’usage de Windows USB. Séparer la sélection de
+l’ordinateur, le choix de sa liaison et la fenêtre de recherche Bluetooth.
+
+Définir l’effet d’un branchement pendant la saisie sur un autre ordinateur,
+le retrait du câble et l’absence d’association fiable. La fermeture des connexions
+Bluetooth en Gaming sera un lot ultérieur. Aucune de ces règles ne découle du seul
+nom d’OS détecté. La restriction USB du profil wire actuel reste un correctif distinct.

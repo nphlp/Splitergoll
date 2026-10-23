@@ -15,6 +15,11 @@ ici concerne les connexions et la mémorisation de ce mode.
 Le gain de latence reste à mesurer. La présence d’un câble d’alimentation seul
 ne suffit pas à autoriser Gaming USB.
 
+L’idée de désactiver IDLE en Gaming reste à évaluer, sans changement actuel.
+IDLE n’abaisse pas explicitement la fréquence du CPU et ne coupe pas le BLE.
+Sur ce clavier sans éclairage ni écran, ne pas supposer un gain de latence ou une
+consommation divisée par deux. Mesurer un effet avant d’ajouter cette exception.
+
 ## Retrouver le mode choisi
 
 Demande retenue pour le développement : si le dernier choix était Gaming,
@@ -32,6 +37,10 @@ Depuis Gaming, L1 + clic encodeur droit quitte d’abord Gaming, rouvre la reche
 et porte la demande de bascule vers une autre destination, selon les règles communes.
 
 ## Points à décider avant le code
+
+L’utilisateur propose d’étudier un profil Gaming séparé de Windows. Mémoriser le
+mode peut aussi fonctionner avec les couches Windows existantes. Comparer ces
+options après le mode USB/BLE mixte, sans modifier les keymaps dans le lot présent.
 
 - Déconnecter aussi Windows BLE pendant Gaming, ou seulement le Mac ?
 - Si l’USB disparaît : attendre son retour, repasser en Windows BLE normal ou

@@ -18,7 +18,26 @@ Le profil `wire` désactive la veille profonde. Le profil `bluetooth` l’active
 la matrice est déclarée comme source de réveil.
 [Fonctionnement ZMK](https://zmk.dev/docs/features/low-power-states).
 
+**L’inactivité IDLE existe aussi sous USB.** Dans le code ZMK compilé, seul SLEEP
+est conditionné par l’absence d’alimentation USB. V1 a donc réellement atteint
+IDLE pendant les essais Bluetooth alimentés par USB. Cela ne valide pas SLEEP.
+Le mode matériel `wire` et le diagnostic `bluetooth` alimenté par USB sont deux
+configurations distinctes, même sur le même V1.
+
 ## Consommation
+
+`Idle` signifie « inactif ». Ce n’est pas un réglage de fréquence CPU : ZMK
+signale l’état et les composants concernés réduisent leurs tâches. Sur Splitergoll,
+les mesures de batterie s’arrêtent et la recherche continue sans hôte se ferme.
+La matrice et les connexions restent utilisables. Aucune mesure ne démontre une
+consommation divisée par deux, notamment sans écran ni éclairage à éteindre.
+
+En sommeil profond, le cœur et la radio s’arrêtent. Le circuit de détection GPIO
+du nRF52840 reste capable de détecter un niveau électrique produit par une touche.
+Il provoque un redémarrage, pas une reprise à l’instruction précédente. La RAM
+ordinaire est réinitialisée par le démarrage, les réglages en flash sont conservés.
+Voir [les états ZMK](https://zmk.dev/docs/features/low-power-states) et
+[le mode System OFF du nRF52840](https://docs.nordicsemi.com/r/bundle/ps_nrf52840/page/power.html).
 
 Actif, le clavier traite les frappes et entretient les connexions BLE. En inactivité,
 ces connexions restent ouvertes, mais les mesures de batterie s’arrêtent. Sur V2 sans
@@ -66,9 +85,15 @@ de départ distincts. IDLE n’arrête pas les tâches différées : la fin de f
 la sauvegarde peuvent encore s’exécuter. Une fenêtre bornée peut finir en IDLE,
 la recherche continue sans hôte s’y arrête. La radio ne compte pas comme une frappe.
 
-Ces règles sont prévues dans le code. Vérifier leur rencontre réelle reste au
-[point de reprise](reprise.md) : aucune sauvegarde perdue, fausse activité ou
-prolongation du sommeil profond. L’USB de V1 empêche SLEEP, dont l’essai demande V2.
+Les essais courts de V1 confirment fermeture, IDLE, sauvegarde et persistance,
+sans reprise d’activité. L’ordre précis n’est pas mesuré entre deux lectures USB.
+Le [point de reprise](reprise.md) distingue ce résultat du complément sur batterie.
+L’USB de V1 empêche SLEEP, dont l’essai demande V2.
+
+Sur V2 sous USB, ON relie la batterie au contrôleur et OFF l’isole. IDLE reste
+possible et SLEEP reste bloqué dans les deux cas. L’interrupteur n’est pas relié
+à un GPIO de lecture : son état doit être indiqué pendant le diagnostic. Détecter
+l’USB ne prouve ni la présence d’une batterie ni une charge effective.
 
 ## Essai au chrono
 

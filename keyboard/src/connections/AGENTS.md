@@ -284,8 +284,29 @@ restant, un geste reconnecte et sélectionne Mac. Validation physique principale
 
 ## Ideas / backlog
 
-Avant le mode mixte, vérifier l’échéance 120 s du checkpoint et de l’admission face
-à IDLE 120 s : le travail doit finir sans générer d’activité ni retarder SLEEP.
+Le journal RAM optionnel est dans diagnostics/power. Avec son option explicite,
+le worker radio observe remaining/advertising et le backend observe le résultat
+de l’écriture NVS existante. Aucun nouvel appel HCI, timer, note_activity ou
+settings_save_one n’est ajouté. La collecte prend seulement son spinlock.
+Le dump relâche ce verrou avant chaque émission USB et ne prend pas control_lock.
+Sans option, aucun appel ni en-tête de journal ne subsiste. Le build ble-trace
+usuel recompilé est identique octet par octet à la référence des deux moitiés.
+L’idée IDLE désactivé en Gaming reste à mesurer et décider, aucune exception ajoutée.
+
+Le harnais versionné keyboard/tests/integration/selector du vrai ble_auto.c couvre checkpoint juste avant,
+au moment et juste après IDLE : une seule sauvegarde, aucune note_activity et
+aucun réarmement de fenêtre. ASan/UBSan passent, sans preuve matérielle déduite.
+Le diagnostic privé idle-window-10s raccourcit recherche et IDLE à 10000 ms,
+sans changement public ni raccourcissement de SLEEP. Essais USB sur V1 puis
+sommeil profond sur batterie avec V2, sans assimiler ces deux validations.
+
+Avant le mode mixte, compléter l’essai court sur batterie V2. Les ordres
+checkpoint/IDLE passent dans le vrai sélecteur natif et dans six Ztests utilisant
+activity.c réel et le noyau Zephyr sous QEMU. La NVS et la radio y restent doublées,
+aucune consommation ou source GPIO de réveil n’y est simulée. L’essai V1 sous USB
+est valide pour IDLE et la persistance, pas pour SLEEP. Pas de répétition manuelle
+à 120 secondes demandée. Les suites de radio/appairage utilisent désormais les
+sources versionnées sous keyboard/tests/integration/radio, jamais leurs binaires privés.
 Le futur Gaming mémorise le mode Windows normal/Gaming pour le retrouver après
 coupure/reset/rebranchement au même Windows USB. Cible souhaitée, non implémentée.
 Clarifier identité USB/BLE, portée de mémoire, repli sans USB et sortie volontaire

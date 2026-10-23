@@ -38,8 +38,10 @@ et une reprise en 2 à 5 secondes après sollicitation de la gauche en veille pr
 La droite seule ne réveille pas la centrale. L’autonomie, la première frappe et les
 réveils par chaque touche restent à vérifier dans le [TODO](TODO.md).
 
-La priorité est de vérifier le délai réel de deux minutes avec l’inactivité,
-puis les nouveaux appairages. Vient ensuite le firmware USB + BLE commun,
+La rencontre recherche/inactivité et la persistance sont validées au délai court
+sur V1. Le complément sur batterie de V2 confirme fermeture puis IDLE à gauche,
+sans reset ni réveil au retour USB, grâce au journal RAM dédié. L’utilisateur ne
+demande pas de répétition à deux minutes. La suite vise le firmware USB + BLE commun,
 avec Gaming USB et le choix de destination. Les noms des futurs profils ne sont pas
 encore fixés. Le [cadrage de l’appairage](gestion-appairage.md) distingue règles
 prévues et moteur déjà développé. Les branches historiques et les variantes minimales
@@ -75,6 +77,8 @@ et `make bat avg` calcule une moyenne par moitié sur 30 secondes.
 - [Planification selon le matériel](planification.md) : choisir les chantiers réalisables avec Mac, Windows, V1 ou V2.
 - [Build local](build-local.md) : commandes, environnement et résultats.
 - [Logs USB](logs-usb.md) : firmwares de diagnostic et console de chaque moitié.
+- [Journal d’activité](diagnostic-activite.md) : observer les événements sur batterie puis les lire par USB.
+- [Tests automatisés](tests-automatises.md) : unités, intégration, Zephyr/QEMU et limites matérielles.
 - [Matériel et connexions](configuration-materielle.md) : cartes, rôles et limites.
 - [Essais wire](tests-wire.md) : vérifier le clavier sans batterie sur Mac et Windows.
 - [Latence](latence.md) : diagnostic rapide, mesures possibles et limites des logs USB.
@@ -101,6 +105,7 @@ et `make bat avg` calcule une moyenne par moitié sur 30 secondes.
 - [Appairage Bluetooth](appairage-bluetooth.md) : clés de connexion, reset et diagnostic.
 - [Batteries](batteries.md) : mesure actuelle et affichage des deux niveaux.
 - [Application macOS](application-macos.md) : lancer le lecteur des deux batteries dans une fenêtre et la barre des menus, puis le valider sur V2.
+- [Clavier suivi par l’app](selection-clavier-app.md) : choix V1/V2 prévu, mémoire et séparation des mesures.
 - [Keymap automatique USB](keymap-auto.md) : macOS ou Windows avec gaming, sélection à la connexion.
 - [Keymap automatique Bluetooth](keymap-auto-bluetooth.md) : OS mémorisé et bascule Mac/Windows confirmés sur V1 en diagnostic.
 - [Keymap](keymap.md) : organisation, couches et sept schémas de touches.

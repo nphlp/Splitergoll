@@ -699,3 +699,18 @@ sans refuser un connu à cause d’une ancienne perte. L’admission suit la fen
 radio, le sélecteur n’ajoute aucun masque de refus individuel.
 Une sélection USB explicite change réellement le profil puis utilise le même flux.
 La nouvelle politique reste à valider sur matériel, sans modifier les keymaps.
+
+## Couverture reproductible des adaptateurs
+
+scripts/test.sh inclut désormais le vrai usb_observer.c avec usb_auto.c et le
+vrai ble_observer.c avec son décodeur ATT. Les cas contrôlent callbacks natifs,
+générations, refus d’OS sans HID, erreurs et reset concurrent, distinction du split,
+paquet original intact et absence de payload de frappe dans les observations.
+Le sélecteur BLE inclut les gardes de rapports clavier/média et modificateurs,
+la saisie retenue, les erreurs natives et les différentes origines de mémorisation.
+Acquisition et backend réels sont testés avec bonds, horloge et NVS simulés :
+initial/reconnexion/reboot, remplacement d’identité, erreurs, saturation et effacement.
+Ces harnais sont versionnés dans keyboard/tests/integration, sans lecture série.
+Les règles encore futures (Linux, identité commune USB/BLE et Gaming persistant)
+ne deviennent pas implémentées parce que certaines politiques pures sont testées.
+Voir docs/tests-automatises.md pour la frontière entre logiciel et matériel.
