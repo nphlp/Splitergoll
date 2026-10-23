@@ -79,19 +79,10 @@ après celle-ci. Les nouvelles arrivées sont alors refusées, les connexions co
 
 ## Gaming USB
 
-L’entrée en Gaming USB ferme la fenêtre en cours, arrête les annonces vers les
-ordinateurs et déconnecte le Mac en BLE. Les appairages et OS mémorisés sont conservés.
-La liaison BLE entre les deux moitiés reste nécessaire.
-
-Au retour à Windows USB, la nouvelle fenêtre de 120 secondes laisse revenir le Mac.
-Windows reste utilisable en USB et sélectionné, la reconnexion du Mac ne prend pas
-la destination. Le raccourci permet ensuite de le sélectionner. Si le retour vient
-de L1 + clic encodeur droit, il porte au contraire la demande explicite de recherche
-et de bascule vers le premier autre appareil prêt.
-
-Ce choix vise à réduire l’activité radio vers les ordinateurs pendant le jeu.
-Son bénéfice sur la latence n’est pas mesuré. Ces règles concernent le futur mode
-mixte avec Gaming USB, pas une coupure de la seule sortie d’un clavier en Bluetooth.
+Le futur Gaming USB ferme immédiatement la recherche et sélectionne Windows USB.
+Le retour volontaire à Windows normal la rouvre, sans détourner la saisie USB.
+La mémorisation de Gaming et les cas de débranchement sont cadrés séparément dans
+[Gaming USB](gaming-usb.md), à développer après les destinations mixtes.
 
 ## Décisions restantes
 

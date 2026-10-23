@@ -20,7 +20,8 @@ Le [tableau de planification](planification.md) distingue les sujets terminables
 Mac + V2 et ceux à valider lors d’une séance commune Mac/Windows. Le matériel
 disponible est maintenant Mac + Windows + V1 + V2 à domicile. Les comportements
 Bluetooth principaux sont validés sur V1 au délai court. La séance se termine avec
-un retour prévu à `wire windows` pour jouer. Reprendre le développement ensuite.
+un retour confirmé à `wire windows` normal, gaming inclus, pour jouer.
+Lire [le point de reprise](reprise.md) avant la prochaine séance.
 
 Détection USB et BLE Mac/Windows, mémoire d’OS et bascule entre appareils sont
 validées sur V1 dans les conditions indiquées ci-dessous. Linux automatique reste à faire.
@@ -29,8 +30,8 @@ intégrée au firmware. Sur V1, les appairages Mac/Windows, la bascule entre deu
 hôtes connectés et la reconnexion après raccourci sont confirmés. Le diagnostic
 à dix secondes valide aussi la saisie immédiate retenue pendant la transition,
 Shift maintenu puis relâché et la sélection de Windows retrouvé. Les destinations
-mixtes restent à faire. La fin de séance prévoit `wire windows` normal pour jouer,
-avec flash utilisateur encore à confirmer. Le Bluetooth normal à deux minutes sera
+mixtes restent à faire. Les deux moitiés de V1 sont maintenant flashées en
+`wire windows` normal selon l’utilisateur. Le Bluetooth normal à deux minutes sera
 validé lors de la reprise, sans effacer les appairages.
 
 Ordre des prochains lots :
@@ -38,8 +39,9 @@ Ordre des prochains lots :
 1. Les comportements principaux du lot Bluetooth sont validés sur V1 au délai de
    dix secondes : sauvegarde immédiate, persistance, rappel du précédent, repli,
    recherche sans résultat et perte totale sans boucle. Confirmer ultérieurement
-   le délai normal de deux minutes. IDLE, nouveaux bonds et cas limites restent
-   distincts, sans refaire toute la série déjà validée.
+   le délai normal de deux minutes et sa rencontre avec IDLE à deux minutes : la
+   sauvegarde doit aboutir sans réveil artificiel ou report du sommeil profond.
+   Nouveaux bonds et cas limites restent distincts, sans refaire la série validée.
 2. Réunir USB et BLE autour des [destinations](destinations-saisie.md), en résolvant
    l’association entre l’hôte USB et son éventuel bond BLE. Puis intégrer Gaming USB.
 3. Ajouter la correction manuelle d’OS, optimiser le délai de bascule, puis traiter
@@ -254,6 +256,10 @@ de préparer la mémoire d’OS propre à V2, absente du profil macOS normal.
 - [ ] Compléter les cas distincts du [protocole court](tests-reprise-bluetooth.md) :
   geste annulant le rappel, reconnexion pendant une fenêtre encore ouverte et IDLE.
   Les coupures radio involontaires ne sont pas observées.
+- [ ] Vérifier la rencontre des deux chronos à 120 secondes : fermeture/sauvegarde
+  de reprise juste avant, au même moment et juste après IDLE. IDLE ne doit ni bloquer
+  la sauvegarde ni relancer l’activité. La recherche ne doit pas repousser SLEEP.
+  Couvrir les ordres avec horloge contrôlée, puis vérifier sur V1 et V2 selon l’état.
 - [ ] Revenir au firmware normal à 120 secondes et confirmer son usage Mac/Windows.
   La série v5 à dix secondes ne valide pas à elle seule ce délai ni les nouveaux bonds.
 - [x] Retenir la fenêtre réelle de 120 secondes, terminable en IDLE sans report de
@@ -317,6 +323,11 @@ de préparer la mémoire d’OS propre à V2, absente du profil macOS normal.
   pendant Gaming. Ne pas couper la liaison entre moitiés ni la seule sortie BLE.
   Depuis Gaming, L1 + clic droit revient à Windows et déclenche explicitement la recherche,
   avec bascule vers le premier autre appareil prêt si Windows était le seul disponible.
+- [ ] Mémoriser le mode Windows normal/Gaming avec la destination Windows : après
+  coupure, reset ou rebranchement au même Windows USB, retrouver le mode choisi.
+  Ne pas restaurer Gaming sur Mac ou sans USB utilisable. Définir avant le code
+  le repli sans USB, la portée par appareil et l’effet d’une sortie volontaire ou
+  d’un détour par Mac. Voir [Gaming USB](gaming-usb.md).
 - [ ] Mesurer l’effet de la suppression des liaisons BLE hôtes sur la latence Gaming USB,
   sans confondre gain supposé et mesure réelle. La liaison de droite reste en BLE.
 - [ ] Dernier recours si le full auto échoue : mode manuel avec mémoire persistante,

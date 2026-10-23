@@ -16,8 +16,8 @@ Bluetooth au PC Windows et au Mac. L1 + clic encodeur droit doit parcourir :
 
 Windows Bluetooth reste une liaison connue, mais ne constitue pas une troisième
 destination lorsque Windows USB est utilisable. La connexion BLE peut rester présente.
-Une exception est envisagée pour le Gaming USB : déconnecter le Mac et arrêter les
-annonces pendant le jeu, puis rouvrir deux minutes au retour à Windows.
+Le [Gaming USB](gaming-usb.md) devra déconnecter le Mac et arrêter les annonces
+pendant le jeu, puis rouvrir deux minutes au retour volontaire à Windows normal.
 Voir [la gestion de l’appairage](gestion-appairage.md).
 
 ## Priorité par ordinateur
@@ -37,8 +37,9 @@ et au débranchement reste à préciser, notamment le repli sur le BLE du même 
 
 Notre détection USB reconnaît un OS, pas l’identité de l’ordinateur. Deux appareils
 Windows ne doivent donc pas être fusionnés sur ce seul indice. Il reste à définir
-comment associer l’hôte USB à un appareil Bluetooth mémorisé. Sans association fiable,
-ne pas retirer arbitrairement une destination de la liste.
+comment associer l’hôte USB à un appareil Bluetooth mémorisé. L’objectif reste
+automatique, sans programme hôte à installer, sa faisabilité doit être vérifiée.
+Sans association fiable, ne pas retirer arbitrairement une destination de la liste.
 
 Les slots Bluetooth conservent leurs appairages. Une destination est le choix proposé
 à l’utilisateur, elle pourra regrouper plusieurs liaisons vers un même appareil.

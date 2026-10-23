@@ -281,3 +281,13 @@ statuts, sans joindre de capture. Il répète ensuite l’ancien scénario sans 
 et confirme fermeture/réouverture : Mac ne revient pas après échéance avec Windows
 restant, un geste reconnecte et sélectionne Mac. Validation physique principale
 à dix secondes terminée, délai normal et cas limites restent distincts.
+
+## Ideas / backlog
+
+Avant le mode mixte, vérifier l’échéance 120 s du checkpoint et de l’admission face
+à IDLE 120 s : le travail doit finir sans générer d’activité ni retarder SLEEP.
+Le futur Gaming mémorise le mode Windows normal/Gaming pour le retrouver après
+coupure/reset/rebranchement au même Windows USB. Cible souhaitée, non implémentée.
+Clarifier identité USB/BLE, portée de mémoire, repli sans USB et sortie volontaire
+avant le code. Le détail des tâches reste dans docs/TODO.md, le cadrage dans
+docs/gaming-usb.md et l’ordre de reprise dans docs/reprise.md.

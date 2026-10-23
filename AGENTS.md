@@ -106,6 +106,32 @@ isolés. Cette autorisation ne déclenche aucun flash ni effacement d’appairag
 
 ## Étape active et validation
 
+Point de reprise de fin de séance : lot Bluetooth publié dans bd22c0e. L’utilisateur
+confirme le flash des deux moitiés de V1 en wire windows normal pour jouer et arrête
+pour aujourd’hui. Ne plus supposer que V1 utilise le diagnostic Bluetooth.
+La prochaine séance commence par docs/reprise.md, sans nouvelle manipulation ce soir.
+Vérifier le matériel et les firmwares avant tout essai, conserver les appairages.
+
+Nouvelle priorité explicitement demandée : fenêtre normale 120 s et IDLE 120 s
+peuvent coïncider. Leurs origines diffèrent, fenêtre au premier retour/raccourci,
+activité à la dernière entrée physique. activity.c du socle figé continue les
+workers en IDLE, sys_poweroff ne se produit qu’en SLEEP après dix minutes sans USB.
+Le sélecteur programme son checkpoint, la radio notifie la fermeture, sans appeler
+note_activity. Ce contrôle du code ne prouve pas tous les ordres d’exécution : tester
+avant/à/après IDLE, sauvegarde durable et absence de report d’activité ou de SLEEP.
+Aucune modification des délais ni firmware dans le chantier de documentation.
+
+Suite produit à cadrer : vraie identité commune USB/BLE, pas simple égalité d’OS.
+Windows USB et Windows BLE doivent former une destination, Mac BLE une autre.
+L’USB est prioritaire pour le même ordinateur, sans empêcher le choix de Mac BLE.
+Garder la fenêtre Bluetooth indépendante de la sortie de saisie.
+Nouvelle demande Gaming : conserver le mode choisi après coupure/reset/rebranchement
+au même Windows USB. L’entrée Gaming sélectionne/mémorise Windows USB et ferme la
+recherche. Aucun effacement de profil ZMK. Restent à définir : identité/portée de
+cette mémoire, repli sans USB, sortie volontaire de Gaming et retour après choix Mac.
+Le cadrage est dans docs/gaming-usb.md, les tâches dans docs/TODO.md. Ne pas coder
+ces arbitrages comme si leurs réponses étaient déjà convenues.
+
 Signal utilisateur à reconnaître lors d’un futur diagnostic : « je tape sur Mac et
 le clavier bascule tout seul vers Windows », surtout si le phénomène se répète.
 Examiner la perte de liaison active, le repli et sa sauvegarde immédiate. L’ancienne
@@ -259,7 +285,7 @@ principale sur V1 est terminée. Pour jouer, l’utilisateur demande wire window
 gaming inclus : paire préparée dans dist/firmware/wire-windows-2026-10-22-22-30-51.
 Les deux UF2 passent SHA-256 et gardes, USB gauche, périphérique droit BLE, sans
 logs ni reset des réglages. Le build s’est terminé normalement, flash non effectué
-par l’agent et pas encore confirmé par l’utilisateur. Les commandes données ciblent
+par l’agent et confirmé ensuite par l’utilisateur sur les deux moitiés. Les commandes données ciblent
 right puis left, chaque moitié seule en bootloader. Aucun settings_reset nécessaire.
 À la reprise, ne pas supposer le firmware, les slots ou le matériel disponible.
 Aucun lecteur série ni changement de destination sans disponibilité explicite.

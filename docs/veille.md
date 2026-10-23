@@ -59,6 +59,17 @@ profonde : la couche choisie en mémoire n’était pas sauvegardée. Les profil
 ont directement leur OS en couche zéro. La vérification du nom macOS après réveil
 reste distincte du constat que la saisie a repris.
 
+## Fenêtre Bluetooth et inactivité
+
+La recherche normale et l’inactivité durent chacune deux minutes, avec des points
+de départ distincts. IDLE n’arrête pas les tâches différées : la fin de fenêtre et
+la sauvegarde peuvent encore s’exécuter. Une fenêtre bornée peut finir en IDLE,
+la recherche continue sans hôte s’y arrête. La radio ne compte pas comme une frappe.
+
+Ces règles sont prévues dans le code. Vérifier leur rencontre réelle reste au
+[point de reprise](reprise.md) : aucune sauvegarde perdue, fausse activité ou
+prolongation du sommeil profond. L’USB de V1 empêche SLEEP, dont l’essai demande V2.
+
 ## Essai au chrono
 
 Utiliser le profil `bluetooth` normal. Ne pas reflasher le reset pour cet essai.

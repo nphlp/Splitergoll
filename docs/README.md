@@ -18,12 +18,12 @@ et Zephyr 4.1. Les moitiés communiquent en BLE, la gauche envoie la saisie à l
 | Détection USB et keymap `wire auto` | Mac/Windows validés sur V1 en firmware normal |
 | Détection BLE initiale, mémoire et restauration par appareil | Mac/Windows validés sur V1, sans nouvelle détection aux reconnexions |
 | `bluetooth auto` et L1 + clic encodeur droit | Bascule entre appareils connectés et bonnes keymaps confirmées sur V1 en `ble-trace` |
-| Reconnexion des connus et nouvel appairage sur trente secondes | Intégrés, connus validés sur V1 au délai de test de dix secondes, nouveaux bonds à tester |
+| Reconnexion des connus et nouvel appairage sur deux minutes | Intégrés, connus validés sur V1 au délai de test de dix secondes, nouveaux bonds à tester |
 | Recherche avec sélection et tampon de saisie | Intégrés, essais Mac/Windows validés sur V1 au délai de test |
 | Recherche sans hôte jusqu’à la veille légère | Implémentée, tests logiciels et compilation OK, essais V1 à faire |
 | Arrêt des annonces et déconnexion du Mac en Gaming USB | Spécifiés, non implémentés sur le clavier |
 | Destinations mixtes USB/BLE avec priorité USB par ordinateur | Spécifiées, association des identités USB/BLE à résoudre |
-| Préférence durable et retour à l’ancien appareil au démarrage | Implémentés, tests logiciels et compilation OK, essais V1 à faire |
+| Préférence durable et retour à l’ancien appareil au démarrage | Comportements principaux validés sur V1 au délai court, délai normal à confirmer |
 | Correction manuelle persistante d’un OS mal reconnu | Prévue, non implémentée |
 
 Les heuristiques d’OS sont expérimentales, elles ne sont pas validées sur tous
@@ -38,8 +38,8 @@ et une reprise en 2 à 5 secondes après sollicitation de la gauche en veille pr
 La droite seule ne réveille pas la centrale. L’autonomie, la première frappe et les
 réveils par chaque touche restent à vérifier dans le [TODO](TODO.md).
 
-La priorité est de valider ensemble reconnexions et nouveaux appairages sur V1,
-avec Mac et Windows. Vient ensuite le firmware USB + BLE commun,
+La priorité est de vérifier le délai réel de deux minutes avec l’inactivité,
+puis les nouveaux appairages. Vient ensuite le firmware USB + BLE commun,
 avec Gaming USB et le choix de destination. Les noms des futurs profils ne sont pas
 encore fixés. Le [cadrage de l’appairage](gestion-appairage.md) distingue règles
 prévues et moteur déjà développé. Les branches historiques et les variantes minimales
@@ -71,6 +71,7 @@ et `make bat avg` calcule une moyenne par moitié sur 30 secondes.
 
 ## Documentation
 
+- [Reprendre le développement](reprise.md) : état validé, priorités et points à décider pour la prochaine séance.
 - [Planification selon le matériel](planification.md) : choisir les chantiers réalisables avec Mac, Windows, V1 ou V2.
 - [Build local](build-local.md) : commandes, environnement et résultats.
 - [Logs USB](logs-usb.md) : firmwares de diagnostic et console de chaque moitié.
@@ -82,11 +83,12 @@ et `make bat avg` calcule une moyenne par moitié sur 30 secondes.
 - [Détection d’OS](detection-os.md) : préparer et comparer les captures de connexion USB, puis BLE.
 - [Diagnostic Bluetooth](detection-os-bluetooth.md) : comparer Mac et Windows sans sélection automatique.
 - [Sélection de l’ordinateur](selection-appareil.md) : comportement Bluetooth prévu, bascule et reprise après veille.
-- [Connexions Bluetooth](reconnexion-bluetooth.md) : trente secondes pour les connus et nouveaux appareils, sans détourner la saisie.
+- [Connexions Bluetooth](reconnexion-bluetooth.md) : deux minutes pour les connus et nouveaux appareils, sans détourner la saisie.
 - [Essais de connexion Bluetooth](tests-connexions-bluetooth.md) : premier appairage, ajout, mémoire et reconnexions sur V1.
 - [Essais de reprise Bluetooth](tests-reprise-bluetooth.md) : préférence durable et ordre de retour Mac/Windows.
 - [Essais de recherche Bluetooth](tests-recherche-bluetooth.md) : absence d’hôte, première arrivée et arrêt en veille légère.
 - [Destinations de saisie](destinations-saisie.md) : futur choix USB/Bluetooth et priorité par ordinateur.
+- [Gaming USB](gaming-usb.md) : fermeture du Bluetooth hôte et mémoire du mode, à développer.
 - [Gestion de l’appairage](gestion-appairage.md) : définir l’ouverture aux nouveaux appareils et les reconnexions.
 - [Mémoire de l’OS](memoire-os.md) : acquisition initiale et sauvegarde expérimentale, correction manuelle prévue.
 - [Essais de mémoire](tests-memoire-os.md) : appairage, reconnexion et redémarrage sur Mac puis Windows.

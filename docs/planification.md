@@ -1,7 +1,8 @@
 # Planifier selon le matériel disponible
 
 Le matériel disponible est **Mac + Windows + V1 + V2 à domicile**.
-V1 sert en priorité aux essais de connexion, V2 peut rester le clavier de saisie.
+V1 est revenu en `wire windows` normal pour jouer. Les prochains essais de
+connexion seront préparés à la reprise, V2 peut rester le clavier de saisie.
 Le suivi détaillé reste dans le
 [TODO](TODO.md). Ce tableau sert à choisir un chantier que l’on peut réellement
 terminer, sans confondre développement et validation matérielle.
@@ -35,7 +36,7 @@ grâce à ses USB d’alimentation. V2 peut fonctionner en USB avec le profil ad
 
 | Sujet | Matériel pour terminer | Ce qu’on peut préparer sans Windows |
 | --- | --- | --- |
-| Fenêtres de reconnexion de deux minutes | Mac + Windows + un clavier, deux appairages avec OS mémorisés | Comportements principaux validés sur V1 au délai de dix secondes. Confirmer le délai normal et les nouveaux bonds |
+| Fenêtres de reconnexion de deux minutes | Mac + Windows + un clavier, deux appairages avec OS mémorisés | Comportements principaux validés sur V1 au délai de dix secondes. Vérifier les 120 secondes face à IDLE, puis les nouveaux bonds |
 | Sélection automatique et retour au précédent pendant la fenêtre de démarrage | Mac + Windows + un clavier. V2 ajoute l’essai après vraie veille profonde | Sauvegarde immédiate, persistance et retour Windows après Mac confirmés. Vraie veille profonde et délai normal restent distincts |
 | Accueil d’un nouvel appareil sans détourner la saisie | Mac + Windows + un clavier | Cadrage et tests des slots libres/pleins et des demandes concurrentes. Intégré et testé en logiciel. Valider ensemble appairage initial et reconnexion |
 | Réduire le délai de bascule | Mac + Windows + un clavier | Inspecter les gardes et préparer les mesures. Comparer les deux sens avec le même firmware |
@@ -64,11 +65,12 @@ directement. Les essais batterie et veille n’en ont pas besoin.
 
 ## Ordre conseillé
 
-1. Le lot Bluetooth principal est validé sur V1 au délai court. Pour la reprise,
-   confirmer le délai normal de deux minutes, puis compléter nouveaux appairages
-   et IDLE si nécessaire. Ne pas refaire toutes les bascules déjà validées.
-2. Développer ensuite les destinations USB/BLE puis Gaming USB,
-   avec les deux ordinateurs disponibles pour les transitions.
+1. Lire [le point de reprise](reprise.md), vérifier le matériel disponible, puis
+   tester le délai normal de deux minutes face à IDLE et à la sauvegarde. Compléter
+   les nouveaux appairages séparément, sans refaire les bascules déjà validées.
+2. Concevoir l’identité commune des destinations USB/BLE, puis développer Gaming USB
+   avec mémoire du mode. Clarifier les cas de retrait USB et de sortie volontaire
+   avant le code, avec les deux ordinateurs pour les transitions.
 3. Sur V2, compléter première frappe, encodeurs et autonomie sur batterie.
 4. Compléter la reprise de l’app après sommeil du Mac et l’ouverture de session.
 
