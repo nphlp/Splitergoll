@@ -11,7 +11,11 @@ Les évolutions sont suivies dans le [TODO](../../docs/TODO.md), sans liste dupl
 
 - `BatteryCore` : décodage GATT, identité des côtés, dernières lectures et disponibilité.
   BatterySymbolLayout conserve les proportions du symbole dans le cadre de chaque ligne.
-- `BatteryMonitor` : adaptateur CoreBluetooth, entièrement sur l’acteur principal.
+- `KeyboardSelection` : choix explicite et automatique par identifiant, libellés et sérialisation versionnée.
+- `BatteryMonitor` : adaptateur CoreBluetooth sur l’acteur principal, inventaire à chaque battement.
+- `BatteryPeripheralDelegate` : proxy par génération, refus des réponses tardives avant traitement.
+- `KeyboardPreferences` : stockage UserDefaults local du seul UUID/libellé choisi, injectable en mémoire.
+- `KeyboardMenu` : sous-menu natif Clavier suivi, testable sans lecteur Bluetooth.
 - `BatteriesView` : vue observée et tableau de données indépendant, utilisable pour contrôler le rendu sans Bluetooth.
 - `Application` : cycle AppKit, fenêtre SwiftUI fixe 320 × 174 points et NSStatusItem. Dock visible avec la fenêtre, caché lorsqu’elle est fermée. Démarrage discret sans fenêtre.
 - `LaunchAtLogin` : inscription via SMAppService au premier lancement réel. `LoginRegistration` teste sa politique sans toucher aux préférences système.
@@ -62,8 +66,15 @@ Retrouver uniquement un périphérique déjà connecté au système. Le nom conf
 est accepté seul ou suivi d’un espace et d’un suffixe non blanc, pour les libellés
 personnalisés comme Splitergoll V1/V2. Garder la casse et la frontière du nom :
 ni SplitergollV2, ni Splitergoll_Left, ni un nom cible vide ne correspondent.
-Refuser de choisir arbitrairement entre plusieurs correspondances, même si l’une
-garde le nom exact. Le lecteur CLI suit la même règle. La connexion cliente CoreBluetooth
+Sans préférence, refuser de choisir arbitrairement entre plusieurs correspondances
+au démarrage, même si l’une garde le nom exact. Si l’app suit déjà l’unique clavier,
+continuer lorsqu’un second apparaît. Un choix explicite persiste sous followedKeyboard.v1
+(JSON version 1, UUID local et nom), sans mesures, adresse BLE ou clé d’appairage.
+Le préféré absent conserve son nom et ses tirets, sans repli. Un appareil préféré
+renommé reste reconnu par UUID, même hors du filtre de nom initial. Son libellé est
+mis à jour, un nom absent conserve le précédent. Les autres inconnus restent filtrés.
+Deux noms identiques reçoivent un suffixe UUID, avec UUID complet si préfixes identiques.
+Le lecteur CLI garde sa règle initiale : une correspondance ou refus de l’ambiguïté. La connexion cliente CoreBluetooth
 est distincte de la connexion du clavier gérée par macOS.
 
 Lire `180F/2A19` et `2904`, sans écrire le CCC ni activer les notifications.
@@ -102,7 +113,8 @@ la connexion système. Aucun verrou ou assertion empêchant la veille, aucun sca
 Fermer la fenêtre conserve le menu. Quitter ferme uniquement les ressources de l’app.
 
 La fenêtre ne contient que le titre, Connecté/Déconnecté et les batteries gauche/droite.
-Le menu contient connexion, Ouvrir l’app et Quitter l’app. Les erreurs du lecteur
+Le menu contient connexion, Clavier suivi, Ouvrir l’app et Quitter l’app.
+Le nom choisi remplace le titre générique dans la fenêtre et figure dans l’infobulle. Les erreurs du lecteur
 ne sont pas détaillées dans cette interface. Ne pas y remettre les dates et cadences.
 LSUIElement et la politique accessory masquent le Dock au démarrage. showWindow
 passe en regular avant de montrer la fenêtre. Son delegate windowWillClose revient
@@ -225,25 +237,27 @@ deux SVG installés sont vérifiées. Aucun lancement réel par l’agent. Aprè
 l’utilisateur confirme le fonctionnement de l’affichage sur V2. Cela ne valide pas
 encore les reprises après sommeil, les déconnexions ou l’ouverture de session.
 
-## Sélection du clavier suivi retenue pour le prochain lot
+## Sélection du clavier suivi
 
-L’utilisateur valide le développement du choix V1/V2 dans le menu. Spécification dans
-docs/selection-clavier-app.md, tâches dans docs/TODO.md. Aucun code de cette
-fonctionnalité n’est encore implémenté et les invariants de sélection actuels restent
-applicables jusqu’à ce lot. Cible retenue : noms de périphériques comme libellés, identifiant
-CoreBluetooth local comme clé du choix, persistance et absence de bascule silencieuse
-si le clavier préféré disparaît. Vider les mesures au changement, rejeter les
-callbacks tardifs, tester les noms identiques, renommages et reconnexions.
-Ce choix concerne le clavier physique lu par l’app, jamais le slot hôte du firmware.
-Le firmware wire n’expose pas BAS dans le build contrôlé, mais conserve ZMK_BLE=y.
-Ne pas déduire de la présence Bluetooth de V1 que l’app lisait forcément ses batteries.
-Retour utilisateur : avec V1 désactivé et l’app redémarrée, V2 s’actualise à cinq
-secondes. Cause de l’anomalie antérieure non établie, sans capture des mesures ADC
-ou des lectures GATT pendant l’incident. Ne pas la présenter comme un mélange prouvé.
+Implémentée et validée par 44 tests Swift au total, sans accès Bluetooth, fenêtre
+réelle, inscription ou écriture des préférences système. Le stockage est injecté
+par KeyboardPreferenceStorage, les tests du vrai BatteryMonitor utilisent une mémoire
+locale. Vérifier l’absence de réécritures périodiques et la restauration après recréation.
+Le gate refuse un token après fermeture, changement de périphérique ou reconnexion
+au même UUID. Chaque proxy GATT capture son token. Les callbacks de centrale gardent
+la garde d’identité de l’objet et attendent la clôture avant une nouvelle connexion.
+Au changement de cible, vider BatteryState et les tables GATT avant la nouvelle lecture.
+Après indisponibilité Bluetooth, vider l’inventaire mais conserver le choix explicite.
+Aucun scan, abonnement, accès HID, changement de destination ou nouvel appairage ajouté.
 
-Ordre de développement validé : commit tests/journal, correction wire, sélecteur
-app puis destinations USB/BLE et Gaming. L’essai du sélecteur doit utiliser V1 et
-V2 connectés simultanément au Mac, avec les services batterie requis. V1 wire
-strict ne répond pas à cette condition : préparer le profil BLE avec l’utilisateur,
-sans flash, sélection hôte ou effacement implicite. Le découpage futur de Gaming
-reste ouvert, la mémoire d’un mode ne nécessite pas forcément une keymap séparée.
+Le build signé est préparé sous .local/apps, sans installation ou lancement par
+l’agent. L’utilisateur confirme ensuite son installation et V2 seul sélectionné
+dans le menu. Cela ne valide pas la persistance ou l’isolation entre deux claviers.
+L’utilisateur reporte ces essais et demande de reprendre le firmware USB/BLE.
+Ne pas reflasher V1 uniquement pour poursuivre les tests de l’app à ce stade.
+L’essai utilisateur V1/V2 reste à faire selon docs/selection-clavier-app.md. V1 wire
+strict ne convient pas : préparer le profil BLE avec l’utilisateur, sans effacement
+implicite. Le choix du clavier physique ne touche jamais au slot hôte du firmware.
+L’anomalie antérieure de mesure n’a pas de cause établie, ne pas la présenter comme
+un mélange prouvé des batteries. La cadence reste cinq secondes, avec les limites ADC
+et IDLE inchangées. Le cadrage USB/BLE et Gaming demeure un chantier distinct.

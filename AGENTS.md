@@ -106,6 +106,62 @@ isolés. Cette autorisation ne déclenche aucun flash ni effacement d’appairag
 
 ## Étape active et validation
 
+Lot tests/journal/documentation committé et poussé dans 9325f07. Chantier actif :
+restriction wire validée par retour utilisateur, puis sélecteur de l’app implémenté.
+Le ZMK figé impose depends on ZMK_BLE à ZMK_SPLIT_BLE : ne pas désactiver ZMK_BLE,
+ce serait couper la droite. Implémentation locale wire_usb_only.c, activée par
+wire-left.conf seulement sur la centrale, avec interception legacy adv_start/stop
+sans délégation radio. Préserver le scanner du split, les keymaps et tous les bonds.
+Pas de patch de dépendance. Les restrictions LTO/annonces étendues/rôle sont contrôlées
+par Kconfig, CMake et BUILD_ASSERT. Gardes de build vérifiant présence des wrappers.
+Les profils Bluetooth et la droite ne doivent jamais activer cette option.
+24 suites natives ASan/UBSan et les 112 cas AWK/81 PowerShell passent. Six
+configurations natives incompatibles sont refusées par BUILD_ASSERT : USB absent,
+rôle droit, split absent, annonces étendues, LTO ou BLE_RECONNECT simultané.
+Les cinq keymaps wire normales, wire windows debug, wire auto usb-trace et deux
+paires témoins bluetooth auto/macos compilent et passent les gardes et SHA-256.
+Les sept maps wire ont le scanner bt_le_scan_start lié et aucune fonction native
+bt_le_adv_start/stop allouée, seuls les wrappers peuvent recevoir les demandes.
+Les quatre UF2 Bluetooth témoins sont identiques octet pour octet aux références
+normales, droite wire windows identique à celle déjà flashée. Aucun changement
+de keymap, dépendance, environnement, Compose, Dockerfile ou réglage NVS.
+Paire finale : dist/firmware/wire-windows-2026-10-23-15-59-52. Seule la gauche
+nécessite un flash pour ce test V1. Les conteneurs éphémères sont libérés et les
+trois services partagés préservés. Seuls KSCAN, const tap-dance et Docker insecure
+restent signalés par le socle. Une erreur initiale de Kconfig sans prompt a été
+corrigée avant tout export utilisable. Aucune erreur de build restante. Aucun flash,
+accès série ou effacement dans ce chantier. L’utilisateur répond « C’est good ! »
+après le protocole court V1 : retenir cette validation rapportée, sans fabriquer
+une nouvelle capture ni une mesure radio. L’utilisateur autorise ensuite le commit
+et le push de tous les changements en attente avant de reprendre USB/BLE.
+
+Sélecteur app développé : KeyboardSelection choisit par UUID CoreBluetooth local,
+préférence JSON v1 conservée par UserDefaults. Nom visible et choix explicite durable,
+aucun repli silencieux si préféré absent. Proxy GATT par génération, mesures vidées
+au changement, inventaire toutes les cinq secondes sans scan. 44 tests Swift et
+build signé passent, sans lecteur réel, installation, lancement ou écriture de
+préférences système pendant ces contrôles. Voir companion/macos/AGENTS.md et
+docs/selection-clavier-app.md. L’utilisateur confirme ensuite l’installation et
+V2 seul sélectionné dans le menu. Les autres essais de l’app sont reportés à sa
+demande, V1 reste en wire Windows. Reprendre le cadrage de l’identité commune
+USB/BLE avant le mode mixte, sans lancer un nouveau flash ou une capture implicite.
+Le futur essai V1/V2 demandera un profil Bluetooth exposant BAS sur V1.
+
+
+Nouveau build normal demandé pour lever le doute sur V2 perçu en veille rapide :
+dist/firmware/bluetooth-auto-2026-10-24-13-57-26, deux moitiés exportées après
+compilation réussie en 14 secondes. Chaque .config final confirme IDLE=120000,
+SLEEP=600000 avec SLEEP=y, batterie=5 s, aucune trace USB/BLE/power, CDC, USB HID,
+wire-only ou option de reset des bonds activée. CMake utilise le module public
+keyboard et auto.keymap, sans copie de diagnostic. Gardes natives du build,
+UF2 et SHA-256 passent. Le conteneur éphémère est libéré, les trois services
+partagés sont inchangés. Warnings KSCAN et Docker insecure seulement dans cette
+exécution incrémentale. Aucun flash, accès série ou changement d’appairage par
+l’agent. L’utilisateur confirme ensuite avoir flashé les deux moitiés de V2.
+Retenir ce flash normal comme dernier firmware annoncé, sans déduire une nouvelle
+mesure chronométrée des délais ou une lecture d’identification du firmware.
+
+
 Reprise : lot Bluetooth publié dans bd22c0e, documentation dans 795c7d7, poussés sur
 origin/unified-firmware. Mac, Windows, V1 et V2 sont disponibles selon l’utilisateur.
 V1 était flashé en wire windows normal pour jouer. Ne pas le supposer déjà en
@@ -169,7 +225,7 @@ L’utilisateur donne son go au commit test(firmware): couvrir les connexions et
 ajouter le journal d’activité, avec push selon les règles globales. Ordre validé
 pour la suite : correction wire, développement du sélecteur app avec essai V1/V2
 sur le Mac, identité des destinations USB/BLE, puis Gaming et sa mémorisation.
-Le sélecteur est retenu mais non implémenté. L’idée d’une keymap Gaming séparée
+Le sélecteur app est maintenant implémenté, son essai réel reste à faire. L’idée d’une keymap Gaming séparée
 reste à étudier, pas une obligation ni un changement autorisé dans ce commit.
 
 Nouvelle priorité explicitement demandée : fenêtre normale 120 s et IDLE 120 s

@@ -8,6 +8,7 @@ import Foundation
 final class BatteryMonitor: NSObject, ObservableObject {
     @Published private(set) var state = BatteryState()
     @Published private(set) var now = Date()
+    @Published private(set) var selection: KeyboardSelection
 
     let targetName: String
     private let serviceID = CBUUID(string: "180F")
@@ -16,7 +17,9 @@ final class BatteryMonitor: NSObject, ObservableObject {
     private var central: CBCentralManager?
     private var device: CBPeripheral?
     private var closingDevice: CBPeripheral?
-    private var lastDeviceID: UUID?
+    private let preferences: any KeyboardPreferenceStorage
+    private var sessionGate = BatterySessionGate()
+    private var sessionDelegate: BatteryPeripheralDelegate?
     private var levels: [ObjectIdentifier: CBCharacteristic] = [:]
     private var channels: [ObjectIdentifier: Int] = [:]
     private var pendingReads: Set<ObjectIdentifier> = []
@@ -28,8 +31,10 @@ final class BatteryMonitor: NSObject, ObservableObject {
     private var stopped = false
 
     // Le nom vient du bundle préparé depuis la configuration du clavier, jamais d’un nom supposé.
-    init(targetName: String) {
+    init(targetName: String, preferences: any KeyboardPreferenceStorage = KeyboardPreferences()) {
         self.targetName = targetName
+        self.preferences = preferences
+        self.selection = KeyboardSelection(preferenceData: preferences.data)
         super.init()
     }
 
@@ -74,6 +79,7 @@ final class BatteryMonitor: NSObject, ObservableObject {
         guard !suspended, !stopped else { return }
         now = Date()
         guard central?.state == .poweredOn else { return }
+        refreshKeyboards()
 
         if let started = connectionStarted, now.timeIntervalSince(started) >= 15 {
             failSession("La connexion du lecteur n’a pas abouti. Réveille le clavier.")
@@ -95,34 +101,89 @@ final class BatteryMonitor: NSObject, ObservableObject {
         }
     }
 
-    // Retrouve les périphériques déjà reliés au système, y compris renommés, sans résoudre une ambiguïté.
+    // Actualise le menu même pendant une lecture, sans scanner ni changer la connexion HID.
+    private func refreshKeyboards() {
+        guard let central, central.state == .poweredOn else { return }
+        updateKeyboards(
+            central.retrieveConnectedPeripherals(withServices: [serviceID]).map {
+                KeyboardIdentity(id: $0.identifier, name: $0.name ?? "")
+            })
+    }
+
+    // Applique un inventaire système au choix suivi et invalide le lecteur si sa cible a changé.
+    func updateKeyboards(_ candidates: [KeyboardIdentity]) {
+        let previousID = selection.selected?.id
+        var updated = selection
+        updated.update(candidates, targetName: targetName)
+        saveSelection(updated)
+        if previousID != selection.selected?.id {
+            releaseDevice(phase: .waiting)
+            state = BatteryState()
+            retryAfter = .distantPast
+        } else if let device, !selection.available.contains(where: { $0.id == device.identifier }) {
+            releaseDevice(phase: .disconnected)
+        }
+    }
+
+    // Enregistre seulement un choix explicite ou son nouveau libellé, sans réécrire à chaque lecture.
+    private func saveSelection(_ updated: KeyboardSelection) {
+        if updated.preferred != selection.preferred {
+            preferences.data = updated.preferenceData
+        }
+        selection = updated
+    }
+
+    // Le choix de l’app vide les mesures, sans sélectionner un ordinateur dans le firmware.
+    func selectKeyboard(_ id: UUID) {
+        var updated = selection
+        guard updated.select(id) else { return }
+        let changed = updated.selected?.id != selection.selected?.id
+        saveSelection(updated)
+        guard changed else { return }
+        releaseDevice(phase: .waiting)
+        state = BatteryState()
+        retryAfter = .distantPast
+        now = Date()
+        findConnectedKeyboard()
+    }
+
+    // N’ouvre le lecteur que sur la cible choisie et après clôture de la session précédente.
     private func findConnectedKeyboard() {
         guard let central, central.state == .poweredOn, device == nil,
             closingDevice == nil, now >= retryAfter
         else { return }
-
-        let candidates = central.retrieveConnectedPeripherals(withServices: [serviceID])
-        switch ConnectedKeyboardChoice.select(names: candidates.map(\.name), targetName: targetName) {
-        case .none:
-            state.phase = .waiting
-        case .ambiguous:
-            state.phase = .ambiguous
-        case .single(let index):
-            let peripheral = candidates[index]
-            if peripheral.identifier != lastDeviceID { state = BatteryState() }
-            lastDeviceID = peripheral.identifier
-            state.beginSession()
-            device = peripheral
-            connectionStarted = now
-            peripheral.delegate = self
-            central.connect(peripheral, options: nil)
+        refreshKeyboards()
+        guard closingDevice == nil else { return }
+        guard let selected = selection.selected, selection.selectedIsAvailable else {
+            state.phase = selection.needsChoice ? .ambiguous : .waiting
+            return
         }
+        guard
+            let peripheral = central.retrieveConnectedPeripherals(withServices: [serviceID])
+                .first(where: { $0.identifier == selected.id })
+        else { return }
+        state.beginSession()
+        device = peripheral
+        connectionStarted = now
+        let token = sessionGate.begin(peripheralID: peripheral.identifier)
+        let delegate = BatteryPeripheralDelegate(monitor: self, token: token)
+        sessionDelegate = delegate
+        peripheral.delegate = delegate
+        central.connect(peripheral, options: nil)
+    }
+
+    // Une réponse tardive d’une ancienne session ne peut modifier ni les niveaux ni les erreurs courantes.
+    func accepts(_ token: BatterySessionGate.Token, peripheral: CBPeripheral) -> Bool {
+        !stopped && !suspended && peripheral === device
+            && sessionGate.accepts(token, peripheralID: peripheral.identifier)
     }
 
     // Ferme uniquement la connexion cliente de l’app et attend sa clôture avant toute nouvelle tentative.
     private func releaseDevice(phase: MonitorPhase) {
         let previous = device
         device = nil
+        sessionGate.end()
+        sessionDelegate = nil
         previous?.delegate = nil
         levels.removeAll()
         channels.removeAll()
@@ -179,11 +240,12 @@ final class BatteryMonitor: NSObject, ObservableObject {
 }
 
 // Tous les callbacks ci-dessous sont délivrés sur la file principale choisie au démarrage.
-extension BatteryMonitor: @preconcurrency CBCentralManagerDelegate, @preconcurrency CBPeripheralDelegate {
+extension BatteryMonitor: @preconcurrency CBCentralManagerDelegate {
     // Réagit aux permissions et à l’alimentation Bluetooth, sans afficher de dialogue système forcé.
     func centralManagerDidUpdateState(_ central: CBCentralManager) {
         guard !stopped else { return }
         if central.state != .poweredOn {
+            updateKeyboards([])
             releaseDevice(phase: .waiting)
             closingDevice = nil
         }
@@ -192,7 +254,9 @@ extension BatteryMonitor: @preconcurrency CBCentralManagerDelegate, @preconcurre
             return
         }
         switch central.state {
-        case .poweredOn: findConnectedKeyboard()
+        case .poweredOn:
+            refreshKeyboards()
+            findConnectedKeyboard()
         case .poweredOff: state.phase = .bluetoothOff
         case .unauthorized: state.phase = .permissionDenied
         case .unsupported: state.phase = .unavailable

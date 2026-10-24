@@ -56,8 +56,11 @@ Les deux câbles USB alimentent les moitiés. Le câble gauche transporte aussi 
 le câble droit fournit l’alimentation. Les moitiés communiquent toujours en BLE,
 les deux câbles ne les relient pas entre elles.
 
-Veille profonde et reporting batterie sont désactivés. Les capacités BLE vers
-un hôte restent présentes, ce profil ne promet pas une radio arrêtée.
+Les nouveaux builds interdisent les annonces Bluetooth de la gauche vers les
+ordinateurs. La radio reste active pour la moitié droite. Veille profonde et
+reporting batterie sont désactivés. Les appairages enregistrés sont conservés,
+mais un ancien hôte ne doit plus pouvoir se reconnecter à la gauche en wire.
+Cette restriction est développée et compilée, sa validation sur V1 reste à faire.
 
 **État :** flash et fonctionnement de V1 confirmés sur le Mac avec `wire macos`.
 Le profil `wire windows` (gaming inclus) est aussi flashé et fonctionnel sur V1.

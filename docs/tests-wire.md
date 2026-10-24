@@ -4,6 +4,25 @@ Utiliser le Clavier V1 sans batterie, avec les deux UF2 du même build `wire`.
 Les [schémas de touches](keymap.md) restent la référence. La bascule d’OS décrite
 ci-dessous concerne `multi`. Les profils fixes utilisent directement leur OS.
 
+## Restriction Bluetooth du nouveau wire
+
+Le correctif bloque les annonces de la centrale vers les ordinateurs, sans
+changer les keymaps ni la liaison BLE entre moitiés. Le retour utilisateur après
+le protocole ci-dessous est positif sur V1, sans nouvelle capture instrumentée.
+
+1. Flasher la gauche avec le nouveau `wire windows`. Si la droite est identique
+   au build précédent, son reflash n’est pas nécessaire. Ne pas effacer les bonds.
+2. Brancher la gauche au PC Windows et alimenter la droite par son USB. Taper
+   quelques lettres de chaque côté, puis vérifier Shift entre les deux moitiés.
+3. Garder le Bluetooth du Mac actif : V1 ne doit plus s’y reconnecter comme clavier.
+   L’ancienne entrée peut rester enregistrée, mais doit être déconnectée.
+4. Redémarrer la gauche et vérifier à nouveau saisie USB des deux côtés et
+   absence de reconnexion Bluetooth au Mac. V2 peut rester utilisé sur le Mac.
+
+La droite garde ses annonces de transport split : ce test ne demande pas une
+radio entièrement éteinte. Les variantes debug et usb-trace ajoutent uniquement
+leur diagnostic USB, sans réautoriser les connexions Bluetooth de la gauche.
+
 ## Résultats confirmés
 
 Sur le firmware migré vers Zephyr 4.1, l’utilisateur confirme sur V1 en `wire macos`

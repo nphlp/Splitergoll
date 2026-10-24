@@ -41,9 +41,9 @@ final class ApplicationDelegate: NSObject, NSApplicationDelegate, NSWindowDelega
         self.monitor = monitor
         configureMenu()
         configureWindow(monitor)
-        monitor.$state.combineLatest(monitor.$now)
+        monitor.$state.combineLatest(monitor.$now, monitor.$selection)
             .receive(on: RunLoop.main)
-            .sink { [weak self] _, _ in
+            .sink { [weak self] _, _, _ in
                 // Attend la fin des affectations @Published avant de relire le modèle sur la file principale.
                 MainActor.assumeIsolated { self?.updateMenu() }
             }.store(in: &subscriptions)
@@ -109,11 +109,13 @@ final class ApplicationDelegate: NSObject, NSApplicationDelegate, NSWindowDelega
         statusItem.button?.imagePosition = .imageOnly
         let description = monitor.state.menuTitle(at: monitor.now)
         statusItem.button?.toolTip =
-            "Splitergoll\n\(description)\nÉclair : 100 % annoncé, charge non confirmée."
-        statusItem.button?.setAccessibilityLabel("Batteries Splitergoll\n\(description)")
+            "\(monitor.selection.displayName)\n\(description)\nÉclair : 100 % annoncé, charge non confirmée."
+        statusItem.button?.setAccessibilityLabel("Batteries \(monitor.selection.displayName)\n\(description)")
         let menu = NSMenu()
         let status = NSMenuItem(title: monitor.state.connectionTitle, action: nil, keyEquivalent: "")
         menu.addItem(status)
+        menu.addItem(
+            KeyboardMenu.item(selection: monitor.selection, target: self, action: #selector(selectKeyboard)))
         menu.addItem(NSMenuItem.separator())
         for (title, action) in [
             ("Ouvrir l’app", #selector(showWindow)),
@@ -126,6 +128,12 @@ final class ApplicationDelegate: NSObject, NSApplicationDelegate, NSWindowDelega
         menu.autoenablesItems = false
         status.isEnabled = false
         statusItem.menu = menu
+    }
+
+    // Change uniquement le lecteur des batteries, sans rediriger les frappes du clavier.
+    @objc private func selectKeyboard(_ sender: NSMenuItem) {
+        guard let id = sender.representedObject as? UUID else { return }
+        monitor?.selectKeyboard(id)
     }
 
     // Réaffiche la même fenêtre et donne le focus à l’app, sans toucher au clavier connecté.

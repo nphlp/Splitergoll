@@ -9,6 +9,31 @@ La recherche avec sélection sur une arrivée est raccordée dans ble_auto.c.
 Gaming USB reste séparé.
 Les règles humaines sont dans docs/gestion-appairage.md et docs/destinations-saisie.md.
 
+## Wire : USB exclusif vers l’ordinateur
+
+wire-left.conf active SPLITERGOLL_WIRE_USB_ONLY uniquement sur la centrale wire.
+wire_usb_only.c intercepte bt_le_adv_start et bt_le_adv_stop, répond sans démarrer
+ni arrêter d’annonce native. Cela évite les erreurs/réessais de ble.c, sans émission
+hôte. Le scanner central du split n’est pas intercepté et la droite garde son
+firmware, ses annonces et ses bonds. Aucun timer, profil ou effacement ajouté.
+
+Dans le ZMK figé, ZMK_SPLIT_BLE dépend de ZMK_BLE. Mettre ZMK_BLE=n couperait la
+droite : conserver le socle, les services et bindings &bt, sans liaison hôte rendue
+possible par des annonces. La restriction est au lien, pas une priorité d’endpoint.
+Elle ne supprime pas les appairages enregistrés sur le Mac ou le clavier.
+
+Le module refuse un rôle périphérique, USB absent, split BLE absent, annonces
+étendues, LTO ou le contrôleur BLE_RECONNECT simultané. CMake ne l’inclut pas dans
+bluetooth ni dans la droite. Les signatures sont vérifiées contre les vrais headers
+Zephyr. Les gardes du build exigent les deux wrappers et le scanner du split.
+Le test natif exécute le vrai module contre une frontière radio comptée, sous
+ASan/UBSan : démarrages/arrêts répétés sans appel natif, payloads intacts. Six
+configurations incompatibles sont aussi refusées à la compilation. Les sept
+variantes wire contrôlées gardent bt_le_scan_start et retirent les API natives
+adv_start/stop du lien final. Les témoins Bluetooth auto/macos et la droite
+wire windows sont identiques aux UF2 précédents.
+Ne pas déduire de ces contrôles seuls la validation de la vraie liaison split.
+
 ## Contrat
 
 Les identifiants 0 à 15 désignent des destinations logiques, pas des transports.

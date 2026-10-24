@@ -14,8 +14,8 @@ make app start
 ```
 
 L’app démarre dans la barre des menus, sans icône dans le Dock ni fenêtre ouverte.
-Le menu contient seulement **Connecté / Déconnecté**, **Ouvrir l’app** et **Quitter l’app**.
-La fenêtre fixe de 320 × 174 points montre le titre, la connexion et les batteries
+Le menu contient **Connecté / Déconnecté**, **Clavier suivi**, **Ouvrir l’app** et **Quitter l’app**.
+La fenêtre fixe de 320 × 174 points montre le nom du clavier suivi, la connexion et les batteries
 **Gauche** et **Droite**. Fermer la fenêtre laisse l’app fonctionner.
 Les deux lignes de la barre affichent le contour gauche suivi de son niveau en haut,
 puis le niveau et le contour droit en bas. Les contours suivent le thème clair ou sombre.
@@ -28,7 +28,8 @@ Le nom `Splitergoll` est reconnu, ainsi qu’un nom personnalisé commençant pa
 `Splitergoll `, comme `Splitergoll V1` ou `Splitergoll V2`. Si plusieurs correspondent,
 l’app ne choisit pas à ta place au démarrage et laisse les niveaux indisponibles.
 Si elle suit déjà un clavier, elle continue à le lire quand un second apparaît.
-Un [sélecteur V1/V2 dans le menu](selection-clavier-app.md) est retenu pour le prochain lot app, pas encore développé.
+Le [sélecteur V1/V2](selection-clavier-app.md) mémorise ton choix explicite. Si ce clavier
+est absent, son nom reste affiché avec des tirets, sans suivre l’autre à sa place.
 Un niveau indisponible ou égal à **0 %** est remplacé par `-`, sans afficher d’ancienne valeur.
 Le zéro reste conservé dans la mesure brute : cette convention ne prouve pas une déconnexion.
 À 100 %, un **éclair** remplace le pourcentage, horizontal et agrandi dans la barre,

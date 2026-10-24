@@ -27,9 +27,10 @@ il n’est pas nécessaire d’avoir V1 et V2 ensemble.
 | [Application macOS](application-macos.md) | Affichage des niveaux, tirets à la déconnexion et éclairs sous USB confirmés sur V2 | Compléter reprise, sommeil du Mac et ouverture de session. Couche, OS et réglages avancés reportés |
 | Correction manuelle de l’OS mémorisé | Développer et tester correction, sauvegarde, reconnexion et redémarrage sur Mac | Choisir d’abord le raccourci et préparer la mémoire d’OS de V2. Une vérification Windows restera nécessaire |
 
-Le profil courant retenu pour V2 est `bluetooth macos` normal : keymap fixe,
-batteries et veille, sans mémoire d’OS ni fenêtres expérimentales. Les essais courts
-ont utilisé un diagnostic temporaire. Revenir au firmware normal sans nouvel appairage.
+Le dernier retour normal annoncé pour V2 est `bluetooth auto`, avec mémoire d’OS
+propre au clavier. Le Mac seul est appairé après le nettoyage réalisé par
+l’utilisateur. Les essais courts ont utilisé un diagnostic temporaire. Vérifier
+le firmware réellement présent avant un nouveau test, sans effacer les appairages.
 
 ## Ce qu’il vaut mieux valider avec Mac et Windows ensemble
 
@@ -67,18 +68,16 @@ directement. Les essais batterie et veille n’en ont pas besoin.
 
 ## Ordre conseillé
 
-1. Committer les tests, le journal et les résultats V1/V2 validés. Le retour de V2
-   au firmware de base est annoncé, sans nouvelle série chronométrée à imposer.
-2. Corriger `wire` pour conserver le BLE split et supprimer le BLE vers les hôtes.
-   Vérifier les bindings Bluetooth et les builds avant le flash de V1.
-3. Développer la [sélection V1/V2 dans l’app](selection-clavier-app.md), avec tests
-   de sélection, persistance et isolation des mesures. Faire ensuite l’essai réel
-   avec V1 et V2 connectés en Bluetooth au Mac, dans des profils exposant leurs
-   services batterie. Ne pas remettre V1 en BLE à l’insu de l’utilisateur.
-4. Concevoir l’identité commune USB/BLE, puis le choix de liaison, le branchement
-   et le retrait du câble. Mac + Windows et un clavier pour les transitions,
-   V2 pour distinguer charge et fonctionnement sur batterie.
-5. Traiter Gaming et sa mémoire après les destinations. Un profil de keymap séparé
+1. Les tests et le journal sont publiés dans `9325f07`. Le wire strict est corrigé
+   et l’essai V1 est confirmé par l’utilisateur.
+2. Le sélecteur de l’app est développé, testé automatiquement et installé. V2 seul
+   est bien sélectionné selon l’utilisateur. Les essais avec deux claviers et de
+   persistance sont reportés à sa demande. V1 reste en wire sur Windows.
+3. Concevoir l’identité commune USB/BLE, puis le choix de liaison, le branchement
+   et le retrait du câble. Commencer par vérifier les informations comparables,
+   sans confondre identification de l’OS et identité d’un ordinateur. Mac + Windows
+   et un clavier pour les transitions, V2 pour les essais sur batterie.
+4. Traiter Gaming et sa mémoire après les destinations. Un profil de keymap séparé
    ou un mode du groupe Windows restent des options à comparer, sans choix technique acté.
 
 Les autres essais de réveil, autonomie et reprise de l’app restent dans le TODO.

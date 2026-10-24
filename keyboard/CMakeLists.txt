@@ -1,5 +1,5 @@
 # Compile seulement les fonctions demandées par la keymap ou un diagnostic explicite.
-if(CONFIG_SPLITERGOLL_USB_OBSERVER OR CONFIG_SPLITERGOLL_BLE_OBSERVER)
+if(CONFIG_SPLITERGOLL_USB_OBSERVER OR CONFIG_SPLITERGOLL_BLE_OBSERVER OR CONFIG_SPLITERGOLL_WIRE_USB_ONLY)
   zephyr_library()
   zephyr_library_include_directories(include config/keymaps ${APPLICATION_SOURCE_DIR}/include)
   zephyr_include_directories(include)
@@ -48,4 +48,12 @@ if(CONFIG_SPLITERGOLL_BLE_RECONNECT)
                          src/connections/ble_reconnect.c)
   zephyr_link_libraries(-Wl,--wrap=bt_le_adv_start -Wl,--wrap=bt_le_adv_stop
                        -Wl,--wrap=bt_conn_auth_cb_register -Wl,--wrap=bt_conn_auth_info_cb_register)
+endif()
+
+if(CONFIG_SPLITERGOLL_WIRE_USB_ONLY)
+  if(CONFIG_SPLITERGOLL_BLE_RECONNECT OR CONFIG_BT_EXT_ADV OR CONFIG_LTO)
+    message(FATAL_ERROR "Wire USB-only requires legacy advertising without BLE reconnect or LTO")
+  endif()
+  zephyr_library_sources(src/connections/wire_usb_only.c)
+  zephyr_link_libraries(-Wl,--wrap=bt_le_adv_start -Wl,--wrap=bt_le_adv_stop)
 endif()

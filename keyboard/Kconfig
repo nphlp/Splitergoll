@@ -31,3 +31,9 @@ config SPLITERGOLL_USB_OBSERVER
     bool
     default y if (SPLITERGOLL_OS_AUTO && ZMK_USB) || SPLITERGOLL_USB_TRACE
     depends on USB_DEVICE_STACK && ZMK_SPLIT_ROLE_CENTRAL
+
+# Le socle ZMK_BLE reste nécessaire au split, les annonces hôtes sont filtrées au lien.
+config SPLITERGOLL_WIRE_USB_ONLY
+    bool "USB-only host output on the wire central"
+    depends on ZMK_USB && ZMK_BLE && ZMK_SPLIT_BLE && ZMK_SPLIT_ROLE_CENTRAL
+    depends on !SPLITERGOLL_BLE_RECONNECT && !BT_EXT_ADV && !LTO

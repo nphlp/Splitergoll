@@ -7,7 +7,7 @@ struct BatteriesView: View {
     @ObservedObject var monitor: BatteryMonitor
 
     var body: some View {
-        BatteryDashboard(state: monitor.state, now: monitor.now)
+        BatteryDashboard(state: monitor.state, now: monitor.now, keyboardName: monitor.selection.displayName)
     }
 }
 
@@ -17,11 +17,12 @@ struct BatteryDashboard: View {
 
     let state: BatteryState
     let now: Date
+    var keyboardName = "Splitergoll"
 
     var body: some View {
         VStack(spacing: 14) {
             HStack {
-                Text("Splitergoll").font(.headline)
+                Text(keyboardName).font(.headline).lineLimit(1).truncationMode(.tail).help(keyboardName)
                 Spacer()
                 HStack(spacing: 5) {
                     Circle()

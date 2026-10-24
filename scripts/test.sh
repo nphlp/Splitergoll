@@ -71,6 +71,10 @@ run_suite usb_stack keyboard/tests/integration/usb/usb_stack_test.c \
 run_suite ble_observer keyboard/tests/integration/observer/ble_observer_test.c \
     -Ikeyboard/tests/integration/observer/stubs keyboard/src/os_detection/ble_observer.c \
     keyboard/src/os_detection/ble_att.c
+run_suite wire_usb_only keyboard/tests/integration/wire/wire_usb_only_test.c \
+    -Ikeyboard/tests/integration/wire/stubs \
+    -DCONFIG_ZMK_USB=1 -DCONFIG_ZMK_SPLIT_ROLE_CENTRAL=1 -DCONFIG_ZMK_SPLIT_BLE=1 \
+    -DCONFIG_BT_EXT_ADV=0 -DCONFIG_LTO=0 -DCONFIG_SPLITERGOLL_BLE_RECONNECT=0
 printf '\n%s suites C passent avec ASan/UBSan.\n' "$SUITE_COUNT"
 printf 'Résultats : %s\n' "$TEST_DIRECTORY"
 

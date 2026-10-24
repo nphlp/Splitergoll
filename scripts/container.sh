@@ -46,7 +46,21 @@ check_firmware() {
     done
 
     grep -qx 'CONFIG_ZMK_SPLIT=y' "$configuration" || fail 'Split désactivé'
-    grep -qx 'CONFIG_ZMK_BLE=y' "$configuration" || fail 'BLE interne désactivé'
+    grep -qx 'CONFIG_ZMK_BLE=y' "$configuration" || fail 'Socle BLE requis par le split désactivé'
+    grep -qx 'CONFIG_ZMK_SPLIT_BLE=y' "$configuration" || fail 'Transport BLE entre les moitiés désactivé'
+    if [ "$PROFILE" = wire ] && [ "$side" = left ]; then
+        grep -qx 'CONFIG_SPLITERGOLL_WIRE_USB_ONLY=y' "$configuration" || fail 'Restriction USB de wire absente'
+        grep -qx 'CONFIG_BT_CENTRAL=y' "$configuration" || fail 'Scanner BLE du split désactivé'
+        for symbol in __wrap_bt_le_adv_start __wrap_bt_le_adv_stop bt_le_scan_start; do
+            grep -Eq "0x[0-9a-f]+[[:space:]]+$symbol$" "$directory/zephyr/zmk.map" ||
+                fail "Composant wire absent : $symbol"
+        done
+        if grep -Eq '0x[0-9a-f]+[[:space:]]+bt_le_adv_(start|stop)$' "$directory/zephyr/zmk.map"; then
+            fail 'Les annonces natives restent liées dans le firmware wire'
+        fi
+    elif grep -qx 'CONFIG_SPLITERGOLL_WIRE_USB_ONLY=y' "$configuration"; then
+        fail 'Restriction wire présente sur le mauvais profil ou la mauvaise moitié'
+    fi
     if grep -Eq '^(CONFIG_ZMK_SETTINGS_RESET_ON_START|CONFIG_ZMK_BLE_CLEAR_BONDS_ON_START)=y$' "$configuration"; then
         fail 'Firmware de clavier incorrect : effacement des appairages activé'
     fi

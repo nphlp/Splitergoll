@@ -20,8 +20,8 @@ au voisinage d’IDLE et persistance après coupure. **IDLE fonctionne sous USB,
 SLEEP est bloqué.** Ces essais sont utiles, sans prouver le comportement sur batterie.
 La répétition dédiée à deux minutes est abandonnée à la demande de l’utilisateur.
 
-La [suite automatisée](tests-automatises.md) est renforcée : 23 suites C natives,
-112 cas de protocole, six tests Zephyr/QEMU et les 30 tests de l’app passent.
+La [suite automatisée](tests-automatises.md) est renforcée : 24 suites C natives,
+112 cas de protocole, six tests Zephyr/QEMU et les 44 tests de l’app passent.
 Les différents ordres de checkpoint/IDLE ne demandent plus une répétition manuelle.
 Cela ne simule ni le câblage, ni la radio du vrai V2, ni son réveil GPIO.
 
@@ -42,17 +42,30 @@ avoir reflashé le firmware de base. Après redémarrage de l’app et retrait d
 il constate une actualisation des batteries de V2 à cinq secondes. La cause de
 l’ancien affichage n’est pas établie. Aucune nouvelle série d’attentes n’est demandée.
 
-**Prochaine étape : commit du lot validé.** Ensuite, corriger le profil `wire` :
-son build conserve actuellement le Bluetooth vers les ordinateurs. Garder le BLE
-entre moitiés, vérifier les raccourcis concernés et les compilations. Puis développer
-le [sélecteur V1/V2 de l’app](selection-clavier-app.md), avec essai réel des deux
-claviers sur le Mac. La fonctionnalité est retenue mais pas encore implémentée.
-Le cadrage USB/BLE puis Gaming viendront après, sans modifier l’app dans le lot présent.
+**Lot précédent committé et poussé dans `9325f07`.** Le wire strict bloque
+maintenant les annonces hôtes de la centrale et conserve le BLE split, les keymaps
+et les bonds. Les contrôles logiciels passent et l’utilisateur confirme l’essai
+court sur V1. Aucun relevé radio supplémentaire n’est déduit de ce retour.
+
+Le [sélecteur V1/V2 de l’app](selection-clavier-app.md) est développé : choix
+explicite mémorisé, nom visible et mesures isolées. Tests et build signé passent. L’utilisateur confirme l’installation et la sélection
+de V2 seul dans le menu. Les essais de persistance, bascule V1/V2 et absence du
+préféré sont reportés à sa demande. V1 reste en wire sur Windows.
+La priorité revient au cadrage de l’identité commune USB/BLE, puis Gaming.
+Aucun nouveau flash n’est nécessaire avant d’avoir défini le diagnostic utile.
 
 USB + OFF et USB + ON alimentent tous deux le contrôleur, seul ON permet la charge
 avec le câblage actuel. Ce réglage reste déclaré par l’utilisateur, aucun GPIO ne
 le détecte. Le sommeil profond court reste facultatif, pour une question de réveil
 précise. Voir [le journal](diagnostic-activite.md) et [les essais batteries/veille](tests-batteries-veille.md).
+
+Le ressenti de veille trop rapide sur V2 motive une nouvelle compilation normale,
+sans supposer quel ancien UF2 tourne encore. La paire
+`bluetooth-auto-2026-10-24-13-57-26` est recompilée et contrôlée : IDLE 120 000 ms,
+SLEEP 600 000 ms et batteries 5 s sur les deux moitiés, sans diagnostic ou reset des
+réglages. UF2 et SHA-256 valides. L’utilisateur confirme ensuite le flash des
+deux moitiés de V2. Les délais compilés sont contrôlés, sans nouveau test
+chronométré sur batterie après ce flash.
 
 ## 2. Réunir USB et Bluetooth par ordinateur
 
@@ -96,5 +109,5 @@ Les cas sans USB et la sortie volontaire restent à préciser dans
 | Dépôt | Finaliser le README, préparer la purge historique des anciennes photos avec métadonnées |
 
 Le [TODO](TODO.md) conserve le détail complet et les validations. La prochaine
-étape est le commit, puis la restriction wire, le sélecteur de l’app et les destinations. Aucun flash,
+étape est le cadrage des destinations USB/BLE. Les essais complémentaires de l’app sont reportés. Aucun flash,
 reset d’appairage ou service n’est lancé automatiquement à la reprise.

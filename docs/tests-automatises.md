@@ -12,7 +12,7 @@ Sur le Mac, avec Clang et Python 3 :
 bash scripts/test.sh
 ```
 
-Les **23 suites C** utilisent ASan/UBSan et des horloges contrôlées, sans clavier
+Les **24 suites C** utilisent ASan/UBSan et des horloges contrôlées, sans clavier
 ni attente réelle. Les **112 cas de protocole** passent dans les vrais validateurs
 AWK. Si `pwsh` est disponible, 81 cas passent aussi dans les validateurs PowerShell.
 Sinon ce contrôle est explicitement signalé comme non exécuté. Un runtime local
@@ -28,7 +28,9 @@ bash scripts/test-zephyr.sh
 
 Le conteneur est éphémère, sans réseau ni périphérique USB. QEMU est arrêté à son
 verdict ou à l’expiration du délai, sans toucher aux autres processus.
-L’app dispose séparément de 30 tests Swift, sans connexion Bluetooth :
+L’app dispose séparément de 44 tests Swift, sans connexion Bluetooth ni écriture
+des préférences système : mesures, choix V1/V2, persistance simulée, générations
+de lecture, menu AppKit et inscription de session simulée.
 
 ```sh
 make app test
@@ -42,6 +44,7 @@ make app test
 | Détection BLE | Filtrage hôte/split, paquets intacts, exclusion du contenu privé, acquisition initiale, reconnexion, remplacement de bond et débordements |
 | Mémoire | Restauration, identité vérifiée, erreurs NVS, déduplication et observation d’une écriture sans écriture supplémentaire |
 | Choix d’appareil | Retour du préféré, perte partielle/totale, choix manuel, expiration, tampon de saisie, releases, rapports clavier/média et modificateurs en cours |
+| Wire USB seul | Annonces hôtes bloquées après demandes répétées, paramètres intacts et aucun appel de coupure radio |
 | Appairage | Slots libres/pleins, nouveaux bonds, fin tardive du SMP, borne de 30 secondes, échecs et conservation du split |
 | Activité | Fenêtre avant/pendant/après IDLE, recherche continue, fermeture en SLEEP, aucune activité artificielle, USB bloquant SLEEP |
 | Diagnostics | Formats anciens et courant, troncatures, champs inattendus, capacité, pertes, lectures répétées et journal RAM |

@@ -6,10 +6,13 @@
 - [x] Récupérer le README et les fichiers de conception de `main`.
 - [x] Garder la keymap complète de `dongle`, les helpers et les GPIO.
 - [x] Configurer la gauche centrale USB et la droite périphérique BLE.
-- [ ] Restreindre `wire` à l’USB vers l’ordinateur : le build actuel garde
-  `ZMK_BLE=y` et peut rester connecté aux hôtes en BLE. Conserver le transport
-  split, vérifier les raccourcis Bluetooth, les profils/keymaps et les compilations.
-  Ce correctif est distinct de la future priorité USB/BLE.
+- [x] Restreindre les annonces hôtes de `wire` en conservant le BLE split :
+  module local à la centrale, keymaps et bonds conservés, tests natifs et gardes
+  de compilation. `ZMK_BLE` reste requis par le split dans le socle figé.
+- [x] Valider le wire corrigé sur V1 : USB et saisie des deux côtés, Shift croisé,
+  aucune reconnexion au Mac, puis redémarrage. Voir [le protocole court](tests-wire.md).
+  Retour utilisateur positif après le protocole court, sans nouvelle capture instrumentée.
+  Ce correctif reste distinct de la future priorité USB/BLE.
 - [x] Figer ZMK 0.3.0, les dépendances et l’image Docker.
 - [x] Préparer un Makefile avec `make setup` et `make build`.
 - [x] Compiler les deux moitiés et vérifier les UF2, leurs empreintes et les rôles.
@@ -23,10 +26,11 @@
 Gaming persistant : comparer plus tard un profil de keymap distinct et un mode
 du groupe Windows. La mémorisation n’impose pas à elle seule un découpage.
 
-Prochain lot recommandé après le commit des tests et du journal : rendre `wire`
-strictement USB vers l’ordinateur, en conservant le BLE entre moitiés. La sélection
-V1/V2 de l’app vient ensuite, avec essai des deux claviers sur le Mac. Puis cadrer
-l’identité et la priorité des destinations USB/BLE avant d’implémenter le mode mixte.
+Le wire strict est corrigé et validé sur V1 selon le retour utilisateur. Le
+sélecteur V1/V2 de l’app est développé, ses tests et son build passent. L’app
+est installée et V2 seul est bien sélectionné selon l’utilisateur. Les essais
+complémentaires de l’app sont reportés. Reprendre le cadrage de l’identité et de
+la priorité des destinations USB/BLE avant d’implémenter le mode mixte.
 
 Le [tableau de planification](planification.md) distingue les sujets terminables avec
 Mac + V2 et ceux à valider lors d’une séance commune Mac/Windows. Le matériel
@@ -289,7 +293,7 @@ de préparer la mémoire d’OS propre à V2, absente du profil macOS normal.
   écriture NVS. SLEEP et consommation restent des validations séparées.
 - [x] Ajouter le journal RAM optionnel, borné et sans frappes ni identités,
   avec lecture `make ble power <port>`, validation des pertes et tests natifs.
-- [x] Rendre les 23 suites C reproductibles avec `bash scripts/test.sh`, dont les
+- [x] Rendre les suites C reproductibles avec `bash scripts/test.sh`, dont les
   vrais adaptateurs USB, BLE, radio, acquisition, NVS et journal. ASan/UBSan passent.
 - [x] Versionner les doubles et scénarios d’intégration, sans dépendre des anciens
   harnais privés. Couvrir aussi rapports HID occupés et instrumentation des écritures.
@@ -492,11 +496,14 @@ de préparer la mémoire d’OS propre à V2, absente du profil macOS normal.
 - [x] Accepter le nom personnalisé `Splitergoll V2` dans l’app et le lecteur CLI,
   sans choisir entre plusieurs correspondances. Deux niveaux lus sur V2 sans USB : 89/79 %.
 - [x] Confirmer l’affichage des batteries dans l’app installée après correction du nom sur V2.
-- [ ] Ajouter une [sélection du clavier suivi](selection-clavier-app.md) dans le menu
-  de l’app : liste V1/V2, choix mémorisé par identifiant, nom visible, aucune valeur
-  reprise de l’autre clavier et tests des réponses tardives. Fonctionnalité retenue,
-  sans changement de destination des frappes ni nouvel appairage. Valider avec
-  V1 et V2 connectés au Mac en Bluetooth, dans des profils exposant leurs batteries.
+- [x] Ajouter une [sélection du clavier suivi](selection-clavier-app.md) dans le menu
+  de l’app : choix explicite mémorisé par identifiant, nom visible, valeurs vidées
+  à la bascule et rejet des réponses tardives. Tests sans Bluetooth, build signé.
+- [x] Confirmer l’installation de l’app et V2 seul sélectionné dans le menu, selon
+  le retour utilisateur. La persistance et la bascule restent à tester.
+- [ ] Essais reportés : valider le sélecteur avec V1 et V2 connectés simultanément au Mac en Bluetooth :
+  nom et mesures, choix conservé au redémarrage, absence du préféré sans repli.
+  Préparer V1 en profil Bluetooth, son wire strict n’expose pas ces batteries.
 - [x] Remplacer le symbole de batterie en charge par un petit éclair seul à 100 %,
   horizontal dans la barre et agrandi dans la colonne du pourcentage, sans déformation
   ni changement de largeur du menu. Garder la charge possible en infobulle.
