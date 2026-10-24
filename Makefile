@@ -47,7 +47,7 @@ bat:
 	@$(SCRIPT) scripts/batteries.sh $(ARGS)
 
 app:
-	@$(SCRIPT) companion/macos/app.sh $(ARGS)
+	@$(SCRIPT) companion/app.sh $(ARGS)
 
 ##############
 #   Debug    #

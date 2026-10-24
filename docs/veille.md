@@ -39,6 +39,11 @@ ordinaire est réinitialisée par le démarrage, les réglages en flash sont con
 Voir [les états ZMK](https://zmk.dev/docs/features/low-power-states) et
 [le mode System OFF du nRF52840](https://docs.nordicsemi.com/r/bundle/ps_nrf52840/page/power.html).
 
+**System OFF est le mode logiciel le plus économe du nRF52840.** Notre veille
+profonde l’utilise déjà via `sys_poweroff()`. La batterie reste reliée et une petite
+consommation subsiste pour les circuits encore alimentés et le réveil. Couper
+l’interrupteur retire l’alimentation batterie, mais ne coupe pas un USB branché.
+
 Actif, le clavier traite les frappes et entretient les connexions BLE. En inactivité,
 ces connexions restent ouvertes, mais les mesures de batterie s’arrêtent. Sur V2 sans
 écran ni LED externe, le gain par rapport à une pause avant l’inactivité peut donc
@@ -70,8 +75,9 @@ profonde, les deux USB débranchés et les batteries sur ON :
 
 La première frappe après veille, toutes les touches et les encodeurs restent
 à vérifier séparément. Ce retour ne mesure pas la latence et ne valide pas
-la durée normale de dix minutes. Le délai normal d’inactivité passe à deux minutes
-dans les prochains builds, le diagnostic déjà installé garde ses délais courts.
+la durée normale de dix minutes. L’utilisateur a ensuite reflashé les deux moitiés
+de V2 avec `bluetooth auto` normal : deux minutes d’inactivité, dix de veille profonde.
+Ces réglages sont contrôlés au build, sans nouvelle mesure chronométrée sur batterie.
 
 L’ancienne keymap `multi`, testée sous ZMK 0.3.0, revenait à Windows après veille
 profonde : la couche choisie en mémoire n’était pas sauvegardée. Les profils fixes
@@ -125,7 +131,7 @@ qu’en veille profonde est une option à décider après les essais.
 Reflasher les deux UF2 du profil `bluetooth`, disponibles pour V2 après `make build bluetooth macos`,
 sans firmware de reset. Cela rétablit l’inactivité à deux minutes, la veille à
 dix minutes et la mesure batterie à 5 secondes pendant l’activité. Les appairages sont conservés.
-La remise du nouveau build normal sur V2 reste à faire après les essais.
+L’utilisateur confirme la remise du profil `bluetooth auto` normal sur les deux moitiés de V2.
 Les USB branchés pour charger bloquent la veille profonde pendant la charge.
 Dans `multi`, la première frappe de réveil et le retour à Windows restent les mêmes
 après une veille profonde, seul son délai change.

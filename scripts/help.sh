@@ -71,12 +71,15 @@ show_bat_help() {
 
 # Présente le démarrage, la compilation et les tests de l’app native.
 show_app_help() {
-    printf '\n%sApplication macOS%s\n\n' "$LOG_HEADING" "$LOG_RESET"
+    printf '\n%sApplications%s\n\n' "$LOG_HEADING" "$LOG_RESET"
     show_command 'make app' 'Afficher cette aide'
     show_command 'make app start' 'Compiler et démarrer l’app dans la barre des menus'
     show_command 'make app build' 'Compiler et signer le bundle sans le lancer'
     show_command 'make app install' 'Quitter l’app, installer le bundle compilé et le lancer'
     show_command 'make app test' 'Tester la logique sans accès Bluetooth'
+    printf '\n'
+    show_command 'make app build windows' 'Compiler le portable Windows sans le lancer'
+    show_command 'make app test windows' 'Tester sa logique sans Windows ni Bluetooth'
     printf '\n'
 }
 
@@ -129,9 +132,9 @@ show_help() {
     show_command 'make flash' 'Afficher les choix de flash'
     show_command 'make stop' 'Arrêter les conteneurs de build de ce checkout'
     show_command 'make clear' 'Arrêter le build et effacer .local/ et dist/'
-    printf '\n%sBatteries sur macOS%s\n' "$LOG_HEADING" "$LOG_RESET"
+    printf '\n%sBatteries et applications%s\n' "$LOG_HEADING" "$LOG_RESET"
     show_command 'make bat' 'Afficher les commandes de lecture des batteries'
-    show_command 'make app' 'Afficher les commandes de l’app macOS'
+    show_command 'make app' 'Afficher les commandes des apps Mac et Windows'
     printf '\n%sDebug%s\n' "$LOG_HEADING" "$LOG_RESET"
     show_command 'make port' 'Afficher la méthode pour trouver le port du clavier'
     show_command 'make usb' 'Afficher les commandes de diagnostic USB'

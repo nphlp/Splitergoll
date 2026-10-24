@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
+    <AssemblyName>Splitergoll</AssemblyName>
+    <Product>Splitergoll</Product>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>Assets/AppIcon.ico</ApplicationIcon>
+    <PublishSingleFile>true</PublishSingleFile>
+    <SelfContained>true</SelfContained>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <DebugType>embedded</DebugType>
+    <Version>0.1.0</Version>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../BatteryCore/BatteryCore.csproj" />
+    <AssemblyMetadata Include="KeyboardName" Value="$(SplitergollKeyboardName)" />
+    <InternalsVisibleTo Include="Splitergoll.UiTests" />
+    <EmbeddedResource Include="Assets/AppIcon.ico" LogicalName="Splitergoll.AppIcon.ico" />
+  </ItemGroup>
+  <Target Name="RequireKeyboardName" BeforeTargets="BeforeBuild">
+    <Error Condition="'$(SplitergollKeyboardName)' == ''" Text="Nom Bluetooth manquant. Utilise make app build windows." />
+  </Target>
+</Project>

@@ -36,6 +36,31 @@ de lecture, menu AppKit et inscription de session simulée.
 make app test
 ```
 
+Le compagnon Windows possède aussi un noyau C# testé sans API Windows, Bluetooth
+ou préférences système. Un SDK .NET 10 est requis pour lancer ses tests depuis le Mac :
+
+```sh
+make app test windows
+```
+
+Cette commande compile aussi 16 tests des vrais contrôles WinForms : panneau et
+fenêtre, polices de taille normale à triple, nom long, texte non rogné, absence de
+chevauchement, ouverture/réouverture réelle via ShowNear, largeur initiale,
+icône/logo présents, agrandissement et fermeture masquante. Sur Mac, leur exécution
+est explicitement ignorée, car WinForms exige Windows. Les polices agrandies
+ne remplacent pas un essai réel de DPI ou de changement de moniteur.
+Avec le SDK .NET sur Windows, depuis la racine du dépôt :
+
+```powershell
+dotnet run --project companion/windows/UiTests --configuration Release --runtime win-x64 -p:SplitergollKeyboardName=Splitergoll
+```
+
+Ce test ouvre brièvement les fenêtres, sans lecture Bluetooth ni app active.
+Il ne faut pas installer le SDK pour l’usage normal du portable.
+
+La compilation `make app build windows` produit ensuite le portable win-x64.
+Elle ne valide pas le rendu GDI/WinForms, les pilotes GATT ni les protections du PC.
+
 ## Couverture
 
 | Sujet | Vérifications automatisées |
@@ -49,6 +74,7 @@ make app test
 | Activité | Fenêtre avant/pendant/après IDLE, recherche continue, fermeture en SLEEP, aucune activité artificielle, USB bloquant SLEEP |
 | Diagnostics | Formats anciens et courant, troncatures, champs inattendus, capacité, pertes, lectures répétées et journal RAM |
 | App macOS | Décodage batterie, indisponibilité, symboles et politique d’ouverture de session |
+| App Windows | Présentation GATT, niveaux, sessions périmées, préférences JSON, choix explicite, ambiguïtés et largeur des textes |
 
 Les tests d’intégration exécutent les vrais adaptateurs du dépôt. Seules leurs
 frontières radio, ZMK, USB ou stockage sont remplacées. QEMU ajoute le vrai

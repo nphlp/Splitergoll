@@ -1,0 +1,12 @@
+<Project>
+  <PropertyGroup>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <AnalysisLevel>latest</AnalysisLevel>
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+    <ArtifactsPath>$(MSBuildThisFileDirectory)../../.local/tools/windows-app/artifacts</ArtifactsPath>
+    <UseArtifactsOutput>true</UseArtifactsOutput>
+    <RestorePackagesPath>$(MSBuildThisFileDirectory)../../.local/tools/windows-app/packages</RestorePackagesPath>
+  </PropertyGroup>
+</Project>

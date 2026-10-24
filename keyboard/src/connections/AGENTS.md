@@ -34,6 +34,109 @@ adv_start/stop du lien final. Les témoins Bluetooth auto/macos et la droite
 wire windows sont identiques aux UF2 précédents.
 Ne pas déduire de ces contrôles seuls la validation de la vraie liaison split.
 
+## Étude du mode mixte USB/BLE
+
+Décision actuelle après les premiers essais réels du compagnon Windows : utiliser
+les deux applications pour étudier une identité locale commune USB/BLE. La recherche
+autonome ci-dessous reste un relevé de possibilités et de limites, sans constituer
+un préalable bloquant. Aucun protocole d’identité n’est encore implémenté. Premier lot diagnostic
+sans bascule de saisie, puis seulement destination unique et priorité USB.
+Ne pas associer deux ordinateurs sur leur OS. Le clavier doit rester utilisable
+sans compagnon. Voir docs/identite-ordinateur.md pour le stockage et la confiance.
+
+Après publication du wire strict et du sélecteur app dans 24babd6, reprendre
+l’identité des destinations avant toute fusion. Dans le socle figé, endpoints.c
+sélectionne USB/BLE selon preferred_transport et la disponibilité HID/profil actif,
+avec repli natif. Ce mécanisme ne reconnaît pas un même ordinateur sur deux liens.
+
+Notre Kconfig force SPLITERGOLL_BLE_AUTO à !ZMK_USB. CMake choisit ble_auto.c ou
+usb_auto.c, et non les deux. Activer ZMK_USB dans bluetooth auto remplacerait donc
+le sélecteur BLE par celui d’USB et ferait perdre le comportement attendu.
+Prévoir un coordinateur unique pour les wrappers événement/keymap et les gardes,
+sans compiler deux propriétaires concurrents. Garder les profils existants intacts.
+
+L’observateur USB actuel conserve uniquement les SETUP huit octets pour l’OS,
+pas un identifiant d’hôte. La mémoire BLE lie l’OS au bond local. Aucun lien
+commun n’est actuellement prouvé. Un nom ou OS identique n’autorise pas une fusion.
+DIS reste optionnel, le numéro de série USB désigne le périphérique. Une corrélation
+d’indicateurs HID serait une piste à évaluer, pas une identité garantie. Aucun
+changement de descripteur HID, frappe synthétique ou commande de charge ajouté.
+
+Prochaine étape proposée : diagnostic simultané sur V2, Mac puis Windows, sans
+apprentissage d’association ou modification des bonds/keymaps. Définir d’abord
+les informations réellement observables et le périmètre de capture. L’utilisateur
+privilégie l’étude d’un identifiant commun reçu à l’initialisation. Rejeter une
+association par OS ou par état HID statique, éviter un programme hôte. SET_ADDRESS
+attribue une adresse au périphérique USB, pas une identité du PC. Les logs USB
+actuels n’incluent que huit octets SETUP et les métadonnées BLE exportées ne
+contiennent ni adresse brute ni clé. Ne pas conclure sur des payloads non capturés. Pas de build,
+flash ou lecture série de ce nouveau lot à ce stade. Voir docs/destinations-saisie.md.
+
+Réutilisation du corpus local pour l’identité : .local/usb-traces contient dix
+USBTRACE v1 valides (cinq Mac, cinq Windows), sans pertes/rejets. Trente tuples
+SETUP distincts hors index/temps, aucun bmRequestType vendor. .local/ble-traces
+contient dix-huit fichiers, dix-sept BLETRACE v1/v2 valides sans pertes/rejets,
+un fichier de 51 octets avec seul en-tête de capture. Deux ont été collectés sous
+Windows, seize sous Mac, mais plusieurs de ces derniers contiennent Windows.
+Ne pas assimiler le host du lecteur au peer Bluetooth ni les dumps cumulatifs à
+des sessions indépendantes. Deux motifs FEATURES seulement, capacités radio et non
+identité. Les ATTR sont les caractéristiques locales du clavier. Aucun identifiant
+commun établi dans les champs conservés, pas de conclusion sur les données exclues.
+Inventaire privé avec SHA-256 par fichier :
+.local/research/host-identity-existing-captures/inventory.json. Aucun accès matériel,
+aucun nouvel export d’adresse ou de clé. Les sources brutes restent intactes.
+Les ETL/XML Windows de 5663dfa5 ne sont pas retrouvés parmi les captures locales
+inventoriées ou Downloads, leurs conclusions et les demandes anonymisées restent
+dans le dépôt. Ne pas annoncer une conservation exhaustive de toutes les tentatives.
+
+Recherche protocolaire de l’identité, sans firmware nouveau : voir
+docs/identite-ordinateur.md. USB GET_DESCRIPTOR/ContainerID identifient le clavier,
+CDC SET_LINE_CODING transporte seulement dwDTERate/bCharFormat/bParityType/bDataBits.
+Le socle usb_hid.c SET_REPORT traite LED et éventuellement multiplicateurs de
+résolution, pas une identité de PC. Un nouveau Feature Report ne force pas le
+pilote générique à l’écrire. BLE Database Hash porte les services du serveur,
+les READ DIS observés visent notre clavier. Une découverte GATT cliente du PC
+serait une nouvelle opération, non une valeur à relire dans les anciennes traces.
+
+Piste concrète Microsoft documentée : TLC vendor Page 0xFFF4 Usage 0x01, sœur de
+Integrated Windows Pen, Host Bluetooth Report Usage 0x06 et adresse hôte six octets
+Usage 0x03 avec type Usage 0x09 (public sous Windows). Le service système écrit
+ce Feature Report à l’énumération. Prérequis explicite dans le guide actuel :
+extension INF avec DEVPKEY_BluetoothOobCouplingChannel_OptInForUse. Ne pas présenter
+une TLC seule comme suffisante ni installer/configurer Windows implicitement.
+Retour capacité zéro arrête la suite d’appairage selon la spécification, mais
+cela ne lève aucun de ces prérequis. Aucun prototype ou essai autorisé par cette
+seule recherche documentaire. Ne pas demander de clé ou déclencher un appairage.
+
+Apple : support officiel pairing USB automatique Magic Keyboard, étude primaire
+SkySafe décrivant adresse Mac + link key via USB HID OOB. Cette étude historique
+porte aussi sur des bugs corrigés. Déclenchement pour notre VID/PID/descripteur,
+macOS actuel et compatibilité avec notre radio BLE restent inconnus. Ne pas
+extraire de clés ni modifier les identités de périphérique pour cette étude.
+BlueZ sixaxis fournit un autre exemple fabricant envoyant son adresse d’adaptateur
+via SET_FEATURE USB à des modèles spécifiques. Ses liens BR/EDR ne sont pas
+transposables tels quels au nRF52840, qui ne supporte pas Bluetooth Classic.
+Solaar HOSTS_INFO écrit socket.gethostname dans les slots, pas un mécanisme
+universel autonome. WUSB CHID est un autre protocole, pas USB HID filaire de V2.
+
+Zephyr figé conn.h distingue le.dst (identité distante ou RPA avant résolution)
+et le.remote (adresse de connexion). Une éventuelle correspondance doit attendre
+la résolution et vérifier type d’adresse/radio/adaptateurs. Même adresse publique
+sur OOB et identité BLE reste à prouver sur nos appareils. Ne pas affirmer que
+BT Classic et BLE ont universellement la même identité. Aucun ID commun actuel
+n’est validé et capturer davantage sans champ cible n’est pas recommandé.
+
+L’utilisateur accepte désormais le compagnon comme recours facultatif (futur
+Windows batteries et app Mac), tout en demandant de poursuivre la recherche autonome.
+Aucune dépendance de la saisie à cette installation. L’app générerait et transmettrait
+son identifiant, le clavier n’écrit pas de fichier hôte directement. Recherche élargie :
+OID_GEN_MACHINE_NAME renseigne le miniport NDIS, pas preuve de transfert au périphérique
+RNDIS. DHCP FQDN optionnel et nom GATT distant ne garantissent ni disponibilité ni
+unicité. HCI USB expose notre contrôleur, pas celui du PC, et ne doit pas remplacer
+implicitement le socle split. InputStick documente une synchronisation LED dépendante
+de l’OS, donc la corrélation temporelle reste une hypothèse. Aucun accès USB, réseau
+hôte, injection HID ou modification système réalisé dans cette étude.
+
 ## Contrat
 
 Les identifiants 0 à 15 désignent des destinations logiques, pas des transports.

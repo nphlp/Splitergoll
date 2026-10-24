@@ -23,6 +23,16 @@
 
 ## Étapes suivantes
 
+Priorité choisie : reprendre le [rapprochement USB/Bluetooth](identite-ordinateur.md)
+avec les applications Mac et Windows, maintenant disponibles pour les batteries.
+Commencer par un diagnostic de l’identité commune, sans bascule de saisie.
+Le protocole et les conditions de confiance restent à définir. L’application
+reste facultative pour utiliser le clavier.
+
+La base de l’app Windows est jugée satisfaisante. Sa largeur de départ est réduite
+d’un quart, les silhouettes gauche/droite sont reportées. La lecture réelle des
+deux niveaux et le menu contextuel sont confirmés. Voir [le guide](application-windows.md).
+
 Gaming persistant : comparer plus tard un profil de keymap distinct et un mode
 du groupe Windows. La mémorisation n’impose pas à elle seule un découpage.
 
@@ -441,7 +451,17 @@ de préparer la mémoire d’OS propre à V2, absente du profil macOS normal.
   USB Windows + BLE Mac + BLE Windows donne deux choix, USB Windows et BLE Mac.
   Garder la possibilité de choisir Mac BLE lorsque Windows USB est présent.
 - [ ] Définir l’association entre un hôte USB et un appareil BLE mémorisé pour éviter
-  les doublons. L’OS seul n’identifie pas la machine, tester notamment deux PC Windows.
+  les doublons. L’OS seul n’identifie pas la machine, tester notamment deux PC Windows
+  ou deux Mac. Chercher d’abord un identifiant commun dans l’initialisation, pas une
+  égalité Caps Lock/Num Lock. Recherche autonome prioritaire, programme hôte facultatif
+  accepté comme recours sans rendre la saisie dépendante de son installation.
+- [ ] Évaluer les [protocoles d’identité](identite-ordinateur.md) Apple et Microsoft
+  avant un nouveau flash. Host Bluetooth Report Windows exige une activation INF
+  pour numériseur, comportement Apple actuel et compatibilité BLE à vérifier.
+  Aucun identifiant universel commun aux profils actuels n’est trouvé.
+- [ ] Évaluer les autres pistes autonomes documentées : réactions HID corrélées,
+  nom du poste via réseau USB et lecture du pair BLE. Distinguer indice et identité,
+  vérifier les conditions avant un prototype et ne pas fusionner sur le nom seul.
 - [ ] Définir le comportement à l’arrivée/retrait de l’USB : prise éventuelle de sélection,
   repli sur le BLE du même ordinateur et absence de destination pour une simple charge.
   Le nom du futur profil de build n’est pas encore fixé, les profils actuels restent disponibles.
@@ -518,6 +538,27 @@ de préparer la mémoire d’OS propre à V2, absente du profil macOS normal.
 - [ ] Ensuite, ajouter couche active et OS utilisé par la keymap dans l’app.
   Définir leur transmission et celle de l’état USB par moitié, avec compatibilité
   des firmwares anciens. Ce protocole ne bloque pas le premier lot batteries.
+- [x] Développer le premier compagnon Windows : portable autonome win-x64, une
+  icône avec gauche au-dessus de droite, panneau compact, choix de clavier et
+  démarrage de session explicite. Mode démo sans Bluetooth, tests du noyau et build.
+- [x] Confirmer la lecture réelle des deux batteries de V2 et le menu contextuel
+  sur le PC Windows, selon le retour utilisateur et ses photos.
+- [x] Corriger les hauteurs fixes des vues Windows : lignes selon le contenu,
+  largeur initiale/minimale stable au DPI, hauteur selon le texte et fenêtre redimensionnable.
+  Garder le dessin de l’icône tel quel, à la demande de l’utilisateur.
+- [x] Embarquer explicitement l’ICO pour la fenêtre Windows et ajouter le logo
+  dans les deux vues, sans modifier les chiffres de la zone de notification.
+- [x] Réduire la largeur de départ des deux vues Windows d’un quart, de 340 à
+  255 unités logiques, avec les mêmes gardes de lisibilité et de DPI.
+- [ ] Améliorer les deux vues Windows avec les SVG validés des moitiés gauche et
+  droite et leurs pourcentages dans deux cartes, plutôt que de simples lignes.
+  Le menu contextuel et l’affichage des chiffres près de l’horloge sont satisfaisants.
+- [ ] Valider le rendu corrigé sur l’écran agrandi, puis choix conservé,
+  déconnexions, sommeil/reprise et lancement de session de l’app Windows.
+- [ ] Définir puis ajouter l’identifiant commun USB/BLE aux compagnons, voie
+  retenue pour le prochain lot. Prouver d’abord la correspondance sans changer
+  la saisie, puis gérer la destination unique et la priorité USB. Le clavier
+  reste utilisable sans installation, sans fusion non prouvée.
 - [ ] Ensuite, rendre configurables la présence dans la barre des menus, le Dock,
   le lancement à l’ouverture de session et les informations affichées. Le mode
   actuel garde la barre des menus, montre le Dock avec la fenêtre et demande le lancement automatique.

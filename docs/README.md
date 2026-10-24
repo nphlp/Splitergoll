@@ -92,6 +92,7 @@ et `make bat avg` calcule une moyenne par moitié sur 30 secondes.
 - [Essais de reprise Bluetooth](tests-reprise-bluetooth.md) : préférence durable et ordre de retour Mac/Windows.
 - [Essais de recherche Bluetooth](tests-recherche-bluetooth.md) : absence d’hôte, première arrivée et arrêt en veille légère.
 - [Destinations de saisie](destinations-saisie.md) : futur choix USB/Bluetooth et priorité par ordinateur.
+- [Identité de l’ordinateur](identite-ordinateur.md) : données disponibles, protocoles d’appairage USB et limites de l’association USB/BLE.
 - [Gaming USB](gaming-usb.md) : fermeture du Bluetooth hôte et mémoire du mode, à développer.
 - [Gestion de l’appairage](gestion-appairage.md) : définir l’ouverture aux nouveaux appareils et les reconnexions.
 - [Mémoire de l’OS](memoire-os.md) : acquisition initiale et sauvegarde expérimentale, correction manuelle prévue.
@@ -105,6 +106,7 @@ et `make bat avg` calcule une moyenne par moitié sur 30 secondes.
 - [Appairage Bluetooth](appairage-bluetooth.md) : clés de connexion, reset et diagnostic.
 - [Batteries](batteries.md) : mesure actuelle et affichage des deux niveaux.
 - [Application macOS](application-macos.md) : lancer le lecteur des deux batteries dans une fenêtre et la barre des menus, puis le valider sur V2.
+- [Application Windows](application-windows.md) : portable des deux batteries, utilisation et mises à jour.
 - [Clavier suivi par l’app](selection-clavier-app.md) : choix V1/V2 prévu, mémoire et séparation des mesures.
 - [Keymap automatique USB](keymap-auto.md) : macOS ou Windows avec gaming, sélection à la connexion.
 - [Keymap automatique Bluetooth](keymap-auto-bluetooth.md) : OS mémorisé et bascule Mac/Windows confirmés sur V1 en diagnostic.

@@ -2,6 +2,18 @@
 
 ## Point de départ
 
+**Prochaine étape : l’identité commune USB/Bluetooth aidée par les applications.**
+Les compagnons Mac et Windows existent. Cadrer un diagnostic qui leur fait annoncer
+la même identité locale sur les deux liaisons, sans changer la saisie pour ce premier
+lot. Le [guide d’identité](identite-ordinateur.md) garde les contraintes et limites.
+Le clavier reste utilisable sans app, aucune fusion par simple égalité d’OS.
+
+La base de l’[app Windows](application-windows.md) est jugée satisfaisante après
+les corrections. La largeur passe de 340 à 255 unités logiques à la demande de
+l’utilisateur, sans nouvelle validation visuelle de cette largeur réduite. Les
+cartes avec les silhouettes des deux moitiés sont au TODO. La lecture réelle des
+batteries de V2 et le menu contextuel sont confirmés. Aucun nouveau flash requis.
+
 Le lot Bluetooth est publié dans `bd22c0e`, sur `unified-firmware`.
 Les comportements principaux sont validés sur V1 avec le diagnostic à dix secondes :
 choix manuel mémorisé immédiatement, persistance après coupure, retour du préféré,
@@ -42,7 +54,7 @@ avoir reflashé le firmware de base. Après redémarrage de l’app et retrait d
 il constate une actualisation des batteries de V2 à cinq secondes. La cause de
 l’ancien affichage n’est pas établie. Aucune nouvelle série d’attentes n’est demandée.
 
-**Lot précédent committé et poussé dans `9325f07`.** Le wire strict bloque
+**Tests/journal publiés dans `9325f07`, puis wire et app dans `24babd6`.** Le wire strict bloque
 maintenant les annonces hôtes de la centrale et conserve le BLE split, les keymaps
 et les bonds. Les contrôles logiciels passent et l’utilisateur confirme l’essai
 court sur V1. Aucun relevé radio supplémentaire n’est déduit de ce retour.
@@ -65,7 +77,9 @@ sans supposer quel ancien UF2 tourne encore. La paire
 SLEEP 600 000 ms et batteries 5 s sur les deux moitiés, sans diagnostic ou reset des
 réglages. UF2 et SHA-256 valides. L’utilisateur confirme ensuite le flash des
 deux moitiés de V2. Les délais compilés sont contrôlés, sans nouveau test
-chronométré sur batterie après ce flash.
+chronométré sur batterie après ce flash. Tous les changements alors en attente
+sont committés et poussés dans `24babd6`. La reprise USB/BLE est une nouvelle étude,
+sans nouveau firmware mixte ou flash à effectuer à ce stade.
 
 ## 2. Réunir USB et Bluetooth par ordinateur
 

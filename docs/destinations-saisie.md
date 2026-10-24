@@ -37,14 +37,38 @@ et au débranchement reste à préciser, notamment le repli sur le BLE du même 
 
 Notre détection USB reconnaît un OS, pas l’identité de l’ordinateur. Deux appareils
 Windows ne doivent donc pas être fusionnés sur ce seul indice. Il reste à définir
-comment associer l’hôte USB à un appareil Bluetooth mémorisé. L’objectif reste
-automatique, sans programme hôte à installer, sa faisabilité doit être vérifiée.
+comment associer l’hôte USB à un appareil Bluetooth mémorisé. La voie retenue pour
+le prochain lot utilise les compagnons Mac et Windows pour annoncer la même
+identité locale sur les deux liaisons. Leur protocole reste à définir et développer.
 Sans association fiable, ne pas retirer arbitrairement une destination de la liste.
+
+Les captures existantes sont réutilisables : dix USB et dix-sept Bluetooth valides,
+plus un fichier Bluetooth sans trace. Aucun identifiant commun n’apparaît dans
+les champs conservés. Elles restent privées sous `.local/`, sans versionnement.
+
+La [recherche sur l’identité de l’ordinateur](identite-ordinateur.md) distingue
+les champs ordinaires et deux protocoles d’appairage qui transmettent une adresse
+d’hôte par USB : Apple Magic Keyboard et Microsoft Seamless Pairing pour stylets.
+Leur compatibilité avec notre clavier n’est pas établie. Microsoft exige notamment
+une activation par extension INF côté PC. Vérifier ces prérequis avant de préparer
+un firmware : une capture plus large du profil actuel n’a pas de champ exploitable
+identifié à ce stade. Aucun nouveau flash ou changement de keymap demandé.
+
+Le croisement des OS et l’égalité Caps Lock/Num Lock sont rejetés comme preuves.
+Le compagnon restera facultatif : sans association fiable fournie par l’app,
+le clavier fonctionne et les destinations USB/BLE restent distinctes.
+Un essai avec deux machines du même OS restera nécessaire pour vérifier que
+le rapprochement ne dépend pas de l’OS détecté.
 
 Les slots Bluetooth conservent leurs appairages. Une destination est le choix proposé
 à l’utilisateur, elle pourra regrouper plusieurs liaisons vers un même appareil.
 
-## Arbitrages avant développement
+## Transport et arbitrages
+
+ZMK fournit déjà la [sélection de sortie USB/BLE](https://zmk.dev/docs/keymaps/behaviors/outputs).
+Cela permet de garder le Bluetooth pendant une sortie USB. Notre futur contrôleur
+doit coordonner ce transport, l’ordinateur sélectionné et sa keymap. Le simple
+basculement de sortie ne résout pas l’identité commune.
 
 Le branchement USB doit permettre d’utiliser le câble pour l’ordinateur associé,
 mais ne suffit pas à décider de déconnecter tous les hôtes Bluetooth : le Mac doit

@@ -11,6 +11,11 @@ courts couvrent [le build](docs/build-local.md), [le matériel](docs/configurati
 et [la keymap](docs/keymap.md). Les tâches et idées sont centralisées dans
 [docs/TODO.md](docs/TODO.md), à la demande de l’utilisateur.
 
+Le compagnon Windows est dans `companion/windows/`, avec sa spec locale et son
+guide `docs/application-windows.md`. Lecture réelle des deux batteries de V2
+confirmée par l’utilisateur sur Windows, tests du noyau réalisés depuis le Mac.
+Les tests UI compilés ne sont pas présentés comme exécutés sur Windows.
+
 Tous les guides restent à plat dans `docs/`, avec un fichier par sujet et sans
 date dans les noms ou les titres. Ils restent courts et utiles à l’usage.
 L’AGENTS.md garde les invariants, preuves techniques et décisions utiles au prochain chantier.
