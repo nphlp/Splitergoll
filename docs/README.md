@@ -22,7 +22,7 @@ et Zephyr 4.1. Les moitiés communiquent en BLE, la gauche envoie la saisie à l
 | Recherche avec sélection et tampon de saisie | Intégrés, essais Mac/Windows validés sur V1 au délai de test |
 | Recherche sans hôte jusqu’à la veille légère | Implémentée, tests logiciels et compilation OK, essais V1 à faire |
 | Arrêt des annonces et déconnexion du Mac en Gaming USB | Spécifiés, non implémentés sur le clavier |
-| Destinations mixtes USB/BLE avec priorité USB par ordinateur | Spécifiées, association des identités USB/BLE à résoudre |
+| Destinations mixtes USB/BLE avec priorité USB par ordinateur | [Prototype Mac développé](priorite-usb.md), validation physique à faire |
 | Préférence durable et retour à l’ancien appareil au démarrage | Comportements principaux validés sur V1 au délai court, délai normal à confirmer |
 | Correction manuelle persistante d’un OS mal reconnu | Prévue, non implémentée |
 

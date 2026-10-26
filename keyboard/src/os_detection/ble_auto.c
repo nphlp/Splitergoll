@@ -8,6 +8,9 @@
 #include <splitergoll/host_window_policy.h>
 #include <splitergoll/host_preference.h>
 #include <splitergoll/host_preference_settings.h>
+#if defined(CONFIG_SPLITERGOLL_USB_PRIORITY)
+#include <splitergoll/usb_priority.h>
+#endif
 #include "common/auto-layers.h"
 #include <zephyr/init.h>
 #include <zephyr/kernel.h>
@@ -80,6 +83,9 @@ static bool report_nonempty(const void *body, size_t length) {
 
 // Un rapport ou modificateur encore actif doit finir avant toute nouvelle sélection.
 static bool hid_busy(void) {
+#if defined(CONFIG_SPLITERGOLL_USB_PRIORITY) && defined(CONFIG_ZMK_POINTING)
+    if (zmk_hid_get_mouse_report()->body.buttons != 0) return true;
+#endif
     return zmk_hid_get_explicit_mods() != 0 ||
            report_nonempty(&zmk_hid_get_keyboard_report()->body, sizeof(zmk_hid_get_keyboard_report()->body)) ||
            report_nonempty(&zmk_hid_get_consumer_report()->body, sizeof(zmk_hid_get_consumer_report()->body));
@@ -314,6 +320,9 @@ int __wrap_zmk_event_manager_raise(zmk_event_t *event) {
     int result = forward ? __real_zmk_event_manager_raise(event) : 0;
     bool waiting = state.input.selected == USB_OS_UNKNOWN || device_request.pending ||
                    device_window.pending >= 0 || device_window.searching || automatic_target >= 0;
+#if defined(CONFIG_SPLITERGOLL_USB_PRIORITY)
+    waiting = waiting || splitergoll_usb_priority_pending();
+#endif
     splitergoll_ble_auto_unlock();
     if (waiting) splitergoll_ble_auto_notify();
     return result;
@@ -388,6 +397,9 @@ static void select_os(struct k_work *work) {
     splitergoll_ble_auto_lock();
     uint32_t now_ms = k_uptime_get_32();
     reconcile_selection(now_ms);
+#if defined(CONFIG_SPLITERGOLL_USB_PRIORITY)
+    uint32_t identity_remaining = splitergoll_usb_priority_update();
+#endif
     uint32_t remaining = usb_auto_drain_remaining(&state.input, now_ms);
     struct ble_reconnect_status radio = splitergoll_ble_reconnect_status();
     if (session.checkpoint && radio.remaining_ms == 0 && radio.connected != 0 &&
@@ -399,7 +411,19 @@ static void select_os(struct k_work *work) {
         session.checkpoint = false;
     }
     bool waiting = state.input.selected == USB_OS_UNKNOWN && ble_auto_guess(state.target) != USB_OS_UNKNOWN;
-    if ((waiting || device_request.pending || device_window.pending >= 0 || automatic_target >= 0) &&
+    bool pending_route = false;
+#if defined(CONFIG_SPLITERGOLL_USB_PRIORITY)
+    pending_route = splitergoll_usb_priority_pending();
+    // La nouvelle échéance ne doit jamais retarder une ancienne macro, recherche ou sauvegarde.
+    uint32_t next = identity_remaining ? identity_remaining : UINT32_MAX;
+    if ((waiting || device_request.pending || device_window.pending >= 0 || automatic_target >= 0 || pending_route) &&
+        state.input.held == 0 && remaining != 0 && remaining < next) next = remaining;
+    uint32_t host_remaining = host_window_remaining(&device_window, now_ms);
+    if (device_window.searching && host_remaining && host_remaining < next) next = host_remaining;
+    if (session.checkpoint && radio.remaining_ms && !radio.without_host && radio.remaining_ms < next) next = radio.remaining_ms;
+    if (next != UINT32_MAX) k_work_schedule(k_work_delayable_from_work(work), K_MSEC(next));
+#endif
+    if ((waiting || device_request.pending || device_window.pending >= 0 || automatic_target >= 0 || pending_route) &&
         state.input.held == 0 && remaining != 0) {
         k_work_schedule(k_work_delayable_from_work(work), K_MSEC(remaining));
     }

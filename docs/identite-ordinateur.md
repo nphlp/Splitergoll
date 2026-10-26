@@ -1,8 +1,9 @@
 # Reconnaître un ordinateur en USB et Bluetooth
 
-**Diagnostic Mac implémenté, essai sur V2 à faire.** Le rapprochement est aidé par
+**Diagnostic Mac initial validé sur V2, priorité USB expérimentale développée.** Le rapprochement est aidé par
 les applications Mac et Windows, dont le client d’identité Windows reste à développer.
-La saisie n’utilise encore aucune association USB/BLE. Le clavier doit
+Le [nouveau mode USB prioritaire](priorite-usb.md) utilise cette association, son
+essai physique reste à faire. Les profils normaux sont conservés. Le clavier doit
 rester utilisable sans application. Un OS identique ou un état Caps Lock commun
 ne suffit pas. Les [destinations de saisie](destinations-saisie.md) décrivent le
 comportement souhaité. La recherche autonome ci-dessous reste disponible.
@@ -86,10 +87,11 @@ Une capture plus large sur le firmware actuel n’a pas de champ commun identifi
 
 ## Voie retenue : identifiant fourni par l’application
 
-**Premier diagnostic Mac développé.** L’ouverture de « Tester l’identité
-USB/Bluetooth » crée un identifiant aléatoire par installation utilisateur et
-annonce la même valeur par USB vendor HID et BLE chiffré. Les échanges restent
-optionnels et s’arrêtent à la fermeture du diagnostic. Le [protocole d’essai](diagnostic-identite.md)
+**Diagnostic Mac initial validé.** L’app crée un identifiant aléatoire par installation
+utilisateur et annonce la même valeur par USB vendor HID et BLE chiffré pour le
+clavier suivi. Elle entretient ces annonces en arrière-plan pour la priorité USB.
+Arrêter dans les détails, quitter ou mettre le Mac en veille suspend les échanges.
+Le [protocole d’essai](diagnostic-identite.md)
 donne les commandes et les résultats attendus. Le client Windows reste à développer.
 Un programme hôte est nécessaire pour fournir cette identité sur chaque OS.
 Le clavier ne peut pas créer directement un fichier sur l’ordinateur par HID.

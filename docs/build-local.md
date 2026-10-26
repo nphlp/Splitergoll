@@ -11,7 +11,7 @@ de cette branche. Son ancienne matrice `build.yaml` a également été retirée.
 Prérequis : Make, Bash, Docker démarré, `shasum` et un terminal macOS/Linux.
 Sur Windows, utiliser WSL avec Docker. La validation Windows reste à faire.
 
-Commande : `make build <matériel> <keymap> [debug|usb-trace|ble-trace|identity]`.
+Commande : `make build <matériel> <keymap> [debug|usb-trace|ble-trace|identity|usb-priority]`.
 Le matériel et la keymap sont obligatoires, dans cet ordre. Aucun choix par défaut.
 
 ```sh
@@ -29,6 +29,8 @@ make build bluetooth windows debug
 - Ajouter `debug` après la keymap active les logs USB, voir [logs-usb.md](logs-usb.md).
 - `identity`, réservé à `bluetooth auto`, ajoute les canaux d’[identité USB/BLE](diagnostic-identite.md)
   sur la gauche, sans saisie USB ni logs série. La droite reste normale.
+- `usb-priority`, réservé à `bluetooth auto`, active la [priorité USB](priorite-usb.md)
+  pour le même ordinateur déclaré par l’app. Deux interfaces HID à gauche, sans port série.
 - `usb-trace`, réservé à `wire`, enregistre les requêtes de connexion de la gauche
   et affiche aussi la sélection appliquée avec `auto` : voir [le diagnostic d’OS](detection-os.md).
 - `ble-trace`, réservé à `bluetooth`, garde les échanges de découverte de l’hôte

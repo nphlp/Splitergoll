@@ -118,6 +118,7 @@ show_firmware_summary() {
         usb-trace) logging_label='trace des requêtes USB (centrale gauche)' ;;
         ble-trace) logging_label='trace de la connexion Bluetooth (centrale gauche)' ;;
         identity) logging_label='désactivés, canal d’identité USB/Bluetooth actif sur la gauche' ;;
+        usb-priority) logging_label='désactivés, priorité USB pour le même ordinateur déclaré' ;;
         normal) logging_label='désactivés (normal)' ;;
     esac
 
@@ -193,8 +194,8 @@ confirm_and_flash() {
 if [ "$#" -eq 1 ]; then
     FIRMWARE=$1
     filename=$(basename "$FIRMWARE")
-    [[ "$filename" =~ ^splitergoll-(wire|bluetooth)-(auto|multi|windows|macos|linux)(-(debug|usb-trace|ble-trace|identity))?-(left|right)\.uf2$ ]] ||
-        fail 'Précise un UF2 généré par ce dépôt, ou make flash <matériel> <keymap> <left|right> [debug|usb-trace|ble-trace|identity]'
+    [[ "$filename" =~ ^splitergoll-(wire|bluetooth)-(auto|multi|windows|macos|linux)(-(debug|usb-trace|ble-trace|identity|usb-priority))?-(left|right)\.uf2$ ]] ||
+        fail 'Précise un UF2 généré par ce dépôt, ou make flash <matériel> <keymap> <left|right> [debug|usb-trace|ble-trace|identity|usb-priority]'
     profile=${BASH_REMATCH[1]}
     keymap=${BASH_REMATCH[2]}
     mode=${BASH_REMATCH[4]}
@@ -205,7 +206,7 @@ if [ "$#" -eq 1 ]; then
     directory=$(CDPATH= cd "$(dirname "$FIRMWARE")" && pwd) || fail 'Dossier du firmware absent'
     FIRMWARE="$directory/$filename"
 else
-    [ "$#" -eq 3 ] || [ "$#" -eq 4 ] || fail 'Utilise make flash <matériel> <keymap> <left|right> [debug|usb-trace|ble-trace|identity]'
+    [ "$#" -eq 3 ] || [ "$#" -eq 4 ] || fail 'Utilise make flash <matériel> <keymap> <left|right> [debug|usb-trace|ble-trace|identity|usb-priority]'
     select_profile "$1"
     select_keymap "$2"
     SIDE=$3
@@ -213,8 +214,8 @@ else
     mode=normal
     if [ "$#" -eq 4 ]; then
         case "$4" in
-            debug|usb-trace|ble-trace|identity) mode=$4 ;;
-            *) fail 'Utilise debug, usb-trace, ble-trace ou identity après la moitié' ;;
+            debug|usb-trace|ble-trace|identity|usb-priority) mode=$4 ;;
+            *) fail 'Utilise debug, usb-trace, ble-trace, identity ou usb-priority après la moitié' ;;
         esac
         DEBUG_ARGUMENT=" $mode"
     fi

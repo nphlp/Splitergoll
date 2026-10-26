@@ -34,7 +34,64 @@ adv_start/stop du lien final. Les témoins Bluetooth auto/macos et la droite
 wire windows sont identiques aux UF2 précédents.
 Ne pas déduire de ces contrôles seuls la validation de la vraie liaison split.
 
-## Étude du mode mixte USB/BLE
+## Priorité USB expérimentale
+
+SPLITERGOLL_USB_PRIORITY est explicitement activé par `bluetooth auto usb-priority`,
+gauche seulement. USB natif et deux HID : clavier ZMK sur HID_0, identité vendor
+sur HID_1. ble_auto.c reste l’unique filtre d’entrées et propriétaire des couches.
+L’observateur/classifieur USB est absent. Aucun lien choisi par égalité d’OS.
+
+usb_priority_state.c est pur : une preuve fraîche du profil actuellement choisi
+autorise USB. Les bascules normales attendent les appuis, rapports clavier/média,
+boutons souris et comportements différés. Une expiration dans le même contexte
+attend ces relâchements. Un contexte ou profil remplacé est révoqué immédiatement.
+L’unique worker BLE applique ce choix et programme le minimum entre durée de preuve,
+ancien comportement, recherche et checkpoint. Aucun timer ne note une activité.
+Le harnais du vrai sélecteur est aussi compilé avec cette option et vérifie les
+deux ordres entre expiration de preuve et checkpoint, sans retarder la sauvegarde.
+
+usb_priority.c filtre zmk_usb_is_hid_ready pour la sélection native et garde
+zmk_endpoint_send_report/send_mouse_report juste avant l’envoi. Le protocole
+USB GET_REPORT ne doit pas lire les frappes d’un autre ordinateur : keyboard/CMakeLists.txt
+applique uniquement dans ce mode des alias de compilation aux getters du fichier
+ZMK src/usb_hid.c, sans modifier les sources téléchargées. Les modèles protégés
+retournent des rapports vides tant que la sortie n’est pas autorisée. Le pilote
+garde son test physique USB natif et peut donc libérer l’ancien hôte après révocation.
+Le wrapper de son envoi clavier complète la libération souris que le ZMK figé
+vide en mémoire sans l’envoyer. Aucun contenu de frappe n’est stocké ni exporté.
+Les symboles des getters protégés doivent être effectivement liés, contrôle du build.
+L’inspection ARM confirme GET_REPORT et les envois via ces getters.
+
+ZMK reste responsable des rapports et de la transition d’endpoint. Lors du premier
+passage USB, sa préférence native USB est demandée puis dédupliquée par le socle.
+Cela peut écrire la clé existante endpoints/preferred2 si elle valait BLE, pas de
+nouveau namespace ni d’écriture à chaque renouvellement. Les appairages, la mémoire
+d’OS et la préférence d’appareil sont conservés. Le raccourci de changement d’hôte
+reste celui de BLE auto : USB seulement pour le profil prouvé, BLE pour les autres.
+Les connexions Bluetooth et le split restent présents, Désactivé dans l’app
+signifie seulement aucune saisie sur cette liaison. Gaming n’est pas modifié.
+
+L’app Mac doit entretenir les annonces en arrière-plan. Quitter ou Arrêter provoque
+le repli BLE après expiration et fin des appuis. Le lien BLE hôte reste nécessaire
+à l’identité et au choix de keymap de ce premier lot. Pas de mode USB seul autonome
+dans ce prototype, ni de client d’identité Windows. Le mode normal wire reste disponible.
+L’identité est déclarative : conflit visible refusé, copie d’UUID hors présence
+simultanée et multi-utilisateurs restent des limites avant généralisation.
+
+Validation logicielle : 29 suites C ASan/UBSan, 112 cas AWK et 77 tests Swift passent.
+PowerShell absent. Le mode compile, gardes et SHA-256 positifs. Aucun essai physique
+USB prioritaire, aucun flash ni accès série par l’agent. Les témoins bluetooth auto
+et wire windows normaux restent identiques à leurs références sur les deux moitiés.
+La droite usb-priority est identique à la droite normale, seul le flash gauche est requis.
+Artefact final préparé : dist/firmware/bluetooth-auto-usb-priority-2026-10-26-17-14-50.
+Les .config confirment USB=y, deux HID, BLE_AUTO et HOST_IDENTITY, sans CDC,
+IDLE=120000, SLEEP=600000, batterie=5 s. Témoins du 26-17-12 : Bluetooth auto identique
+au 24-13-57, wire Windows identique au 23-15-59 sur les deux moitiés. L’inspection
+llvm-objdump confirme GET_REPORT et les envois via les getters protégés, ainsi que
+l’appel natif d’envoi clavier via le wrapper de libération. Aucun fichier de ZMK
+téléchargé modifié, ces définitions CMake sont limitées au nouveau mode.
+
+## Référence de conception du mode mixte USB/BLE
 
 Décision actuelle après les premiers essais réels du compagnon Windows : utiliser
 les deux applications pour étudier une identité locale commune USB/BLE. La recherche
@@ -50,7 +107,8 @@ l’identité des destinations avant toute fusion. Dans le socle figé, endpoint
 sélectionne USB/BLE selon preferred_transport et la disponibilité HID/profil actif,
 avec repli natif. Ce mécanisme ne reconnaît pas un même ordinateur sur deux liens.
 
-Notre Kconfig force SPLITERGOLL_BLE_AUTO à !ZMK_USB. CMake choisit ble_auto.c ou
+Sans l’exception explicite SPLITERGOLL_USB_PRIORITY, notre Kconfig force
+SPLITERGOLL_BLE_AUTO à !ZMK_USB. CMake choisit ble_auto.c ou
 usb_auto.c, et non les deux. Activer ZMK_USB dans bluetooth auto remplacerait donc
 le sélecteur BLE par celui d’USB et ferait perdre le comportement attendu.
 Prévoir un coordinateur unique pour les wrappers événement/keymap et les gardes,
@@ -58,7 +116,8 @@ sans compiler deux propriétaires concurrents. Garder les profils existants inta
 
 L’observateur USB actuel conserve uniquement les SETUP huit octets pour l’OS,
 pas un identifiant d’hôte. La mémoire BLE lie l’OS au bond local. Aucun lien
-commun n’est actuellement prouvé. Un nom ou OS identique n’autorise pas une fusion.
+commun n’est prouvé par ces seules données. L’app fournit désormais une déclaration
+distincte. Un nom ou OS identique n’autorise pas une fusion.
 DIS reste optionnel, le numéro de série USB désigne le périphérique. Une corrélation
 d’indicateurs HID serait une piste à évaluer, pas une identité garantie. Aucun
 changement de descripteur HID, frappe synthétique ou commande de charge ajouté.

@@ -29,6 +29,8 @@ Le [premier diagnostic Mac](diagnostic-identite.md) est développé, sans bascul
 de saisie. La correspondance est confirmée sur Mac + V2. Restent le retrait et
 le rebranchement USB, puis la relance du diagnostic. Le client d’identité
 Windows reste à développer. L’application reste facultative pour utiliser le clavier.
+La [priorité USB Mac](priorite-usb.md) est développée dans un profil expérimental
+séparé, avec app en arrière-plan. Son essai physique sur V2 est la prochaine étape.
 Le dernier portable de batteries Windows à largeur réduite sera testé à la maison.
 
 La base de l’app Windows est jugée satisfaisante. Sa largeur de départ est réduite
@@ -566,8 +568,24 @@ de préparer la mémoire d’OS propre à V2, absente du profil macOS normal.
   Comparaison uniquement, aucun changement des frappes ou des bonds.
 - [x] Confirmer la correspondance physique sur Mac + V2 : l’utilisateur obtient
   « Même ordinateur déclaré », annonces USB et Bluetooth présentes.
+- [x] Réunir batteries, sélecteur, OS actif, liaison de saisie et rapprochement
+  dans la fenêtre Mac, avec diagnostic repliable. OS et sortie lus dans le firmware,
+  champs non communiqués sur les anciennes versions. Tests automatisés positifs.
+- [ ] Valider la fenêtre Mac unifiée et ses nouveaux champs sur V2 après mise à jour.
+- [x] Afficher les connexions dans un tableau : claviers BLE connus et USB confirmé
+  du clavier suivi. Choisir une ligne ne change pas la destination des frappes.
+  Distinguer saisie locale, autre ordinateur et canal de diagnostic.
+- [ ] Étendre l’inventaire aux claviers USB seuls et aux liaisons USB des claviers
+  non suivis. Ne pas les associer à un nom BLE sans preuve du même contrôleur.
 - [ ] Valider le retrait/rebranchement USB et la relance du diagnostic sur Mac + V2.
   Aucun nouvel appairage demandé.
+- [x] Développer `bluetooth auto usb-priority` : vrai HID USB, preuve du profil
+  sélectionné, repli Bluetooth, gardes de touches et rapports USB protégés.
+  L’app entretient les annonces même fenêtre fermée. Tests logiciels et build seulement.
+- [ ] Tester sur Mac + V2 : USB sélectionné, saisie des deux moitiés, retrait/reprise
+  Bluetooth, rebranchement, maintien Shift et fermeture de fenêtre sans perte de priorité.
+- [ ] Étudier ensuite une sortie USB autonome après rapprochement, sans maintenir
+  le lien BLE hôte pour l’identité et la keymap. Le premier prototype conserve ce lien.
 - [ ] Développer ensuite le client d’identité Windows, puis tester le PC à la maison.
 - [ ] Avant fusion automatique : traiter les UUID copiés, plusieurs comptes sur
   un même ordinateur et les contextes concurrents. Le diagnostic actuel reste déclaratif.

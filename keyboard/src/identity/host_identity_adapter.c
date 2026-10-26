@@ -9,9 +9,14 @@
 #include <zephyr/usb/usb_device.h>
 #include <zephyr/usb/class/usb_hid.h>
 #include <zmk/ble.h>
+#include <zmk/endpoints.h>
+#include <zmk/keymap.h>
+#include <splitergoll/ble_auto.h>
 #include <splitergoll/host_identity.h>
+#include <splitergoll/usb_priority.h>
+#include "common/auto-layers.h"
 
-BUILD_ASSERT(!IS_ENABLED(CONFIG_ZMK_USB) && IS_ENABLED(CONFIG_SPLITERGOLL_BLE_AUTO));
+BUILD_ASSERT((!IS_ENABLED(CONFIG_ZMK_USB) || IS_ENABLED(CONFIG_SPLITERGOLL_USB_PRIORITY)) && IS_ENABLED(CONFIG_SPLITERGOLL_BLE_AUTO));
 BUILD_ASSERT(ZMK_BLE_PROFILE_COUNT <= 8);
 BUILD_ASSERT(CONFIG_ZMK_USB_INIT_PRIORITY > 90);
 
@@ -20,6 +25,34 @@ static struct k_spinlock lock;
 static struct bt_conn *owners[8];
 static usb_dc_status_callback native_status;
 static bool configured;
+
+// Les callbacks notifient le sélecteur après libération du spinlock, jamais de mutation HID dans un pilote.
+static void identity_changed(void) {
+#if IS_ENABLED(CONFIG_SPLITERGOLL_USB_PRIORITY)
+    splitergoll_ble_auto_notify();
+#endif
+}
+
+// L’identité n’est pas exportée. Les contextes permettent au garde natif de refuser un lien remplacé.
+struct usb_priority_evidence splitergoll_identity_evidence(unsigned profile, uint32_t now) {
+    struct usb_priority_evidence result = {.profile = (int)profile};
+    if (profile >= ZMK_BLE_PROFILE_COUNT) return result;
+    k_spinlock_key_t key = k_spin_lock(&lock);
+    const struct hi_link *usb = &state.links[HI_USB], *ble = &state.links[profile + 1];
+    uint8_t report[HI_SIZE];
+    bool readable = hi_read(&state, HI_USB, now, report);
+    result.context_valid = readable && usb->ready && ble->ready && usb->claimed && ble->claimed &&
+        memcmp(usb->host, ble->host, HI_ID_SIZE) == 0 && report[7] != 3;
+    result.usb_context = usb->generation;
+    result.ble_context = ble->generation;
+    result.matched = result.context_valid && report[7] == 1 && (report[56] & (1U << profile));
+    if (result.matched) {
+        uint32_t usb_age = now - usb->received, ble_age = now - ble->received;
+        result.lease_ms = HI_LEASE_MS - (usb_age > ble_age ? usb_age : ble_age);
+    }
+    k_spin_unlock(&lock, key);
+    return result;
+}
 
 // La collection vendor ne déclare aucune touche et n’envoie aucun rapport de saisie USB.
 static const uint8_t descriptor[] = {
@@ -42,6 +75,7 @@ static void status_changed(enum usb_dc_status_code status, const uint8_t *param)
     }
     k_spin_unlock(&lock, key);
     if (native_status) native_status(status, param);
+    identity_changed();
 }
 
 int __real_usb_enable(usb_dc_status_callback callback);
@@ -71,6 +105,7 @@ static int set_report(const struct device *dev, struct usb_setup_packet *setup, 
     k_spinlock_key_t key = k_spin_lock(&lock);
     bool ok = hi_write(&state, HI_USB, k_uptime_get_32(), *data, (size_t)*len);
     k_spin_unlock(&lock, key);
+    if (ok) identity_changed();
     return ok ? 0 : -EINVAL;
 }
 
@@ -117,7 +152,27 @@ static ssize_t write_identity(struct bt_conn *conn, const struct bt_gatt_attr *a
     k_spinlock_key_t key = k_spin_lock(&lock);
     bool ok = owners[link - 1] == conn && hi_write(&state, (unsigned)link, k_uptime_get_32(), buf, len);
     k_spin_unlock(&lock, key);
+    if (ok) identity_changed();
     return ok ? len : BT_GATT_ERR(BT_ATT_ERR_VALUE_NOT_ALLOWED);
+}
+
+// Lit les couches réellement appliquées et la sortie ZMK, sans sélectionner d’OS ou d’appareil.
+static ssize_t read_runtime(struct bt_conn *conn, const struct bt_gatt_attr *attr, void *buf, uint16_t len, uint16_t offset) {
+    if (host_link(conn) < 0) return BT_GATT_ERR(BT_ATT_ERR_AUTHORIZATION);
+    uint8_t response[32] = {0};
+    memcpy(response, "SGST", 4); response[4] = IS_ENABLED(CONFIG_SPLITERGOLL_USB_PRIORITY) ? 2 : 1;
+    response[24] = IS_ENABLED(CONFIG_SPLITERGOLL_USB_PRIORITY) ? 1 : 0;
+    memcpy(response + 8, state.boot, HI_ID_SIZE);
+    splitergoll_ble_auto_lock();
+    bool macos = zmk_keymap_layer_active(AUTO_MACOS_BASE);
+    bool windows = zmk_keymap_layer_active(AUTO_WINDOWS_BASE);
+    response[5] = macos != windows ? (macos ? 1 : 2) : 0;
+    struct zmk_endpoint_instance endpoint = zmk_endpoint_get_selected();
+    response[6] = endpoint.transport == ZMK_TRANSPORT_USB ? 1 : endpoint.transport == ZMK_TRANSPORT_BLE ? 2 : 0;
+    int profile = zmk_ble_active_profile_index();
+    response[7] = profile >= 0 && profile < ZMK_BLE_PROFILE_COUNT ? (uint8_t)profile : 255;
+    splitergoll_ble_auto_unlock();
+    return bt_gatt_attr_read(conn, attr, buf, len, offset, response, sizeof(response));
 }
 
 #define ID_UUID(last) BT_UUID_128_ENCODE(0x7d2f6767, 0x4c2b, 0x4d13, 0xa528, 0x80b87ac03800ULL + (last))
@@ -125,7 +180,9 @@ BT_GATT_SERVICE_DEFINE(identity_service,
     BT_GATT_PRIMARY_SERVICE(BT_UUID_DECLARE_128(ID_UUID(0x10))),
     BT_GATT_CHARACTERISTIC(BT_UUID_DECLARE_128(ID_UUID(0x11)), BT_GATT_CHRC_READ | BT_GATT_CHRC_WRITE,
         BT_GATT_PERM_READ_ENCRYPT | BT_GATT_PERM_WRITE_ENCRYPT | BT_GATT_PERM_PREPARE_WRITE,
-        read_identity, write_identity, NULL));
+        read_identity, write_identity, NULL),
+    BT_GATT_CHARACTERISTIC(BT_UUID_DECLARE_128(ID_UUID(0x12)), BT_GATT_CHRC_READ,
+        BT_GATT_PERM_READ_ENCRYPT, read_runtime, NULL, NULL));
 
 // Une déconnexion invalide l’annonce sans toucher au bond, au slot sélectionné ou à sa keymap.
 static void disconnected(struct bt_conn *conn, uint8_t reason) {
@@ -134,6 +191,7 @@ static void disconnected(struct bt_conn *conn, uint8_t reason) {
     for (unsigned i = 0; i < ZMK_BLE_PROFILE_COUNT; i++)
         if (owners[i] == conn) { owners[i] = NULL; hi_close(&state, i + 1); }
     k_spin_unlock(&lock, key);
+    identity_changed();
 }
 
 // Un objet bt_conn réutilisé ne doit jamais hériter du contexte d’une connexion précédente.
@@ -153,7 +211,7 @@ static int identity_init(void) {
     uint8_t boot[HI_ID_SIZE];
     if (sys_csrand_get(boot, sizeof(boot))) return -EIO;
     hi_init(&state, boot);
-    const struct device *dev = device_get_binding("HID_0");
+    const struct device *dev = device_get_binding(IS_ENABLED(CONFIG_SPLITERGOLL_USB_PRIORITY) ? "HID_1" : "HID_0");
     if (!dev || !device_is_ready(dev)) return -ENODEV;
     usb_hid_register_device(dev, descriptor, sizeof(descriptor), &ops);
     return usb_hid_init(dev);

@@ -8,6 +8,9 @@ par exemple `splitergoll-wire-macos-right.uf2`.
 Le [diagnostic d’identité](diagnostic-identite.md) se choisit explicitement avec
 `make flash bluetooth auto left identity`. Seule la gauche ajoute cette fonction,
 la droite est identique au firmware normal. Aucun reset d’appairage nécessaire.
+La vraie [priorité USB](priorite-usb.md) utilise un autre build et la commande
+`make flash bluetooth auto left usb-priority`. Ne pas confondre avec `identity`,
+qui garde toute la saisie en Bluetooth.
 
 ## Depuis le terminal (macOS)
 

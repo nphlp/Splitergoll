@@ -1,8 +1,9 @@
 # Destinations de saisie
 
-**Évolution prévue, pas encore implémentée.** Les firmwares `wire` et `bluetooth`
-actuels restent distincts. Leur futur rapprochement doit permettre de choisir un
-ordinateur avec la meilleure liaison disponible et sa keymap.
+**Premier prototype Mac développé, essai physique à faire.** Le mode
+[bluetooth auto usb-priority](priorite-usb.md) choisit USB pour le même ordinateur
+déclaré, avec repli Bluetooth. Les profils normaux `wire` et `bluetooth` restent
+distincts. Windows, les installations multi-utilisateurs et Gaming restent à compléter.
 
 ## Le cas de référence
 
@@ -31,7 +32,8 @@ le premier autre appareil prêt prend la sélection. Avec plusieurs, le geste pa
 
 Seul l’USB de la gauche peut transporter la saisie. Un chargeur ou un USB qui ne
 permet pas la saisie ne doit pas créer de destination. Le comportement au branchement
-et au débranchement reste à préciser, notamment le repli sur le BLE du même appareil.
+et au débranchement est décrit dans le [prototype Mac](priorite-usb.md) : priorité
+après preuve, transition normale après relâchements et repli Bluetooth au retrait.
 
 ## Reconnaître le même ordinateur
 
@@ -40,8 +42,9 @@ Windows ne doivent donc pas être fusionnés sur ce seul indice. Il reste à dé
 comment associer l’hôte USB à un appareil Bluetooth mémorisé. La voie retenue pour
 le prochain lot utilise les compagnons Mac et Windows pour annoncer la même
 identité locale sur les deux liaisons. Le [diagnostic Mac](diagnostic-identite.md)
-est développé mais ne change aucune destination. Son essai réel et le client
-Windows restent à faire.
+est validé sur Mac + V2 pour la correspondance initiale. Son profil `identity`
+ne change aucune destination. Le nouveau profil `usb-priority` utilise cette preuve
+pour la saisie réelle. Son essai physique et le client Windows restent à faire.
 Sans association fiable, ne pas retirer arbitrairement une destination de la liste.
 
 Les captures existantes sont réutilisables : dix USB et dix-sept Bluetooth valides,
@@ -58,7 +61,8 @@ identifié à ce stade. Aucun nouveau flash ou changement de keymap demandé.
 
 Le croisement des OS et l’égalité Caps Lock/Num Lock sont rejetés comme preuves.
 Le compagnon restera facultatif : sans association fiable fournie par l’app,
-le clavier fonctionne et les destinations USB/BLE restent distinctes.
+le clavier fonctionne. Le prototype revient en Bluetooth en l’absence d’association,
+sans choisir arbitrairement l’ordinateur relié au câble.
 Un essai avec deux machines du même OS restera nécessaire pour vérifier que
 le rapprochement ne dépend pas de l’OS détecté.
 

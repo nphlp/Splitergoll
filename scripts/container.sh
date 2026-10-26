@@ -65,18 +65,33 @@ check_firmware() {
         fail 'Firmware de clavier incorrect : effacement des appairages activé'
     fi
 
-    if [ "$BUILD_MODE" = identity ] && [ "$side" = left ]; then
+    if { [ "$BUILD_MODE" = identity ] || [ "$BUILD_MODE" = usb-priority ]; } && [ "$side" = left ]; then
         for option in CONFIG_SPLITERGOLL_HOST_IDENTITY=y CONFIG_SPLITERGOLL_BLE_AUTO=y CONFIG_USB_DEVICE_STACK=y CONFIG_USB_DEVICE_HID=y CONFIG_CSPRNG_ENABLED=y; do
             grep -Fxq "$option" "$configuration" || fail "Diagnostic d’identité incomplet : $option"
         done
-        if grep -Eq '^(CONFIG_ZMK_USB|CONFIG_USB_CDC_ACM)=y$' "$configuration"; then
+        if [ "$BUILD_MODE" = identity ] && grep -qx 'CONFIG_ZMK_USB=y' "$configuration"; then
             fail 'Le diagnostic identité ne doit activer ni saisie USB ni port série'
+        fi
+        if grep -qx 'CONFIG_USB_CDC_ACM=y' "$configuration"; then fail 'Port série inattendu'; fi
+        if [ "$BUILD_MODE" = usb-priority ]; then
+            for option in CONFIG_SPLITERGOLL_USB_PRIORITY=y CONFIG_ZMK_USB=y CONFIG_USB_HID_DEVICE_COUNT=2; do
+                grep -Fxq "$option" "$configuration" || fail "Priorité USB incomplète : $option"
+            done
+            grep -Eq '0x[0-9a-f]+[[:space:]]+__wrap_zmk_usb_is_hid_ready$' "$directory/zephyr/zmk.map" || fail 'Garde USB absente'
+            grep -Eq '0x[0-9a-f]+[[:space:]]+__wrap_zmk_endpoint_send_report$' "$directory/zephyr/zmk.map" || fail 'Garde des rapports USB absente'
+            grep -Eq '0x[0-9a-f]+[[:space:]]+zmk_usb_hid_send_keyboard_report$' "$directory/zephyr/zmk.map" || fail 'Saisie USB native absente'
+            for symbol in splitergoll_usb_keyboard_report splitergoll_usb_consumer_report splitergoll_usb_mouse_report; do
+                grep -Eq "0x[0-9a-f]+[[:space:]]+$symbol$" "$directory/zephyr/zmk.map" || fail "Protection HID absente : $symbol"
+            done
         fi
         for symbol in __wrap_usb_enable hi_read hi_write identity_service; do
             grep -Eq "0x[0-9a-f]+[[:space:]]+$symbol$" "$directory/zephyr/zmk.map" || fail "Composant identité absent : $symbol"
         done
     elif grep -qx 'CONFIG_SPLITERGOLL_HOST_IDENTITY=y' "$configuration"; then
         fail 'Diagnostic identité actif hors de la centrale demandée'
+    fi
+    if { [ "$BUILD_MODE" != usb-priority ] || [ "$side" != left ]; } && grep -qx 'CONFIG_SPLITERGOLL_USB_PRIORITY=y' "$configuration"; then
+        fail 'Priorité USB présente hors de la centrale demandée'
     fi
 
     if [ "$BUILD_MODE" = debug ]; then
@@ -185,7 +200,7 @@ check_firmware() {
             fi
             ;;
         bluetooth)
-            if grep -qx 'CONFIG_ZMK_USB=y' "$configuration"; then
+            if { [ "$BUILD_MODE" != usb-priority ] || [ "$side" != left ]; } && grep -qx 'CONFIG_ZMK_USB=y' "$configuration"; then
                 fail 'Sortie clavier USB activée dans le profil bluetooth'
             fi
             grep -qx 'CONFIG_ZMK_SLEEP=y' "$configuration" || fail 'Veille Bluetooth désactivée'
@@ -243,6 +258,10 @@ case "${1-}" in
                 modules="$modules;$OS_DIAGNOSTIC_ROOT/firmware"
             elif [ "$BUILD_MODE" = identity ] && [ "$side" = left ]; then
                 set -- -S splitergoll-identity
+            elif [ "$BUILD_MODE" = usb-priority ] && [ "$side" = left ]; then
+                set -- -S splitergoll-usb-priority
+                # Le profil Bluetooth coupe USB. Cette exception explicite doit être fusionnée en dernier.
+                FIRMWARE_CONFIGURATION="$FIRMWARE_CONFIGURATION;$IDENTITY_DIAGNOSTIC_ROOT/snippets/splitergoll-usb-priority/priority.conf"
             fi
             west build -p auto -s zmk/app -d "$directory" -b "$BOARD" "$@" -- \
                 -DSHIELD="splitergoll_$side" \

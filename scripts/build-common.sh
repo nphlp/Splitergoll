@@ -73,11 +73,11 @@ select_build_mode() {
             [ "$PROFILE" = bluetooth ] || fail 'ble-trace observe l’hôte Bluetooth : utilise le matériel bluetooth'
             BUILD_VARIANT="$PROFILE-$KEYMAP_PROFILE-ble-trace"
             ;;
-        identity)
-            [ "$PROFILE" = bluetooth ] && [ "$KEYMAP_PROFILE" = auto ] || fail 'identity exige bluetooth auto'
-            BUILD_VARIANT="$PROFILE-$KEYMAP_PROFILE-identity"
+        identity|usb-priority)
+            [ "$PROFILE" = bluetooth ] && [ "$KEYMAP_PROFILE" = auto ] || fail "$BUILD_MODE exige bluetooth auto"
+            BUILD_VARIANT="$PROFILE-$KEYMAP_PROFILE-$BUILD_MODE"
             ;;
-        *) fail 'Mode de compilation inconnu : utilise debug, usb-trace, ble-trace, identity ou aucun argument' ;;
+        *) fail 'Mode de compilation inconnu : utilise debug, usb-trace, ble-trace, identity, usb-priority ou aucun argument' ;;
     esac
 }
 

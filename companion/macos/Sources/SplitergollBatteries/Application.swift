@@ -22,7 +22,6 @@ final class ApplicationDelegate: NSObject, NSApplicationDelegate, NSWindowDelega
     private var window: NSWindow?
     private var statusItem: NSStatusItem?
     private let identityMonitor = HostIdentityMonitor()
-    private var identityWindow: NSWindow?
     private var subscriptions: Set<AnyCancellable> = []
 
     // Valide la configuration du bundle avant de demander tout accès Bluetooth.
@@ -49,17 +48,21 @@ final class ApplicationDelegate: NSObject, NSApplicationDelegate, NSWindowDelega
                 // Attend la fin des affectations @Published avant de relire le modèle sur la file principale.
                 MainActor.assumeIsolated {
                     self?.updateMenu()
-                    self?.identityMonitor.followSelection(self?.monitor?.selection.selected?.id)
+                    self?.followKeyboardSelection()
+                    self?.fitWindow()
                 }
             }.store(in: &subscriptions)
         identityMonitor.objectWillChange.receive(on: RunLoop.main)
             .sink { [weak self] _ in
-                MainActor.assumeIsolated { self?.fitIdentityWindow() }
+                MainActor.assumeIsolated { self?.fitWindow() }
             }.store(in: &subscriptions)
         updateMenu()
         monitor.start()
         NSWorkspace.shared.notificationCenter.addObserver(
             self, selector: #selector(identityWillSleep), name: NSWorkspace.willSleepNotification, object: nil
+        )
+        NSWorkspace.shared.notificationCenter.addObserver(
+            self, selector: #selector(identityDidWake), name: NSWorkspace.didWakeNotification, object: nil
         )
         LaunchAtLogin.configure()
     }
@@ -82,17 +85,22 @@ final class ApplicationDelegate: NSObject, NSApplicationDelegate, NSWindowDelega
         if let statusItem { NSStatusBar.system.removeStatusItem(statusItem) }
     }
 
-    // Garde une petite fenêtre fixe, sans redimensionnement ni passage en plein écran.
+    // La largeur reste compacte et la hauteur suit les informations et les détails dépliés.
     private func configureWindow(_ monitor: BatteryMonitor) {
         let window = NSWindow(
-            contentRect: NSRect(origin: .zero, size: BatteryDashboard.size),
+            contentRect: NSRect(x: 0, y: 0, width: BatteriesView.width, height: 380),
             styleMask: [.titled, .closable, .miniaturizable], backing: .buffered, defer: false
         )
         window.title = "Splitergoll"
         window.delegate = self
-        window.contentViewController = NSHostingController(rootView: BatteriesView(monitor: monitor))
-        window.contentMinSize = BatteryDashboard.size
-        window.contentMaxSize = BatteryDashboard.size
+        window.contentViewController = NSHostingController(
+            rootView: BatteriesView(
+                monitor: monitor, diagnostic: identityMonitor,
+                select: { [weak self] id in self?.chooseKeyboard(id) },
+                restart: { [weak self] in self?.startIdentity() },
+                resize: { [weak self] in
+                    Task { @MainActor in self?.fitWindow() }
+                }))
         window.collectionBehavior = [.fullScreenNone]
         window.isReleasedWhenClosed = false
         window.center()
@@ -131,10 +139,6 @@ final class ApplicationDelegate: NSObject, NSApplicationDelegate, NSWindowDelega
         menu.addItem(
             KeyboardMenu.item(selection: monitor.selection, target: self, action: #selector(selectKeyboard)))
         menu.addItem(NSMenuItem.separator())
-        let identity = NSMenuItem(
-            title: "Tester l’identité USB/Bluetooth", action: #selector(showIdentity), keyEquivalent: "")
-        identity.target = self
-        menu.addItem(identity)
         for (title, action) in [
             ("Ouvrir l’app", #selector(showWindow)),
             ("Quitter l’app", #selector(quitApplication)),
@@ -148,11 +152,23 @@ final class ApplicationDelegate: NSObject, NSApplicationDelegate, NSWindowDelega
         statusItem.menu = menu
     }
 
-    // Change uniquement le lecteur des batteries, sans rediriger les frappes du clavier.
+    // Le menu et le sélecteur de fenêtre utilisent la même sélection, sans rediriger les frappes.
     @objc private func selectKeyboard(_ sender: NSMenuItem) {
         guard let id = sender.representedObject as? UUID else { return }
+        chooseKeyboard(id)
+    }
+
+    // La sélection persistée ne concerne que les informations suivies par l’application.
+    private func chooseKeyboard(_ id: UUID) {
         monitor?.selectKeyboard(id)
-        identityMonitor.stop()
+        followKeyboardSelection()
+    }
+
+    // Le choix suivi renouvelle aussi l’identité en arrière-plan pour autoriser la priorité USB.
+    private func followKeyboardSelection() {
+        identityMonitor.maintain(
+            selected: monitor?.selection.selected?.id,
+            available: monitor?.selection.selectedIsAvailable == true && monitor?.state.phase == .connected)
     }
 
     // Réaffiche la même fenêtre et donne le focus à l’app, sans toucher au clavier connecté.
@@ -160,50 +176,36 @@ final class ApplicationDelegate: NSObject, NSApplicationDelegate, NSWindowDelega
         NSApp.setActivationPolicy(.regular)
         window?.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
+        followKeyboardSelection()
+        fitWindow()
     }
 
     // Fermer la fenêtre retire l’app du Dock et conserve son indicateur dans la barre des menus.
     func windowWillClose(_ notification: Notification) {
         guard let closingWindow = notification.object as? NSWindow else { return }
-        if closingWindow === identityWindow { identityMonitor.stop() }
-        let anotherVisible = [window, identityWindow].compactMap { $0 }.contains {
-            $0 !== closingWindow && $0.isVisible
-        }
-        if !anotherVisible { NSApp.setActivationPolicy(.accessory) }
+        guard closingWindow === window else { return }
+        NSApp.setActivationPolicy(.accessory)
     }
 
-    // L’ouverture du diagnostic est le seul geste autorisant les annonces d’identité.
-    @objc private func showIdentity() {
-        if identityWindow == nil {
-            let window = NSWindow(
-                contentRect: NSRect(x: 0, y: 0, width: 390, height: 280),
-                styleMask: [.titled, .closable, .miniaturizable], backing: .buffered, defer: false)
-            window.title = "Identité USB/Bluetooth"
-            window.delegate = self
-            window.isReleasedWhenClosed = false
-            window.contentViewController = NSHostingController(
-                rootView: HostIdentityView(diagnostic: identityMonitor) { [weak self] in
-                    guard let self else { return }
-                    self.identityMonitor.start(selected: self.monitor?.selection.selected?.id)
-                })
-            window.center()
-            identityWindow = window
-        }
+    // Relancer réactive explicitement le compagnon arrêté, sans changer l’appareil sélectionné par le clavier.
+    private func startIdentity() {
         identityMonitor.start(selected: monitor?.selection.selected?.id)
-        fitIdentityWindow()
-        NSApp.setActivationPolicy(.regular)
-        identityWindow?.makeKeyAndOrderFront(nil)
-        NSApp.activate(ignoringOtherApps: true)
     }
 
     // Ne prolonge ni l’activité de la machine ni les annonces du diagnostic pendant le sommeil.
     @objc private func identityWillSleep() { identityMonitor.pauseForSleep() }
 
+    // Le réveil ne force pas de reconnexion système, le lecteur attend le clavier déjà disponible.
+    @objc private func identityDidWake() {
+        identityMonitor.resumeAfterSleep()
+        followKeyboardSelection()
+    }
+
     // Les messages longs du diagnostic ajustent la hauteur au lieu de rogner leur texte.
-    private func fitIdentityWindow() {
-        guard let window = identityWindow, let view = window.contentViewController?.view else { return }
+    private func fitWindow() {
+        guard let window, let view = window.contentViewController?.view else { return }
         view.layoutSubtreeIfNeeded()
-        let size = NSSize(width: 390, height: max(280, view.fittingSize.height))
+        let size = NSSize(width: BatteriesView.width, height: max(340, view.fittingSize.height))
         if window.contentLayoutRect.size != size { window.setContentSize(size) }
     }
 

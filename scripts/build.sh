@@ -4,6 +4,7 @@
 # Sans argument, affiche l’aide. Le matériel et la keymap sont obligatoires, dans cet ordre.
 # debug ajoute les logs USB, usb-trace et ble-trace étudient la connexion de la centrale.
 # identity expose le diagnostic USB vendor et BLE, sans changer la saisie Bluetooth.
+# usb-priority choisit USB après rapprochement, avec repli Bluetooth.
 # Appelé par make build, sans flasher le clavier.
 
 set -eu
@@ -17,7 +18,7 @@ fi
 
 if [ "$#" -lt 2 ] || [ "$#" -gt 3 ]; then
     bash "$SCRIPT_DIRECTORY/help.sh" build >&2
-    fail 'Précise le matériel puis la keymap : make build <wire|bluetooth> <auto|multi|windows|macos|linux> [debug|usb-trace|ble-trace|identity]'
+    fail 'Précise le matériel puis la keymap : make build <wire|bluetooth> <auto|multi|windows|macos|linux> [debug|usb-trace|ble-trace|identity|usb-priority]'
 fi
 
 # Exporte une paire complète et ses empreintes seulement après les deux compilations réussies.
@@ -62,6 +63,8 @@ build_profile() {
         fi
     elif [ "$BUILD_MODE" = identity ]; then
         printf '%s\n' 'Diagnostic : identité USB vendor et BLE chiffré, saisie toujours en Bluetooth'
+    elif [ "$BUILD_MODE" = usb-priority ]; then
+        printf '%s\n' 'USB prioritaire après rapprochement de l’appareil sélectionné, repli Bluetooth'
     fi
     run_step 'Vérification des prérequis' preflight
     resolve_workspace
@@ -78,8 +81,8 @@ mode=normal
 
 if [ "$#" -eq 3 ]; then
     case "$3" in
-        debug|usb-trace|ble-trace|identity) mode=$3 ;;
-        *) fail 'L’argument final doit être debug, usb-trace, ble-trace ou identity' ;;
+        debug|usb-trace|ble-trace|identity|usb-priority) mode=$3 ;;
+        *) fail 'L’argument final doit être debug, usb-trace, ble-trace, identity ou usb-priority' ;;
     esac
 fi
 

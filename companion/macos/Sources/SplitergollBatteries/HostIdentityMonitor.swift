@@ -12,12 +12,17 @@ final class HostIdentityMonitor: NSObject, ObservableObject, @preconcurrency CBC
     @Published private(set) var now = Date()
     @Published private(set) var usb: HostIdentityProtocol.Observation?
     @Published private(set) var ble: HostIdentityProtocol.Observation?
+    @Published private(set) var runtime: KeyboardRuntime?
     var verdict: String { HostIdentityProtocol.verdict(usb: usb, ble: ble, now: now) }
+    var currentRuntime: KeyboardRuntime? {
+        runtime.flatMap { $0.isCurrent(boot: ble?.report.boot, at: now) ? $0 : nil }
+    }
 
     private var central: CBCentralManager?
     private var device: CBPeripheral?
     private var proxy: IdentityPeripheralDelegate?
     private var characteristic: CBCharacteristic?
+    private var runtimeCharacteristic: CBCharacteristic?
     private var identity: UUID?
     private var selected: UUID?
     private var timer: Timer?
@@ -27,10 +32,13 @@ final class HostIdentityMonitor: NSObject, ObservableObject, @preconcurrency CBC
     private var waitingForStatus = false
     private var usbBusy = false
     private let usbProbe = HostUSBProbe()
+    private var policy = IdentitySessionPolicy()
 
-    // Le fichier est créé seulement après ouverture explicite du diagnostic, jamais au build/test.
+    // Le compagnon renouvelle l’identité en arrière-plan pour maintenir la sortie USB autorisée.
     func start(selected: UUID?) {
         stop()
+        policy.resume()
+        guard !policy.sleeping else { return }
         guard let selected else {
             bluetoothText = "Choisir d’abord le clavier suivi"
             return
@@ -43,6 +51,7 @@ final class HostIdentityMonitor: NSObject, ObservableObject, @preconcurrency CBC
             identity = try HostIdentityFile.loadOrCreate(
                 at: directory.appendingPathComponent("host-identity.json"))
         } catch {
+            policy.stopped(at: Date())
             bluetoothText = "Identité locale indisponible, aucun échange effectué"
             return
         }
@@ -72,25 +81,49 @@ final class HostIdentityMonitor: NSObject, ObservableObject, @preconcurrency CBC
         device = nil
         proxy = nil
         characteristic = nil
+        runtimeCharacteristic = nil
+        runtime = nil
         challenge = nil
         pendingSince = nil
         waitingForStatus = false
         usb = nil
         ble = nil
         now = Date()
+        policy.stopped(at: now)
         usbText = "Non testé"
         bluetoothText = "Arrêté"
         // Ne pas remettre usbBusy à zéro : un appel IOKit synchrone peut encore appartenir à l’ancienne génération.
     }
 
     // La pause n’empêche pas le sommeil du Mac et n’entretient pas d’annonces après sa reprise.
-    func pauseForSleep() { stop() }
+    func pauseForSleep() {
+        policy.sleep()
+        stop()
+    }
+
+    // L’arrêt manuel ne doit pas être annulé par le battement de lecture des batteries.
+    func pauseByUser() {
+        policy.pause()
+        stop()
+    }
+
+    // Le lecteur de batteries signalera le clavier quand sa reconnexion sera terminée.
+    func resumeAfterSleep() { policy.wake() }
+
+    // Fermer la fenêtre ne modifie pas ce cycle. Aucun scan ou changement de destination n’est envoyé par l’app.
+    func maintain(selected: UUID?, available: Bool, at date: Date = Date()) {
+        followSelection(selected)
+        if policy.permitsStart(selected: selected, available: available, running: running, at: date) {
+            start(selected: selected)
+        }
+    }
 
     // Une sélection automatique ou explicite différente ne retargete jamais des annonces déjà en cours.
     func followSelection(_ id: UUID?) {
-        if running && selected != id {
+        if selected != id {
             stop()
-            bluetoothText = "Clavier suivi modifié, relancer le diagnostic"
+            selected = id
+            policy.resume()
         }
     }
 
@@ -185,7 +218,11 @@ final class HostIdentityMonitor: NSObject, ObservableObject, @preconcurrency CBC
             return
         }
         peripheral.discoverCharacteristics(
-            [CBUUID(string: HostIdentityProtocol.characteristic)], for: service)
+            [
+                CBUUID(string: HostIdentityProtocol.characteristic),
+                CBUUID(string: KeyboardRuntime.characteristic),
+            ],
+            for: service)
     }
 
     // Le mode avec réponse est obligatoire pour savoir si l’annonce est acceptée.
@@ -202,11 +239,20 @@ final class HostIdentityMonitor: NSObject, ObservableObject, @preconcurrency CBC
             return
         }
         characteristic = value
+        let runtimeValues =
+            service.characteristics?.filter {
+                $0.uuid == CBUUID(string: KeyboardRuntime.characteristic) && $0.properties.contains(.read)
+            } ?? []
+        runtimeCharacteristic = runtimeValues.count == 1 ? runtimeValues.first : nil
         peripheral.readValue(for: value)
     }
 
     // Valide le challenge, annonce l’identité puis relit les masques publics de cette même session.
     func received(_ peripheral: CBPeripheral, value: CBCharacteristic, error: Error?) {
+        if value === runtimeCharacteristic {
+            receivedRuntime(value.value, error: error)
+            return
+        }
         guard value === characteristic else { return }
         if let error {
             stop()
@@ -227,6 +273,10 @@ final class HostIdentityMonitor: NSObject, ObservableObject, @preconcurrency CBC
                 pendingSince = nil
                 waitingForStatus = false
                 probeUSB(boot: report.boot, identity: identity)
+                if let runtimeCharacteristic {
+                    pendingSince = Date()
+                    peripheral.readValue(for: runtimeCharacteristic)
+                }
             } else {
                 challenge = report
                 pendingSince = Date()
@@ -237,6 +287,24 @@ final class HostIdentityMonitor: NSObject, ObservableObject, @preconcurrency CBC
             stop()
             bluetoothText = "Réponse Bluetooth refusée ou non valide"
         }
+    }
+
+    // Une lecture optionnelle invalide n’empêche pas le diagnostic des anciennes versions du firmware.
+    func receivedRuntime(_ data: Data?, error: Error?, at date: Date = Date()) {
+        pendingSince = nil
+        guard error == nil, let data, let report = try? KeyboardRuntime(data, received: date),
+            report.isCurrent(boot: ble?.report.boot, at: date)
+        else {
+            runtime = nil
+            return
+        }
+        runtime = report
+        now = date
+    }
+
+    // Les états copiables ne contiennent aucune identité, aucun jeton ni contenu de saisie.
+    var diagnosticText: String {
+        "OS actif : \(currentRuntime?.os.title ?? "Non communiqué")\nSaisie : \(currentRuntime?.transport.title ?? "Non communiquée")\nUSB : \(usbText)\nBluetooth : \(bluetoothText)\nRésultat : \(verdict)\nLa sortie de saisie est choisie par le clavier. Aucun identifiant exporté."
     }
 
     // Une écriture confirmée est suivie d’une lecture, sans supposer que le firmware l’a mémorisée.

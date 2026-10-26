@@ -35,6 +35,10 @@ run_suite ble_auto_state keyboard/tests/ble_auto_state_test.c keyboard/src/os_de
 run_suite ble_device_state keyboard/tests/ble_device_state_test.c keyboard/src/os_detection/ble_device_state.c keyboard/src/os_detection/ble_auto_state.c keyboard/src/os_detection/usb_auto_state.c
 run_suite host_preference keyboard/tests/host_preference_test.c keyboard/src/connections/host_preference.c
 run_suite host_identity keyboard/tests/host_identity_test.c keyboard/src/identity/host_identity.c
+run_suite usb_priority keyboard/tests/usb_priority_test.c keyboard/src/connections/usb_priority_state.c
+run_suite usb_priority_adapter keyboard/tests/integration/identity/priority_test.c \
+    -DCONFIG_SPLITERGOLL_USB_PRIORITY=1 -DCONFIG_ZMK_USB=1 -DCONFIG_ZMK_POINTING=1 \
+    -Ikeyboard/tests/integration/identity/stubs keyboard/src/identity/host_identity.c keyboard/src/connections/usb_priority_state.c
 run_suite host_identity_adapter keyboard/tests/integration/identity/adapter_test.c \
     -Ikeyboard/tests/integration/identity/stubs keyboard/src/identity/host_identity.c
 run_suite host_window_policy keyboard/tests/host_window_policy_test.c keyboard/src/connections/host_window_policy.c
@@ -48,6 +52,11 @@ run_suite power_store diagnostics/power/tests/power_store_test.c diagnostics/pow
 # Les vrais adaptateurs utilisent uniquement les doubles du domaine testé.
 run_suite ble_selector keyboard/tests/integration/selector/ble_selector_test.c \
     -Ikeyboard/tests/integration/selector/stubs \
+    keyboard/src/os_detection/ble_device_state.c keyboard/src/os_detection/ble_auto_state.c \
+    keyboard/src/os_detection/usb_auto_state.c keyboard/src/connections/host_window_policy.c \
+    keyboard/src/connections/host_preference.c
+run_suite usb_priority_selector keyboard/tests/integration/selector/ble_selector_test.c \
+    -DCONFIG_SPLITERGOLL_USB_PRIORITY=1 -Ikeyboard/tests/integration/selector/stubs \
     keyboard/src/os_detection/ble_device_state.c keyboard/src/os_detection/ble_auto_state.c \
     keyboard/src/os_detection/usb_auto_state.c keyboard/src/connections/host_window_policy.c \
     keyboard/src/connections/host_preference.c

@@ -7,7 +7,12 @@
 #include <stdint.h>
 #include <string.h>
 #include <sys/types.h>
+#ifndef CONFIG_ZMK_USB
 #define CONFIG_ZMK_USB 0
+#endif
+#ifndef CONFIG_SPLITERGOLL_USB_PRIORITY
+#define CONFIG_SPLITERGOLL_USB_PRIORITY 0
+#endif
 #define CONFIG_SPLITERGOLL_BLE_AUTO 1
 #define CONFIG_ZMK_USB_INIT_PRIORITY 96
 #define ZMK_BLE_PROFILE_COUNT 5
@@ -18,13 +23,15 @@
 struct device { int unused; };
 struct k_spinlock { int unused; };
 typedef int k_spinlock_key_t;
+typedef void *k_tid_t;
+static inline k_tid_t k_current_get(void) { return (void *)1; }
 static uint32_t now_ms;
 static inline uint32_t k_uptime_get_32(void) { return now_ms; }
 static inline k_spinlock_key_t k_spin_lock(struct k_spinlock *lock) { (void)lock; return 0; }
 static inline void k_spin_unlock(struct k_spinlock *lock, int key) { (void)lock; (void)key; }
 static inline int sys_csrand_get(void *data, size_t len) { memset(data, 1, len); return 0; }
 static struct device hid_device;
-static inline const struct device *device_get_binding(const char *name) { return strcmp(name, "HID_0") == 0 ? &hid_device : NULL; }
+static inline const struct device *device_get_binding(const char *name) { return strcmp(name, CONFIG_SPLITERGOLL_USB_PRIORITY ? "HID_1" : "HID_0") == 0 ? &hid_device : NULL; }
 static inline bool device_is_ready(const struct device *dev) { return dev != NULL; }
 enum usb_dc_status_code { USB_DC_UNKNOWN, USB_DC_CONFIGURED, USB_DC_RESET, USB_DC_DISCONNECTED, USB_DC_SUSPEND, USB_DC_RESUME };
 typedef void (*usb_dc_status_callback)(enum usb_dc_status_code, const uint8_t *);
@@ -79,3 +86,35 @@ struct bt_conn_cb {
     void (*security_changed)(struct bt_conn *, bt_security_t, enum bt_security_err);
 };
 #define BT_CONN_CB_DEFINE(name) struct bt_conn_cb name
+
+enum zmk_transport { ZMK_TRANSPORT_NONE, ZMK_TRANSPORT_USB, ZMK_TRANSPORT_BLE };
+struct zmk_endpoint_instance { enum zmk_transport transport; };
+static struct zmk_endpoint_instance selected_endpoint;
+static int active_profile;
+static uint32_t active_layers;
+static unsigned selector_lock_depth;
+// Compte le verrou utilisé par la vraie lecture du statut, sans simuler une sélection.
+void splitergoll_ble_auto_lock(void) { selector_lock_depth++; }
+// Le callback doit toujours rendre son verrou, même quand aucun OS n’est appliqué.
+void splitergoll_ble_auto_unlock(void) { assert(selector_lock_depth == 1); selector_lock_depth--; }
+// Ces doubles ne modifient jamais les valeurs exposées au test.
+static inline struct zmk_endpoint_instance zmk_endpoint_get_selected(void) { return selected_endpoint; }
+static inline int zmk_ble_active_profile_index(void) { return active_profile; }
+static inline bool zmk_keymap_layer_active(uint8_t layer) { assert(selector_lock_depth); return (active_layers & (1U << layer)) != 0; }
+
+#if CONFIG_SPLITERGOLL_USB_PRIORITY
+void zmk_endpoint_clear_reports(void);
+enum zmk_usb_conn_state { ZMK_USB_CONN_NONE, ZMK_USB_CONN_POWERED, ZMK_USB_CONN_HID };
+struct zmk_usb_conn_state_changed { enum zmk_usb_conn_state conn_state; };
+static unsigned endpoint_notifications, preferred_writes, selector_notifications;
+static enum zmk_transport preferred = ZMK_TRANSPORT_BLE;
+// La préférence native doit rester dédupliquée, aucune écriture à chaque renouvellement d’annonce.
+static inline int zmk_endpoint_set_preferred_transport(enum zmk_transport next) {
+    if (next != preferred) { preferred = next; preferred_writes++; } return 0;
+}
+// La frontière native compte les notifications, aucun événement de frappe n’est généré par le test.
+static inline int raise_zmk_usb_conn_state_changed(struct zmk_usb_conn_state_changed event) {
+    (void)event; endpoint_notifications++; return 0;
+}
+static inline enum zmk_usb_conn_state zmk_usb_get_conn_state(void) { return ZMK_USB_CONN_HID; }
+#endif

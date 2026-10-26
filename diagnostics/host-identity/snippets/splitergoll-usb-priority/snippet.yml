@@ -1,0 +1,3 @@
+name: splitergoll-usb-priority
+append:
+  EXTRA_CONF_FILE: priority.conf

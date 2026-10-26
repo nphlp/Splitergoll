@@ -1,6 +1,7 @@
 # Application macOS
 
-L’app affiche les deux batteries du Splitergoll connecté en Bluetooth au Mac.
+L’app affiche les deux batteries du Splitergoll connecté en Bluetooth au Mac,
+son OS actif et le rapprochement USB/Bluetooth avec le firmware de diagnostic.
 Elle reste facultative pour taper et pour sélectionner la keymap.
 
 ## Lancer l’app
@@ -15,8 +16,21 @@ make app start
 
 L’app démarre dans la barre des menus, sans icône dans le Dock ni fenêtre ouverte.
 Le menu contient **Connecté / Déconnecté**, **Clavier suivi**, **Ouvrir l’app** et **Quitter l’app**.
-La fenêtre fixe de 320 × 174 points montre le nom du clavier suivi, la connexion et les batteries
-**Gauche** et **Droite**. Fermer la fenêtre laisse l’app fonctionner.
+La fenêtre compacte réunit un tableau **Clavier / Liaison / État**, la connexion, les deux
+batteries avec leurs contours, l’**OS actif**, la liaison de **Saisie** et le
+rapprochement **USB/Bluetooth**. Sa largeur reste fixe à 380 points et sa hauteur
+s’adapte au contenu. Les détails et **Copier le diagnostic** sont repliés.
+Fermer la fenêtre laisse les batteries fonctionner dans la barre des menus.
+Chaque clavier Bluetooth connu apparaît. Pour le clavier suivi, une ligne USB
+s’ajoute lorsque le diagnostic confirme le même contrôleur. Cliquer sur une ligne
+choisit les informations à suivre, sans changer la destination des frappes.
+La coche et **Sélectionné** indiquent uniquement la liaison utilisée vers ce Mac,
+**Autre ordinateur**
+une saisie Bluetooth vers un autre hôte. **Diagnostic** signifie que le firmware
+`identity` réserve USB au rapprochement. Le [profil usb-priority](priorite-usb.md)
+permet la vraie bascule : USB **Sélectionné**, Bluetooth **Désactivé** pour la saisie.
+La connexion Bluetooth reste présente. Le nom au-dessus des batteries précise le
+clavier suivi indépendamment de la coche de saisie.
 Les deux lignes de la barre affichent le contour gauche suivi de son niveau en haut,
 puis le niveau et le contour droit en bas. Les contours suivent le thème clair ou sombre.
 Le Dock montre l’icône tant que la fenêtre est ouverte, y compris minimisée.
@@ -107,4 +121,19 @@ et le rendu des contours de la barre, sans accès Bluetooth.
 Essayer la fenêtre, sa fermeture, la réouverture et Quitter depuis la barre.
 Vérifier que le Dock apparaît à l’ouverture et disparaît à la fermeture.
 Vérifier ensuite déconnexion/reconnexion, sommeil du Mac et ouverture de session.
-Les couches, l’OS actif et les options avancées restent dans le [TODO](TODO.md).
+
+## Informations du clavier
+
+L’app entretient l’[identité commune](diagnostic-identite.md) du clavier suivi en
+arrière-plan, même fenêtre fermée, pour permettre la priorité USB. Le fichier local
+est créé à la première utilisation d’un clavier suivi disponible. Le sommeil du
+Mac suspend les échanges, le réveil permet leur reprise. **Arrêter** dans les
+détails est respecté jusqu’à **Relancer** ou au choix d’un autre clavier.
+
+L’OS actif et la sortie de saisie sont lus dans le **clavier**, jamais déduits de
+l’OS du Mac ou de la présence du câble. Un ancien firmware affiche **Non communiqué**.
+Ces informations sont relues toutes les cinq secondes et masquées si elles expirent.
+Le profil `identity` compare sans changer les frappes. Le profil `usb-priority`
+utilise la correspondance pour sélectionner la sortie USB. Quitter l’app provoque
+le repli Bluetooth après expiration. Les couches et les options avancées restent
+dans le [TODO](TODO.md).

@@ -2,10 +2,13 @@
 
 ## Intention
 
-Le lecteur courant reste limité aux deux batteries. Une fenêtre et un indicateur dans la barre
-des menus, en utilisant les services GATT existants. L’app reste facultative pour la saisie.
-Le diagnostic d’identité USB/BLE est un outil opt-in séparé du lecteur batterie,
-sans bascule de saisie. Ouvrir sa fenêtre est le seul déclencheur des écritures.
+Le lecteur batterie reste indépendant du diagnostic. Une fenêtre compacte réunit
+ses deux mesures, le tableau des connexions, l’OS appliqué, la sortie de saisie et l’identité USB/BLE.
+L’indicateur de la barre des menus reste limité aux batteries. L’app reste facultative pour la saisie.
+Le compagnon d’identité est séparé du lecteur batterie. Il entretient les annonces
+en arrière-plan dès que le clavier suivi est disponible, même fenêtre fermée.
+Le firmware identity compare seulement. Le firmware usb-priority utilise la preuve
+pour sa sortie réelle. Sans app, la saisie Bluetooth reste utilisable.
 Le guide humain est [application-macos.md](../../docs/application-macos.md).
 Les évolutions sont suivies dans le [TODO](../../docs/TODO.md), sans liste dupliquée ici.
 
@@ -22,20 +25,30 @@ Les évolutions sont suivies dans le [TODO](../../docs/TODO.md), sans liste dupl
 - `HostIdentityMonitor` : CBCentralManager distinct, UUID du clavier suivi et client
   GATT de diagnostic. Aucun scan/appairage ou sélection de slot. Read challenge,
   writeWithResponse, read statut, puis sonde USB avec le même jeton de démarrage.
-  Proxy de génération contre callbacks tardifs. Arrêt à fermeture, sommeil,
-  changement de clavier, services invalidés ou perte de lien. Pas de relance cachée.
+  Proxy de génération contre callbacks tardifs. Sommeil, changement de clavier,
+  services invalidés ou perte de lien invalident les observations. IdentitySessionPolicy
+  autorise la reprise quand le clavier choisi est disponible, avec trente secondes
+  après échec. Arrêter est respecté jusqu’à Relancer ou au choix d’un autre clavier.
+  Le fichier d’identité peut donc être créé au lancement discret, lors de la première
+  disponibilité de la sélection. Aucun accès système pendant les tests ou le build.
 - `HostUSBProbe` : file série dédiée, IOHIDManager limité au transport USB et à la
   collection vendor FF31/5350. Ni events d’entrée ni seizure. Lecture avant annonce,
   choix unique par jeton de démarrage du clavier BLE. Appels IOKit synchrones hors
   acteur UI, un seul travail en vol, pas d’accumulation. Un appel système lent peut
   retarder ce diagnostic mais jamais bloquer son interface. Résultat tardif ignoré
   après changement de génération, handles libérés après retour de l’appel.
-- `HostIdentityView` : états et verdict copiables sans UUID, nonce, adresse ou frappe.
-  Une correspondance est déclarative, pas une authentification. Fermer arrête
-  les échanges, sans supprimer le fichier. Les annonces du clavier expirent sous 15 s.
+- `KeyboardRuntime` : statut SGST v1/v2 de 32 octets, OS appliqué, transport natif et
+  slot sélectionné. Champs stricts, jeton du même démarrage et durée de vie de 15 s.
+  Le statut vient de la caractéristique optionnelle 3812, jamais de l’OS de l’app.
+  v2 ajoute le bit usbPriority à l’octet 24. Les autres bits et réserves restent
+  refusés. Ancien firmware : Non communiqué, sans bloquer les annonces d’identité.
+- `HostIdentityView` : section intégrée, états et verdict copiables sans UUID, nonce, adresse ou frappe.
+  Une correspondance est déclarative, pas une authentification. Fermer la fenêtre
+  ne coupe plus les échanges. Arrêter, quitter ou dormir les suspend. Les annonces
+  du clavier expirent sous 15 s, le firmware attend la fin des appuis avant le repli.
 
-Le lot identité passe 57 tests Swift avec avertissements fatals, dont 12 AppKit/
-menus et 45 modèles. Le bundle Release est compilé et signé ad hoc, sans lancement
+Le lot priorité USB passe 77 tests Swift avec avertissements fatals, dont 16 AppKit/
+menus et 61 modèles. Le bundle Release est compilé et signé ad hoc, sans lancement
 ou installation pendant ces contrôles. Les tests de stockage utilisent seulement
 leurs dossiers temporaires, pas le vrai fichier d’identité du Mac. Le code ajouté
 est vérifié par swift-format. Le parcours physique reste dans docs/diagnostic-identite.md.
@@ -47,8 +60,34 @@ est vérifié par swift-format. Le parcours physique reste dans docs/diagnostic-
 - `BatteryPeripheralDelegate` : proxy par génération, refus des réponses tardives avant traitement.
 - `KeyboardPreferences` : stockage UserDefaults local du seul UUID/libellé choisi, injectable en mémoire.
 - `KeyboardMenu` : sous-menu natif Clavier suivi, testable sans lecteur Bluetooth.
-- `BatteriesView` : vue observée et tableau de données indépendant, utilisable pour contrôler le rendu sans Bluetooth.
-- `Application` : cycle AppKit, fenêtre SwiftUI fixe 320 × 174 points et NSStatusItem. Dock visible avec la fenêtre, caché lorsqu’elle est fermée. Démarrage discret sans fenêtre.
+- `KeyboardConnections` : lignes par UUID et transport, tous les hôtes BLE connus
+  dans l’inventaire local. USB seulement pour le clavier suivi avec observations
+  fraîches USB/BLE, même jeton de démarrage et usbReady. Aucun rapprochement par nom.
+  Runtime frais requis pour annoncer la saisie. BLE actif ne signifie saisie vers
+  le Mac que si le slot natif sélectionné égale celui de l’observation BLE locale.
+  Sinon Autre ordinateur. USB observé sans sortie native USB : Diagnostic.
+  USB natif actif : BLE Désactivé pour la saisie. Le lien BLE reste présent.
+  Dans usb-priority, un USB observé en attente d’autorisation est aussi Désactivé,
+  pas Diagnostic. Les firmwares identity conservent le libellé Diagnostic.
+  Les noms identiques restent distincts, le préféré absent reste affiché sans action.
+- `KeyboardConnectionsView` : tableau de trois colonnes, sélection de suivi commune
+  aux deux liaisons du clavier. Défilement au-delà de quatre lignes, largeur fixe,
+  noms tronqués avec aide au survol. Ne pas en faire un sélecteur de transport.
+  La coche et le surlignage désignent seulement state=input, libellé Sélectionné.
+  Ne pas cocher toutes les lignes du clavier suivi. Son nom est séparément affiché
+  au-dessus des batteries. Si le statut expire ou cible un autre hôte, aucune
+  liaison locale n’est cochée. Ces états ne désactivent aucune radio.
+  L’inventaire USB seul ou des autres claviers non suivis reste à développer.
+- `BatteriesView` : tableau unifié observé et cartes avec contours.
+  Les détails techniques sont repliés. Tests de mise en page hors écran, sans lecteurs.
+- `Application` : cycle AppKit, fenêtre unique de largeur 380 points et hauteur
+  ajustée au contenu, NSStatusItem. Dock visible avec la fenêtre, caché lorsqu’elle
+  est fermée. Démarrage discret sans fenêtre. La sélection du menu et celle de la
+  fenêtre utilisent la même méthode. Le tableau et la hauteur sont actualisés
+  aussi à un changement d’inventaire sans changement de sélection. Changer de clavier invalide les anciennes
+  annonces. Le battement des batteries entretient le lecteur d’identité même fenêtre
+  fermée. Quitter libère tout, le sommeil suspend et le réveil réautorise la reprise.
+  Arrêter dans les détails désactive la reprise automatique pour ce clavier.
 - `LaunchAtLogin` : inscription via SMAppService au premier lancement réel. `LoginRegistration` teste sa politique sans toucher aux préférences système.
 - `MenuBarBadge` : image template de deux lignes, contour gauche puis valeur en haut,
   valeur puis contour droit en bas. Largeur stable, symboles monochromes adaptés au
@@ -126,7 +165,7 @@ La même indication alimente la fenêtre, le menu et l’accessibilité, sans to
 Le symbole de charge du menu conserve ses proportions après rotation, avec un
 facteur commun limité par la colonne « 99 % » et neuf points de hauteur. Aucun
 étirement des axes ni image intermédiaire qui dégraderait le rendu du symbole.
-Ne pas ajouter de panneau d’explication dans la fenêtre minimale.
+Garder les explications et la copie technique dans la section Diagnostic repliable.
 Les lectures ont lieu toutes les 5 secondes, sans chevauchement. Après 90 secondes
 sans lecture ou en perte de connexion, la barre affiche `-`. Les anciennes valeurs
 restent seulement en mémoire et ne sont plus affichées. Elles ne survivent pas au processus.
@@ -143,9 +182,12 @@ Au sommeil du Mac, libérer le lecteur et invalider le timer. Au réveil, retrou
 la connexion système. Aucun verrou ou assertion empêchant la veille, aucun scan de reprise.
 Fermer la fenêtre conserve le menu. Quitter ferme uniquement les ressources de l’app.
 
-La fenêtre ne contient que le titre, Connecté/Déconnecté et les batteries gauche/droite.
+La fenêtre contient titre, connexion, tableau sélectionnable, batteries, OS et liaison de saisie,
+états USB/BLE et verdict déclaratif. Ne pas confondre le clavier suivi par l’app
+et la destination des frappes du firmware. Les statuts périmés sont masqués.
 Le menu contient connexion, Clavier suivi, Ouvrir l’app et Quitter l’app.
-Le nom choisi remplace le titre générique dans la fenêtre et figure dans l’infobulle. Les erreurs du lecteur
+La liaison de saisie est cochée dans le tableau. Le clavier suivi est nommé
+au-dessus des batteries et dans l’infobulle. Les erreurs du lecteur
 ne sont pas détaillées dans cette interface. Ne pas y remettre les dates et cadences.
 LSUIElement et la politique accessory masquent le Dock au démarrage. showWindow
 passe en regular avant de montrer la fenêtre. Son delegate windowWillClose revient

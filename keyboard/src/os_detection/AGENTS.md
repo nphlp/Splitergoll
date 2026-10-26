@@ -368,7 +368,11 @@ sont suivies dans l’AGENTS du diagnostic et docs/TODO.md.
 ## Keymap automatique Bluetooth
 
 `SPLITERGOLL_OS_AUTO` choisit un seul adaptateur selon ZMK_USB : usb_auto.c ou
-ble_auto.c. Aucun observateur USB dans le firmware Bluetooth normal. Les deux
+ble_auto.c. Exception explicite SPLITERGOLL_USB_PRIORITY : USB natif est actif mais
+ble_auto.c reste l’unique propriétaire des couches et gardes de touches. Aucun
+observateur/classifieur USB supplémentaire dans ce mode, OS depuis la mémoire du
+profil BLE sélectionné seulement. Voir ../connections/AGENTS.md et docs/priorite-usb.md.
+Aucun observateur USB dans le firmware Bluetooth normal. Les deux
 adaptateurs utilisent les mêmes treize couches et les mêmes fichiers Windows/macOS.
 La première intégration conserve les affectations de `auto.keymap`. Le lot suivant
 ajoute le raccourci de changement d’appareil, le choix manuel forcé d’OS reste reporté.

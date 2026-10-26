@@ -9,9 +9,14 @@ est bien sélectionné dans le menu. Les essais complémentaires sont reportés
 
 ## Choisir un clavier
 
-Dans la barre des menus, ouvrir **Clavier suivi**, puis cliquer sur son nom.
-Une coche indique le choix. Son nom apparaît aussi dans la fenêtre et l’infobulle,
+Dans la fenêtre, cliquer sur une ligne du tableau des connexions, ou ouvrir **Clavier suivi**
+dans la barre des menus, puis cliquer sur son nom.
+Une coche indique le choix dans le menu. Dans le tableau, elle indique la liaison
+de saisie sélectionnée, pas le clavier suivi. Le nom du clavier suivi apparaît
+au-dessus des batteries et dans l’infobulle,
 sans élargir l’indicateur compact des batteries.
+Les deux lignes USB et Bluetooth d’un même clavier suivent le même choix. Leur
+état est informatif : cliquer sur USB ne force pas une bascule de saisie.
 
 Sans choix enregistré, l’app suit l’unique clavier compatible connecté. Si elle
 le suit déjà, l’arrivée d’un second ne change rien. Si plusieurs sont disponibles
@@ -21,7 +26,9 @@ ou redémarrage de l’app.
 Si le clavier choisi est absent, son nom reste affiché et les niveaux deviennent
 des tirets. L’app ne suit pas silencieusement l’autre clavier. Pour en changer,
 le sélectionner dans le menu. Au changement, les anciennes mesures sont vidées
-avant de lire les nouvelles.
+avant de lire les nouvelles. Le diagnostic USB/Bluetooth suit le même choix,
+avec invalidation de ses anciens résultats. Il continue fenêtre fermée pour
+maintenir la priorité USB du clavier suivi. Il ne s’applique pas aux autres claviers.
 
 Le nom est un libellé, l’identifiant CoreBluetooth local au Mac reconnaît le
 clavier. Un renommage conserve donc le choix. Deux noms identiques sont distingués

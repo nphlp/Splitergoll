@@ -7,6 +7,9 @@ Aucun changement du sélecteur, du transport HID clavier, de la keymap, des bond
 ou des namespaces NVS. ZMK_USB reste désactivé, USB_DEVICE_STACK et USB_DEVICE_HID
 exposent une collection vendor sans Input/Output report. GATT s’ajoute aux services.
 La droite et les profils normaux ne compilent aucun de ces adaptateurs.
+Exception explicite : `bluetooth auto usb-priority` active le HID clavier natif
+sur HID_0 et ce canal vendor sur HID_1. Son coordinateur est décrit dans
+../connections/AGENTS.md. Ne pas activer cette bascule dans le simple mode identity.
 
 ## Protocole v1
 
@@ -37,7 +40,9 @@ sans crypto ou allocation dans un callback USB. Un compteur épuisé refuse le l
 Ce challenge empêche le rejeu accidentel d’un ancien contexte, pas l’usurpation
 d’identité par un programme malveillant. Copier le fichier utilisateur peut imiter
 une identité sans qu’un second pair soit présent : ne jamais présenter ce protocole
-comme une authentification ni déclencher une fusion de saisie dans ce premier lot.
+comme une authentification. La priorité USB expérimentale demandée ensuite utilise
+ces déclarations dans un périmètre de confiance local, pas une fusion générale sûre
+face à une copie malveillante d’identité. Conflit visible : autorisation refusée.
 
 ## Adaptateurs
 
@@ -53,17 +58,42 @@ comme une authentification ni déclencher une fusion de saisie dans ce premier l
   déconnexion et sécurité perdue révoquent l’ancien propriétaire. Aucun identifiant
   d’hôte, adresse BLE ou contenu de frappe n’est journalisé.
 
+## Statut de saisie en lecture seule
+
+La caractéristique optionnelle 3812 du même service expose SGST v1/v2, 32 octets.
+0..3 = SGST, 4 = version 1, 5 = OS appliqué (0 inconnu, 1 macOS, 2 Windows),
+6 = transport réellement sélectionné par ZMK (0 aucun, 1 USB, 2 BLE),
+7 = slot sélectionné (0..7 ou 255 absent), 8..23 = jeton de démarrage commun,
+v1 : 24..31 = réserves nulles. v2 : 24 vaut 1 pour usb-priority, 25..31 nuls.
+Aucun UUID d’hôte, bond ou caractère tapé n’est exporté.
+
+read_runtime applique les mêmes gardes de rôle, bond et chiffrement que l’identité.
+Il lit les bases actives AUTO_WINDOWS_BASE/AUTO_MACOS_BASE et l’endpoint natif
+sous le verrou du sélecteur BLE. Bases toutes deux absentes ou présentes : OS
+inconnu, pas de valeur implicite. Aucun appel de sélection, écriture NVS, événement
+ou note_activity. L’app vérifie le même démarrage et expire le statut après 15 s.
+Les anciens firmwares sans 3812 continuent de fournir l’identité seule.
+Le service reste réservé aux builds identity/usb-priority, sans modifier SGID v1.
+
+splitergoll_identity_evidence copie sous spinlock : match frais du profil demandé,
+validité du contexte, générations USB/BLE et délai d’expiration minimal des deux
+annonces. Aucun UUID ne sort du module. État inconnu, conflit ou profil hors bornes
+refusés. Les écritures et callbacks notifient seulement l’unique worker auto BLE
+dans le mode usb-priority, après avoir libéré le spinlock. Aucun HID dans ces callbacks.
+
 ## Validation
 
 Le moteur pur et le vrai adaptateur ont des suites C ASan/UBSan. Elles couvrent
 formats/tailles/réserves, expiration et wrap, refus split/non chiffré/non appairé,
 fragments non appliqués, callbacks natifs préservés, reconnexions et conflits.
+Le même harnais couvre le statut : OS appliqué, sortie absente, réserves nulles,
+refus d’une liaison non chiffrée, lecture partielle et verrou toujours libéré.
 Les frontières radio/USB sont doublées. La compilation nRF réelle vérifie les API
 et les gardes, sans prouver l’énumération sur Mac. Les C de cette zone ont -Werror.
 Le guide physique est docs/diagnostic-identite.md. Aucun flash ou effacement réalisé
 par l’agent. Ne pas déduire une priorité USB de la seule présence de l’interface vendor.
 
-Contrôles réalisés : 26 suites C ASan/UBSan et 112 cas AWK passent. PowerShell est
+Contrôles réalisés : 29 suites C ASan/UBSan et 112 cas AWK passent. PowerShell est
 explicitement non exécuté, absent de PATH. Le C identité compile en ARM avec -Werror,
 la paire identity passe les gardes et SHA-256. Le témoin bluetooth auto normal
 est identique sur les deux moitiés au build du 24 octobre, et la droite identity
@@ -76,6 +106,14 @@ Premier essai physique rapporté par l’utilisateur sur Mac + V2 : les deux ann
 sont présentes et le résultat est « Même ordinateur déclaré ». Cela valide ce
 parcours de comparaison, sans prouver une authentification ni une priorité USB.
 Retrait/rebranchement USB et relance du diagnostic restent à vérifier.
+
+Lot fenêtre unifiée : identity compilé dans
+dist/firmware/bluetooth-auto-identity-2026-10-26-15-31-55, gardes et SHA-256 positifs.
+OS et transport SGST sont préparés mais non encore lus sur V2. Le témoin normal
+bluetooth auto du 26-15-33 est identique octet pour octet à celui du 24-13-57 sur
+les deux moitiés. La droite identity est identique à cette droite normale.
+Les 26 suites C et 112 cas AWK passent, PowerShell absent. Aucun flash ni accès
+série par l’agent. Conteneurs de build terminés, services préexistants préservés.
 
 ## Ideas / backlog
 

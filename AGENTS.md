@@ -16,13 +16,21 @@ guide `docs/application-windows.md`. Lecture réelle des deux batteries de V2
 confirmée par l’utilisateur sur Windows, tests du noyau réalisés depuis le Mac.
 Les tests UI compilés ne sont pas présentés comme exécutés sur Windows.
 
-Chantier actuel : diagnostic d’identité USB/BLE sur Mac + V2 au bureau, sans
-changement de destination des frappes. Firmware opt-in `bluetooth auto identity`,
-protocole dans keyboard/src/identity/AGENTS.md et essai dans docs/diagnostic-identite.md.
+Chantier actuel : vraie priorité USB sur Mac + V2, dans le mode expérimental
+`bluetooth auto usb-priority`. Le guide docs/priorite-usb.md décrit son essai.
+Le mode `bluetooth auto identity` reste un diagnostic sans bascule.
 Seule la gauche ajoute les transports, la droite normale reste identique.
 Premier essai physique confirmé par l’utilisateur : annonces USB et Bluetooth,
 résultat « Même ordinateur déclaré ». Retrait/rebranchement USB et relance du
 diagnostic encore à vérifier, aucune priorité USB de saisie déduite de ce résultat.
+Suite préparée : fenêtre Mac unique, sélection du clavier suivi et détails repliables.
+Le firmware identity ajoute la caractéristique optionnelle SGST 3812 en lecture
+seule pour l’OS appliqué et l’endpoint ZMK. Ancien firmware compatible avec champs
+non communiqués. Les captures de l’utilisateur montrent la fenêtre et les champs
+macOS / saisie Bluetooth. La nouvelle priorité USB reste à flasher et à valider.
+L’app entretient désormais l’identité en arrière-plan et respecte sommeil et Arrêter.
+Sans app ou preuve fraîche, le nouveau mode revient en BLE. Il nécessite encore
+le lien BLE hôte pour l’identité et l’OS mémorisé. Aucun effet Gaming supplémentaire.
 Le client d’identité Windows et le test du dernier portable de batteries sont
 reportés à la maison. L’UUID local est déclaratif, pas un secret d’authentification.
 

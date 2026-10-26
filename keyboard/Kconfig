@@ -12,8 +12,8 @@ config SPLITERGOLL_OS_AUTO
 
 config SPLITERGOLL_BLE_AUTO
     bool
-    default y if SPLITERGOLL_OS_AUTO && !ZMK_USB
-    depends on ZMK_BLE && !ZMK_USB && ZMK_SPLIT_ROLE_CENTRAL
+    default y if SPLITERGOLL_OS_AUTO && (!ZMK_USB || SPLITERGOLL_USB_PRIORITY)
+    depends on ZMK_BLE && (!ZMK_USB || SPLITERGOLL_USB_PRIORITY) && ZMK_SPLIT_ROLE_CENTRAL
     select SPLITERGOLL_BLE_MEMORY
 
 config SPLITERGOLL_BLE_RECONNECT
@@ -29,7 +29,7 @@ config SPLITERGOLL_BLE_OBSERVER
 
 config SPLITERGOLL_USB_OBSERVER
     bool
-    default y if (SPLITERGOLL_OS_AUTO && ZMK_USB) || SPLITERGOLL_USB_TRACE
+    default y if (SPLITERGOLL_OS_AUTO && ZMK_USB && !SPLITERGOLL_USB_PRIORITY) || SPLITERGOLL_USB_TRACE
     depends on USB_DEVICE_STACK && ZMK_SPLIT_ROLE_CENTRAL
 
 # Le socle ZMK_BLE reste nécessaire au split, les annonces hôtes sont filtrées au lien.
@@ -40,6 +40,11 @@ config SPLITERGOLL_WIRE_USB_ONLY
 
 config SPLITERGOLL_HOST_IDENTITY
     bool "Diagnostic host identity over vendor USB HID and encrypted BLE"
-    depends on SPLITERGOLL_BLE_AUTO && ZMK_SPLIT_ROLE_CENTRAL && !ZMK_USB
+    depends on SPLITERGOLL_BLE_AUTO && ZMK_SPLIT_ROLE_CENTRAL && (!ZMK_USB || SPLITERGOLL_USB_PRIORITY)
     depends on !USB_DEVICE_STACK_NEXT && !ZMK_USB_LOGGING && !LTO
     depends on USB_DEVICE_STACK && USB_DEVICE_HID && CSPRNG_ENABLED
+
+config SPLITERGOLL_USB_PRIORITY
+    bool "Prefer USB for the same declared Bluetooth host"
+    depends on SPLITERGOLL_OS_AUTO && ZMK_USB && ZMK_BLE && ZMK_SPLIT_ROLE_CENTRAL
+    depends on !USB_DEVICE_STACK_NEXT && !ZMK_USB_LOGGING && !LTO && !BT_EXT_ADV

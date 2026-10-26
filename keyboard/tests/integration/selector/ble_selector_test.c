@@ -1,5 +1,12 @@
 #include "keyboard/src/os_detection/ble_auto.c"
 #include <stdio.h>
+#if defined(CONFIG_SPLITERGOLL_USB_PRIORITY)
+static uint32_t priority_deadline;
+// Le harnais du vrai sélecteur contrôle seulement la frontière de la politique USB testée séparément.
+uint32_t splitergoll_usb_priority_update(void) { return priority_deadline; }
+// Les suites existantes gardent leurs demandes de bascule et de macro inchangées.
+bool splitergoll_usb_priority_pending(void) { return false; }
+#endif
 static unsigned active, connected = 3, selected_calls, forwarded, base;
 static struct host_preference_status saved_preference = {.profile = -1};
 static unsigned preference_writes;
@@ -578,6 +585,20 @@ int main(void) {
     queued_hold();
     delayed_macro();
     native_failure();
+#if defined(CONFIG_SPLITERGOLL_USB_PRIORITY)
+    reset(3);
+    priority_deadline = 15000;
+    session.checkpoint = true;
+    radio.opened_at_ms = clock_ms - (HOST_WINDOW_DURATION_MS - 1000);
+    splitergoll_ble_auto_notify(); tick(clock_ms);
+    assert(selection_work.queued && selection_work.due == clock_ms + 1000);
+    priority_deadline = 0;
+    reset(3);
+    priority_deadline = 1000;
+    session.checkpoint = true;
+    splitergoll_ble_auto_notify(); tick(clock_ms);
+    assert(selection_work.queued && selection_work.due == clock_ms + 1000);
+#endif
     assert(!state_mutex.depth);
     puts("real BLE selector: immediate typing, releases, search, late pairing and cancellation OK");
 }

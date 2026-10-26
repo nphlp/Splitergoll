@@ -7,6 +7,8 @@
 // Partage la sérialisation des entrées avec les commandes USB optionnelles.
 void splitergoll_ble_auto_lock(void);
 void splitergoll_ble_auto_unlock(void);
+// Regroupe les nouvelles preuves et changements radio sur l’unique worker de sélection.
+void splitergoll_ble_auto_notify(void);
 
 // Refuse une mutation pendant un maintien, un rapport HID actif ou un comportement différé.
 bool splitergoll_ble_auto_busy(void);

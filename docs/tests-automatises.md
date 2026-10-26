@@ -12,7 +12,7 @@ Sur le Mac, avec Clang et Python 3 :
 bash scripts/test.sh
 ```
 
-Les **26 suites C** utilisent ASan/UBSan et des horloges contrôlées, sans clavier
+Les **29 suites C** utilisent ASan/UBSan et des horloges contrôlées, sans clavier
 ni attente réelle. Les **112 cas de protocole** passent dans les vrais validateurs
 AWK. Si `pwsh` est disponible, 81 cas passent aussi dans les validateurs PowerShell.
 Sinon ce contrôle est explicitement signalé comme non exécuté. Un runtime local
@@ -28,12 +28,22 @@ bash scripts/test-zephyr.sh
 
 Le conteneur est éphémère, sans réseau ni périphérique USB. QEMU est arrêté à son
 verdict ou à l’expiration du délai, sans toucher aux autres processus.
-L’app dispose séparément de 57 tests Swift, sans connexion Bluetooth ni écriture
+L’app dispose séparément de 77 tests Swift, sans connexion Bluetooth ni écriture
 des préférences système : mesures, choix V1/V2, persistance simulée, générations
 de lecture, menu AppKit et inscription de session simulée.
 Le diagnostic d’identité ajoute le format USB/BLE, les annonces, leur expiration,
 les contradictions et conflits, ainsi que le fichier d’identité isolé dans un
 dossier temporaire. Il ne crée pas l’identité réelle du Mac pendant les tests.
+Le statut du clavier vérifie OS, transport, format strict, contexte et expiration.
+La fenêtre unifiée est mise en page hors écran, y compris ses détails dépliés.
+Le tableau couvre les liaisons du même contrôleur, les noms identiques, le clavier
+préféré absent, les contextes périmés et la saisie dirigée vers un autre ordinateur.
+Ces contrôles ne valident pas encore son rendu visuel sur V2.
+La priorité USB couvre preuve obligatoire, contexte remplacé, attente de touches,
+expiration, garde avant envoi et rapports protégés sur le canal USB non autorisé.
+Les pilotes natifs sont remplacés aux frontières dans ces harnais. La compilation
+nRF et l’inspection du binaire vérifient les points d’intégration, pas la radio réelle.
+Le cycle en arrière-plan de l’app teste sommeil, arrêt explicite et reprise après erreur.
 
 ```sh
 make app test

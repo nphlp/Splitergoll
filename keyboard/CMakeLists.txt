@@ -10,6 +10,32 @@ if(CONFIG_SPLITERGOLL_HOST_IDENTITY)
                              PROPERTIES COMPILE_OPTIONS "-Werror")
   zephyr_link_libraries(-Wl,--wrap=usb_enable)
 endif()
+if(CONFIG_SPLITERGOLL_USB_PRIORITY)
+  if(NOT CONFIG_SPLITERGOLL_HOST_IDENTITY OR NOT CONFIG_SPLITERGOLL_BLE_AUTO OR NOT CONFIG_ZMK_USB)
+    message(FATAL_ERROR "USB priority requires host identity, BLE auto and native keyboard USB")
+  endif()
+  if(CONFIG_ZMK_POINTING)
+    zephyr_link_libraries(-Wl,--wrap=zmk_endpoint_send_mouse_report)
+  endif()
+  # Le pilote conserve son statut physique natif. GET_REPORT et les envois reçoivent les modèles protégés.
+  set_property(SOURCE ${APPLICATION_SOURCE_DIR}/src/usb_hid.c DIRECTORY ${APPLICATION_SOURCE_DIR}
+    APPEND PROPERTY COMPILE_DEFINITIONS
+      zmk_hid_get_keyboard_report=splitergoll_usb_keyboard_report
+      zmk_hid_get_consumer_report=splitergoll_usb_consumer_report)
+  if(CONFIG_ZMK_POINTING)
+    set_property(SOURCE ${APPLICATION_SOURCE_DIR}/src/usb_hid.c DIRECTORY ${APPLICATION_SOURCE_DIR}
+      APPEND PROPERTY COMPILE_DEFINITIONS zmk_hid_get_mouse_report=splitergoll_usb_mouse_report)
+  endif()
+  if(CONFIG_ZMK_USB_BOOT)
+    set_property(SOURCE ${APPLICATION_SOURCE_DIR}/src/usb_hid.c DIRECTORY ${APPLICATION_SOURCE_DIR}
+      APPEND PROPERTY COMPILE_DEFINITIONS zmk_hid_get_boot_report=splitergoll_usb_boot_report)
+  endif()
+  zephyr_library_sources(src/connections/usb_priority_state.c src/connections/usb_priority.c)
+  set_source_files_properties(src/connections/usb_priority_state.c src/connections/usb_priority.c
+    PROPERTIES COMPILE_OPTIONS "-Werror")
+  zephyr_link_libraries(-Wl,--wrap=zmk_usb_is_hid_ready -Wl,--wrap=zmk_endpoint_send_report
+    -Wl,--wrap=zmk_usb_hid_send_keyboard_report)
+endif()
 if(CONFIG_SPLITERGOLL_BLE_MEMORY)
   zephyr_library_sources(src/os_detection/ble_os_memory.c src/os_detection/ble_os_settings.c
                          src/os_detection/ble_acquisition.c)

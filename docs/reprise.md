@@ -3,10 +3,17 @@
 ## Point de départ
 
 **Au bureau : Mac et V2, essais Windows reportés au retour à la maison.**
+Prochaine étape : [essai de la vraie priorité USB](priorite-usb.md). Nouveau build
+`bluetooth auto usb-priority`, seulement gauche à flasher, nouvelle app à installer.
+Le changement est développé et testé en logiciel, pas encore validé sur le clavier.
 Le [diagnostic d’identité Mac](diagnostic-identite.md) est développé et compilable :
 app opt-in et firmware `bluetooth auto identity`, seulement sur la gauche.
 L’utilisateur confirme « Même ordinateur déclaré » sur Mac + V2. Prochaine étape :
 retrait/rebranchement USB, puis relance du diagnostic.
+La fenêtre Mac unifiée est préparée : batteries, tableau des connexions, OS actif et sortie
+de saisie remontés par la nouvelle caractéristique du firmware identity. Les
+nouveaux builds sont préparés. Installation de l’app et flash gauche requis pour
+ces deux champs, essai visuel à faire.
 La saisie reste en BLE. Le [guide d’identité](identite-ordinateur.md) garde les limites.
 Le clavier reste utilisable sans app, aucune fusion par simple égalité d’OS.
 Le client d’identité Windows n’est pas encore développé et le dernier portable
