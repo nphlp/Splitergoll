@@ -1,8 +1,14 @@
 # Compile seulement les fonctions demandées par la keymap ou un diagnostic explicite.
-if(CONFIG_SPLITERGOLL_USB_OBSERVER OR CONFIG_SPLITERGOLL_BLE_OBSERVER OR CONFIG_SPLITERGOLL_WIRE_USB_ONLY)
+if(CONFIG_SPLITERGOLL_USB_OBSERVER OR CONFIG_SPLITERGOLL_BLE_OBSERVER OR CONFIG_SPLITERGOLL_WIRE_USB_ONLY OR CONFIG_SPLITERGOLL_HOST_IDENTITY)
   zephyr_library()
   zephyr_library_include_directories(include config/keymaps ${APPLICATION_SOURCE_DIR}/include)
   zephyr_include_directories(include)
+endif()
+if(CONFIG_SPLITERGOLL_HOST_IDENTITY)
+  zephyr_library_sources(src/identity/host_identity.c src/identity/host_identity_adapter.c)
+  set_source_files_properties(src/identity/host_identity.c src/identity/host_identity_adapter.c
+                             PROPERTIES COMPILE_OPTIONS "-Werror")
+  zephyr_link_libraries(-Wl,--wrap=usb_enable)
 endif()
 if(CONFIG_SPLITERGOLL_BLE_MEMORY)
   zephyr_library_sources(src/os_detection/ble_os_memory.c src/os_detection/ble_os_settings.c

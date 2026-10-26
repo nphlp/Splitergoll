@@ -1,7 +1,8 @@
 # Reconnaître un ordinateur en USB et Bluetooth
 
-**Prochain chantier retenu : le rapprochement aidé par les applications Mac et
-Windows.** Aucune association USB/BLE n’est encore implémentée. Le clavier doit
+**Diagnostic Mac implémenté, essai sur V2 à faire.** Le rapprochement est aidé par
+les applications Mac et Windows, dont le client d’identité Windows reste à développer.
+La saisie n’utilise encore aucune association USB/BLE. Le clavier doit
 rester utilisable sans application. Un OS identique ou un état Caps Lock commun
 ne suffit pas. Les [destinations de saisie](destinations-saisie.md) décrivent le
 comportement souhaité. La recherche autonome ci-dessous reste disponible.
@@ -85,20 +86,20 @@ Une capture plus large sur le firmware actuel n’a pas de champ commun identifi
 
 ## Voie retenue : identifiant fourni par l’application
 
-**À développer.** Les applications de batteries existent maintenant sur Mac et
-Windows. Elles ne transmettent encore aucun identifiant d’ordinateur au clavier.
-L’application Splitergoll créerait un identifiant
-aléatoire persistant sur l’ordinateur et transmettrait la même valeur au clavier
-par USB et par Bluetooth. Un programme hôte serait nécessaire sur chaque OS.
+**Premier diagnostic Mac développé.** L’ouverture de « Tester l’identité
+USB/Bluetooth » crée un identifiant aléatoire par installation utilisateur et
+annonce la même valeur par USB vendor HID et BLE chiffré. Les échanges restent
+optionnels et s’arrêtent à la fermeture du diagnostic. Le [protocole d’essai](diagnostic-identite.md)
+donne les commandes et les résultats attendus. Le client Windows reste à développer.
+Un programme hôte est nécessaire pour fournir cette identité sur chaque OS.
 Le clavier ne peut pas créer directement un fichier sur l’ordinateur par HID.
 L’application écrirait dans son propre dossier de données, avec les droits de
 l’utilisateur, sans commandes simulées au clavier ni droits administrateur.
 
-Le fichier expliquerait son origine réelle : « Créé par l’application Splitergoll
-pour reconnaître ce poste à travers ses connexions USB et Bluetooth. Ce fichier
-contient un identifiant local, pas un mot de passe ni une clé d’appairage. »
-L’application réutiliserait ce fichier quelle que soit la première liaison utilisée.
-Un autre ordinateur aurait son propre identifiant, après installation du programme.
+Le fichier JSON explique son origine et indique que ce n’est ni un mot de passe
+ni une clé d’appairage. Il est conservé dans les données de l’utilisateur et
+réutilisé après remplacement de l’app. Un fichier corrompu n’est pas régénéré
+silencieusement. Un autre ordinateur aura sa propre identité après installation.
 
 Précautions à intégrer au futur protocole :
 
@@ -111,15 +112,15 @@ Précautions à intégrer au futur protocole :
 - Une identité clonée sur deux postes pourrait diriger les frappes vers le mauvais
   ordinateur. Prévoir une régénération et un traitement explicite des conflits.
 
-Le stockage par utilisateur identifierait une installation de l’application,
-pas nécessairement toute la machine. La portée multi-utilisateur, les sauvegardes
-et la réinstallation restent à définir avant le développement.
-Le clavier resterait utilisable sans application, avec USB et BLE distincts faute
-d’association fiable. Les deux compagnons pourraient fournir cette identité.
-Aucun canal de rapprochement n’est développé ou activé à ce stade.
+Le stockage identifie une installation utilisateur, pas nécessairement toute la
+machine. Multi-utilisateur, identités copiées et associations durables restent
+à régler avant d’autoriser la fusion des destinations. Le clavier reste utilisable
+sans app. Aucun changement automatique de destination n’est développé à ce stade.
 
-Le premier lot doit seulement comparer l’identité reçue sur les deux liaisons,
-sans changer la destination des frappes. Prévoir une version de protocole, une
-liaison BLE appairée/chiffrée et un contexte USB remis à zéro au débranchement.
-Une ancienne annonce ou un fichier copié ne doit pas suffire à fusionner deux
-ordinateurs. Après cette preuve, développer la destination unique et sa priorité USB.
+Le protocole v1 compare des annonces en RAM et les expire après quinze secondes.
+Chaque liaison doit répondre au contexte du démarrage courant, renouvelé à la
+reconnexion. Les réponses ne contiennent pas les identifiants d’hôte. Deux pairs
+déclarant le même UUID créent un conflit. Une copie de fichier reste une usurpation
+possible si l’autre installation n’est pas visible : « même ordinateur déclaré »
+n’est pas une preuve d’authenticité. Cette limite doit être traitée avant toute
+fusion automatique de saisie et sa priorité USB.

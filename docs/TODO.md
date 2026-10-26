@@ -25,9 +25,11 @@
 
 Priorité choisie : reprendre le [rapprochement USB/Bluetooth](identite-ordinateur.md)
 avec les applications Mac et Windows, maintenant disponibles pour les batteries.
-Commencer par un diagnostic de l’identité commune, sans bascule de saisie.
-Le protocole et les conditions de confiance restent à définir. L’application
-reste facultative pour utiliser le clavier.
+Le [premier diagnostic Mac](diagnostic-identite.md) est développé, sans bascule
+de saisie. La correspondance est confirmée sur Mac + V2. Restent le retrait et
+le rebranchement USB, puis la relance du diagnostic. Le client d’identité
+Windows reste à développer. L’application reste facultative pour utiliser le clavier.
+Le dernier portable de batteries Windows à largeur réduite sera testé à la maison.
 
 La base de l’app Windows est jugée satisfaisante. Sa largeur de départ est réduite
 d’un quart, les silhouettes gauche/droite sont reportées. La lecture réelle des
@@ -559,6 +561,16 @@ de préparer la mémoire d’OS propre à V2, absente du profil macOS normal.
   retenue pour le prochain lot. Prouver d’abord la correspondance sans changer
   la saisie, puis gérer la destination unique et la priorité USB. Le clavier
   reste utilisable sans installation, sans fusion non prouvée.
+- [x] Préparer le diagnostic Mac + V2 : UUID local documenté, USB HID vendor,
+  service BLE chiffré réservé aux hôtes appairés, contextes renouvelés et expiration.
+  Comparaison uniquement, aucun changement des frappes ou des bonds.
+- [x] Confirmer la correspondance physique sur Mac + V2 : l’utilisateur obtient
+  « Même ordinateur déclaré », annonces USB et Bluetooth présentes.
+- [ ] Valider le retrait/rebranchement USB et la relance du diagnostic sur Mac + V2.
+  Aucun nouvel appairage demandé.
+- [ ] Développer ensuite le client d’identité Windows, puis tester le PC à la maison.
+- [ ] Avant fusion automatique : traiter les UUID copiés, plusieurs comptes sur
+  un même ordinateur et les contextes concurrents. Le diagnostic actuel reste déclaratif.
 - [ ] Ensuite, rendre configurables la présence dans la barre des menus, le Dock,
   le lancement à l’ouverture de session et les informations affichées. Le mode
   actuel garde la barre des menus, montre le Dock avec la fenêtre et demande le lancement automatique.

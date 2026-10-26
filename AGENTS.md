@@ -16,6 +16,16 @@ guide `docs/application-windows.md`. Lecture réelle des deux batteries de V2
 confirmée par l’utilisateur sur Windows, tests du noyau réalisés depuis le Mac.
 Les tests UI compilés ne sont pas présentés comme exécutés sur Windows.
 
+Chantier actuel : diagnostic d’identité USB/BLE sur Mac + V2 au bureau, sans
+changement de destination des frappes. Firmware opt-in `bluetooth auto identity`,
+protocole dans keyboard/src/identity/AGENTS.md et essai dans docs/diagnostic-identite.md.
+Seule la gauche ajoute les transports, la droite normale reste identique.
+Premier essai physique confirmé par l’utilisateur : annonces USB et Bluetooth,
+résultat « Même ordinateur déclaré ». Retrait/rebranchement USB et relance du
+diagnostic encore à vérifier, aucune priorité USB de saisie déduite de ce résultat.
+Le client d’identité Windows et le test du dernier portable de batteries sont
+reportés à la maison. L’UUID local est déclaratif, pas un secret d’authentification.
+
 Tous les guides restent à plat dans `docs/`, avec un fichier par sujet et sans
 date dans les noms ou les titres. Ils restent courts et utiles à l’usage.
 L’AGENTS.md garde les invariants, preuves techniques et décisions utiles au prochain chantier.

@@ -34,6 +34,9 @@ run_suite ble_os_memory keyboard/tests/ble_os_memory_test.c keyboard/src/os_dete
 run_suite ble_auto_state keyboard/tests/ble_auto_state_test.c keyboard/src/os_detection/ble_auto_state.c keyboard/src/os_detection/usb_auto_state.c
 run_suite ble_device_state keyboard/tests/ble_device_state_test.c keyboard/src/os_detection/ble_device_state.c keyboard/src/os_detection/ble_auto_state.c keyboard/src/os_detection/usb_auto_state.c
 run_suite host_preference keyboard/tests/host_preference_test.c keyboard/src/connections/host_preference.c
+run_suite host_identity keyboard/tests/host_identity_test.c keyboard/src/identity/host_identity.c
+run_suite host_identity_adapter keyboard/tests/integration/identity/adapter_test.c \
+    -Ikeyboard/tests/integration/identity/stubs keyboard/src/identity/host_identity.c
 run_suite host_window_policy keyboard/tests/host_window_policy_test.c keyboard/src/connections/host_window_policy.c
 run_suite ble_pairing_state keyboard/tests/ble_pairing_state_test.c keyboard/src/connections/ble_pairing_state.c
 run_suite ble_reconnect_state keyboard/tests/ble_reconnect_state_test.c keyboard/src/connections/ble_reconnect_state.c keyboard/src/connections/host_window_policy.c

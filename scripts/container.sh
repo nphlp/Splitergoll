@@ -65,6 +65,20 @@ check_firmware() {
         fail 'Firmware de clavier incorrect : effacement des appairages activé'
     fi
 
+    if [ "$BUILD_MODE" = identity ] && [ "$side" = left ]; then
+        for option in CONFIG_SPLITERGOLL_HOST_IDENTITY=y CONFIG_SPLITERGOLL_BLE_AUTO=y CONFIG_USB_DEVICE_STACK=y CONFIG_USB_DEVICE_HID=y CONFIG_CSPRNG_ENABLED=y; do
+            grep -Fxq "$option" "$configuration" || fail "Diagnostic d’identité incomplet : $option"
+        done
+        if grep -Eq '^(CONFIG_ZMK_USB|CONFIG_USB_CDC_ACM)=y$' "$configuration"; then
+            fail 'Le diagnostic identité ne doit activer ni saisie USB ni port série'
+        fi
+        for symbol in __wrap_usb_enable hi_read hi_write identity_service; do
+            grep -Eq "0x[0-9a-f]+[[:space:]]+$symbol$" "$directory/zephyr/zmk.map" || fail "Composant identité absent : $symbol"
+        done
+    elif grep -qx 'CONFIG_SPLITERGOLL_HOST_IDENTITY=y' "$configuration"; then
+        fail 'Diagnostic identité actif hors de la centrale demandée'
+    fi
+
     if [ "$BUILD_MODE" = debug ]; then
         grep -qx 'CONFIG_ZMK_USB_LOGGING=y' "$configuration" || fail 'Logs USB de diagnostic absents'
         grep -qx 'CONFIG_LOG=y' "$configuration" || fail 'Système de logs désactivé'
@@ -227,12 +241,14 @@ case "${1-}" in
             elif [ "$BUILD_MODE" = ble-trace ] && [ "$side" = left ]; then
                 set -- -S splitergoll-ble-trace
                 modules="$modules;$OS_DIAGNOSTIC_ROOT/firmware"
+            elif [ "$BUILD_MODE" = identity ] && [ "$side" = left ]; then
+                set -- -S splitergoll-identity
             fi
             west build -p auto -s zmk/app -d "$directory" -b "$BOARD" "$@" -- \
                 -DSHIELD="splitergoll_$side" \
                 -DZMK_CONFIG="$KEYBOARD_CONFIGURATION" \
                 -DZMK_EXTRA_MODULES="$modules" \
-                -DSNIPPET_ROOT="$OS_DIAGNOSTIC_ROOT" \
+                -DSNIPPET_ROOT="$OS_DIAGNOSTIC_ROOT;$IDENTITY_DIAGNOSTIC_ROOT" \
                 -DKEYMAP_FILE:STRING="$KEYMAP_FILE" \
                 -DDTS_EXTRA_CPPFLAGS:STRING="$dts_cppflags" \
                 -DEXTRA_CONF_FILE="$FIRMWARE_CONFIGURATION"

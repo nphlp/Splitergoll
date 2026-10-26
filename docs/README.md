@@ -93,6 +93,7 @@ et `make bat avg` calcule une moyenne par moitié sur 30 secondes.
 - [Essais de recherche Bluetooth](tests-recherche-bluetooth.md) : absence d’hôte, première arrivée et arrêt en veille légère.
 - [Destinations de saisie](destinations-saisie.md) : futur choix USB/Bluetooth et priorité par ordinateur.
 - [Identité de l’ordinateur](identite-ordinateur.md) : données disponibles, protocoles d’appairage USB et limites de l’association USB/BLE.
+- [Diagnostic d’identité Mac](diagnostic-identite.md) : firmware, app et essai USB/BLE sans changer la saisie.
 - [Gaming USB](gaming-usb.md) : fermeture du Bluetooth hôte et mémoire du mode, à développer.
 - [Gestion de l’appairage](gestion-appairage.md) : définir l’ouverture aux nouveaux appareils et les reconnexions.
 - [Mémoire de l’OS](memoire-os.md) : acquisition initiale et sauvegarde expérimentale, correction manuelle prévue.

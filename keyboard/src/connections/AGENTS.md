@@ -39,8 +39,9 @@ Ne pas déduire de ces contrôles seuls la validation de la vraie liaison split.
 Décision actuelle après les premiers essais réels du compagnon Windows : utiliser
 les deux applications pour étudier une identité locale commune USB/BLE. La recherche
 autonome ci-dessous reste un relevé de possibilités et de limites, sans constituer
-un préalable bloquant. Aucun protocole d’identité n’est encore implémenté. Premier lot diagnostic
-sans bascule de saisie, puis seulement destination unique et priorité USB.
+un préalable bloquant. Le protocole diagnostique v1 est dans ../identity, isolé
+du sélecteur. Il garde ZMK_USB=n : le canal USB vendor n’est pas une sortie clavier.
+Premier lot sans bascule de saisie, puis seulement destination unique et priorité USB.
 Ne pas associer deux ordinateurs sur leur OS. Le clavier doit rester utilisable
 sans compagnon. Voir docs/identite-ordinateur.md pour le stockage et la confiance.
 

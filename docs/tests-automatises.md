@@ -12,7 +12,7 @@ Sur le Mac, avec Clang et Python 3 :
 bash scripts/test.sh
 ```
 
-Les **24 suites C** utilisent ASan/UBSan et des horloges contrôlées, sans clavier
+Les **26 suites C** utilisent ASan/UBSan et des horloges contrôlées, sans clavier
 ni attente réelle. Les **112 cas de protocole** passent dans les vrais validateurs
 AWK. Si `pwsh` est disponible, 81 cas passent aussi dans les validateurs PowerShell.
 Sinon ce contrôle est explicitement signalé comme non exécuté. Un runtime local
@@ -28,9 +28,12 @@ bash scripts/test-zephyr.sh
 
 Le conteneur est éphémère, sans réseau ni périphérique USB. QEMU est arrêté à son
 verdict ou à l’expiration du délai, sans toucher aux autres processus.
-L’app dispose séparément de 44 tests Swift, sans connexion Bluetooth ni écriture
+L’app dispose séparément de 57 tests Swift, sans connexion Bluetooth ni écriture
 des préférences système : mesures, choix V1/V2, persistance simulée, générations
 de lecture, menu AppKit et inscription de session simulée.
+Le diagnostic d’identité ajoute le format USB/BLE, les annonces, leur expiration,
+les contradictions et conflits, ainsi que le fichier d’identité isolé dans un
+dossier temporaire. Il ne crée pas l’identité réelle du Mac pendant les tests.
 
 ```sh
 make app test
@@ -74,6 +77,7 @@ Elle ne valide pas le rendu GDI/WinForms, les pilotes GATT ni les protections du
 | Activité | Fenêtre avant/pendant/après IDLE, recherche continue, fermeture en SLEEP, aucune activité artificielle, USB bloquant SLEEP |
 | Diagnostics | Formats anciens et courant, troncatures, champs inattendus, capacité, pertes, lectures répétées et journal RAM |
 | App macOS | Décodage batterie, indisponibilité, symboles et politique d’ouverture de session |
+| Identité USB/BLE | Moteur réel et adaptateurs : refus non appairé/non chiffré/split, trames fragmentées/anciennes, contextes renouvelés, expiration, conflits et callback USB natif préservé |
 | App Windows | Présentation GATT, niveaux, sessions périmées, préférences JSON, choix explicite, ambiguïtés et largeur des textes |
 
 Les tests d’intégration exécutent les vrais adaptateurs du dépôt. Seules leurs

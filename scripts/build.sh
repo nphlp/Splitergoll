@@ -3,6 +3,7 @@
 # Compile les deux moitiés dans Docker et exporte les firmwares UF2 dans dist/.
 # Sans argument, affiche l’aide. Le matériel et la keymap sont obligatoires, dans cet ordre.
 # debug ajoute les logs USB, usb-trace et ble-trace étudient la connexion de la centrale.
+# identity expose le diagnostic USB vendor et BLE, sans changer la saisie Bluetooth.
 # Appelé par make build, sans flasher le clavier.
 
 set -eu
@@ -16,7 +17,7 @@ fi
 
 if [ "$#" -lt 2 ] || [ "$#" -gt 3 ]; then
     bash "$SCRIPT_DIRECTORY/help.sh" build >&2
-    fail 'Précise le matériel puis la keymap : make build <wire|bluetooth> <auto|multi|windows|macos|linux> [debug|usb-trace|ble-trace]'
+    fail 'Précise le matériel puis la keymap : make build <wire|bluetooth> <auto|multi|windows|macos|linux> [debug|usb-trace|ble-trace|identity]'
 fi
 
 # Exporte une paire complète et ses empreintes seulement après les deux compilations réussies.
@@ -59,6 +60,8 @@ build_profile() {
         else
             printf '%s\n' 'Diagnostic : échanges de l’hôte Bluetooth sur la gauche, sans sélection automatique d’OS'
         fi
+    elif [ "$BUILD_MODE" = identity ]; then
+        printf '%s\n' 'Diagnostic : identité USB vendor et BLE chiffré, saisie toujours en Bluetooth'
     fi
     run_step 'Vérification des prérequis' preflight
     resolve_workspace
@@ -75,8 +78,8 @@ mode=normal
 
 if [ "$#" -eq 3 ]; then
     case "$3" in
-        debug|usb-trace|ble-trace) mode=$3 ;;
-        *) fail 'L’argument final doit être debug, usb-trace ou ble-trace' ;;
+        debug|usb-trace|ble-trace|identity) mode=$3 ;;
+        *) fail 'L’argument final doit être debug, usb-trace, ble-trace ou identity' ;;
     esac
 fi
 

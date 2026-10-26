@@ -2,11 +2,15 @@
 
 ## Point de départ
 
-**Prochaine étape : l’identité commune USB/Bluetooth aidée par les applications.**
-Les compagnons Mac et Windows existent. Cadrer un diagnostic qui leur fait annoncer
-la même identité locale sur les deux liaisons, sans changer la saisie pour ce premier
-lot. Le [guide d’identité](identite-ordinateur.md) garde les contraintes et limites.
+**Au bureau : Mac et V2, essais Windows reportés au retour à la maison.**
+Le [diagnostic d’identité Mac](diagnostic-identite.md) est développé et compilable :
+app opt-in et firmware `bluetooth auto identity`, seulement sur la gauche.
+L’utilisateur confirme « Même ordinateur déclaré » sur Mac + V2. Prochaine étape :
+retrait/rebranchement USB, puis relance du diagnostic.
+La saisie reste en BLE. Le [guide d’identité](identite-ordinateur.md) garde les limites.
 Le clavier reste utilisable sans app, aucune fusion par simple égalité d’OS.
+Le client d’identité Windows n’est pas encore développé et le dernier portable
+de batteries à largeur réduite n’a pas encore été testé selon l’utilisateur.
 
 La base de l’[app Windows](application-windows.md) est jugée satisfaisante après
 les corrections. La largeur passe de 340 à 255 unités logiques à la demande de

@@ -2,12 +2,43 @@
 
 ## Intention
 
-Premier lot limité aux deux batteries. Une fenêtre et un indicateur dans la barre
+Le lecteur courant reste limité aux deux batteries. Une fenêtre et un indicateur dans la barre
 des menus, en utilisant les services GATT existants. L’app reste facultative pour la saisie.
+Le diagnostic d’identité USB/BLE est un outil opt-in séparé du lecteur batterie,
+sans bascule de saisie. Ouvrir sa fenêtre est le seul déclencheur des écritures.
 Le guide humain est [application-macos.md](../../docs/application-macos.md).
 Les évolutions sont suivies dans le [TODO](../../docs/TODO.md), sans liste dupliquée ici.
 
 ## Organisation
+
+- `HostIdentityProtocol` dans BatteryCore : trames binaires v1 de 64 octets, mêmes
+  constantes que keyboard/src/identity, modèles/validation sans IOKit/CoreBluetooth.
+- `HostIdentityFile` : UUID par installation utilisateur dans Application Support/
+  Splitergoll/host-identity.json, format v1 avec explication en français, dossier 0700,
+  fichier 0600. Sans secret ni identité matérielle. Fichier corrompu, trop gros,
+  symbolique (y compris lien cassé) ou version inconnue refusé sans remplacement.
+  Création exclusive sans écraser un concurrent. Une écriture interrompue reste
+  une corruption explicite, jamais une identité régénérée silencieusement.
+- `HostIdentityMonitor` : CBCentralManager distinct, UUID du clavier suivi et client
+  GATT de diagnostic. Aucun scan/appairage ou sélection de slot. Read challenge,
+  writeWithResponse, read statut, puis sonde USB avec le même jeton de démarrage.
+  Proxy de génération contre callbacks tardifs. Arrêt à fermeture, sommeil,
+  changement de clavier, services invalidés ou perte de lien. Pas de relance cachée.
+- `HostUSBProbe` : file série dédiée, IOHIDManager limité au transport USB et à la
+  collection vendor FF31/5350. Ni events d’entrée ni seizure. Lecture avant annonce,
+  choix unique par jeton de démarrage du clavier BLE. Appels IOKit synchrones hors
+  acteur UI, un seul travail en vol, pas d’accumulation. Un appel système lent peut
+  retarder ce diagnostic mais jamais bloquer son interface. Résultat tardif ignoré
+  après changement de génération, handles libérés après retour de l’appel.
+- `HostIdentityView` : états et verdict copiables sans UUID, nonce, adresse ou frappe.
+  Une correspondance est déclarative, pas une authentification. Fermer arrête
+  les échanges, sans supprimer le fichier. Les annonces du clavier expirent sous 15 s.
+
+Le lot identité passe 57 tests Swift avec avertissements fatals, dont 12 AppKit/
+menus et 45 modèles. Le bundle Release est compilé et signé ad hoc, sans lancement
+ou installation pendant ces contrôles. Les tests de stockage utilisent seulement
+leurs dossiers temporaires, pas le vrai fichier d’identité du Mac. Le code ajouté
+est vérifié par swift-format. Le parcours physique reste dans docs/diagnostic-identite.md.
 
 - `BatteryCore` : décodage GATT, identité des côtés, dernières lectures et disponibilité.
   BatterySymbolLayout conserve les proportions du symbole dans le cadre de chaque ligne.

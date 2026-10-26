@@ -5,6 +5,10 @@ Choisir le profil voulu et utiliser les deux fichiers du même dossier de build.
 Le nom indique désormais le matériel et la keymap, avec `-debug` si demandé,
 par exemple `splitergoll-wire-macos-right.uf2`.
 
+Le [diagnostic d’identité](diagnostic-identite.md) se choisit explicitement avec
+`make flash bluetooth auto left identity`. Seule la gauche ajoute cette fonction,
+la droite est identique au firmware normal. Aucun reset d’appairage nécessaire.
+
 ## Depuis le terminal (macOS)
 
 Mettre uniquement la moitié à flasher en bootloader avec un double appui sur reset,

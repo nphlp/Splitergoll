@@ -39,7 +39,9 @@ Notre détection USB reconnaît un OS, pas l’identité de l’ordinateur. Deux
 Windows ne doivent donc pas être fusionnés sur ce seul indice. Il reste à définir
 comment associer l’hôte USB à un appareil Bluetooth mémorisé. La voie retenue pour
 le prochain lot utilise les compagnons Mac et Windows pour annoncer la même
-identité locale sur les deux liaisons. Leur protocole reste à définir et développer.
+identité locale sur les deux liaisons. Le [diagnostic Mac](diagnostic-identite.md)
+est développé mais ne change aucune destination. Son essai réel et le client
+Windows restent à faire.
 Sans association fiable, ne pas retirer arbitrairement une destination de la liste.
 
 Les captures existantes sont réutilisables : dix USB et dix-sept Bluetooth valides,

@@ -10,6 +10,7 @@ KEYBOARD_ROOT="$REPOSITORY/keyboard"
 KEYBOARD_CONFIGURATION="$KEYBOARD_ROOT/config"
 KEYBOARD_MANIFEST="$KEYBOARD_ROOT/west.yml"
 OS_DIAGNOSTIC_ROOT="$REPOSITORY/diagnostics/os-signature"
+IDENTITY_DIAGNOSTIC_ROOT="$REPOSITORY/diagnostics/host-identity"
 BUILD_CACHE_ROOT='build/keyboard'
 BUILD_IMAGE='zmkfirmware/zmk-build-arm:4.1@sha256:edb1c953438c6f720ddb79c3762f3972013b7fbbaf4fff3592fc869983e7afc5'
 LOCAL_ROOT="$REPOSITORY/.local"
@@ -72,7 +73,11 @@ select_build_mode() {
             [ "$PROFILE" = bluetooth ] || fail 'ble-trace observe l’hôte Bluetooth : utilise le matériel bluetooth'
             BUILD_VARIANT="$PROFILE-$KEYMAP_PROFILE-ble-trace"
             ;;
-        *) fail 'Mode de compilation inconnu : utilise debug, usb-trace, ble-trace ou aucun argument' ;;
+        identity)
+            [ "$PROFILE" = bluetooth ] && [ "$KEYMAP_PROFILE" = auto ] || fail 'identity exige bluetooth auto'
+            BUILD_VARIANT="$PROFILE-$KEYMAP_PROFILE-identity"
+            ;;
+        *) fail 'Mode de compilation inconnu : utilise debug, usb-trace, ble-trace, identity ou aucun argument' ;;
     esac
 }
 

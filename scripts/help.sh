@@ -16,7 +16,7 @@ show_command() {
 # Explique les deux choix obligatoires, l’option debug et des commandes complètes.
 show_build_help() {
     printf '\n%sCompiler un firmware%s\n\n' "$LOG_HEADING" "$LOG_RESET"
-    printf '  %smake build <matériel> <keymap> [debug|usb-trace|ble-trace]%s\n' "$LOG_SUCCESS" "$LOG_RESET"
+    printf '  %smake build <matériel> <keymap> [debug|usb-trace|ble-trace|identity]%s\n' "$LOG_SUCCESS" "$LOG_RESET"
     printf '%s\n' '  Matériel puis keymap obligatoires, aucun choix par défaut.'
 
     printf '\n%s1. Matériel (obligatoire)%s\n' "$LOG_HEADING" "$LOG_RESET"
@@ -34,6 +34,7 @@ show_build_help() {
     show_command 'debug' 'Ajouter les logs USB sur les deux moitiés'
     show_command 'usb-trace' 'Observer les requêtes USB sur la gauche (wire uniquement)'
     show_command 'ble-trace' 'Observer la connexion BLE sur la gauche (bluetooth uniquement)'
+    show_command 'identity' 'Comparer USB/BLE avec l’app (bluetooth auto uniquement, sans bascule)'
 
     printf '\n%sExemples%s\n' "$LOG_HEADING" "$LOG_RESET"
     show_command 'make build wire auto' 'USB avec sélection automatique macOS / Windows'
@@ -48,7 +49,7 @@ show_build_help() {
 # Présente la sélection du build et la confirmation requise avant un flash USB.
 show_flash_help() {
     printf '\n%sFlasher un firmware (macOS)%s\n\n' "$LOG_HEADING" "$LOG_RESET"
-    printf '  %smake flash <matériel> <keymap> <left|right> [debug|usb-trace|ble-trace]%s\n' "$LOG_SUCCESS" "$LOG_RESET"
+    printf '  %smake flash <matériel> <keymap> <left|right> [debug|usb-trace|ble-trace|identity]%s\n' "$LOG_SUCCESS" "$LOG_RESET"
     printf '  %smake flash <chemin.uf2>%s\n\n' "$LOG_SUCCESS" "$LOG_RESET"
     printf '%s\n' '  Matériel : wire ou bluetooth. Keymap : auto, multi, windows, macos ou linux.'
     printf '%s\n' '  Sans chemin, choisit le dernier build exact. Le diagnostic doit être explicite.'

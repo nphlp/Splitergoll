@@ -21,6 +21,8 @@ final class ApplicationDelegate: NSObject, NSApplicationDelegate, NSWindowDelega
     private var monitor: BatteryMonitor?
     private var window: NSWindow?
     private var statusItem: NSStatusItem?
+    private let identityMonitor = HostIdentityMonitor()
+    private var identityWindow: NSWindow?
     private var subscriptions: Set<AnyCancellable> = []
 
     // Valide la configuration du bundle avant de demander tout accès Bluetooth.
@@ -45,10 +47,20 @@ final class ApplicationDelegate: NSObject, NSApplicationDelegate, NSWindowDelega
             .receive(on: RunLoop.main)
             .sink { [weak self] _, _, _ in
                 // Attend la fin des affectations @Published avant de relire le modèle sur la file principale.
-                MainActor.assumeIsolated { self?.updateMenu() }
+                MainActor.assumeIsolated {
+                    self?.updateMenu()
+                    self?.identityMonitor.followSelection(self?.monitor?.selection.selected?.id)
+                }
+            }.store(in: &subscriptions)
+        identityMonitor.objectWillChange.receive(on: RunLoop.main)
+            .sink { [weak self] _ in
+                MainActor.assumeIsolated { self?.fitIdentityWindow() }
             }.store(in: &subscriptions)
         updateMenu()
         monitor.start()
+        NSWorkspace.shared.notificationCenter.addObserver(
+            self, selector: #selector(identityWillSleep), name: NSWorkspace.willSleepNotification, object: nil
+        )
         LaunchAtLogin.configure()
     }
 
@@ -64,6 +76,8 @@ final class ApplicationDelegate: NSObject, NSApplicationDelegate, NSWindowDelega
     // Libère la connexion cliente et les timers à la fermeture explicite de l’app.
     func applicationWillTerminate(_ notification: Notification) {
         monitor?.stop()
+        identityMonitor.stop()
+        NSWorkspace.shared.notificationCenter.removeObserver(self)
         subscriptions.removeAll()
         if let statusItem { NSStatusBar.system.removeStatusItem(statusItem) }
     }
@@ -117,6 +131,10 @@ final class ApplicationDelegate: NSObject, NSApplicationDelegate, NSWindowDelega
         menu.addItem(
             KeyboardMenu.item(selection: monitor.selection, target: self, action: #selector(selectKeyboard)))
         menu.addItem(NSMenuItem.separator())
+        let identity = NSMenuItem(
+            title: "Tester l’identité USB/Bluetooth", action: #selector(showIdentity), keyEquivalent: "")
+        identity.target = self
+        menu.addItem(identity)
         for (title, action) in [
             ("Ouvrir l’app", #selector(showWindow)),
             ("Quitter l’app", #selector(quitApplication)),
@@ -134,6 +152,7 @@ final class ApplicationDelegate: NSObject, NSApplicationDelegate, NSWindowDelega
     @objc private func selectKeyboard(_ sender: NSMenuItem) {
         guard let id = sender.representedObject as? UUID else { return }
         monitor?.selectKeyboard(id)
+        identityMonitor.stop()
     }
 
     // Réaffiche la même fenêtre et donne le focus à l’app, sans toucher au clavier connecté.
@@ -145,8 +164,47 @@ final class ApplicationDelegate: NSObject, NSApplicationDelegate, NSWindowDelega
 
     // Fermer la fenêtre retire l’app du Dock et conserve son indicateur dans la barre des menus.
     func windowWillClose(_ notification: Notification) {
-        guard let closingWindow = notification.object as? NSWindow, closingWindow === window else { return }
-        NSApp.setActivationPolicy(.accessory)
+        guard let closingWindow = notification.object as? NSWindow else { return }
+        if closingWindow === identityWindow { identityMonitor.stop() }
+        let anotherVisible = [window, identityWindow].compactMap { $0 }.contains {
+            $0 !== closingWindow && $0.isVisible
+        }
+        if !anotherVisible { NSApp.setActivationPolicy(.accessory) }
+    }
+
+    // L’ouverture du diagnostic est le seul geste autorisant les annonces d’identité.
+    @objc private func showIdentity() {
+        if identityWindow == nil {
+            let window = NSWindow(
+                contentRect: NSRect(x: 0, y: 0, width: 390, height: 280),
+                styleMask: [.titled, .closable, .miniaturizable], backing: .buffered, defer: false)
+            window.title = "Identité USB/Bluetooth"
+            window.delegate = self
+            window.isReleasedWhenClosed = false
+            window.contentViewController = NSHostingController(
+                rootView: HostIdentityView(diagnostic: identityMonitor) { [weak self] in
+                    guard let self else { return }
+                    self.identityMonitor.start(selected: self.monitor?.selection.selected?.id)
+                })
+            window.center()
+            identityWindow = window
+        }
+        identityMonitor.start(selected: monitor?.selection.selected?.id)
+        fitIdentityWindow()
+        NSApp.setActivationPolicy(.regular)
+        identityWindow?.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
+    }
+
+    // Ne prolonge ni l’activité de la machine ni les annonces du diagnostic pendant le sommeil.
+    @objc private func identityWillSleep() { identityMonitor.pauseForSleep() }
+
+    // Les messages longs du diagnostic ajustent la hauteur au lieu de rogner leur texte.
+    private func fitIdentityWindow() {
+        guard let window = identityWindow, let view = window.contentViewController?.view else { return }
+        view.layoutSubtreeIfNeeded()
+        let size = NSSize(width: 390, height: max(280, view.fittingSize.height))
+        if window.contentLayoutRect.size != size { window.setContentSize(size) }
     }
 
     // Quitte proprement sans arrêter la liaison HID ni supprimer d’appairage.
