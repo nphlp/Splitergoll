@@ -85,7 +85,7 @@ port=$1
 case "$(uname -s)" in
     Darwin) host=macos ;;
     Linux) host=linux ;;
-    *) fail 'Sous Windows, copie capture.ps1 dans ton dossier de travail et lance-le avec PowerShell (voir docs/detection-os.md)' ;;
+    *) fail 'Sous Windows, copie capture.ps1 dans ton dossier de travail et lance-le avec PowerShell (voir docs/technique/diagnostics/02-detection-os-usb.md)' ;;
 esac
 case "$port" in
     /dev/cu.usbmodem*|/dev/ttyACM*) ;;

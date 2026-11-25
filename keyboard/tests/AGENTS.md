@@ -22,7 +22,7 @@ Le lanceur borne la durée et nettoie uniquement son propre groupe de processus.
 Les formats de diagnostic sont testés séparément par les validateurs réels AWK/PS,
 avec fixtures synthétiques, jamais avec des données privées versionnées.
 
-La matrice humaine docs/tests-automatises.md doit distinguer règles implémentées,
+La matrice humaine docs/technique/validation/01-tests-automatises.md doit distinguer règles implémentées,
 contrats futurs, simulations et faits vérifiés sur le vrai clavier. Ne pas prétendre
 prouver toute absence de bug ou reproduire la consommation réelle du nRF52840.
 

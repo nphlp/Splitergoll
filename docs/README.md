@@ -1,115 +1,94 @@
-# Splitergoll
+# Documentation Splitergoll
 
-Clavier ergonomique split basé sur ZMK : 42 touches et deux encodeurs cliquables,
-avec une keymap française complète et des adaptations Windows, macOS et Linux.
+Splitergoll est un clavier ergonomique en deux moitiés, avec 42 touches, deux
+encodeurs cliquables et un firmware ZMK. V1 est alimenté par USB. V2 a une
+batterie par moitié et peut fonctionner en Bluetooth sur batterie.
 
-Ce fichier prépare le futur `README.md` et sert d’index à la documentation.
-Il reste dans `docs/` pendant le chantier, le README actuel est conservé.
+- [Installer le firmware](demarrer/02-compiler.md)
+- Retrouver une touche sur [macOS](layouts-clavier/02-macos.md), [Windows](layouts-clavier/03-windows.md) ou [Linux](layouts-clavier/04-linux.md)
+- [Connecter un ordinateur](utiliser-le-clavier/01-bluetooth.md) ou [vérifier les batteries](utiliser-le-clavier/02-batteries.md)
 
-## Version en cours
+## Sommaire complet
 
-La branche de travail est `unified-firmware`, avec un snapshot ZMK préparant la 0.4
-et Zephyr 4.1. Les moitiés communiquent en BLE, la gauche envoie la saisie à l’ordinateur.
+### Démarrer
 
-| Fonction | État |
-| --- | --- |
-| Build local, flash guidé et diagnostics USB | Disponibles, parcours de flash validé sur V1 |
-| Keymaps `multi`, `windows` avec jeu, `macos`, `linux` | Disponibles, `multi` garde la bascule manuelle d’OS |
-| Détection USB et keymap `wire auto` | Mac/Windows validés sur V1 en firmware normal |
-| Détection BLE initiale, mémoire et restauration par appareil | Mac/Windows validés sur V1, sans nouvelle détection aux reconnexions |
-| `bluetooth auto` et L1 + clic encodeur droit | Bascule entre appareils connectés et bonnes keymaps confirmées sur V1 en `ble-trace` |
-| Reconnexion des connus et nouvel appairage sur deux minutes | Intégrés, connus validés sur V1 au délai de test de dix secondes, nouveaux bonds à tester |
-| Recherche avec sélection et tampon de saisie | Intégrés, essais Mac/Windows validés sur V1 au délai de test |
-| Recherche sans hôte jusqu’à la veille légère | Implémentée, tests logiciels et compilation OK, essais V1 à faire |
-| Arrêt des annonces et déconnexion du Mac en Gaming USB | Spécifiés, non implémentés sur le clavier |
-| Destinations mixtes USB/BLE avec priorité USB par ordinateur | [Prototype Mac développé](priorite-usb.md), validation physique à faire |
-| Préférence durable et retour à l’ancien appareil au démarrage | Comportements principaux validés sur V1 au délai court, délai normal à confirmer |
-| Correction manuelle persistante d’un OS mal reconnu | Prévue, non implémentée |
+- [01. Identifier son matériel et ses connexions](demarrer/01-materiel.md)
+- [02. Choisir et compiler son firmware](demarrer/02-compiler.md)
+- [03. Flasher le clavier](demarrer/03-flasher.md)
 
-Les heuristiques d’OS sont expérimentales, elles ne sont pas validées sur tous
-les ordinateurs. Linux automatique et le dongle restent au backlog.
-L’attente de bascule BLE ressentie d’environ deux secondes reste à mesurer et réduire.
+### Layouts clavier
 
-V1 est sans batterie, V2 possède une batterie par moitié. La lecture des deux niveaux
-sur batterie est revalidée après migration. Sous USB, le 100 % affiché sur V2 reflète
-l’alimentation du contrôleur et ne prouve pas une batterie pleine.
-Les essais courts après migration retrouvent une reprise immédiate après inactivité
-et une reprise en 2 à 5 secondes après sollicitation de la gauche en veille profonde.
-La droite seule ne réveille pas la centrale. L’autonomie, la première frappe et les
-réveils par chaque touche restent à vérifier dans le [TODO](TODO.md).
+- [01. Tronc commun](layouts-clavier/01-tronc-commun.md)
+- [02. macOS](layouts-clavier/02-macos.md)
+- [03. Windows](layouts-clavier/03-windows.md)
+- [04. Linux](layouts-clavier/04-linux.md)
+- [05. Profil multi](layouts-clavier/05-multi.md)
+- [06. Profil auto](layouts-clavier/06-auto.md)
 
-La rencontre recherche/inactivité et la persistance sont validées au délai court
-sur V1. Le complément sur batterie de V2 confirme fermeture puis IDLE à gauche,
-sans reset ni réveil au retour USB, grâce au journal RAM dédié. L’utilisateur ne
-demande pas de répétition à deux minutes. La suite vise le firmware USB + BLE commun,
-avec Gaming USB et le choix de destination. Les noms des futurs profils ne sont pas
-encore fixés. Le [cadrage de l’appairage](gestion-appairage.md) distingue règles
-prévues et moteur déjà développé. Les branches historiques et les variantes minimales
-restent des archives.
+### Utiliser le clavier
 
-## Démarrer
+- [01. Appairer et changer d’ordinateur](utiliser-le-clavier/01-bluetooth.md)
+- [02. Batteries et recharge](utiliser-le-clavier/02-batteries.md)
+- [03. Veille et réveil](utiliser-le-clavier/03-veille-et-reveil.md)
+- [04. Application macOS](utiliser-le-clavier/04-application-macos.md)
+- [05. Application Windows](utiliser-le-clavier/05-application-windows.md)
 
-Avec Make et Docker démarré, depuis la racine du dépôt :
+### Référence technique
 
-```sh
-make setup
-make build bluetooth multi
-make build wire macos
-```
+#### Firmware
 
-`make build` seul affiche l’aide. Pour compiler, préciser le matériel (`wire` ou
-`bluetooth`), puis la keymap (`auto`, `multi`, `windows`, `macos` ou `linux`).
-`auto` utilise la signature USB en `wire`, ou l’OS mémorisé par appareil en `bluetooth`.
-Les deux choix sont obligatoires, aucun n’est sélectionné par défaut.
-Windows inclut toujours le gaming. Ajouter `debug` à la fin pour les logs USB,
-par exemple `make build bluetooth windows debug`.
+- [01. Build local](technique/firmware/01-build-local.md)
+- [02. Matériel et profils de connexion](technique/firmware/02-materiel-et-profils.md)
+- [03. Architecture des keymaps](technique/firmware/03-architecture-keymaps.md)
+- [04. Règles d’appairage](technique/firmware/04-gestion-appairage.md)
+- [05. Reconnexion Bluetooth](technique/firmware/05-reconnexion-bluetooth.md)
+- [06. Sélection et mémoire de l’ordinateur](technique/firmware/06-selection-appareil.md)
+- [07. Mémoire et correction de l’OS](technique/firmware/07-memoire-os.md)
+- [08. Destinations de saisie USB et Bluetooth](technique/firmware/08-destinations-saisie.md)
+- [09. Identité de l’ordinateur](technique/firmware/09-identite-ordinateur.md)
+- [10. Mesure des batteries](technique/firmware/10-mesure-batteries.md)
+- [11. États d’alimentation](technique/firmware/11-etats-alimentation.md)
 
-Le [guide de build](build-local.md) détaille les prérequis et les fichiers UF2 obtenus.
-Ces commandes ne flashent pas le clavier.
-Sur macOS, `make flash wire macos right` sélectionne le dernier build correspondant
-et demande confirmation avant sa copie. Voir [le guide de flash](flash-firmware.md).
-`make help` affiche toutes les commandes. Sur macOS, `make bat read` lit les deux batteries
-et `make bat avg` calcule une moyenne par moitié sur 30 secondes.
+#### Diagnostics
 
-## Documentation
+- [01. Lire les logs USB](technique/diagnostics/01-logs-usb.md)
+- [02. Diagnostiquer la détection d’OS en USB](technique/diagnostics/02-detection-os-usb.md)
+- [03. Capturer l’USB sur Windows](technique/diagnostics/03-capture-usb-windows.md)
+- [04. Diagnostiquer la détection d’OS en Bluetooth](technique/diagnostics/04-detection-os-bluetooth.md)
+- [05. Capturer le Bluetooth depuis le Mac](technique/diagnostics/05-capture-bluetooth-mac.md)
+- [06. Capturer le Bluetooth sur Windows](technique/diagnostics/06-capture-bluetooth-windows.md)
+- [07. Vérifier l’identité USB et Bluetooth](technique/diagnostics/07-identite-usb-bluetooth.md)
+- [08. Lire le journal d’activité](technique/diagnostics/08-journal-activite.md)
+- [09. Examiner la latence](technique/diagnostics/09-latence.md)
+- [10. Dépanner ou réinitialiser l’appairage](technique/diagnostics/10-depannage-bluetooth.md)
 
-- [Reprendre le développement](reprise.md) : état validé, priorités et points à décider pour la prochaine séance.
-- [Planification selon le matériel](planification.md) : choisir les chantiers réalisables avec Mac, Windows, V1 ou V2.
-- [Build local](build-local.md) : commandes, environnement et résultats.
-- [Logs USB](logs-usb.md) : firmwares de diagnostic et console de chaque moitié.
-- [Journal d’activité](diagnostic-activite.md) : observer les événements sur batterie puis les lire par USB.
-- [Tests automatisés](tests-automatises.md) : unités, intégration, Zephyr/QEMU et limites matérielles.
-- [Matériel et connexions](configuration-materielle.md) : cartes, rôles et limites.
-- [Essais wire](tests-wire.md) : vérifier le clavier sans batterie sur Mac et Windows.
-- [Latence](latence.md) : diagnostic rapide, mesures possibles et limites des logs USB.
-- [Migration ZMK](migration-zmk.md) : versions, nouveautés, ruptures et validation avant flash.
-- [Capture USB Windows](capture-usb-windows.md) : observer le firmware normal sans port série.
-- [Détection d’OS](detection-os.md) : préparer et comparer les captures de connexion USB, puis BLE.
-- [Diagnostic Bluetooth](detection-os-bluetooth.md) : comparer Mac et Windows sans sélection automatique.
-- [Sélection de l’ordinateur](selection-appareil.md) : comportement Bluetooth prévu, bascule et reprise après veille.
-- [Connexions Bluetooth](reconnexion-bluetooth.md) : deux minutes pour les connus et nouveaux appareils, sans détourner la saisie.
-- [Essais de connexion Bluetooth](tests-connexions-bluetooth.md) : premier appairage, ajout, mémoire et reconnexions sur V1.
-- [Essais de reprise Bluetooth](tests-reprise-bluetooth.md) : préférence durable et ordre de retour Mac/Windows.
-- [Essais de recherche Bluetooth](tests-recherche-bluetooth.md) : absence d’hôte, première arrivée et arrêt en veille légère.
-- [Destinations de saisie](destinations-saisie.md) : futur choix USB/Bluetooth et priorité par ordinateur.
-- [Identité de l’ordinateur](identite-ordinateur.md) : données disponibles, protocoles d’appairage USB et limites de l’association USB/BLE.
-- [Diagnostic d’identité Mac](diagnostic-identite.md) : firmware, app et essai USB/BLE sans changer la saisie.
-- [Gaming USB](gaming-usb.md) : fermeture du Bluetooth hôte et mémoire du mode, à développer.
-- [Gestion de l’appairage](gestion-appairage.md) : définir l’ouverture aux nouveaux appareils et les reconnexions.
-- [Mémoire de l’OS](memoire-os.md) : acquisition initiale et sauvegarde expérimentale, correction manuelle prévue.
-- [Essais de mémoire](tests-memoire-os.md) : appairage, reconnexion et redémarrage sur Mac puis Windows.
-- [Capture Bluetooth depuis le Mac](capture-bluetooth-mac.md) : lire les échanges avec Mac ou Windows en gardant les USB sur le Mac.
-- [Capture Bluetooth Windows](capture-bluetooth-windows.md) : conserver l’appairage Mac et lire les échanges du PC.
-- [Firmwares stables](firmwares-stables.md) : récupération du snapshot 0.3 depuis l’historique Git.
-- [Veille et réveil](veille.md) : états d’inactivité et reprise à la frappe.
-- [Essais batteries et veille](tests-batteries-veille.md) : diagnostic ponctuel de V2, délais courts et logs USB.
-- [Flash du firmware](flash-firmware.md) : copie des UF2, bootloader et messages du Finder.
-- [Appairage Bluetooth](appairage-bluetooth.md) : clés de connexion, reset et diagnostic.
-- [Batteries](batteries.md) : mesure actuelle et affichage des deux niveaux.
-- [Application macOS](application-macos.md) : lancer le lecteur des deux batteries dans une fenêtre et la barre des menus, puis le valider sur V2.
-- [Application Windows](application-windows.md) : portable des deux batteries, utilisation et mises à jour.
-- [Clavier suivi par l’app](selection-clavier-app.md) : choix V1/V2 prévu, mémoire et séparation des mesures.
-- [Keymap automatique USB](keymap-auto.md) : macOS ou Windows avec gaming, sélection à la connexion.
-- [Keymap automatique Bluetooth](keymap-auto-bluetooth.md) : OS mémorisé et bascule Mac/Windows confirmés sur V1 en diagnostic.
-- [Keymap](keymap.md) : organisation, couches et sept schémas de touches.
-- [TODO et idées](TODO.md) : suivi des tâches restantes.
+#### Validation
+
+- [01. Tests automatisés](technique/validation/01-tests-automatises.md)
+- [02. Essais wire sur Mac et Windows](technique/validation/02-tests-wire.md)
+- [03. Essais du profil auto en USB](technique/validation/03-tests-auto-usb.md)
+- [04. Essais du profil auto en Bluetooth](technique/validation/04-tests-auto-bluetooth.md)
+- [05. Essais de connexion Bluetooth](technique/validation/05-tests-connexions-bluetooth.md)
+- [06. Essais de reprise Bluetooth](technique/validation/06-tests-reprise-bluetooth.md)
+- [07. Essais de recherche sans hôte](technique/validation/07-tests-recherche-bluetooth.md)
+- [08. Essais de mémoire d’OS](technique/validation/08-tests-memoire-os.md)
+- [09. Essais batteries et veille](technique/validation/09-tests-batteries-veille.md)
+- [10. Essai de sélection V1 et V2 sur Mac](technique/validation/10-tests-selection-clavier-macos.md)
+
+#### Expérimentations
+
+- [01. Priorité USB sur le même ordinateur](technique/experimentations/01-priorite-usb.md)
+- [02. Gaming USB et mémorisation du mode](technique/experimentations/02-gaming-usb.md)
+- [03. Hypothèses sur les signatures Bluetooth](technique/experimentations/03-signatures-bluetooth.md)
+
+#### Historique
+
+- [01. Récupérer les firmwares ZMK 0.3.0](technique/historique/01-firmwares-stables.md)
+- [02. Migration ZMK et Zephyr](technique/historique/02-migration-zmk.md)
+- [03. Bilan des essais V1 et V2](technique/historique/03-bilan-des-essais.md)
+
+#### Suivi
+
+- [01. Reprendre le développement](technique/suivi/01-reprendre.md)
+- [02. Planifier les essais selon le matériel](technique/suivi/02-planification.md)
+- [03. TODO et idées](technique/suivi/03-todo.md)

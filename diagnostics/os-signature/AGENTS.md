@@ -24,7 +24,7 @@ sortie Bluetooth, USB HID désactivé, sans changement de keymap, délais, prote
 ou appairages. La droite est identique au normal. `auto` fonctionne aussi en Bluetooth,
 depuis la mémoire de l’appareil sélectionné, indépendamment du port de diagnostic.
 Le sélecteur USB et son classifieur ne sont pas compilés dans ce diagnostic.
-Le protocole humain est [../../docs/detection-os-bluetooth.md](../../docs/detection-os-bluetooth.md).
+Le protocole humain est [diagnostic de l’OS en Bluetooth](../../docs/technique/diagnostics/04-detection-os-bluetooth.md).
 
 `keyboard/src/os_detection/ble_observer.c` filtre le rôle local `BT_CONN_ROLE_PERIPHERAL` pour ne pas observer
 la droite. Les callbacks Zephyr suivent connexion, sécurité, paramètres proposés
@@ -173,7 +173,7 @@ captures historiques. Sur Windows le même fichier autonome `capture.ps1 -Port C
 <status|free|index>` suffit, sans -Ble ni administrateur. Les sorties Mac restent
 dans `.local/ble-profiles/`, Windows `windows-ble-profile-….txt` dans le dossier
 courant. Les jeux PowerShell Profile, Serial et UsbEvents sont exclusifs.
-Le [guide Windows](../../docs/capture-bluetooth-windows.md) précise flash gauche,
+Le [guide Windows](../../docs/technique/diagnostics/06-capture-bluetooth-windows.md) précise flash gauche,
 lecture de la case Mac, coupure Bluetooth Mac, alimentation PC, sélection libre,
 appairage Windows, capture -Ble et retour à l’index Mac sans oublier aucun appareil.
 
@@ -339,7 +339,7 @@ doit invalider la connaissance lors du remplacement de bond, et traiter le chang
 d’OS/dual boot sur une même identité. Elle ne doit pas coder Mac=0, Windows=1,
 utiliser l’OS du collecteur USB, imposer une affectation manuelle, ou transformer
 une radio reconnue en preuve d’OS. Aucune mémoire d’OS ni sélection BLE automatique
-n’est implémentée. Les tâches et la décision restent dans docs/TODO.md.
+n’est implémentée. Les tâches et la décision restent dans docs/technique/suivi/03-todo.md.
 
 La mémorisation proposée est un cache de résultat heuristique, pas du machine learning.
 Sa mise en œuvre peut être déterministe et testée, mais la qualité de l’identification
@@ -360,7 +360,7 @@ est désormais une solution de dernier recours demandée par l’utilisateur, pa
 comportement de repli implicite d’un classifieur. Un raccourci du type L1 + clic
 encodeur, la restauration après redémarrage/veille et une éventuelle mémoire par hôte
 restent à concevoir. Les profils de build évoqués ne sont pas ajoutés. Le suivi reste
-dans docs/TODO.md, sans dupliquer une liste de tâches ici.
+dans docs/technique/suivi/03-todo.md, sans dupliquer une liste de tâches ici.
 
 Sources examinées à leurs commits précis, sans exécuter ni intégrer leur code :
 
@@ -912,7 +912,7 @@ La sélection automatique attend un hôte connu et une liaison sécurisée, excl
 moitié droite et respecte les relâchements avant changement de destination/couches.
 Une deuxième connexion ne vole pas la saisie à l’hôte actif. Le raccourci de destination
 devra rester utilisable même si l’OS n’a pas encore été identifié.
-Les tâches sont centralisées dans docs/TODO.md. Aucun code, réglage de connexion,
+Les tâches sont centralisées dans docs/technique/suivi/03-todo.md. Aucun code, réglage de connexion,
 préférence de sortie ou appairage n’est modifié pour ce cadrage.
 
 ### Fenêtre de reprise après réveil
@@ -954,7 +954,7 @@ Le code observe `bt_conn` de rôle périphérique hôte, indépendamment de la c
 UART USB. L’USB peut rester sur le Mac pendant la connexion/appairage BLE Windows.
 Le Bluetooth du Mac peut être coupé sans perdre la lecture série USB. Cela évite
 les transferts du script et des captures Windows. Le nouveau protocole humain est
-`../../docs/capture-bluetooth-mac.md`, l’alternative PowerShell reste disponible.
+`../../docs/technique/diagnostics/05-capture-bluetooth-mac.md`, l’alternative PowerShell reste disponible.
 Le champ host et le préfixe macos décrivent l’OS du collecteur, jamais l’hôte BLE.
 Consigner l’hôte testé séparément, sans modifier les captures brutes ni utiliser
 cette annotation comme entrée du classifieur. Le diagnostic v2 sépare les sessions

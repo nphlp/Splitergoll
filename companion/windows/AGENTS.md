@@ -6,7 +6,7 @@ Compagnon facultatif pour les deux batteries, sans changement de firmware.
 Même comportement que l’app Mac, interface adaptée à Windows. Une icône unique
 affiche gauche au-dessus de droite, avec `%` seulement si la lisibilité le permet.
 Un panneau près de l’icône montre les valeurs exactes et permet d’ouvrir la fenêtre.
-Le guide humain reste dans docs/application-windows.md.
+Le guide humain reste dans docs/utiliser-le-clavier/05-application-windows.md.
 
 ## Invariants
 
@@ -87,12 +87,12 @@ L’utilisateur juge ensuite la base satisfaisante mais trop large et demande le
 trois quarts de la largeur précédente, soit 255 au lieu de 340 unités logiques.
 Cette réduction conserve les gardes de contenu et le DPI, sans nouvelle validation
 physique de la largeur réduite. L’amélioration visuelle avec les silhouettes gauche
-et droite est reportée dans docs/TODO.md. Aucun flash ou réappairage requis.
+et droite est reportée dans docs/technique/suivi/03-todo.md. Aucun flash ou réappairage requis.
 
 ## Ideas / backlog
 
 Identité commune USB/BLE par les compagnons : prochain chantier retenu, sans
 identifiant hôte ni protocole d’écriture dans le lot batteries. Commencer par
-un diagnostic de correspondance, sans changement de saisie. Voir docs/identite-ordinateur.md.
+un diagnostic de correspondance, sans changement de saisie. Voir docs/technique/firmware/09-identite-ordinateur.md.
 Interface Windows : deux cartes batterie avec les SVG gauche et droite existants
-et leurs pourcentages, dans le panneau et la fenêtre. Voir docs/TODO.md.
+et leurs pourcentages, dans le panneau et la fenêtre. Voir docs/technique/suivi/03-todo.md.

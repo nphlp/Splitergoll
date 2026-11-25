@@ -9,8 +9,8 @@ Le compagnon d’identité est séparé du lecteur batterie. Il entretient les a
 en arrière-plan dès que le clavier suivi est disponible, même fenêtre fermée.
 Le firmware identity compare seulement. Le firmware usb-priority utilise la preuve
 pour sa sortie réelle. Sans app, la saisie Bluetooth reste utilisable.
-Le guide humain est [application-macos.md](../../docs/application-macos.md).
-Les évolutions sont suivies dans le [TODO](../../docs/TODO.md), sans liste dupliquée ici.
+Le guide humain est [application-macos.md](../../docs/utiliser-le-clavier/04-application-macos.md).
+Les évolutions sont suivies dans le [TODO](../../docs/technique/suivi/03-todo.md), sans liste dupliquée ici.
 
 ## Organisation
 
@@ -51,7 +51,7 @@ Le lot priorité USB passe 77 tests Swift avec avertissements fatals, dont 16 Ap
 menus et 61 modèles. Le bundle Release est compilé et signé ad hoc, sans lancement
 ou installation pendant ces contrôles. Les tests de stockage utilisent seulement
 leurs dossiers temporaires, pas le vrai fichier d’identité du Mac. Le code ajouté
-est vérifié par swift-format. Le parcours physique reste dans docs/diagnostic-identite.md.
+est vérifié par swift-format. Le parcours physique reste dans docs/technique/diagnostics/07-identite-usb-bluetooth.md.
 
 - `BatteryCore` : décodage GATT, identité des côtés, dernières lectures et disponibilité.
   BatterySymbolLayout conserve les proportions du symbole dans le cadre de chaque ligne.
@@ -328,7 +328,7 @@ l’agent. L’utilisateur confirme ensuite son installation et V2 seul sélecti
 dans le menu. Cela ne valide pas la persistance ou l’isolation entre deux claviers.
 L’utilisateur reporte ces essais et demande de reprendre le firmware USB/BLE.
 Ne pas reflasher V1 uniquement pour poursuivre les tests de l’app à ce stade.
-L’essai utilisateur V1/V2 reste à faire selon docs/selection-clavier-app.md. V1 wire
+L’essai utilisateur V1/V2 reste à faire selon docs/technique/validation/10-tests-selection-clavier-macos.md. V1 wire
 strict ne convient pas : préparer le profil BLE avec l’utilisateur, sans effacement
 implicite. Le choix du clavier physique ne touche jamais au slot hôte du firmware.
 L’anomalie antérieure de mesure n’a pas de cause établie, ne pas la présenter comme

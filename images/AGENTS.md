@@ -27,5 +27,5 @@ Cet audit ne couvre pas les objets inaccessibles, les copies ou caches distants.
 Ne pas présenter des données personnelles comme découvertes sans preuve.
 
 Renommer ou nettoyer le checkout ne purge pas les anciennes versions dans Git.
-Le chantier de purge est au [TODO](../docs/TODO.md). Son périmètre, notamment les
+Le chantier de purge est au [TODO](../docs/technique/suivi/03-todo.md). Son périmètre, notamment les
 branches historiques à préserver, doit être validé avant toute réécriture.

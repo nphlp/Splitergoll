@@ -7,7 +7,7 @@ Le moteur C pur et ses tests couvrent la politique cible. L’adaptateur relie l
 fenêtres de reconnexion et l’accueil d’un nouveau bond au firmware bluetooth auto.
 La recherche avec sélection sur une arrivée est raccordée dans ble_auto.c.
 Gaming USB reste séparé.
-Les règles humaines sont dans docs/gestion-appairage.md et docs/destinations-saisie.md.
+Les règles humaines sont dans docs/technique/firmware/04-gestion-appairage.md et docs/technique/firmware/08-destinations-saisie.md.
 
 ## Wire : USB exclusif vers l’ordinateur
 
@@ -100,7 +100,7 @@ un préalable bloquant. Le protocole diagnostique v1 est dans ../identity, isol�
 du sélecteur. Il garde ZMK_USB=n : le canal USB vendor n’est pas une sortie clavier.
 Premier lot sans bascule de saisie, puis seulement destination unique et priorité USB.
 Ne pas associer deux ordinateurs sur leur OS. Le clavier doit rester utilisable
-sans compagnon. Voir docs/identite-ordinateur.md pour le stockage et la confiance.
+sans compagnon. Voir docs/technique/firmware/09-identite-ordinateur.md pour le stockage et la confiance.
 
 Après publication du wire strict et du sélecteur app dans 24babd6, reprendre
 l’identité des destinations avant toute fusion. Dans le socle figé, endpoints.c
@@ -130,7 +130,7 @@ association par OS ou par état HID statique, éviter un programme hôte. SET_AD
 attribue une adresse au périphérique USB, pas une identité du PC. Les logs USB
 actuels n’incluent que huit octets SETUP et les métadonnées BLE exportées ne
 contiennent ni adresse brute ni clé. Ne pas conclure sur des payloads non capturés. Pas de build,
-flash ou lecture série de ce nouveau lot à ce stade. Voir docs/destinations-saisie.md.
+flash ou lecture série de ce nouveau lot à ce stade. Voir docs/technique/firmware/08-destinations-saisie.md.
 
 Réutilisation du corpus local pour l’identité : .local/usb-traces contient dix
 USBTRACE v1 valides (cinq Mac, cinq Windows), sans pertes/rejets. Trente tuples
@@ -150,7 +150,7 @@ inventoriées ou Downloads, leurs conclusions et les demandes anonymisées reste
 dans le dépôt. Ne pas annoncer une conservation exhaustive de toutes les tentatives.
 
 Recherche protocolaire de l’identité, sans firmware nouveau : voir
-docs/identite-ordinateur.md. USB GET_DESCRIPTOR/ContainerID identifient le clavier,
+docs/technique/firmware/09-identite-ordinateur.md. USB GET_DESCRIPTOR/ContainerID identifient le clavier,
 CDC SET_LINE_CODING transporte seulement dwDTERate/bCharFormat/bParityType/bDataBits.
 Le socle usb_hid.c SET_REPORT traite LED et éventuellement multiplicateurs de
 résolution, pas une identité de PC. Un nouveau Feature Report ne force pas le
@@ -367,14 +367,14 @@ Il provient d’une copie du module dans .local/diagnostic/ble-window-10s : seul
 HOST_WINDOW_DURATION_MS diffère, sans modifier les dépendances ou la configuration
 publique. Le délai SMP reste trente secondes depuis son début. Les UF2 passent les
 gardes et SHA-256, les deux bords de l’échéance sont testés en natif. La droite est
-identique au build normal. Protocole humain : docs/tests-connexions-bluetooth.md.
+identique au build normal. Protocole humain : docs/technique/validation/05-tests-connexions-bluetooth.md.
 
 Compiler host_window_policy.c avec keyboard/tests/host_window_policy_test.c,
 -Ikeyboard/include, C11, -Wall -Wextra -Werror et ASan/UBSan. Tester les échéances
 exactes et l’horloge 32 bits, réarmement, recherches, plusieurs arrivées, changements
 externes, identités remplacées, erreurs de topologie, Gaming et tickets périmés.
 Les suites natives existantes restent pertinentes. Aucun essai matériel n’est
-déduit d’un test pur. Les tâches restent centralisées dans docs/TODO.md.
+déduit d’un test pur. Les tâches restent centralisées dans docs/technique/suivi/03-todo.md.
 
 Validation réalisée : les dix suites natives passent avec ASan/UBSan et avertissements
 traités comme erreurs. La nouvelle suite énumère toutes les topologies jusqu’à huit
@@ -498,5 +498,5 @@ sources versionnées sous keyboard/tests/integration/radio, jamais leurs binaire
 Le futur Gaming mémorise le mode Windows normal/Gaming pour le retrouver après
 coupure/reset/rebranchement au même Windows USB. Cible souhaitée, non implémentée.
 Clarifier identité USB/BLE, portée de mémoire, repli sans USB et sortie volontaire
-avant le code. Le détail des tâches reste dans docs/TODO.md, le cadrage dans
-docs/gaming-usb.md et l’ordre de reprise dans docs/reprise.md.
+avant le code. Le détail des tâches reste dans docs/technique/suivi/03-todo.md, le cadrage dans
+docs/technique/experimentations/02-gaming-usb.md et l’ordre de reprise dans docs/technique/historique/03-bilan-des-essais.md.

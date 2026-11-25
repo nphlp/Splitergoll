@@ -119,7 +119,7 @@ normal. Essais restants : démarrage optimisé, touche tenue, reset du bus et r�
 avec le firmware normal. Linux, autres versions d’OS,
 hubs, KVM et BIOS sont inconnus et peuvent donner une mauvaise reconnaissance.
 Le Bluetooth utilise ses propres observations et sa mémoire, l’USB d’alimentation ne révèle pas son hôte.
-Les tâches restent centralisées dans `docs/TODO.md`.
+Les tâches restent centralisées dans `docs/technique/suivi/03-todo.md`.
 
 Validation réalisée : les trois suites C (état, classifieur, stockage) passent avec
 ASan/UBSan. Les dix captures privées restent correctement classées après déplacement
@@ -332,7 +332,7 @@ reboot, remplacement du bond à adresse identique, ambiguïté tardive, erreurs 
 suppression ciblée, surcharge et lecture USB passive. Le SHA du harnais est un
 double, la primitive cryptographique réelle est celle du build embarqué. Cela ne
 simule pas les files/interruptions du SoC ni une vraie coupure pendant NVS.
-Les essais physiques suivent docs/tests-memoire-os.md, après flash et accord ciblé.
+Les essais physiques suivent docs/technique/validation/08-tests-memoire-os.md, après flash et accord ciblé.
 
 Les builds de contrôle `bluetooth macos` et `wire auto usb-trace` passent : leurs
 quatre UF2 sont identiques aux références précédentes. Le build mémoire final est
@@ -363,7 +363,7 @@ restaurés en state saved, learning 0, error 0 et dropped 0. Windows n’offre p
 signature suffisante sur cette reconnexion, mais stored windows est retrouvé sans
 apprentissage : le chemin NVS et son contrôle d’identité sont validés sur V1 et
 ces deux appareils. La veille profonde V2 reste à tester. Les captures et étapes
-sont suivies dans l’AGENTS du diagnostic et docs/TODO.md.
+sont suivies dans l’AGENTS du diagnostic et docs/technique/suivi/03-todo.md.
 
 ## Keymap automatique Bluetooth
 
@@ -371,7 +371,7 @@ sont suivies dans l’AGENTS du diagnostic et docs/TODO.md.
 ble_auto.c. Exception explicite SPLITERGOLL_USB_PRIORITY : USB natif est actif mais
 ble_auto.c reste l’unique propriétaire des couches et gardes de touches. Aucun
 observateur/classifieur USB supplémentaire dans ce mode, OS depuis la mémoire du
-profil BLE sélectionné seulement. Voir ../connections/AGENTS.md et docs/priorite-usb.md.
+profil BLE sélectionné seulement. Voir ../connections/AGENTS.md et docs/technique/experimentations/01-priorite-usb.md.
 Aucun observateur USB dans le firmware Bluetooth normal. Les deux
 adaptateurs utilisent les mêmes treize couches et les mêmes fichiers Windows/macOS.
 La première intégration conserve les affectations de `auto.keymap`. Le lot suivant
@@ -579,7 +579,7 @@ d’alimentation une destination HID. Les contrôles d’identité mémoire BLE 
 Les bonds, le format NVS d’OS et les profils de build existants sont inchangés dans
 ce cadrage. Définir d’abord ouverture/fermeture des nouvelles associations en séparant
 annonces de reconnexion et acceptation d’appairage. Spécifications humaines et TODO
-dans docs/gestion-appairage.md et docs/destinations-saisie.md.
+dans docs/technique/firmware/04-gestion-appairage.md et docs/technique/firmware/08-destinations-saisie.md.
 
 Le dernier cadrage utilisateur propose annonces et nouveaux appairages ouverts
 pendant trente secondes au démarrage/reset, au retour Gaming USB vers Windows et via
@@ -717,4 +717,4 @@ initial/reconnexion/reboot, remplacement d’identité, erreurs, saturation et e
 Ces harnais sont versionnés dans keyboard/tests/integration, sans lecture série.
 Les règles encore futures (Linux, identité commune USB/BLE et Gaming persistant)
 ne deviennent pas implémentées parce que certaines politiques pures sont testées.
-Voir docs/tests-automatises.md pour la frontière entre logiciel et matériel.
+Voir docs/technique/validation/01-tests-automatises.md pour la frontière entre logiciel et matériel.
