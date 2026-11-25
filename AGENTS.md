@@ -93,8 +93,9 @@ isolés. Cette autorisation ne déclenche aucun flash ni effacement d’appairag
   Faire évoluer ces copies actives, jamais les fichiers de la sauvegarde historique.
 - Chaque couche des keymaps fixes conserve un schéma commenté au même format
   que `multi` : 44 positions, clics et deux actions de rotation des encodeurs.
-  Les légendes suivent les bindings réels, `·` indique une action héritée et `∅`
-  aucune action. Adapter le schéma dans le même changement que les affectations.
+  Les légendes suivent les bindings réels. Le point `·` indique une action héritée
+  et une case vide indique l’absence d’action. Adapter le schéma dans le même
+  changement que les affectations.
   Aligner les bindings gauche à gauche et droite à droite sous le schéma, comme
   dans `multi`, avec les retraits des rangées et des pouces. La base garde son
   schéma concret dans chaque profil et son schéma paramétré dans le fichier commun.

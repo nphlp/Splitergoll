@@ -42,7 +42,7 @@ clics d’encodeur. Au total, **42 touches et deux clics**.
 
 | Lire une case | Ce que fait la touche |
 | --- | --- |
-| `∅` | Aucune action |
+| Case vide | Aucune action |
 | `·` | Action de la couche active inférieure, selon les couches en cours |
 | `, ou ?` | Virgule seule, point d’interrogation avec Shift |
 | `é/É` ou `à/â/À` | Un, deux ou trois appuis rapprochés, dans cet ordre (fenêtre de 250 ms) |
