@@ -76,6 +76,11 @@ isolés. Cette autorisation ne déclenche aucun flash ni effacement d’appairag
   macOS et Linux cinq, sans gaming. Les retours du pavé et du jeu ciblent leur base.
   Le clic d’encodeur droit avec L1 est sans action dans les profils fixes.
   Le pavé macOS utilise Command/Control et les symboles de son OS.
+  Avec L1 seule, les positions G et B restent sans action dans tous les profils.
+  En L3, Tab, H, J, K, L, M, Suppr, N et virgule restent sans action.
+  Windows et Linux gardent F1 à F12 et laissent S, D, F et C sans action.
+  Sur Mac, les anciennes touches F sont libres et les raccourcis AeroSpace
+  restent accessibles.
 - `keyboard/config/keymaps/common/behaviors.dtsi` partage les comportements historiques.
   `common/base-layer.dtsi` porte les 44 positions de la base commune aux quatre
   keymaps. Chaque appelant définit `BASE_CTRL`, `BASE_ALT`, `BASE_GUI`, `BASE_DOT`,
@@ -1018,7 +1023,7 @@ couvre les clés de connexion et le reset.
 Le build utilise le bootloader par rétention de la variante nice!nano ZMK et
 conserve le code UF2 `0x57`. Le bootloader installé sur les contrôleurs n’est pas
 mis à jour. L’accès par `&bootloader` est confirmé sur V1 après migration.
-Le retour par reset est confirmé. Tester encore `&sys_reset` et le double appui
+Le retour par reset physique est confirmé. Tester encore le double appui
 physique avant de considérer le parcours matériel complet validé.
 Le snapshot 0.3 dans l’historique Git garde son ancien mécanisme.
 

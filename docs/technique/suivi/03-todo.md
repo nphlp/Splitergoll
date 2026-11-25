@@ -43,7 +43,7 @@ Les tâches ouvertes sont regroupées par sujet. Les résultats déjà consigné
 
 - [ ] Terminer les essais `wire` sur Mac puis Windows : toutes les touches, encodeurs, accents, Shift, couches et redémarrages. Voir [les essais wire](../validation/02-tests-wire.md).
 - [ ] Valider réellement l’arrêt d’un build avec `stop`.
-- [ ] Compléter la validation de migration : gestes non encore essayés, `&sys_reset`, double appui physique, autres profils, V2, BLE vers l’hôte, réglages persistants, veille et batteries.
+- [ ] Compléter la validation de migration : gestes non encore essayés, double appui physique, autres profils, V2, BLE vers l’hôte, réglages persistants, veille et batteries.
 - [ ] Migrer la matrice vers l’API input dans un chantier distinct pour remplacer KSCAN déprécié.
 - [ ] Résoudre en amont l’avertissement `const` du driver tap-dance, sans masquer le diagnostic du compilateur.
 - [ ] Réintégrer le dongle XIAO BLE au build paramétrable, comme centrale des deux moitiés.

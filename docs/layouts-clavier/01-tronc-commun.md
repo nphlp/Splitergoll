@@ -68,6 +68,7 @@ bindings du firmware et peuvent dépendre des raccourcis du système ou de l’a
 
 Les appuis multiples sont définis dans les
 [comportements ZMK](../../keyboard/config/keymaps/common/behaviors.dtsi).
+Avec L1 seule, les positions G et B restent sans action dans tous les profils.
 Le clic droit en L1 est sans action dans les profils fixes. Il change d’OS dans
 [multi](05-multi.md) ou sélectionne l’ordinateur dans
 [bluetooth auto](06-auto.md#en-bluetooth).

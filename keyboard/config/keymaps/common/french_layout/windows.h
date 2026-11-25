@@ -129,15 +129,3 @@ MACRO(fr_tld, &kp _TLD &kp SPACE) // ~
 // Exponents
 #define    _EX2  GRAVE         // ²
 ALT_CODE_3(fr_ex3, 2, 5, 2)    // ³
-
-
-// Coding arrows
-MACRO(fr_arw_s, &kp _MINS &kp _RCHE) // ->
-MACRO(fr_arw_d, &kp _EQAL &kp _RCHE) // =>
-
-
-// Arrows
-ALT_CODE_2(arw_up,  2, 4) // ↑
-ALT_CODE_2(arw_dwn, 2, 5) // ↓
-ALT_CODE_2(arw_rgt, 2, 6) // →
-ALT_CODE_2(arw_lft, 2, 7) // ←

@@ -12,13 +12,6 @@
 #define M_EXCL  N8              // !
 #define M_BSLASH  LS(RA(DOT))   // backslash
 
-// Dead accents
-#define    M_AGU    LS(RA(N1))   // ´ (dead)
-#define    M_GRV    BSLH         // ` (dead)
-#define    M_CIR    LBKT         // ^ (dead)
-#define    M_TRE    LBRC         // ¨ (dead)
-#define    M_TLD    RA(_N)       // ~ (dead)
-
 // Letters with accents
 MACRO(m_agu, &kp BSLH       &kp LS(_A)) // À
 MACRO(m_eau, &kp LS(RA(N1)) &kp LS(_E)) // É
@@ -55,13 +48,6 @@ MACRO(m_grv, &kp BSLH &kp SPACE)     // `
 #define M_END      LG(RIGHT)     // end
 #define M_LWRD     RA(LEFT)      // left word
 #define M_RWRD     RA(RIGHT)     // right word
-
-// Coding arrows
-MACRO(m_arw_s, &kp M_MINS &kp M_RCHE) // ->
-MACRO(m_arw_d, &kp M_EQAL &kp M_RCHE) // =>
-
-
-
 
 // Aerospace Layer 3
 

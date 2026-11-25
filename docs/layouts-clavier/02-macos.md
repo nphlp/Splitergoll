@@ -43,9 +43,9 @@ macOS renseigne les six cases paramétrables ci-dessous.
 ┏━━━━━━━━━━━┳━━━━━━━━━━━┳━━━━━━━━━━━┳━━━━━━━━━━━┳━━━━━━━━━━━┳━━━━━━━━━━━┓   ┏━━━━━━━━━━━┳━━━━━━━━━━━┳━━━━━━━━━━━┳━━━━━━━━━━━┳━━━━━━━━━━━┳━━━━━━━━━━━┓
 ┃           ┃           ┃Début ligne┃           ┃ Fin ligne ┃           ┃   ┃     "     ┃     (     ┃     )     ┃     [     ┃     ]     ┃     ·     ┃
 ┣━━━━━━━━━━━╋━━━━━━━━━━━╋━━━━━━━━━━━╋━━━━━━━━━━━╋━━━━━━━━━━━╋━━━━━━━━━━━┫   ┣━━━━━━━━━━━╋━━━━━━━━━━━╋━━━━━━━━━━━╋━━━━━━━━━━━╋━━━━━━━━━━━╋━━━━━━━━━━━┫
-┃           ┃           ┃     ←     ┃     ↑     ┃     →     ┃     ->    ┃   ┃     '     ┃     {     ┃     }     ┃     <     ┃     >     ┃     ·     ┃
+┃           ┃           ┃     ←     ┃     ↑     ┃     →     ┃           ┃   ┃     '     ┃     {     ┃     }     ┃     <     ┃     >     ┃     ·     ┃
 ┗━━━━━━━━━━━╋━━━━━━━━━━━╋━━━━━━━━━━━╋━━━━━━━━━━━╋━━━━━━━━━━━╋━━━━━━━━━━━┫   ┣━━━━━━━━━━━╋━━━━━━━━━━━╋━━━━━━━━━━━╋━━━━━━━━━━━╋━━━━━━━━━━━╋━━━━━━━━━━━┛
-            ┃           ┃   Mot ←   ┃     ↓     ┃   Mot →   ┃     =>    ┃   ┃     `     ┃     #     ┃     &     ┃     |     ┃     @     ┃
+            ┃           ┃   Mot ←   ┃     ↓     ┃   Mot →   ┃           ┃   ┃     `     ┃     #     ┃     &     ┃     |     ┃     @     ┃
 ╭───────╮   ┗━━━━━━━━━━━┻━━━━━━━━━━━┻━━━━━━━━━━━┻━━━━━━━━━━━┻━━━━━━━━━━━┛   ┗━━━━━━━━━━━┻━━━━━━━━━━━┻━━━━━━━━━━━┻━━━━━━━━━━━┻━━━━━━━━━━━┛   ╭───────╮
 │  LEFT │ ┏━━━━━━━━━━━┓ ┏━━━━━━━━━━━┳━━━━━━━━━━━┳━━━━━━━━━━━┳━━━━━━━━━━━┓   ┏━━━━━━━━━━━┳━━━━━━━━━━━┳━━━━━━━━━━━┳━━━━━━━━━━━┓ ┏━━━━━━━━━━━┓ │   UP  │
 │ RIGHT │ ┃           ┃ ┃  COMMAND  ┃   OPTION  ┃     ·     ┃   SHIFT   ┃   ┃   SHIFT   ┃     ·     ┃     ·     ┃    CTRL   ┃ ┃           ┃ │  DOWN │
@@ -74,9 +74,9 @@ Avec [bluetooth auto](06-auto.md#en-bluetooth), il sélectionne l’ordinateur s
 
 ```text
 ┏━━━━━━━━━━━┳━━━━━━━━━━━┳━━━━━━━━━━━┳━━━━━━━━━━━┳━━━━━━━━━━━┳━━━━━━━━━━━┓   ┏━━━━━━━━━━━┳━━━━━━━━━━━┳━━━━━━━━━━━┳━━━━━━━━━━━┳━━━━━━━━━━━┳━━━━━━━━━━━┓
-┃     F1    ┃     F2    ┃ AS tuiles ┃AS flottant┃ AS accord.┃     F6    ┃   ┃     F7    ┃ Foc/Dépl 1┃ Foc/Dépl 2┃ Foc/Dépl 3┃    F11    ┃    F12    ┃
+┃           ┃           ┃ AS tuiles ┃AS flottant┃ AS accord.┃           ┃   ┃           ┃ Foc/Dépl 1┃ Foc/Dépl 2┃ Foc/Dépl 3┃           ┃           ┃
 ┣━━━━━━━━━━━╋━━━━━━━━━━━╋━━━━━━━━━━━╋━━━━━━━━━━━╋━━━━━━━━━━━╋━━━━━━━━━━━┫   ┣━━━━━━━━━━━╋━━━━━━━━━━━╋━━━━━━━━━━━╋━━━━━━━━━━━╋━━━━━━━━━━━╋━━━━━━━━━━━┫
-┃   Reset   ┃           ┃ Foc/Dépl ←┃ Foc/Dépl ↑┃ Foc/Dépl →┃           ┃   ┃   ´ mort  ┃   ` mort  ┃   ^ mort  ┃   ¨ mort  ┃   ~ mort  ┃           ┃
+┃           ┃           ┃ Foc/Dépl ←┃ Foc/Dépl ↑┃ Foc/Dépl →┃           ┃   ┃           ┃           ┃           ┃           ┃           ┃           ┃
 ┗━━━━━━━━━━━╋━━━━━━━━━━━╋━━━━━━━━━━━╋━━━━━━━━━━━╋━━━━━━━━━━━╋━━━━━━━━━━━┫   ┣━━━━━━━━━━━╋━━━━━━━━━━━╋━━━━━━━━━━━╋━━━━━━━━━━━╋━━━━━━━━━━━╋━━━━━━━━━━━┛
             ┃           ┃           ┃ Foc/Dépl ↓┃           ┃    ⇧⌥Q    ┃   ┃           ┃           ┃           ┃           ┃           ┃
 ╭───────╮   ┗━━━━━━━━━━━┻━━━━━━━━━━━┻━━━━━━━━━━━┻━━━━━━━━━━━┻━━━━━━━━━━━┛   ┗━━━━━━━━━━━┻━━━━━━━━━━━┻━━━━━━━━━━━┻━━━━━━━━━━━┻━━━━━━━━━━━┛   ╭───────╮
@@ -109,9 +109,8 @@ Sur les trois dernières positions, Shift ne choisit pas un autre raccourci
 dans le firmware. La colonne « Action » donne l’intention des raccourcis côté
 ordinateur. Leur effet dépend des réglages AeroSpace et des autres raccourcis macOS.
 
-Le reste de L3 comprend les touches de fonction visibles sur le schéma, les
-accents morts, `⇧⌥Q` en position **B**, la commande de redémarrage en position
-**Tab** et les clics bootloader à gauche et effacement des appairages à droite.
+L3 donne aussi accès à `⇧⌥Q` en position **B** et aux clics d’encodeur
+pour le bootloader à gauche et l’effacement des appairages à droite.
 Les raccourcis sont définis dans [macos.h](../../keyboard/config/keymaps/common/french_layout/macos.h)
 et les doubles actions dans [behaviors.dtsi](../../keyboard/config/keymaps/common/behaviors.dtsi).
 

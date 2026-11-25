@@ -105,10 +105,12 @@ puis tout relâcher. La « touche Y » désigne toujours sa position physique de
 | Geste | Contrôle | Résultat attendu |
 | --- | --- | --- |
 | Maintenir L1 droite | Appuyer sur Y | `"` : couche primaire |
+| Maintenir L1 droite | Appuyer sur G puis B | Le champ de texte reste inchangé |
 | Maintenir L2 gauche | Appuyer sur Y | `=` : couche secondaire |
 | Maintenir L2 gauche | Tourner l’encodeur droit dans un texte de plusieurs lignes | Curseur vertical |
 | Maintenir L1 et L2 | Tourner ce même encodeur droit | Curseur horizontal : couche tertiaire |
 | Tout relâcher | Appuyer sur Y | `y` : retour à la base |
+| Tout relâcher | Appuyer sur G puis B | `gb` en couche de base |
 
 ### Tap-dances : appuis multiples
 
@@ -146,6 +148,12 @@ L’OS n’est pas détecté automatiquement.
 - Tester Shift droit avec une lettre gauche et les couches activées depuis l’autre moitié.
 - Tester les accents et symboles : `é è ê ë à â ù û ç œ É À Ç`, puis `0123456789 () [] {} <> @ # | \ /`.
 - Parcourir les couches primaire, secondaire, tertiaire et pavé numérique.
+- Avec L3 active, vérifier que Tab, H, N, virgule, J, K, L, M et Suppr ne
+  produisent aucun effet. Sur Windows et Linux, faire le même contrôle avec
+  S, D, F et C, puis vérifier que la rangée haute envoie bien F1 à F12.
+  Sur Mac, vérifier que les six cases vides de la rangée haute ne produisent
+  aucun événement et que les raccourcis AeroSpace répondent toujours aux
+  positions décrites dans le [layout macOS](../../layouts-clavier/02-macos.md#3-l3--système-et-aerospace).
 - Vérifier copier/coller et navigation avec Ctrl sous Windows, Command/Option sous macOS.
 - Vérifier les deux couches de jeu sous Windows, selon les actions documentées.
 
