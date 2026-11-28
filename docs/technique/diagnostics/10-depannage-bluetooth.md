@@ -1,8 +1,8 @@
 # 10. Dépanner ou réinitialiser l’appairage
 
-[Documentation](../../README.md) › [Référence technique](../../README.md#référence-technique) › [Diagnostics](../../README.md#diagnostics) › 10. Dépanner ou réinitialiser l’appairage
+[Documentation](../../README.md) › [Technique](../README.md) › [Diagnostics](../README.md#diagnostics) › 10. Dépanner ou réinitialiser l’appairage
 
-[← 09. Examiner la latence](09-latence.md)
+[← 9. Examiner la latence](9-latence.md)
 
 La gauche est la centrale : elle se connecte à la droite et au Mac. Ces deux
 liaisons ont leurs propres clés d’appairage. Flasher une nouvelle keymap ou
@@ -47,7 +47,7 @@ systématique à chaque changement de keymap.
 ## Si la droite ne transmet pas ses touches
 
 Vérifier successivement le firmware présent, le scan des touches et la connexion
-BLE. Les [messages du Finder](../../demarrer/03-flasher.md#messages-du-finder) ne suffisent
+BLE. Les [messages du Finder](../../developpement/3-flasher.md#messages-du-finder) ne suffisent
 pas à diagnostiquer le flash. Des UF2 temporaires avec le snippet `zmk-usb-logging`
 permettent d’observer les événements et l’appairage.
 [Logs USB ZMK](https://github.com/zmkfirmware/zmk/blob/v0.3.0/docs/docs/development/usb-logging.mdx).
@@ -63,6 +63,6 @@ Les preuves techniques et les limites du diagnostic restent dans `AGENTS.md`.
 
 ---
 
-[Documentation](../../README.md) › [Référence technique](../../README.md#référence-technique) › [Diagnostics](../../README.md#diagnostics) › 10. Dépanner ou réinitialiser l’appairage
+[Documentation](../../README.md) › [Technique](../README.md) › [Diagnostics](../README.md#diagnostics) › 10. Dépanner ou réinitialiser l’appairage
 
-[← 09. Examiner la latence](09-latence.md)
+[← 9. Examiner la latence](9-latence.md)

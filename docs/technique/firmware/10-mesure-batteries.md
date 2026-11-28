@@ -1,8 +1,8 @@
 # 10. Mesure des batteries
 
-[Documentation](../../README.md) › [Référence technique](../../README.md#référence-technique) › [Firmware](../../README.md#firmware) › 10. Mesure des batteries
+[Documentation](../../README.md) › [Technique](../README.md) › [Firmware](../README.md#firmware) › 10. Mesure des batteries
 
-[← 09. Identité de l’ordinateur](09-identite-ordinateur.md) · [11. États d’alimentation →](11-etats-alimentation.md)
+[← 9. Identité de l’ordinateur](9-identite-ordinateur.md) · [11. États d’alimentation →](11-etats-alimentation.md)
 
 Les deux niveaux sont lus séparément sur le Mac. Après migration, l’utilisateur
 relève **63 % à gauche et 67 % à droite sur V2, USB débranchés**.
@@ -74,7 +74,7 @@ après reflash des deux moitiés. Les anciens firmwares restent à leur cadence 
 **ZMK arrête les mesures en inactivité et les relance au réveil d’activité.**
 Une lecture GATT ne relance pas elle-même la mesure. Pour comparer la charge,
 appuyer sur une touche de chaque moitié avant le relevé.
-Le [diagnostic ponctuel de V2](../validation/09-tests-batteries-veille.md) utilise des délais courts
+Le [diagnostic ponctuel de V2](../validation/9-tests-batteries-veille.md) utilise des délais courts
 et des logs USB, séparément des builds normaux.
 
 `keyboard/config/profiles/bluetooth-left.conf` active maintenant la récupération de la
@@ -148,7 +148,7 @@ Un indicateur unique représentant la batterie la plus faible pourrait aussi êt
 Il demanderait une adaptation du firmware et une décision sur les mesures absentes.
 
 La commande de lecture est versionnée. `make app start` ouvre maintenant le premier lot
-de l’[application macOS](../../utiliser-le-clavier/04-application-macos.md) : deux niveaux dans la barre des menus
+de l’[application macOS](../../utilisation/4-application-macos.md) : deux niveaux dans la barre des menus
 et une fenêtre d’informations, à valider sur V2. Couche, OS et réglages avancés
 viendront ensuite. La validation devra vérifier l’autonomie et le sommeil du Mac, la documentation
 signalant que les notifications batterie peuvent réveiller certains hôtes macOS.
@@ -163,6 +163,6 @@ signalant que les notifications batterie peuvent réveiller certains hôtes macO
 
 ---
 
-[Documentation](../../README.md) › [Référence technique](../../README.md#référence-technique) › [Firmware](../../README.md#firmware) › 10. Mesure des batteries
+[Documentation](../../README.md) › [Technique](../README.md) › [Firmware](../README.md#firmware) › 10. Mesure des batteries
 
-[← 09. Identité de l’ordinateur](09-identite-ordinateur.md) · [11. États d’alimentation →](11-etats-alimentation.md)
+[← 9. Identité de l’ordinateur](9-identite-ordinateur.md) · [11. États d’alimentation →](11-etats-alimentation.md)

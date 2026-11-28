@@ -90,7 +90,7 @@ Le même harnais couvre le statut : OS appliqué, sortie absente, réserves null
 refus d’une liaison non chiffrée, lecture partielle et verrou toujours libéré.
 Les frontières radio/USB sont doublées. La compilation nRF réelle vérifie les API
 et les gardes, sans prouver l’énumération sur Mac. Les C de cette zone ont -Werror.
-Le guide physique est docs/technique/diagnostics/07-identite-usb-bluetooth.md. Aucun flash ou effacement réalisé
+Le guide physique est docs/technique/diagnostics/7-identite-usb-bluetooth.md. Aucun flash ou effacement réalisé
 par l’agent. Ne pas déduire une priorité USB de la seule présence de l’interface vendor.
 
 Contrôles réalisés : 29 suites C ASan/UBSan et 112 cas AWK passent. PowerShell est

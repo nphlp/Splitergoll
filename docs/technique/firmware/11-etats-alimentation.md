@@ -1,6 +1,6 @@
 # 11. États d’alimentation
 
-[Documentation](../../README.md) › [Référence technique](../../README.md#référence-technique) › [Firmware](../../README.md#firmware) › 11. États d’alimentation
+[Documentation](../../README.md) › [Technique](../README.md) › [Firmware](../README.md#firmware) › 11. États d’alimentation
 
 [← 10. Mesure des batteries](10-mesure-batteries.md)
 
@@ -64,7 +64,7 @@ la consommation : cela ne distingue pas à lui seul l’état ACTIVE de l’éta
 Ces calculs viennent des [données du modèle](https://github.com/zmkfirmware/zmk/blob/4dd95d7840eb3d5a3f59bb29fbf1ab054715ef85/docs/src/data/power.js).
 
 Pour les essais ponctuels de V2 aux délais courts, suivre
-[le protocole batteries et veille](../validation/09-tests-batteries-veille.md). Les logs se lisent
+[le protocole batteries et veille](../validation/9-tests-batteries-veille.md). Les logs se lisent
 avec USB, le réveil de veille profonde se teste sur batterie sans USB.
 
 ## Résultats sur V2
@@ -97,7 +97,7 @@ la recherche continue sans hôte s’y arrête. La radio ne compte pas comme une
 
 Les essais courts de V1 confirment fermeture, IDLE, sauvegarde et persistance,
 sans reprise d’activité. L’ordre précis n’est pas mesuré entre deux lectures USB.
-Le [point de reprise](../suivi/01-reprendre.md) distingue ce résultat du complément sur batterie.
+Le [point de reprise](../suivi/1-reprendre.md) distingue ce résultat du complément sur batterie.
 L’USB de V1 empêche SLEEP, dont l’essai demande V2.
 
 Sur V2 sous USB, ON relie la batterie au contrôleur et OFF l’isole. IDLE reste
@@ -140,10 +140,10 @@ Les USB branchés pour charger bloquent la veille profonde pendant la charge.
 Dans `multi`, la première frappe de réveil et le retour à Windows restent les mêmes
 après une veille profonde, seul son délai change.
 
-Pour flasher ou redémarrer le contrôleur : [flash du firmware](../../demarrer/03-flasher.md).
+Pour flasher ou redémarrer le contrôleur : [flash du firmware](../../developpement/3-flasher.md).
 
 ---
 
-[Documentation](../../README.md) › [Référence technique](../../README.md#référence-technique) › [Firmware](../../README.md#firmware) › 11. États d’alimentation
+[Documentation](../../README.md) › [Technique](../README.md) › [Firmware](../README.md#firmware) › 11. États d’alimentation
 
 [← 10. Mesure des batteries](10-mesure-batteries.md)

@@ -1,8 +1,8 @@
 # 10. Essai de sélection V1 et V2 sur Mac
 
-[Documentation](../../README.md) › [Référence technique](../../README.md#référence-technique) › [Validation](../../README.md#validation) › 10. Essai de sélection V1 et V2 sur Mac
+[Documentation](../../README.md) › [Technique](../README.md) › [Validation](../README.md#validation) › 10. Essai de sélection V1 et V2 sur Mac
 
-[← 09. Essais batteries et veille](09-tests-batteries-veille.md)
+[← 9. Essais batteries et veille](9-tests-batteries-veille.md)
 
 Le menu **Clavier suivi** permet de choisir les batteries de V1 ou V2 lorsque
 plusieurs Splitergoll sont connectés au Mac. Il ne change pas la destination des
@@ -57,6 +57,6 @@ radio réel. L’anomalie antérieure d’affichage n’avait pas de cause confi
 
 ---
 
-[Documentation](../../README.md) › [Référence technique](../../README.md#référence-technique) › [Validation](../../README.md#validation) › 10. Essai de sélection V1 et V2 sur Mac
+[Documentation](../../README.md) › [Technique](../README.md) › [Validation](../README.md#validation) › 10. Essai de sélection V1 et V2 sur Mac
 
-[← 09. Essais batteries et veille](09-tests-batteries-veille.md)
+[← 9. Essais batteries et veille](9-tests-batteries-veille.md)

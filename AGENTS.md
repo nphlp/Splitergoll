@@ -6,18 +6,18 @@ Une configuration ZMK complète, commune et compilable en local. Projet classé
 `sync` avec les règles globales. Branche de travail : `unified-firmware`.
 
 Le [sommaire de la documentation](docs/README.md) indexe les guides numérotés.
-Les premiers parcours couvrent [la prise en main](docs/README.md#démarrer),
-[les layouts actifs](docs/README.md#layouts-clavier) et
-[l’usage quotidien](docs/README.md#utiliser-le-clavier). Les tâches et idées
-restent centralisées dans le [TODO](docs/technique/suivi/03-todo.md).
+Les premiers parcours couvrent [la prise en main](docs/README.md#développement),
+[les layouts actifs](docs/README.md#layouts) et
+[l’usage quotidien](docs/README.md#utilisation). Les tâches et idées
+restent centralisées dans le [TODO](docs/technique/suivi/3-todo.md).
 
 Le compagnon Windows est dans `companion/windows/`, avec sa spec locale et son
-guide `docs/utiliser-le-clavier/05-application-windows.md`. Lecture réelle des deux batteries de V2
+guide `docs/utilisation/5-application-windows.md`. Lecture réelle des deux batteries de V2
 confirmée par l’utilisateur sur Windows, tests du noyau réalisés depuis le Mac.
 Les tests UI compilés ne sont pas présentés comme exécutés sur Windows.
 
 Chantier actuel : vraie priorité USB sur Mac + V2, dans le mode expérimental
-`bluetooth auto usb-priority`. Le guide docs/technique/experimentations/01-priorite-usb.md décrit son essai.
+`bluetooth auto usb-priority`. Le guide docs/technique/experimentations/1-priorite-usb.md décrit son essai.
 Le mode `bluetooth auto identity` reste un diagnostic sans bascule.
 Seule la gauche ajoute les transports, la droite normale reste identique.
 Premier essai physique confirmé par l’utilisateur : annonces USB et Bluetooth,
@@ -34,14 +34,13 @@ le lien BLE hôte pour l’identité et l’OS mémorisé. Aucun effet Gaming su
 Le client d’identité Windows et le test du dernier portable de batteries sont
 reportés à la maison. L’UUID local est déclaratif, pas un secret d’authentification.
 
-`docs/README.md` est le sommaire unique. Les guides d’usage et de layout ont
-leurs propres dossiers. Les rubriques de référence restent imbriquées sous
-`docs/technique/`. Les noms des dossiers restent sans préfixe numérique. Les
-fichiers de chaque rubrique sont numérotés à partir de `01`. En haut et en bas,
-le fil d’Ariane renvoie à la rubrique du sommaire général et les liens
-précédent/suivant restent dans le dossier.
-Garder le sommaire exhaustif et les noms sans date. Les guides d’usage restent
-courts, avec des liens vers les protocoles, preuves et expériences.
+`docs/README.md` indexe les guides Développement, Layouts et Utilisation et
+renvoie à `docs/technique/README.md`. Ce second sommaire couvre toutes les
+rubriques techniques. Les dossiers gardent des noms sans préfixe numérique.
+Dans chaque rubrique, les guides sont numérotés à partir de `1`, sans zéro
+initial. En haut et en bas, le fil d’Ariane renvoie au sommaire de la rubrique
+et les liens précédent/suivant restent dans le dossier. Les guides d’usage
+restent courts, avec des liens vers les protocoles, preuves et expériences.
 Distinguer ce qui est prévu, implémenté et observé lors d’un essai.
 
 Autorisation explicite de l’utilisateur : lancer les builds locaux Docker et leurs
@@ -113,7 +112,7 @@ isolés. Cette autorisation ne déclenche aucun flash ni effacement d’appairag
 - Le snapshot des 32 firmwares ZMK 0.3.0 est conservé dans l’historique Git au
   commit `7e7be6d`. À la demande de l’utilisateur, `archives/firmware/zmk-0.3.0/`
   est retiré du checkout après les essais positifs de V1. Cela ne valide pas V2
-  ni tous les autres profils. Le guide `docs/technique/historique/01-firmwares-stables.md` explique sa
+  ni tous les autres profils. Le guide `docs/technique/historique/1-firmwares-stables.md` explique sa
   récupération sans changer de branche. Les métadonnées et empreintes restent
   dans ce commit, sans log privé, NVS ou appairage. L’archive de la keymap est
   distincte et reste également récupérable dans l’historique Git.
@@ -382,7 +381,7 @@ le groupe de processus créé par le test, car Cortex-M3 reste inactif après ve
 Les six cas passent, le conteneur éphémère disparaît. Les 30 tests Swift passent
 séparément, sans ouverture de l’app, Bluetooth ni inscription à la session.
 Toute future modification d’algorithme complète la suite correspondante dans le
-même lot. docs/technique/validation/01-tests-automatises.md distingue couverture et limites matérielles.
+même lot. docs/technique/validation/1-tests-automatises.md distingue couverture et limites matérielles.
 
 Diagnostic privé compilé :
 .local/flash/power-journal/bluetooth-auto-ble-trace-2026-10-23-11-48-56.
@@ -409,7 +408,7 @@ Nouvelle demande Gaming : conserver le mode choisi après coupure/reset/rebranch
 au même Windows USB. L’entrée Gaming sélectionne/mémorise Windows USB et ferme la
 recherche. Aucun effacement de profil ZMK. Restent à définir : identité/portée de
 cette mémoire, repli sans USB, sortie volontaire de Gaming et retour après choix Mac.
-Le cadrage est dans docs/technique/experimentations/02-gaming-usb.md, les tâches dans docs/technique/suivi/03-todo.md. Ne pas coder
+Le cadrage est dans docs/technique/experimentations/2-gaming-usb.md, les tâches dans docs/technique/suivi/3-todo.md. Ne pas coder
 ces arbitrages comme si leurs réponses étaient déjà convenues.
 
 Signal utilisateur à reconnaître lors d’un futur diagnostic : « je tape sur Mac et
@@ -485,9 +484,9 @@ BLEPROFILE v6 retire POLICY.excluded et autorise remaining_ms jusqu’à 120000.
 Les anciens v1/v2/v3/v4/v5 restent lus avec leur propre contrat, notamment trente
 secondes au maximum pour v3/v4. Le protocole est contrôlé par AWK et PowerShell,
 BOM UTF-8 conservé, sans export d’identité ou payload de saisie.
-Protocoles humains : [connexion](docs/technique/validation/05-tests-connexions-bluetooth.md),
-[reprise](docs/technique/validation/06-tests-reprise-bluetooth.md)
-et [recherche](docs/technique/validation/07-tests-recherche-bluetooth.md). Pour tester le rappel d’un préféré après reboot,
+Protocoles humains : [connexion](docs/technique/validation/5-tests-connexions-bluetooth.md),
+[reprise](docs/technique/validation/6-tests-reprise-bluetooth.md)
+et [recherche](docs/technique/validation/7-tests-recherche-bluetooth.md). Pour tester le rappel d’un préféré après reboot,
 couper d’abord la gauche, puis le Bluetooth du préféré : sinon le repli avant arrêt
 le remplacerait justement dans la mémoire. Ne pas déduire le succès des nouvelles
 règles des retours matériels du lot précédent.
@@ -653,12 +652,12 @@ firmware auto sait faire cette acquisition directement, le diagnostic fixe reste
 utile pour l’isoler.
 Le Mac seul permettrait une validation partielle des fenêtres, jamais la reconnexion
 simultanée Mac/Windows. Les essais V1 restent explicitement en attente.
-Le guide docs/technique/suivi/02-planification.md distingue validations indépendantes et transitions
+Le guide docs/technique/suivi/2-planification.md distingue validations indépendantes et transitions
 à tester avec les deux hôtes. Un seul clavier, V1 ou V2, suffit pour ces transitions.
 V2 est requis pour les essais sur batterie et de veille profonde sans USB.
 Priorité au bureau : batteries et veille de V2 après migration. Garder les essais
 Mac/Windows de connexion groupés sur le même firmware, sans assimiler un essai Mac
-seul à une validation de l’ensemble. Les tâches détaillées restent dans docs/technique/suivi/03-todo.md.
+seul à une validation de l’ensemble. Les tâches détaillées restent dans docs/technique/suivi/3-todo.md.
 Le raccourci tertiaire de la keymap macOS est BT_CLR_ALL, pas BT_CLR : L1 + L2
 puis clic encodeur droit efface tous les slots hôtes et sélectionne zéro, sans
 effacer le bond de la moitié droite. Le bouton reset seul conserve les bonds.
@@ -727,7 +726,7 @@ Pour comparer la charge, appuyer sur une touche de chaque moitié avant le relev
 Le pilote compilé est battery_nrf_vddh, ses logs natifs donnent ADC raw, mV et %.
 Ce diagnostic ne mesure ni courant de charge ni autonomie et ne conserve pas
 un historique de logs après sys_poweroff. La présence d’USB empêche toujours
-la veille profonde. Essais réels et protocole : docs/technique/validation/09-tests-batteries-veille.md.
+la veille profonde. Essais réels et protocole : docs/technique/validation/9-tests-batteries-veille.md.
 
 Capture V2 après disponibilité explicite de l’utilisateur : deux consoles ouvertes
 180 secondes par .local/diagnostic/power-test/capture.py, sans commande applicative.
@@ -845,11 +844,11 @@ L’essai droite seule proposé ensuite n’a pas été lancé, le diagnostic ay
 Le debug est indépendant de la sortie USB/Bluetooth. Pour une éventuelle reprise,
 attendre le signal de disponibilité avant une capture et annoncer ouverture/fermeture.
 Le parcours complet des touches, encodeurs et couches reste à valider selon le
-[protocole wire](docs/technique/validation/02-tests-wire.md).
+[protocole wire](docs/technique/validation/2-tests-wire.md).
 L’ordre retenu est : diagnostic rapide de latence sur V1 et le Mac, migration
 ZMK/Zephyr, puis diagnostic d’auto-détection d’OS et autres améliorations du backlog.
-Le [guide de latence](docs/technique/diagnostics/09-latence.md) distingue diagnostic et mesure complète.
-La [préparation de migration](docs/technique/historique/02-migration-zmk.md) conserve les versions,
+Le [guide de latence](docs/technique/diagnostics/9-latence.md) distingue diagnostic et mesure complète.
+La [préparation de migration](docs/technique/historique/2-migration-zmk.md) conserve les versions,
 ruptures et validations. La recherche officielle du 16 octobre 2026 confirme
 que ZMK 0.3.0 reste la dernière release stable, publiée le 1er août 2025.
 La PR officielle #3024 prépare 0.4.0 mais reste ouverte. Ne pas présenter sa date
@@ -866,7 +865,7 @@ est identique octet pour octet au build précédent `wire-macos-2026-10-16-11-56
 Le snapshot occupe environ 14 Mio. Cela ne valide pas physiquement les 32 UF2.
 Les avertissements de cette compilation stable étaient Docker insecure et GPREGRET déprécié.
 Les conteneurs éphémères ont disparu, les trois services préexistants sont conservés.
-Le [guide des firmwares stables](docs/technique/historique/01-firmwares-stables.md) décrit le retour arrière.
+Le [guide des firmwares stables](docs/technique/historique/1-firmwares-stables.md) décrit le retour arrière.
 La cible nice!nano v2 est `nice_nano@2.0.0//zmk`. L’image officielle 4.1 est figée
 au digest `sha256:edb1c953438c6f720ddb79c3762f3972013b7fbbaf4fff3592fc869983e7afc5`.
 Le setup a contrôlé les 45 dépendances actives en 194 secondes. Le manifeste
@@ -927,7 +926,7 @@ ou keymaps. `BUILD_MODE` vaut `normal`, `debug`, `usb-trace` ou `ble-trace`. `BU
 matériel et keymap avec suffixe `-debug`, `-usb-trace` ou `-ble-trace` pour ces diagnostics. Caches et artefacts sont séparés,
 et les métadonnées indiquent le mode. Valider les quatre paires de builds et conserver
 les contrôles d’absence de reset dans tous les modes. Le logging doit être présent
-en debug et absent en normal. Le guide court est [logs-usb.md](docs/technique/diagnostics/01-logs-usb.md).
+en debug et absent en normal. Le guide court est [logs-usb.md](docs/technique/diagnostics/1-logs-usb.md).
 Avec l’ancien firmware aux délais courts, l’utilisateur confirme une reprise immédiate après 10 secondes
 d’inactivité et une déconnexion après une minute, suivie d’une reconnexion en environ
 3 secondes sur appui, sans reset. Son essai séparé confirme le réveil local gauche
@@ -1018,7 +1017,7 @@ Avec les deux en veille profonde, la droite ne peut pas réveiller la centrale.
 Décider après les tests si la centrale doit rester en inactivité pour permettre
 une reprise depuis la droite, sans promettre ce comportement avec sa radio coupée.
 Le guide `docs/technique/firmware/11-etats-alimentation.md` distingue les capacités de ZMK des essais matériels.
-`docs/demarrer/03-flasher.md` couvre le flash et le bootloader, `docs/technique/diagnostics/10-depannage-bluetooth.md`
+`docs/developpement/3-flasher.md` couvre le flash et le bootloader, `docs/technique/diagnostics/10-depannage-bluetooth.md`
 couvre les clés de connexion et le reset.
 Le build utilise le bootloader par rétention de la variante nice!nano ZMK et
 conserve le code UF2 `0x57`. Le bootloader installé sur les contrôleurs n’est pas
@@ -1182,21 +1181,22 @@ locaux sont relatifs au dépôt, aucun chemin personnel absolu n’est inscrit.
 Cette exception remplace ici la règle globale des variables d’environnement,
 sans l’étendre aux autres zones.
 
-Les [layouts clavier](docs/README.md#layouts-clavier) documentent les
-affectations actives, couche par couche pour macOS, Windows, Linux et `multi`.
+Les [layouts clavier](docs/README.md#layouts) documentent les
+affectations actives, couche par couche pour macOS, Windows et Linux.
 `auto` renvoie aux groupes de touches partagés et précise ses différences.
+L’architecture technique décrit aussi le comportement de `multi`.
 Lors d’une modification, synchroniser dans le même lot les bindings, le schéma
 commenté de la source et la page du profil, avec les héritages et encodeurs.
 Dans les pages de layout, reprendre les encadrements, l’alignement et les
 espacements des commentaires Devicetree. Les rotations figurent aux extrémités.
-Le schéma de [Tronc commun](docs/layouts-clavier/01-tronc-commun.md#couche-de-base)
+Le schéma de [Tronc commun](docs/layouts/1-commun.md#couche-de-base)
 reprend à l’identique le commentaire de `common/base-layer.dtsi`, sans les
 préfixes `// `. Actualiser les deux dans le même changement.
 Pour L3 macOS, tenir aussi à jour le tableau des touches et combinaisons AeroSpace.
-Le [guide d’architecture](docs/technique/firmware/03-architecture-keymaps.md)
+Le [guide d’architecture](docs/technique/firmware/3-architecture-keymaps.md)
 explique leur assemblage. Le README de la racine reste au contenu validé.
 
-`docs/technique/firmware/02-materiel-et-profils.md` distingue le matériel, le trajet des touches
+`docs/technique/firmware/2-materiel-et-profils.md` distingue le matériel, le trajet des touches
 et l’alimentation. Ses trois architectures doivent préciser l’état réel : saisie
 câble confirmée sur le Mac avec le clavier PC sans batterie, dongle historique
 pas encore réintégré au build, Bluetooth
@@ -1232,7 +1232,7 @@ Ne jamais en copier les valeurs dans Git. Les firmwares normaux sans logs sont i
 
 ## TODO
 
-Voir [docs/technique/suivi/03-todo.md](docs/technique/suivi/03-todo.md), source unique du suivi.
+Voir [docs/technique/suivi/3-todo.md](docs/technique/suivi/3-todo.md), source unique du suivi.
 
 ## Organisation du code
 
@@ -1293,7 +1293,7 @@ noms sur 255 puis 262 octets. Ne pas attribuer son origine à un pilote précis 
 `capture.ps1 -UsbEvents` prépare une capture ETW hôte sans port COM ni modification
 du firmware. Fichier autonome, sorties à la racine du dossier courant, PowerShell
 administrateur requis pour ce mode uniquement. Le guide est
-[docs/technique/diagnostics/03-capture-usb-windows.md](docs/technique/diagnostics/03-capture-usb-windows.md). Le correctif ajoute le motif
+[docs/technique/diagnostics/3-capture-usb-windows.md](docs/technique/diagnostics/3-capture-usb-windows.md). Le correctif ajoute le motif
 255 puis 262 du même index/langue, plus deux noms distincts lus sur 255, sans
 Windows par défaut. Les veto, gardes d’appuis et keymaps restent inchangés.
 Les trois suites C passent et les dix captures précédentes gardent leur OS.
@@ -1342,12 +1342,12 @@ PowerShell a eu deux chaînes cassées par des apostrophes typographiques, corri
 après reproduction exacte avec le parseur officiel local. Les regex ne changent pas.
 Les invariants et tests du nouveau moteur sont dans
 [keyboard/src/os_detection/AGENTS.md](keyboard/src/os_detection/AGENTS.md).
-Le [profil auto](docs/layouts-clavier/06-auto.md#en-usb) décrit l’usage. Les [essais USB](docs/technique/validation/03-tests-auto-usb.md) gardent le protocole et les résultats.
+Le [profil auto](docs/layouts/5-auto.md#en-usb) décrit l’usage. Les [essais USB](docs/technique/validation/3-tests-auto-usb.md) gardent le protocole et les résultats.
 `auto` est refusé avec Bluetooth. `usb-trace` reste passif avec une keymap fixe,
 mais expose aussi la sélection réellement appliquée avec `auto`.
 Lorsque `auto` couvrira les usages et sera validé, l’utilisateur souhaite retirer
 `multi` des profils actifs tout en le conservant comme archive autonome. Ce retrait
-n’est pas effectué maintenant, il reste suivi dans `docs/technique/suivi/03-todo.md`.
+n’est pas effectué maintenant, il reste suivi dans `docs/technique/suivi/3-todo.md`.
 
 ## Diagnostic Bluetooth
 
@@ -1356,7 +1356,7 @@ Le diagnostic actif est maintenant Bluetooth sur V1, d’abord Mac puis Windows.
 clavier USB ni sélection automatique. Les échanges précoces restent en RAM jusqu’au
 reset physique, indépendamment de l’ouverture du lecteur. La droite reste normale.
 La spec est dans [diagnostics/os-signature/AGENTS.md](diagnostics/os-signature/AGENTS.md)
-et le guide court dans [docs/technique/diagnostics/04-detection-os-bluetooth.md](docs/technique/diagnostics/04-detection-os-bluetooth.md).
+et le guide court dans [docs/technique/diagnostics/4-detection-os-bluetooth.md](docs/technique/diagnostics/4-detection-os-bluetooth.md).
 Ne pas confondre hôte Bluetooth et ordinateur d’alimentation USB, ni déduire un OS
 de sa radio seule. Les captures réelles et reconnexions doivent précéder toute règle.
 Le premier flash des deux moitiés et la connexion BLE V1/Mac sont confirmés par
@@ -1404,7 +1404,7 @@ initiale Windows, mais laisse sa reconnexion limitée au MTU/batterie inconnue.
 La mémoire validée est maintenant partagée par `bluetooth auto` et le diagnostic
 gauche. Le sélecteur de keymap BLE est préparé, son essai matériel reste à faire.
 La sélection automatique de destination BLE reste un chantier distinct.
-Le fonctionnement et les essais sont décrits dans [memoire-os.md](docs/technique/firmware/07-memoire-os.md)
+Le fonctionnement et les essais sont décrits dans [memoire-os.md](docs/technique/firmware/7-memoire-os.md)
 et dans les AGENTS des modules clavier et diagnostic.
 L’utilisateur a désormais flashé ce build : acquisition initiale et reconnexion
 Mac sont confirmées, avec macos sauvegardé sans réapprentissage à la reconnexion.
@@ -1434,8 +1434,8 @@ destinataire s’il revient, même si l’utilisateur a déjà tapé sur le prem
 Taper ne ferme ni ne prolonge cette fenêtre. Sinon le nouveau devient la préférence mémorisée.
 La bascule manuelle annule cette fenêtre. Les annonces nécessaires au second hôte,
 l’invalidation d’appairage et la politique de reprise restent à implémenter/tester.
-Les guides courts sont [selection-appareil.md](docs/technique/firmware/06-selection-appareil.md) et
-[memoire-os.md](docs/technique/firmware/07-memoire-os.md), avec les cas limites dans la spec du diagnostic.
+Les guides courts sont [selection-appareil.md](docs/technique/firmware/6-selection-appareil.md) et
+[memoire-os.md](docs/technique/firmware/7-memoire-os.md), avec les cas limites dans la spec du diagnostic.
 
 L’utilisateur accepte une détection initiale suivie d’une mémoire automatique si la
 première reconnaissance est fiable. Le full auto reste prioritaire. La correction
@@ -1453,14 +1453,14 @@ n’a pas de sélecteur Bluetooth. Le diagnostic gauche expose `ble profiles`
 pour lire et `ble select` pour choisir un index, sans BT_CLR ni modification de touches. Seul l’index actif
 change via l’API native, sauvegardé après 60 secondes, les bonds restent intacts.
 La sélection Windows se fait sur le PC après déplacement des USB et coupure du
-Bluetooth Mac. Le guide [capture-bluetooth-windows.md](docs/technique/diagnostics/06-capture-bluetooth-windows.md)
+Bluetooth Mac. Le guide [capture-bluetooth-windows.md](docs/technique/diagnostics/6-capture-bluetooth-windows.md)
 donne le retour à la case Mac sans nouvel appairage. Le contrôle est testé en natif,
 compilé puis flashé par l’utilisateur. Ses sorties confirment Mac en case 0, choix
 libre 1 sur Windows, puis retour à 0 avec les deux cases toujours appairées.
 La sélection et le lecteur PowerShell sont donc validés sur les deux ordinateurs.
 Pour reconnecter Windows, réutiliser 1 explicitement, jamais `free` après l’appairage.
 Les prochains essais peuvent garder les USB sur le Mac pendant la liaison BLE
-Windows. Le [guide de capture Mac](docs/technique/diagnostics/05-capture-bluetooth-mac.md) évite PowerShell
+Windows. Le [guide de capture Mac](docs/technique/diagnostics/5-capture-bluetooth-mac.md) évite PowerShell
 et les transferts de fichiers. Le champ host de la capture désigne seulement le collecteur.
 
 ## Bluetooth auto, première intégration
@@ -1478,7 +1478,7 @@ Huit suites C, le worker/backend réels en harnais et douze captures / 43 sessio
 passent. Les six paires de build et douze UF2 sont contrôlés. Wire auto et le
 Bluetooth macOS fixe normal restent identiques aux versions validées. Les couches
 des trois variantes auto BLE sont identiques à wire auto. Le guide court est
-[keymap-auto-bluetooth.md](docs/technique/validation/04-tests-auto-bluetooth.md). L’utilisateur confirme
+[keymap-auto-bluetooth.md](docs/technique/validation/4-tests-auto-bluetooth.md). L’utilisateur confirme
 le flash gauche. Les lectures passives retrouvent Mac actif/connecté, stored macos,
 state saved, learning 0 et error 0, sans perte. Windows reste appairé/déconnecté,
 son cache chargé mais unverified. Ces premières lectures ne validaient pas encore
@@ -1543,7 +1543,7 @@ la réouverture tardive avec une intention de sélection dépendant du nombre de
 Le comportement si plein et à la fin d’un appairage en cours reste à préciser.
 Pas d’effacement ou remplacement automatique d’un bond.
 Ce cadrage de l’appairage précède la modification des annonces, les profils mixtes suivent.
-Voir les guides courts docs/technique/firmware/04-gestion-appairage.md et docs/technique/firmware/08-destinations-saisie.md.
+Voir les guides courts docs/technique/firmware/4-gestion-appairage.md et docs/technique/firmware/8-destinations-saisie.md.
 Ce cadrage ne change pas encore les builds, la keymap ou le firmware. Le branchement
 USB, son retrait, le repli au BLE et le nom du profil futur restent à définir.
 
@@ -1622,7 +1622,7 @@ Les preuves privées sont dans .local/validation/ble-pairing/.
 
 ## Application compagnon macOS
 
-Le périmètre demandé est décrit dans docs/utiliser-le-clavier/04-application-macos.md. Le premier lot
+Le périmètre demandé est décrit dans docs/utilisation/4-application-macos.md. Le premier lot
 est implémenté dans companion/macos, avec ses invariants dans son AGENTS.md.
 L’utilisateur choisit de commencer uniquement par les batteries :
 fenêtre simple, deux niveaux dans la barre des menus, lecture automatique, reconnexion,
@@ -1711,4 +1711,4 @@ sont préservés. Aucun flash ni lancement de l’app réelle effectué par l’
 
 ## Ideas / backlog
 
-Consigner les idées dans [docs/technique/suivi/03-todo.md](docs/technique/suivi/03-todo.md), sans dupliquer les listes.
+Consigner les idées dans [docs/technique/suivi/3-todo.md](docs/technique/suivi/3-todo.md), sans dupliquer les listes.
